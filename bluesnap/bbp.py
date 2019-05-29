@@ -34,6 +34,8 @@ class Cell(object):
     X = "x"
     Y = "y"
     Z = "z"
+    HOLDING_CURRENT = '@dynamics:holding_current'
+    THRESHOLD_CURRENT = '@dynamics:threshold_current'
 
 
 class Synapse(object):
