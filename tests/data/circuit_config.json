@@ -1,0 +1,25 @@
+{
+  "manifest": {
+    "$BASE_DIR": ".",
+    "$COMPONENT_DIR": "$BASE_DIR",
+    "$NETWORK_DIR": "./"
+  },
+  "components": {
+    "morphologies_dir": "$COMPONENT_DIR/morphologies",
+    "mechanisms_dir": "/abc"
+  },
+  "networks": {
+    "nodes": [
+      {
+        "nodes_file": "$BASE_DIR/nodes.h5",
+        "node_types_file": null
+      }
+    ],
+    "edges": [
+      {
+        "edges_file": "$BASE_DIR/edges.h5",
+        "edge_types_file": null
+      }
+    ]
+  }
+}

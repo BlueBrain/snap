@@ -1,0 +1,17 @@
+{
+  "manifest": {
+    "$BASE_DIR": "."
+  },
+  "networks": {
+    "nodes": [
+      {
+        "nodes_file": "$BASE_DIR/nodes.h5",
+        "node_types_file": null
+      },
+      {
+        "nodes_file": "$BASE_DIR/nodes.h5",
+        "node_types_file": null
+      }
+    ]
+  }
+}
