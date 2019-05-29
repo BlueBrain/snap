@@ -54,8 +54,10 @@ def _load_population(h5_filepath, csv_filepath, population):
     result = pd.DataFrame(index=np.arange(node_count))
 
     _all = libsonata.Selection([(0, node_count)])
-    for prop in sorted(nodes.attribute_names):
-        result[prop] = nodes.get_attribute(prop, _all)
+    for attr in sorted(nodes.attribute_names):
+        result[attr] = nodes.get_attribute(attr, _all)
+    for attr in sorted(nodes.dynamics_attribute_names):
+        result['@dynamics:%s' % attr] = nodes.get_dynamics_attribute(attr, _all)
 
     return result
 
