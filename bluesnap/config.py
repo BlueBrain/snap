@@ -29,6 +29,8 @@ import os.path
 
 import six
 
+from bluesnap import utils
+
 
 class Config(object):
     """
@@ -39,8 +41,7 @@ class Config(object):
     """
     def __init__(self, filepath):
         configdir = os.path.abspath(os.path.dirname(filepath))
-        with open(filepath) as f:
-            content = json.load(f)
+        content = utils.load_json(filepath)
         self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)
         self.content = content
 
