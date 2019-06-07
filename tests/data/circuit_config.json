@@ -11,13 +11,13 @@
   "networks": {
     "nodes": [
       {
-        "nodes_file": "$BASE_DIR/nodes.h5",
+        "nodes_file": "$NETWORK_DIR/nodes.h5",
         "node_types_file": null
       }
     ],
     "edges": [
       {
-        "edges_file": "$BASE_DIR/edges.h5",
+        "edges_file": "$NETWORK_DIR/edges.h5",
         "edge_types_file": null
       }
     ]

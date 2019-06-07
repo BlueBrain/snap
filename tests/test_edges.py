@@ -19,6 +19,11 @@ TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
 
 
+def index(values):
+    '''have pandas index types match'''
+    return np.array(values, dtype=np.uint64)
+
+
 def test_get_population_name_duplicate():
     storage = Mock()
     storage.population_names = ['a', 'b']
@@ -120,7 +125,7 @@ class TestEdgePopulation(object):
                 (0, 1, 88.1862, 1111.),
             ],
             columns=properties,
-            index=edge_ids
+            index=index(edge_ids)
         )
         pdt.assert_frame_equal(actual, expected, check_dtype=False)
 
@@ -128,7 +133,7 @@ class TestEdgePopulation(object):
         prop = Synapse.AXONAL_DELAY
         edge_ids = [1, 0]
         actual = self.test_obj.properties(edge_ids, prop)
-        expected = pd.Series([88.1862, 99.8945], index=edge_ids, name=prop)
+        expected = pd.Series([88.1862, 99.8945], index=index(edge_ids), name=prop)
         pdt.assert_series_equal(actual, expected, check_dtype=False)
 
     def test_properties_3(self):
@@ -151,7 +156,7 @@ class TestEdgePopulation(object):
         expected = pd.DataFrame([
                 [1110., 1120., 1130.]
             ],
-            index=[0],
+            index=index([0]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -161,7 +166,7 @@ class TestEdgePopulation(object):
         expected = pd.DataFrame([
                 [1211., 1221., 1231.]
             ],
-            index=[1],
+            index=index([1]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -171,7 +176,7 @@ class TestEdgePopulation(object):
         expected = pd.DataFrame([
                 [2112., 2122., 2132.]
             ],
-            index=[2],
+            index=index([2]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -181,7 +186,7 @@ class TestEdgePopulation(object):
         expected = pd.DataFrame([
                 [2213., 2223., 2233.]
             ],
-            index=[3],
+            index=index([3]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -220,7 +225,7 @@ class TestEdgePopulation(object):
                     [52.1881],
                     [11.1058],
                 ],
-                columns=properties, index=[1, 2, 3]
+                columns=properties, index=index([1, 2, 3])
             ),
             check_dtype=False
         )
@@ -240,7 +245,7 @@ class TestEdgePopulation(object):
                     [99.8945],
                     [11.1058],
                 ],
-                columns=properties, index=[0, 3]
+                columns=properties, index=index([0, 3])
             ),
             check_dtype=False
         )
@@ -263,7 +268,7 @@ class TestEdgePopulation(object):
                 [
                     [99.8945],
                 ],
-                columns=properties, index=[0]
+                columns=properties, index=index([0])
             ),
             check_dtype=False
         )
@@ -277,7 +282,7 @@ class TestEdgePopulation(object):
                     [88.1862],
                     [52.1881],
                 ],
-                columns=properties, index=[1, 2]
+                columns=properties, index=index([1, 2])
             ),
             check_dtype=False
         )

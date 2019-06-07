@@ -23,6 +23,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 from builtins import map
 
+import collections
+
 import libsonata
 import numpy as np
 import pandas as pd
@@ -90,14 +92,16 @@ class EdgePopulation(object):
 
     def _nodes(self, population):
         nodes = self._circuit.nodes
-        if isinstance(nodes, dict):
+
+        result = None
+        if isinstance(nodes, collections.Mapping):
             result = nodes.get(population)
         elif nodes.name == population:
             result = nodes
-        else:
-            result = None
+
         if result is None:
             raise BlueSnapError("Undefined node population: '%s'" % population)
+
         return result
 
     @property
@@ -134,14 +138,14 @@ class EdgePopulation(object):
             return edge_ids
 
         if is_iterable(properties):
-            if len(edge_ids) < 1:
+            if len(edge_ids) == 0:
                 result = pd.DataFrame(columns=properties)
             else:
                 result = pd.DataFrame(index=edge_ids)
                 for p in properties:
                     result[p] = self._get_property(p, selection)
         else:
-            if len(edge_ids) < 1:
+            if len(edge_ids) == 0:
                 result = pd.Series(name=properties)
             else:
                 result = pd.Series(
