@@ -1,0 +1,16 @@
+sudo: false
+dist: xenial   # required for Python >= 3.7
+language: python
+python:
+  - '2.7'
+  - '3.6'
+install: pip install tox-travis
+script: tox
+
+deploy:
+  provider: pypi
+  on:
+    tags: true
+  user: 'bbp.opensource'
+  password:
+    secure: 'vHjeg/ztzwcAAskClMkUM7FxjOClffi17dCBSvSaVi0DvsfsdWFAtoa2HJJ27vhRsQ2Zmh7nLG2uxRvFsYRZjNukrOd5sl/c9+Et/p8WINkUzNCnvwcvlSH8nFlLtIRrtFuV6YBouPz0YeOT+YxwJyeZteOh7Um2mvZpwizz7H1GAtDPbAAyVbdaRKWL+XPX1geAKIA8LRA3O5lhUeUkm/w8dRvWBeLXTdE4n/SlzXuUltn9yhQEvjqeBET6WYbN0v6FF+OXg6J52eT3nOwiLajw7BNb3fhg1OURuuXyYNBBad/W/dnE1pQL8Ltwe1+G0Xag6w6pOAIASir510/HDu6dXXQsYdWfUz9OcJxu5bJsf2JBv1fHiGirFTx8AwGonEBwE3eKhq0gSlxQJTt4Azar45GmFP5u47hXL2RftCSF5KjGfjzLQU1/7C/h6aXvkw9+fJ2G9yiwOeIQOTVUiYmFz3B0DANY4lbccClVnvO50/NZLMvPmaYdq2V8hFUPF2G/yu3VJ4OD56wM1Qvbz6ZDh9CTZ7dbHn9fV35PAWrdqpxjHdBnVNuh4yGrpGvfcnVRsh50WD4RAFuEVVh6KkY++zksC0YxXo2A42VMxDKtWqIyWhVyFbCPukACdn9mlXH0ngIwy09c3DvdajR1eNyWSMDeL8XqVhwiYSntj+o='
