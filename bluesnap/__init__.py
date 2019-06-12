@@ -1,8 +1,6 @@
 """
 BlueBrain SNAP library.
-"""
 
-"""
 Copyright (c) 2019, EPFL/Blue Brain Project
 
 This file is part of BlueBrain SNAP library <https://github.com/BlueBrain/snap>
