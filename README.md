@@ -1,6 +1,7 @@
 `bluesnap` is a Python library for accessing BlueBrain circuit models represented in [SONATA](https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md) format.
 
 [![Build Status](https://travis-ci.com/BlueBrain/snap.svg?branch=master)](https://travis-ci.com/BlueBrain/snap)
+[![codecov.io](https://codecov.io/github/BlueBrain/snap/coverage.svg?branch=master)](https://codecov.io/github/BlueBrain/snap?branch=master)
 
 The main interface class exposed is `Circuit`, which corresponds to the *static* structure of a neural network, i.e.:
  - node positions / properties

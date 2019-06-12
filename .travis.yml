@@ -17,6 +17,10 @@ script:
 after_success:
   - codecov
 
+branches:
+  only:
+    - master
+
 deploy:
   provider: pypi
   on:
