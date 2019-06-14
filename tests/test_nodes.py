@@ -103,6 +103,7 @@ class TestNodePopulation:
         assert(
             sorted(self.test_obj.property_names) ==
             [
+                Cell.HOLDING_CURRENT,
                 Cell.LAYER,
                 Cell.MORPHOLOGY,
                 Cell.MTYPE,
@@ -151,17 +152,17 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 9)
+        assert _call().shape == (3, 10)
         assert _call(0, Cell.MTYPE) == 'L2_X'
         assert _call(np.int32(0), Cell.MTYPE) == 'L2_X'
         pdt.assert_frame_equal(
-            _call([1, 2], properties=[Cell.X, Cell.Y, Cell.Z]),
+            _call([1, 2], properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
             pd.DataFrame(
                 [
-                    [201., 202., 203.],
-                    [301., 302., 303.],
+                    [201., 'L6_Y', 0.2],
+                    [301., 'L6_Y', 0.3],
                 ],
-                columns=[Cell.X, Cell.Y, Cell.Z],
+                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
                 index=[1, 2]
             )
         )
