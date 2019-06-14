@@ -19,13 +19,13 @@ TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
 
 
-# def test_get_population_name_duplicate():
-#     storage = Mock()
-#     storage.population_names = ['a', 'b']
-#     with patch(test_module.__name__ + '.libsonata.NodeStorage') as NodeStorage:
-#         NodeStorage.return_value = storage
-#         with pytest.raises(BlueSnapError):
-#             test_module._get_population_name(mock.ANY)
+def test_get_population_name_duplicate():
+    storage = Mock()
+    storage.population_names = ['a', 'b']
+    with patch(test_module.__name__ + '.libsonata.NodeStorage') as NodeStorage:
+        NodeStorage.return_value = storage
+        with pytest.raises(BlueSnapError):
+            test_module._get_population_name(mock.ANY)
 
 
 def test_gids_by_filter():
