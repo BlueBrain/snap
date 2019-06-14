@@ -35,6 +35,10 @@ class EggInfo(egg_info):
             pass
 
 
+with open('README.md') as f:
+    README = f.read()
+
+
 setup(
     name='bluesnap',
     install_requires=[
@@ -57,8 +61,9 @@ setup(
     },
     author="BlueBrain Project, EPFL",
     author_email="bbp-ou-nse@groupes.epfl.ch",
-    description="(bluesnap)",
-    long_description="(bluesnap)",
+    description="Simulation and Neural network Analysis Productivity layer",
+    long_description=README,
+    long_description_content_type='text/markdown',
     url='https://github.com/BlueBrain/snap',
     keywords=[
         'SONATA',

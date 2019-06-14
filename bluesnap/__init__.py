@@ -1,5 +1,5 @@
 """
-BlueBrain SNAP library.
+Simulation and Neural network Analysis Productivity layer.
 
 Copyright (c) 2019, EPFL/Blue Brain Project
 
