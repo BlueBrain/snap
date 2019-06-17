@@ -21,10 +21,10 @@ Access to circuit data.
 
 from cached_property import cached_property
 
-from bluesnap.config import Config
-from bluesnap.nodes import NodePopulation
-from bluesnap.edges import EdgePopulation
-from bluesnap.exceptions import BlueSnapError
+from bluepysnap.config import Config
+from bluepysnap.nodes import NodePopulation
+from bluepysnap.edges import EdgePopulation
+from bluepysnap.exceptions import BlueSnapError
 
 
 def _collect_populations(configs, cls, select=None):

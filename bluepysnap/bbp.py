@@ -19,7 +19,7 @@
 BBP cell / synapse attribute namespace.
 """
 
-from bluesnap import edges
+from bluepysnap import edges
 
 
 class Cell(object):

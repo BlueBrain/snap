@@ -24,7 +24,7 @@ import os
 import numpy as np
 import neurom as nm
 
-from bluesnap.settings import MORPH_CACHE_SIZE
+from bluepysnap.settings import MORPH_CACHE_SIZE
 
 
 class MorphHelper(object):

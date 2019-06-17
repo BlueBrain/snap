@@ -3,7 +3,7 @@ import os
 import numpy as np
 import numpy.testing as npt
 
-import bluesnap.utils as test_module
+import bluepysnap.utils as test_module
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

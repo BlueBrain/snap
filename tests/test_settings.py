@@ -2,7 +2,7 @@ import os
 
 from mock import patch
 
-import bluesnap.settings as test_module
+import bluepysnap.settings as test_module
 
 
 def test_str2bool():

@@ -1,6 +1,6 @@
-bluesnap is a Python library for accessing BlueBrain circuit models represented in SONATA format.
+BlueBrain SNAP is a Python library for accessing BlueBrain circuit models represented in SONATA format.
 
-bluesnap is licensed under the LGPL, unless noted otherwise, e.g., for external dependencies. See file LGPL.txt for the full license.
+BlueBrain SNAP is licensed under the LGPL, unless noted otherwise, e.g., for external dependencies. See file LGPL.txt for the full license.
 
 Copyright (C) 2019, Blue Brain Project/EPFL and contributors.
 

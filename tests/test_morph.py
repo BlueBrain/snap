@@ -6,7 +6,7 @@ import pandas as pd
 
 from mock import Mock, patch
 
-import bluesnap.morph as test_module
+import bluepysnap.morph as test_module
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

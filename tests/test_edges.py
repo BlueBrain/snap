@@ -9,10 +9,10 @@ import pytest
 
 from mock import Mock, patch
 
-from bluesnap.bbp import Synapse
-from bluesnap.exceptions import BlueSnapError
+from bluepysnap.bbp import Synapse
+from bluepysnap.exceptions import BlueSnapError
 
-import bluesnap.edges as test_module
+import bluepysnap.edges as test_module
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

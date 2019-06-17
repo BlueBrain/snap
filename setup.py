@@ -40,7 +40,7 @@ with open('README.md') as f:
 
 
 setup(
-    name='bluesnap',
+    name='bluepysnap',
     install_requires=[
         'cached_property>=1.0',
         'functools32;python_version<"3.2"',

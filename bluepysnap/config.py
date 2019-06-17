@@ -26,7 +26,7 @@ import os.path
 
 import six
 
-from bluesnap import utils
+from bluepysnap import utils
 
 
 class Config(object):
