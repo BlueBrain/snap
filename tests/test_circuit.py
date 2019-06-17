@@ -2,11 +2,11 @@ import os
 
 import pytest
 
-from bluesnap.nodes import NodePopulation
-from bluesnap.edges import EdgePopulation
-from bluesnap.exceptions import BlueSnapError
+from bluepysnap.nodes import NodePopulation
+from bluepysnap.edges import EdgePopulation
+from bluepysnap.exceptions import BlueSnapError
 
-import bluesnap.circuit as test_module
+import bluepysnap.circuit as test_module
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

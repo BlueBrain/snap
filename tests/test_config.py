@@ -1,6 +1,6 @@
 import os
 
-import bluesnap.config as test_module
+import bluepysnap.config as test_module
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

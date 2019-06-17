@@ -9,10 +9,10 @@ import pytest
 
 from mock import patch, Mock
 
-from bluesnap.bbp import Cell
-from bluesnap.exceptions import BlueSnapError
+from bluepysnap.bbp import Cell
+from bluepysnap.exceptions import BlueSnapError
 
-import bluesnap.nodes as test_module
+import bluepysnap.nodes as test_module
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -226,7 +226,7 @@ class TestNodePopulation:
         assert _call('Layer23') == 1
 
     def test_morph(self):
-        from bluesnap.morph import MorphHelper
+        from bluepysnap.morph import MorphHelper
         self.test_obj._circuit.config = {
             'components': {
                 'morphologies_dir': 'test'

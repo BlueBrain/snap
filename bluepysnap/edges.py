@@ -29,8 +29,8 @@ import pandas as pd
 
 from cached_property import cached_property
 
-from bluesnap.exceptions import BlueSnapError
-from bluesnap.utils import is_iterable
+from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.utils import is_iterable
 
 
 SOURCE_NODE_ID = "@source_node"

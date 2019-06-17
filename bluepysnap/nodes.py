@@ -28,8 +28,8 @@ import six
 
 from cached_property import cached_property
 
-from bluesnap import utils
-from bluesnap.exceptions import BlueSnapError
+from bluepysnap import utils
+from bluepysnap.exceptions import BlueSnapError
 
 
 def _get_population_name(h5_filepath):
@@ -294,7 +294,7 @@ class NodePopulation(object):
     @cached_property
     def morph(self):
         """ Access to node morphologies. """
-        from bluesnap.morph import MorphHelper
+        from bluepysnap.morph import MorphHelper
         return MorphHelper(
             self._circuit.config['components']['morphologies_dir'],
             self

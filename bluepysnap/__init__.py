@@ -19,5 +19,5 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """
 
-from bluesnap.circuit import Circuit
-from bluesnap.exceptions import BlueSnapError
+from bluepysnap.circuit import Circuit
+from bluepysnap.exceptions import BlueSnapError
