@@ -27,7 +27,7 @@ deploy:
   on:
     tags: true
     branch: master
-    skip_existing: true
+    condition: "$TRAVIS_PYTHON_VERSION == 3.6"
   user: bbp.opensource
   password:
     secure: deF/6QFIqIrWGQdfFrc50ZRO1aY/jD1rzM1CY3LkAV8Zh86Xpnlma6rElV9yq7P5TealypPSnlCjEBz9KneiydVbgKpnjDe4DefHJ8onrcJxQZddbyl+0vtkcHV0CHlAYXNO7SSBuuf/OQ7aXsr0kjhH/qlSjj+W0sv1fMEkvOke8HYXfhRV4OQb61huMlPeLdIxCQpBLfaRz3043sjGjko6olRkvVcucH79mu7gk2hWaiAs9by8O9KQu7WkEkv7jVvi3guPT6XZckotDd76KoFAlS2F/DONOLPXNCQ6BFqzqX42NTzA/0/FiddkoCC5XvZvqVWA5A9tDomdMuSiXS8iyvPhJgtjUw/L2r5nNga3gm5xyyeVnqxxM15kgF75Wfc3H+/9oFt/nfdCTC/071a/qa0PHL8dOzljCfgYR66yNI3UtpCo/JZR/OnNo9E6TDH46Mt81AQpX7iAuPqsaiDbUuJV69Qr/SuF0t2WAnyD1dx56NDhgR/U+o79ywa/bEbQWw4WXLfGD3j0VhnhkbrbGBLsb5qTWzAOF6PNSBgmiIsX11b6EqrE/q8VXCn6Y6D7wHPs16TN0Wg5AwOYOu5zcOFd710oJKCbvhBZ6SXvGMHg193vBRvxv3JTUCa2Sqsv5xcmaub7FB7He68AKxCQNzpTPSUTfTQxKBo0IEw=
