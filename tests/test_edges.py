@@ -56,17 +56,6 @@ def test_estimate_range_size_4():
         test_module._estimate_range_size(mock.ANY, [])
 
 
-def test_dynamics_params_collision():
-    config = {
-        'edges_file': os.path.join(TEST_DATA_DIR, "edges_collision.h5"),
-        'edge_types_file': None
-    }
-    circuit = Mock()
-    population = test_module.EdgePopulation(config, circuit)
-    with pytest.raises(BlueSnapError):
-        print(population.property_names)
-
-
 class TestEdgePopulation(object):
     def setup(self):
         config = {
@@ -385,9 +374,3 @@ class TestEdgePopulation(object):
             self.test_obj.iter_connections(
                 [0, 2], [1], return_edge_ids=True, return_edge_count=True
             )
-
-
-if __name__ == '__main__':
-    test_pop = TestEdgePopulation()
-    test_pop.setup()
-    test_pop.test_basic()

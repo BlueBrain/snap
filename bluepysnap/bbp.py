@@ -20,6 +20,7 @@ BBP cell / synapse attribute namespace.
 """
 
 from bluepysnap import edges
+from bluepysnap import nodes
 
 
 class Cell(object):
@@ -34,8 +35,8 @@ class Cell(object):
     X = "x"
     Y = "y"
     Z = "z"
-    HOLDING_CURRENT = '@dynamics:holding_current'
-    THRESHOLD_CURRENT = '@dynamics:threshold_current'
+    HOLDING_CURRENT = nodes.DYNAMICS_PREFIX + 'holding_current'
+    THRESHOLD_CURRENT = nodes.DYNAMICS_PREFIX + 'threshold_current'
 
 
 class Synapse(object):

@@ -76,13 +76,7 @@ class EdgePopulation(object):
 
     @cached_property
     def _population(self):
-        pop = libsonata.EdgePopulation(self._h5_filepath, self._csv_filepath or '', self.name)
-        name_collision = set(pop.attribute_names) & set(pop.dynamics_attribute_names)
-        if len(name_collision) > 0:
-            raise BlueSnapError(
-                "Collision between edge property names and `dynamics_params` names: '%s'"
-                % name_collision)
-        return pop
+        return libsonata.EdgePopulation(self._h5_filepath, self._csv_filepath or '', self.name)
 
     @cached_property
     def name(self):
