@@ -93,6 +93,7 @@ class TestEdgePopulation(object):
                 Synapse.PRE_X_SURFACE,
                 Synapse.PRE_Y_SURFACE,
                 Synapse.PRE_Z_SURFACE,
+                test_module.DYNAMICS_PREFIX + 'param1'
             ])
         )
 
@@ -116,13 +117,14 @@ class TestEdgePopulation(object):
             Synapse.POST_GID,
             Synapse.AXONAL_DELAY,
             Synapse.POST_X_CENTER,
+            test_module.DYNAMICS_PREFIX + 'param1',
         ]
         edge_ids = [0, 1]
         actual = self.test_obj.properties(edge_ids, properties)
         expected = pd.DataFrame(
             [
-                (2, 0, 99.8945, 1110.),
-                (0, 1, 88.1862, 1111.),
+                (2, 0, 99.8945, 1110., 0.),
+                (0, 1, 88.1862, 1111., 1.),
             ],
             columns=properties,
             index=index_as_uint64(edge_ids)

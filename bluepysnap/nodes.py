@@ -31,6 +31,8 @@ from cached_property import cached_property
 from bluepysnap import utils
 from bluepysnap.exceptions import BlueSnapError
 
+DYNAMICS_PREFIX = "@dynamics:"
+
 
 def _get_population_name(h5_filepath):
     populations = libsonata.NodeStorage(h5_filepath).population_names
@@ -57,7 +59,7 @@ def _load_population(h5_filepath, csv_filepath, population):
     for attr in sorted(nodes.attribute_names):
         result[attr] = nodes.get_attribute(attr, _all)
     for attr in sorted(nodes.dynamics_attribute_names):
-        result['@dynamics:%s' % attr] = nodes.get_dynamics_attribute(attr, _all)
+        result['%s%s' % (DYNAMICS_PREFIX, attr)] = nodes.get_dynamics_attribute(attr, _all)
 
     return result
 
@@ -110,6 +112,7 @@ def _gids_by_filter(nodes, props):
 
 class NodePopulation(object):
     """ Node population access. """
+
     def __init__(self, config, circuit):
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']

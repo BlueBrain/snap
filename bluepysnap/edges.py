@@ -32,9 +32,9 @@ from cached_property import cached_property
 from bluepysnap.exceptions import BlueSnapError
 from bluepysnap.utils import is_iterable
 
-
 SOURCE_NODE_ID = "@source_node"
 TARGET_NODE_ID = "@target_node"
+DYNAMICS_PREFIX = "@dynamics:"
 
 
 def _get_population_name(h5_filepath):
@@ -112,18 +112,29 @@ class EdgePopulation(object):
         """ Target NodePopulation. """
         return self._nodes(self._population.target)
 
+    @cached_property
+    def _property_names(self):
+        return set(self._population.attribute_names)
+
+    @cached_property
+    def _dynamics_params_names(self):
+        return {DYNAMICS_PREFIX + name for name in list(self._population.dynamics_attribute_names)}
+
     @property
     def property_names(self):
         """ Set of available edge properties. """
-        return set(self._population.attribute_names)
+        return self._property_names | self._dynamics_params_names
 
     def _get_property(self, prop, selection):
         if prop == SOURCE_NODE_ID:
             result = self._population.source_nodes(selection)
         elif prop == TARGET_NODE_ID:
             result = self._population.target_nodes(selection)
-        elif prop in self.property_names:
+        elif prop in self._property_names:
             result = self._population.get_attribute(prop, selection)
+        elif prop in self._dynamics_params_names:
+            result = self._population.get_dynamics_attribute(
+                prop.split(DYNAMICS_PREFIX)[1], selection)
         else:
             raise BlueSnapError("No such property: %s" % prop)
         return result
