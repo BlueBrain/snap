@@ -28,7 +28,7 @@ def test_get_population_name_duplicate():
             test_module._get_population_name(mock.ANY)
 
 
-def test_gids_by_filter():
+def test_node_ids_by_filter():
     nodes = pd.DataFrame({
         Cell.X: [0.0, 0.5, 1.0],
         Cell.MTYPE: pd.Categorical.from_codes([0, 1, 1], ['A', 'B', 'C']),
@@ -50,7 +50,7 @@ def test_gids_by_filter():
         test_module._node_ids_by_filter(nodes, {'err': 23})
 
 
-def test_gids_by_filter_complex_query():
+def test_node_ids_by_filter_complex_query():
     nodes = pd.DataFrame({
         Cell.MTYPE: ['L23_MC', 'L4_BP', 'L6_BP', 'L6_BPC'],
     })
@@ -169,9 +169,9 @@ class TestNodePopulation:
         with pytest.raises(BlueSnapError):
             _call(0, properties='no-such-property')
         with pytest.raises(BlueSnapError):
-            _call(999)  # invalid GID
+            _call(999)  # invalid node id
         with pytest.raises(BlueSnapError):
-            _call([0, 999])  # one of GIDs is invalid
+            _call([0, 999])  # one of node ids is invalid
 
     def test_positions(self):
         _call = self.test_obj.positions

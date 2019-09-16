@@ -69,6 +69,7 @@ def _estimate_range_size(func, node_ids, n=3):
 
 class EdgePopulation(object):
     """ Edge population access. """
+
     def __init__(self, config, circuit):
         self._h5_filepath = config['edges_file']
         self._csv_filepath = config['edge_types_file']
@@ -320,6 +321,7 @@ class EdgePopulation(object):
 
     def _iter_connections(self, source_node_ids, target_node_ids, unique_node_ids, shuffle):
         """ Iterate through `source_node_ids` -> `target_node_ids` connections. """
+
         # pylint: disable=too-many-branches,too-many-locals
         def _optimal_direction():
             """ Choose between source and target node IDs for iterating. """
@@ -343,45 +345,46 @@ class EdgePopulation(object):
 
         direction = _optimal_direction()
         if direction == 'target':
-            primary_nids, secondary_nids = target_node_ids, source_node_ids
-            get_connected_nids = self.afferent_nodes
+            primary_node_ids, secondary_node_ids = target_node_ids, source_node_ids
+            get_connected_node_ids = self.afferent_nodes
         else:
-            primary_nids, secondary_nids = source_node_ids, target_node_ids
-            get_connected_nids = self.efferent_nodes
+            primary_node_ids, secondary_node_ids = source_node_ids, target_node_ids
+            get_connected_node_ids = self.efferent_nodes
 
-        primary_nids = np.unique(primary_nids)
+        primary_node_ids = np.unique(primary_node_ids)
         if shuffle:
-            np.random.shuffle(primary_nids)
+            np.random.shuffle(primary_node_ids)
 
-        if secondary_nids is not None:
-            secondary_nids = np.unique(secondary_nids)
+        if secondary_node_ids is not None:
+            secondary_node_ids = np.unique(secondary_node_ids)
 
-        secondary_nids_used = set()
+        secondary_node_ids_used = set()
 
-        for key_nid in primary_nids:
-            connected_nids = get_connected_nids(key_nid, unique=False)
-            connected_nids_with_count = np.stack(
-                np.unique(connected_nids, return_counts=True)
+        for key_node_id in primary_node_ids:
+            connected_node_ids = get_connected_node_ids(key_node_id, unique=False)
+            connected_node_ids_with_count = np.stack(
+                np.unique(connected_node_ids, return_counts=True)
             ).transpose()
             # np.stack(uint64, int64) -> float64
-            connected_nids_with_count = connected_nids_with_count.astype(np.uint32)
-            if secondary_nids is not None:
-                mask = np.in1d(connected_nids_with_count[:, 0], secondary_nids, assume_unique=True)
-                connected_nids_with_count = connected_nids_with_count[mask]
+            connected_node_ids_with_count = connected_node_ids_with_count.astype(np.uint32)
+            if secondary_node_ids is not None:
+                mask = np.in1d(connected_node_ids_with_count[:, 0],
+                               secondary_node_ids, assume_unique=True)
+                connected_node_ids_with_count = connected_node_ids_with_count[mask]
             if shuffle:
-                np.random.shuffle(connected_nids_with_count)
-            for conn_nid, edge_count in connected_nids_with_count:
+                np.random.shuffle(connected_node_ids_with_count)
+            for conn_node_id, edge_count in connected_node_ids_with_count:
                 if direction == 'target':
-                    yield conn_nid, key_nid, edge_count
+                    yield conn_node_id, key_node_id, edge_count
                 else:
-                    yield key_nid, conn_nid, edge_count
+                    yield key_node_id, conn_node_id, edge_count
                 if unique_node_ids:
-                    secondary_nids_used.add(conn_nid)
+                    secondary_node_ids_used.add(conn_node_id)
                     break
 
     def iter_connections(
-        self, source=None, target=None, unique_node_ids=False, shuffle=False,
-        return_edge_ids=False, return_edge_count=False
+            self, source=None, target=None, unique_node_ids=False, shuffle=False,
+            return_edge_ids=False, return_edge_count=False
     ):
         """
         Iterate through `source` -> `target` connections.
