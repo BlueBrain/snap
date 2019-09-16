@@ -343,40 +343,40 @@ class EdgePopulation(object):
 
         direction = _optimal_direction()
         if direction == 'target':
-            primary_gids, secondary_gids = target_node_ids, source_node_ids
-            get_connected_gids = self.afferent_nodes
+            primary_nids, secondary_nids = target_node_ids, source_node_ids
+            get_connected_nids = self.afferent_nodes
         else:
-            primary_gids, secondary_gids = source_node_ids, target_node_ids
-            get_connected_gids = self.efferent_nodes
+            primary_nids, secondary_nids = source_node_ids, target_node_ids
+            get_connected_nids = self.efferent_nodes
 
-        primary_gids = np.unique(primary_gids)
+        primary_nids = np.unique(primary_nids)
         if shuffle:
-            np.random.shuffle(primary_gids)
+            np.random.shuffle(primary_nids)
 
-        if secondary_gids is not None:
-            secondary_gids = np.unique(secondary_gids)
+        if secondary_nids is not None:
+            secondary_nids = np.unique(secondary_nids)
 
-        secondary_gids_used = set()
+        secondary_nids_used = set()
 
-        for key_gid in primary_gids:
-            connected_gids = get_connected_gids(key_gid, unique=False)
-            connected_gids_with_count = np.stack(
-                np.unique(connected_gids, return_counts=True)
+        for key_nid in primary_nids:
+            connected_nids = get_connected_nids(key_nid, unique=False)
+            connected_nids_with_count = np.stack(
+                np.unique(connected_nids, return_counts=True)
             ).transpose()
             # np.stack(uint64, int64) -> float64
-            connected_gids_with_count = connected_gids_with_count.astype(np.uint32)
-            if secondary_gids is not None:
-                mask = np.in1d(connected_gids_with_count[:, 0], secondary_gids, assume_unique=True)
-                connected_gids_with_count = connected_gids_with_count[mask]
+            connected_nids_with_count = connected_nids_with_count.astype(np.uint32)
+            if secondary_nids is not None:
+                mask = np.in1d(connected_nids_with_count[:, 0], secondary_nids, assume_unique=True)
+                connected_nids_with_count = connected_nids_with_count[mask]
             if shuffle:
-                np.random.shuffle(connected_gids_with_count)
-            for conn_gid, edge_count in connected_gids_with_count:
+                np.random.shuffle(connected_nids_with_count)
+            for conn_nid, edge_count in connected_nids_with_count:
                 if direction == 'target':
-                    yield conn_gid, key_gid, edge_count
+                    yield conn_nid, key_nid, edge_count
                 else:
-                    yield key_gid, conn_gid, edge_count
+                    yield key_nid, conn_nid, edge_count
                 if unique_node_ids:
-                    secondary_gids_used.add(conn_gid)
+                    secondary_nids_used.add(conn_nid)
                     break
 
     def iter_connections(

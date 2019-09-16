@@ -36,18 +36,18 @@ def test_gids_by_filter():
     })
     npt.assert_equal(
         [],
-        test_module._gids_by_filter(nodes, {Cell.MTYPE: 'err'})
+        test_module._node_ids_by_filter(nodes, {Cell.MTYPE: 'err'})
     )
     npt.assert_equal(
         [1],
-        test_module._gids_by_filter(nodes, {
+        test_module._node_ids_by_filter(nodes, {
             Cell.X: (0, 0.7),
             Cell.MTYPE: ['B', 'C'],
             Cell.LAYER: (1, 2)
         })
     )
     with pytest.raises(BlueSnapError):
-        test_module._gids_by_filter(nodes, {'err': 23})
+        test_module._node_ids_by_filter(nodes, {'err': 23})
 
 
 def test_gids_by_filter_complex_query():
@@ -57,34 +57,34 @@ def test_gids_by_filter_complex_query():
     # only full match is accepted
     npt.assert_equal(
         [1, 2],
-        test_module._gids_by_filter(nodes, {
+        test_module._node_ids_by_filter(nodes, {
             Cell.MTYPE: {'$regex': '.*BP'},
         })
     )
     # ...not 'startswith'
     npt.assert_equal(
         [],
-        test_module._gids_by_filter(nodes, {
+        test_module._node_ids_by_filter(nodes, {
             Cell.MTYPE: {'$regex': 'L6'},
         })
     )
     # ...or 'endswith'
     npt.assert_equal(
         [],
-        test_module._gids_by_filter(nodes, {
+        test_module._node_ids_by_filter(nodes, {
             Cell.MTYPE: {'$regex': 'BP'},
         })
     )
     # tentative support for 'regex:' prefix
     npt.assert_equal(
         [1, 2],
-        test_module._gids_by_filter(nodes, {
+        test_module._node_ids_by_filter(nodes, {
             Cell.MTYPE: 'regex:.*BP',
         })
     )
     # '$regex' is the only query modifier supported for the moment
     with pytest.raises(BlueSnapError):
-        test_module._gids_by_filter(nodes, {Cell.MTYPE: {'err': '.*BP'}})
+        test_module._node_ids_by_filter(nodes, {Cell.MTYPE: {'err': '.*BP'}})
 
 
 class TestNodePopulation:
