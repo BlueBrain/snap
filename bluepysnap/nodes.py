@@ -76,7 +76,7 @@ def _complex_query(prop, query):
     return result
 
 
-def _gids_by_filter(nodes, props):
+def _node_ids_by_filter(nodes, props):
     """
     Return index of `nodes` rows matching `props` dict.
 
@@ -85,8 +85,8 @@ def _gids_by_filter(nodes, props):
         scalar or iterables (exact or "one of" match for other fields)
 
     E.g.:
-        >>> _gids_by_filter(nodes, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
-        >>> _gids_by_filter(nodes, { Node.LAYER: [2, 3] })
+        >>> _node_ids_by_filter(nodes, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
+        >>> _node_ids_by_filter(nodes, { Node.LAYER: [2, 3] })
     """
     # pylint: disable=assignment-from-no-return
     unknown_props = set(props) - set(nodes.columns)
@@ -150,33 +150,33 @@ class NodePopulation(object):
     def _data(self):
         return _load_population(self._h5_filepath, self._csv_filepath, self.name)
 
-    def _check_id(self, gid):
-        """ Check that single GID belongs to the circuit. """
-        if gid not in self._data.index:
-            raise BlueSnapError("GID not found: %d" % gid)
+    def _check_id(self, node_id):
+        """ Check that single node id belongs to the circuit. """
+        if node_id not in self._data.index:
+            raise BlueSnapError("node id not found: %d" % node_id)
 
-    def _check_ids(self, gids):
-        """ Check that GIDs belong to the circuit. """
-        missing = pd.Index(gids).difference(self._data.index)
+    def _check_ids(self, node_ids):
+        """ Check that node ids belong to the circuit. """
+        missing = pd.Index(node_ids).difference(self._data.index)
         if not missing.empty:
-            raise BlueSnapError("GIDs not found: [%s]" % ",".join(map(str, missing)))
+            raise BlueSnapError("node id not found: [%s]" % ",".join(map(str, missing)))
 
     def _check_property(self, prop):
         if prop not in self.property_names:
             raise BlueSnapError("No such property: '%s'" % prop)
 
     def ids(self, group=None, limit=None, sample=None):
-        """ GIDs corresponding to node `group`.
+        """ node ids corresponding to node `group`.
 
             `group` could be:
-                - single GID (int)
-                - list of GIDs (list-like)
+                - single node id (int)
+                - list of node ids (list-like)
                 - string (target name)
                 - properties filter (dict-like)
                 - None (i.e. 'all')
 
-            If `sample` is specified, `sample` GIDs are randomly chosen from the match result.
-            If `limit` is specified, first `limit` GIDs from the match result are returned.
+            If `sample` is specified, `sample` node ids are randomly chosen from the match result.
+            If `limit` is specified, first `limit` node ids from the match result are returned.
 
             If `group` is a sequence (list or array), its order is preserved.
             Otherwise return result is sorted and contains no duplicates.
@@ -192,7 +192,7 @@ class NodePopulation(object):
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
-            result = _gids_by_filter(self._data, props=group)
+            result = _node_ids_by_filter(self._data, props=group)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)
@@ -218,8 +218,8 @@ class NodePopulation(object):
         """ Node properties as pandas Series / DataFrame.
 
             `group` could be:
-                - single GID (int)
-                - list of GIDs (list-like)
+                - single node id (int)
+                - list of node ids (list-like)
                 - string (target name)
                 - properties filter (dict-like)
                 - None (i.e. 'all')
@@ -227,8 +227,8 @@ class NodePopulation(object):
             If `properties` is specified, return only selected properties (all by default).
 
             Returns:
-                pandas Series if single GID is passed as `group`.
-                pandas DataFrame indexed by GIDs otherwise.
+                pandas Series if single node id is passed as `group`.
+                pandas DataFrame indexed by node ids otherwise.
         """
 
         result = self._data
@@ -252,8 +252,8 @@ class NodePopulation(object):
         Node position(s) as pandas Series / DataFrame.
 
         Returns:
-            pandas ('x', 'y', 'z') Series if single GID is passed as `group`.
-            pandas ('x', 'y', 'z') DataFrame indexed by GIDs otherwise
+            pandas ('x', 'y', 'z') Series if single node id is passed as `group`.
+            pandas ('x', 'y', 'z') DataFrame indexed by node ids otherwise
         """
         result = self.get(group=group, properties=['x', 'y', 'z'])
         return result.astype(float)
@@ -263,8 +263,8 @@ class NodePopulation(object):
         Node orientation(s) as pandas Series / DataFrame.
 
         Returns:
-            3x3 rotation matrix if single GID is passed as `group`.
-            pandas Series with rotation matrices indexed by GIDs otherwise
+            3x3 rotation matrix if single node id is passed as `group`.
+            pandas Series with rotation matrices indexed by node ids otherwise
         """
         props = [
             'rotation_angle_xaxis',

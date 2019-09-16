@@ -41,22 +41,22 @@ class MorphHelper(object):
                 from functools32 import lru_cache
             self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
 
-    def get_filepath(self, gid):
-        """ Return path to SWC morphology file corresponding to `gid`. """
-        name = self._nodes.get(gid, 'morphology')
+    def get_filepath(self, node_id):
+        """ Return path to SWC morphology file corresponding to `node_id`. """
+        name = self._nodes.get(node_id, 'morphology')
         return os.path.join(self._morph_dir, "%s.swc" % name)
 
-    def get(self, gid, transform=False):
+    def get(self, node_id, transform=False):
         """
-        Return NeuroM morphology object corresponding to `gid`.
+        Return NeuroM morphology object corresponding to `node_id`.
 
         If `transform` is True, rotate and translate morphology points
-        according to `gid` position in the circuit.
+        according to `node_id` position in the circuit.
         """
-        filepath = self.get_filepath(gid)
+        filepath = self.get_filepath(node_id)
         result = self._load(filepath)
         if transform:
-            A_t = self._nodes.orientations(gid).transpose()
-            B = self._nodes.positions(gid).values
+            A_t = self._nodes.orientations(node_id).transpose()
+            B = self._nodes.positions(node_id).values
             result = result.transform(lambda p: np.dot(p, A_t) + B)
         return result
