@@ -8,15 +8,25 @@ BlueBrain SNAP is a Python library for accessing BlueBrain circuit models repres
 
 |build_status| |coverage|
 
+Installation
+------------
+
+BlueBrain SNAP can be installed using ``pip``::
+
+   pip install bluepysnap
+
+Usage
+-----
+
 The main interface class exposed is ``Circuit``, which corresponds to the *static* structure of a neural network, that is:
- - node positions / properties
- - edge positions / properties
+ - node positions and properties
+ - edge positions and properties
  - detailed morphologies
 
 Most of BlueBrain SNAP methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames,
 indexed in a way to facilitate combining data from different sources (that is, by node or edge IDs).
 
-Among other dependencies, BlueBrain SNAP relies on BBP-provided libraries:
+Among other dependencies, BlueBrain SNAP relies on BlueBrain Project provided libraries:
  - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
  - `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
 
