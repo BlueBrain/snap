@@ -1,16 +1,22 @@
-BlueBrain `SNAP` is a Python library for accessing `BlueBrain <https://github.com/bluebrain/>`__ circuit models represented in `SONATA <https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md>`__ format.
+BlueBrain SNAP
+==============
+
+BlueBrain Simulation and Neural network Analysis Productivity layer (BlueBrain SNAP).
+
+BlueBrain SNAP is a Python library for accessing BlueBrain circuit models represented in
+`SONATA <https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md>`__ format.
 
 |build_status| |coverage|
 
-
-The main interface class exposed is `Circuit`, which corresponds to the *static* structure of a neural network, i.e.:
+The main interface class exposed is ``Circuit``, which corresponds to the *static* structure of a neural network, that is:
  - node positions / properties
  - edge positions / properties
  - detailed morphologies
 
-Most of `SNAP` methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames, indexed in a way to facilitate combining data from different sources (i.e. by node or edge IDs).
+Most of BlueBrain SNAP methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames,
+indexed in a way to facilitate combining data from different sources (that is, by node or edge IDs).
 
-Among other dependencies, `SNAP` relies on BBP-provided libraries:
+Among other dependencies, BlueBrain SNAP relies on BBP-provided libraries:
  - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
  - `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
 
