@@ -32,6 +32,11 @@ Among other dependencies, BlueBrain SNAP relies on BlueBrain Project provided li
 - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
 - `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
 
+License
+-------
+
+BlueBrain SNAP is licensed under the LGPL. Refer to the
+`LICENSE.txt <https://github.com/BlueBrain/snap/blob/master/LICENSE.txt>`__ for details.
 
 .. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master
    :target: https://travis-ci.com/BlueBrain/snap
