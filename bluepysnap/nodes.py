@@ -166,19 +166,20 @@ class NodePopulation(object):
             raise BlueSnapError("No such property: '%s'" % prop)
 
     def ids(self, group=None, limit=None, sample=None):
-        """ node ids corresponding to node `group`.
+        """ Node ids corresponding to node ``group``.
 
-            `group` could be:
+            ``group`` could be:
+
                 - single node id (int)
                 - list of node ids (list-like)
                 - string (target name)
                 - properties filter (dict-like)
                 - None (i.e. 'all')
 
-            If `sample` is specified, `sample` node ids are randomly chosen from the match result.
-            If `limit` is specified, first `limit` node ids from the match result are returned.
+            If ``sample`` is specified, ``sample`` node ids are randomly chosen from the match result.
+            If ``limit`` is specified, first ``limit`` node ids from the match result are returned.
 
-            If `group` is a sequence (list or array), its order is preserved.
+            If ``group`` is a sequence (list or array), its order is preserved.
             Otherwise return result is sorted and contains no duplicates.
         """
 
@@ -215,19 +216,21 @@ class NodePopulation(object):
             return np.unique(result)
 
     def get(self, group=None, properties=None):
-        """ Node properties as pandas Series / DataFrame.
+        """ Node properties as a pandas Series or DataFrame.
 
-            `group` could be:
+            ``group`` could be:
+
                 - single node id (int)
                 - list of node ids (list-like)
                 - string (target name)
                 - properties filter (dict-like)
                 - None (i.e. 'all')
 
-            If `properties` is specified, return only selected properties (all by default).
+            If ``properties`` is specified, return only selected properties (all by default).
 
             Returns:
-                pandas Series if single node id is passed as `group`.
+                pandas Series if single node id is passed as ``group``.
+
                 pandas DataFrame indexed by node ids otherwise.
         """
 
@@ -260,10 +263,11 @@ class NodePopulation(object):
 
     def orientations(self, group=None):
         """
-        Node orientation(s) as pandas Series / DataFrame.
+        Node orientation(s) as a pandas Series or DataFrame.
 
         Returns:
-            3x3 rotation matrix if single node id is passed as `group`.
+            3x3 rotation matrix if single node id is passed as ``group``.
+
             pandas Series with rotation matrices indexed by node ids otherwise
         """
         props = [

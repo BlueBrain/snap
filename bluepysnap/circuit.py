@@ -56,7 +56,7 @@ class Circuit(object):
 
     @cached_property
     def nodes(self):
-        """ Access to node population(s). """
+        """ Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
         return _collect_populations(
             self._config['networks']['nodes'],
             lambda cfg: NodePopulation(cfg, self),
@@ -65,7 +65,7 @@ class Circuit(object):
 
     @cached_property
     def edges(self):
-        """ Access to edge population(s). """
+        """ Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
         return _collect_populations(
             self._config['networks']['edges'],
             lambda cfg: EdgePopulation(cfg, self),

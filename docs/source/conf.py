@@ -63,7 +63,6 @@ html_show_sourcelink = False
 # autodoc settings
 autodoc_default_options = {
     "members": True,
-    "show-inheritance": True
 }
 
 # autosummary settings
