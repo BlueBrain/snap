@@ -19,16 +19,18 @@ Usage
 -----
 
 The main interface class exposed is ``Circuit``, which corresponds to the *static* structure of a neural network, that is:
- - node positions and properties
- - edge positions and properties
- - detailed morphologies
+
+- node positions and properties
+- edge positions and properties
+- detailed morphologies
 
 Most of BlueBrain SNAP methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames,
 indexed in a way to facilitate combining data from different sources (that is, by node or edge IDs).
 
 Among other dependencies, BlueBrain SNAP relies on BlueBrain Project provided libraries:
- - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
- - `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
+
+- `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
+- `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
 
 
 .. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master

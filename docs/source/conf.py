@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'BluePySNAP'
+project = 'BlueBrain SNAP'
 author = 'BlueBrain Project, EPFL'
 copyright = " Copyright Blue Brain Project/EPFL 2005-2019. All rights reserved"
 
@@ -47,7 +47,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -55,7 +55,7 @@ html_theme = 'alabaster'
 # html_static_path = ['_static']
 
 # ensure a useful title is used
-html_title = "BluePySNAP"
+html_title = "BlueBrain SNAP"
 
 # hide source links
 html_show_sourcelink = False
