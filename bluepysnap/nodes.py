@@ -176,7 +176,9 @@ class NodePopulation(object):
                 - properties filter (dict-like)
                 - None (i.e. 'all')
 
-            If ``sample`` is specified, ``sample`` node ids are randomly chosen from the match result.
+            If ``sample`` is specified,
+            ``sample`` node ids are randomly chosen from the match result.
+
             If ``limit`` is specified, first ``limit`` node ids from the match result are returned.
 
             If ``group`` is a sequence (list or array), its order is preserved.
