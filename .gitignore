@@ -1,5 +1,5 @@
-docs/build
-docs/source/submodules
+doc/build
+doc/source/submodules
 .coverage
 .eggs
 .tox
