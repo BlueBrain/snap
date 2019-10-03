@@ -138,7 +138,14 @@ class NodePopulation(object):
         return set(self._data.columns)
 
     def property_values(self, prop):
-        """ Set of values for a given property. """
+        """ Set of values for a given property.
+
+            Args:
+               prop (str): Name of the property to retrieve.
+
+            Returns:
+                set: A set of the unique values of the property in the node population.
+        """
         return set(self.get(properties=prop).unique())
 
     @property
@@ -151,38 +158,44 @@ class NodePopulation(object):
         return _load_population(self._h5_filepath, self._csv_filepath, self.name)
 
     def _check_id(self, node_id):
-        """ Check that single node id belongs to the circuit. """
+        """ Check that single node ID belongs to the circuit. """
         if node_id not in self._data.index:
-            raise BlueSnapError("node id not found: %d" % node_id)
+            raise BlueSnapError("node ID not found: %d" % node_id)
 
     def _check_ids(self, node_ids):
-        """ Check that node ids belong to the circuit. """
+        """ Check that node IDs belong to the circuit. """
         missing = pd.Index(node_ids).difference(self._data.index)
         if not missing.empty:
-            raise BlueSnapError("node id not found: [%s]" % ",".join(map(str, missing)))
+            raise BlueSnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
 
     def _check_property(self, prop):
         if prop not in self.property_names:
             raise BlueSnapError("No such property: '%s'" % prop)
 
     def ids(self, group=None, limit=None, sample=None):
-        """ Node ids corresponding to node ``group``.
+        """ Node IDs corresponding to node ``group``.
 
-            ``group`` could be:
+            Args:
+                group (int/sequence/str/mapping/None): Which IDs will be returned
+                    depends on the type of the ``group`` argument:
 
-                - single node id (int)
-                - list of node ids (list-like)
-                - string (target name)
-                - properties filter (dict-like)
-                - None (i.e. 'all')
+                    - ``int``: returns a single node ID.
+                    - ``sequence``: returns a list of node IDs.
+                    - ``str``: returns a target name.
+                    - ``mapping``: returns node IDs matching a properties filter.
+                    - ``None``: returns all IDs.
 
-            If ``sample`` is specified,
-            ``sample`` node ids are randomly chosen from the match result.
+                    If ``group`` is a ``sequence``, the order of results is preserved.
+                    Otherwise the result is sorted and contains no duplicates.
 
-            If ``limit`` is specified, first ``limit`` node ids from the match result are returned.
+                sample (int): If specified, randomly choose ``sample`` number of
+                    IDs from the match result.
 
-            If ``group`` is a sequence (list or array), its order is preserved.
-            Otherwise return result is sorted and contains no duplicates.
+                limit (int): If specified, return the first ``limit`` number of
+                    IDs from the match result.
+
+            Returns:
+                numpy.array: A numpy array of IDs.
         """
 
         preserve_order = False
@@ -220,20 +233,23 @@ class NodePopulation(object):
     def get(self, group=None, properties=None):
         """ Node properties as a pandas Series or DataFrame.
 
-            ``group`` could be:
+            Args:
+                group (int/sequence/str/mapping/None): Which nodes will have their properties
+                    returned depends on the type of the ``group`` argument:
 
-                - single node id (int)
-                - list of node ids (list-like)
-                - string (target name)
-                - properties filter (dict-like)
-                - None (i.e. 'all')
+                    - ``int``: returns properties of a single node.
+                    - ``sequence``: returns properties from a list of node.
+                    - ``str``: returns properties of a target name.
+                    - ``mapping``: returns properties of nodes matching a properties filter.
+                    - ``None``: returns properties of all nodes.
 
-            If ``properties`` is specified, return only selected properties (all by default).
+                properties (set): If specified, return only the properties in the set.
+                    Otherwise return all properties.
 
             Returns:
-                pandas Series if single node id is passed as ``group``.
-
-                pandas DataFrame indexed by node ids otherwise.
+                pandas.Series/pandas.DataFrame:
+                    If single node ID is passed as ``group`` returns a pandas Series.
+                    Otherwise return a pandas DataFrame indexed by node IDs.
         """
 
         result = self._data
@@ -254,11 +270,24 @@ class NodePopulation(object):
 
     def positions(self, group=None):
         """
-        Node position(s) as pandas Series / DataFrame.
+        Node position(s) as pandas Series or DataFrame.
+
+        Args:
+            group (int/sequence/str/mapping/None): Which nodes will have their positions
+                returned depends on the type of the ``group`` argument:
+
+                - ``int``: returns positions of a single node.
+                - ``sequence``: returns positions from a list of node IDs.
+                - ``str``: returns positions of a target name.
+                - ``mapping``: returns positions of nodes matching a properties filter.
+                - ``None``: returns positions of all nodes.
 
         Returns:
-            pandas ('x', 'y', 'z') Series if single node id is passed as `group`.
-            pandas ('x', 'y', 'z') DataFrame indexed by node ids otherwise
+            pandas.Series/pandas.DataFrame:
+                Series of ('x', 'y', 'z') if single node ID is
+
+                passed as ``group``. Otherwise, a pandas.DataFrame of ('x', 'y', 'z') indexed
+                by node IDs.
         """
         result = self.get(group=group, properties=['x', 'y', 'z'])
         return result.astype(float)
@@ -267,10 +296,20 @@ class NodePopulation(object):
         """
         Node orientation(s) as a pandas Series or DataFrame.
 
-        Returns:
-            3x3 rotation matrix if single node id is passed as ``group``.
+        Args:
+            group (int/sequence/str/mapping/None): Which nodes will have their positions
+                returned depends on the type of the ``group`` argument:
 
-            pandas Series with rotation matrices indexed by node ids otherwise
+                - ``int``: returns positions of a single node.
+                - ``sequence``: returns positions from a list of node IDs.
+                - ``str``: returns positions of a target name.
+                - ``mapping``: returns positions of nodes matching a properties filter.
+                - ``None``: returns positions of all nodes.
+
+        Returns:
+            numpy.ndarry/pandas.Series:
+                A 3x3 rotation matrix if a single node ID is passed as ``group``.
+                Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """
         props = [
             'rotation_angle_xaxis',
@@ -297,7 +336,23 @@ class NodePopulation(object):
         return result
 
     def count(self, group=None):
-        """ Total number of nodes for a given node group. """
+        """
+        Total number of nodes for a given node group.
+
+        Args:
+            group (int/sequence/str/mapping/None): Which nodes will have their positions
+                returned depends on the type of the ``group`` argument:
+
+                - ``int``: returns positions of a single node.
+                - ``sequence``: returns positions from a list of node IDs.
+                - ``str``: returns positions of a target name.
+                - ``mapping``: returns positions of nodes matching a properties filter.
+                - ``None``: returns positions of all nodes.
+
+        Returns:
+            int: The total number of nodes in a given group.
+        """
+
         return len(self.ids(group))
 
     @cached_property

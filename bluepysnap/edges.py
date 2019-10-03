@@ -171,25 +171,25 @@ class EdgePopulation(object):
         Edge properties as pandas DataFrame.
 
         Args:
-            edge_ids: array-like of edge IDs
-            properties: edge property name | list of edge property names
+            edge_ids (array-like): array-like of edge IDs
+            properties (str/list): an edge property name or a list of edge property names
 
         Returns:
-            Pandas Series indexed by edge IDs if ``properties`` is scalar.
-
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            pandas.Series/pandas.DataFrame:
+                A pandas Series indexed by edge IDs if ``properties`` is scalar.
+                A pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         selection = libsonata.Selection(edge_ids)
         return self._get(selection, properties)
 
     def positions(self, edge_ids, side, kind):
         """
-        Edge positions as pandas DataFrame.
+        Edge positions as a pandas DataFrame.
 
         Args:
-            edge_ids: array-like of edge IDs
-            side: 'afferent' | 'efferent'
-            kind: 'center' | 'surface'
+            edge_ids (array-like): array-like of edge IDs
+            side (str): ``afferent`` or ``efferent``
+            kind (str): ``center`` or ``surface``
 
         Returns:
             Pandas Dataframe with ('x', 'y', 'z') columns indexed by edge IDs.
@@ -210,11 +210,11 @@ class EdgePopulation(object):
         Get afferent node IDs for given target ``node_id``.
 
         Args:
-            node_id: target node ID
+            node_id (int): target node ID
+            unique (bool): If ``True``, return only unique afferent node IDs.
 
         Returns:
-            Array of source node IDs.
-            By default, the array is uniq-ed and sorted.
+            numpy.ndarray: Afferent node IDs.
         """
         selection = self._population.afferent_edges(
             _resolve_node_ids(self.target, node_id)
@@ -229,11 +229,11 @@ class EdgePopulation(object):
         Get efferent node IDs for given source ``node_id``.
 
         Args:
-            node_id: source node ID
+            node_id (int): Source node ID
+            unique (bool): If ``True``, return only unique efferent node IDs.
 
         Returns:
-            Array of target node IDs.
-            By default, the array is uniq-ed and sorted.
+            numpy.ndarray: Efferent node IDs.
         """
         selection = self._population.efferent_edges(
             _resolve_node_ids(self.source, node_id)
@@ -248,7 +248,7 @@ class EdgePopulation(object):
         Get afferent edges for given ``node_id``.
 
         Args:
-            node_id: target node ID
+            node_id (int): Target node ID
             properties: None / edge property name / list of edge property names
 
         Returns:
