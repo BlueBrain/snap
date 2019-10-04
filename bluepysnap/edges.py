@@ -246,13 +246,14 @@ class EdgePopulation(object):
         Get afferent edges for given ``node_id``.
 
         Args:
-            node_id (int): Target node ID
-            properties: None / edge property name / list of edge property names
+            node_id (int): Target node ID.
+            properties: An edge property name, a list of edge property names, or None.
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            pandas.Series/pandas.DataFrame/list:
+                A pandas Series indexed by edge ID if ``properties`` is a string.
+                A pandas DataFrame indexed by edge ID if ``properties`` is a list.
+                A list of edge IDs, if ``properties`` is None.
         """
         return self.pathway_edges(source=None, target=node_id, properties=properties)
 
