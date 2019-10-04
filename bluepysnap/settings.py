@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Configuration variables.
-"""
+"""Configuration variables."""
 
 import os
 
@@ -29,7 +27,7 @@ STRICT_MODE = False
 
 
 def str2bool(value):
-    """ Convert environment variable value to bool. """
+    """Convert environment variable value to bool."""
     if value is None:
         return False
     else:
@@ -37,7 +35,7 @@ def str2bool(value):
 
 
 def load_env():
-    """ Load settings from environment variables. """
+    """Load settings from environment variables."""
     # pylint: disable=global-statement
     if 'BLUESNAP_MORPH_CACHE_SIZE' in os.environ:
         global MORPH_CACHE_SIZE

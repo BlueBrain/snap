@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Miscellaneous utilities.
-"""
+"""Miscellaneous utilities."""
 
 import collections
 import json
@@ -27,18 +25,18 @@ import six
 
 
 def load_json(filepath):
-    """ Load JSON from file. """
+    """Load JSON from file."""
     with open(filepath) as f:
         return json.load(f)
 
 
 def is_iterable(v):
-    """ Check if `v` is any iterable (strings are considered scalar). """
+    """Check if `v` is any iterable (strings are considered scalar)."""
     return isinstance(v, collections.Iterable) and not isinstance(v, six.string_types)
 
 
 def ensure_list(v):
-    """ Convert iterable / wrap scalar into list (strings are considered scalar). """
+    """Convert iterable / wrap scalar into list (strings are considered scalar)."""
     if is_iterable(v):
         return list(v)
     else:
@@ -60,7 +58,6 @@ def euler2mat(az, ay, ax):
     See also:
         https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix (R = X1 * Y2 * Z3)
     """
-
     c1, s1 = np.cos(ax), np.sin(ax)
     c2, s2 = np.cos(ay), np.sin(ay)
     c3, s3 = np.cos(az), np.sin(az)

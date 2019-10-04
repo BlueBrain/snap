@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-SONATA network config parsing.
-"""
+"""SONATA network config parsing."""
 
 # TODO: move to `libsonata` library
 
@@ -36,6 +34,7 @@ class Config(object):
     See also:
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
+
     def __init__(self, filepath):
         configdir = os.path.abspath(os.path.dirname(filepath))
         content = utils.load_json(filepath)
@@ -92,10 +91,10 @@ class Config(object):
             return value
 
     def resolve(self):
-        """ Resolve variables in config file paths. """
+        """Resolve variables in config file paths."""
         return self._resolve(self.content)
 
     @staticmethod
     def parse(filepath):
-        """ Parse SONATA network config. """
+        """Parse SONATA network config."""
         return Config(filepath).resolve()

@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Node population access.
-"""
+"""Node population access."""
 
 import collections
 
@@ -111,7 +109,7 @@ def _node_ids_by_filter(nodes, props):
 
 
 class NodePopulation(object):
-    """ Node population access. """
+    """Node population access."""
 
     def __init__(self, config, circuit):
         self._h5_filepath = config['nodes_file']
@@ -124,33 +122,34 @@ class NodePopulation(object):
 
     @cached_property
     def name(self):
-        """ Node population name. """
+        """Node population name."""
         return _get_population_name(self._h5_filepath)
 
     @property
     def size(self):
-        """ Node population size. """
+        """Node population size."""
         return len(self._data)
 
     @property
     def property_names(self):
-        """ Set of available node properties. """
+        """Set of available node properties."""
         return set(self._data.columns)
 
     def property_values(self, prop):
-        """ Set of values for a given property.
+        """
+        Set of values for a given property.
 
-            Args:
-               prop (str): Name of the property to retrieve.
+        Args:
+           prop (str): Name of the property to retrieve.
 
-            Returns:
-                set: A set of the unique values of the property in the node population.
+        Returns:
+            set: A set of the unique values of the property in the node population.
         """
         return set(self.get(properties=prop).unique())
 
     @property
     def node_sets(self):
-        """ Node sets defined for this node population. """
+        """Node sets defined for this node population."""
         return self._node_sets
 
     @cached_property
@@ -158,12 +157,12 @@ class NodePopulation(object):
         return _load_population(self._h5_filepath, self._csv_filepath, self.name)
 
     def _check_id(self, node_id):
-        """ Check that single node ID belongs to the circuit. """
+        """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:
             raise BlueSnapError("node ID not found: %d" % node_id)
 
     def _check_ids(self, node_ids):
-        """ Check that node IDs belong to the circuit. """
+        """Check that node IDs belong to the circuit."""
         missing = pd.Index(node_ids).difference(self._data.index)
         if not missing.empty:
             raise BlueSnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
@@ -173,31 +172,31 @@ class NodePopulation(object):
             raise BlueSnapError("No such property: '%s'" % prop)
 
     def ids(self, group=None, limit=None, sample=None):
-        """ Node IDs corresponding to node ``group``.
-
-            Args:
-                group (int/sequence/str/mapping/None): Which IDs will be returned
-                    depends on the type of the ``group`` argument:
-
-                    - ``int``: returns a single node ID.
-                    - ``sequence``: returns a list of node IDs.
-                    - ``str``: returns a target name.
-                    - ``mapping``: returns node IDs matching a properties filter.
-                    - ``None``: returns all IDs.
-
-                    If ``group`` is a ``sequence``, the order of results is preserved.
-                    Otherwise the result is sorted and contains no duplicates.
-
-                sample (int): If specified, randomly choose ``sample`` number of
-                    IDs from the match result.
-
-                limit (int): If specified, return the first ``limit`` number of
-                    IDs from the match result.
-
-            Returns:
-                numpy.array: A numpy array of IDs.
         """
+        Node IDs corresponding to node ``group``.
 
+        Args:
+            group (int/sequence/str/mapping/None): Which IDs will be returned
+                depends on the type of the ``group`` argument:
+
+                - ``int``: returns a single node ID.
+                - ``sequence``: returns a list of node IDs.
+                - ``str``: returns a target name.
+                - ``mapping``: returns node IDs matching a properties filter.
+                - ``None``: returns all IDs.
+
+                If ``group`` is a ``sequence``, the order of results is preserved.
+                Otherwise the result is sorted and contains no duplicates.
+
+            sample (int): If specified, randomly choose ``sample`` number of
+                IDs from the match result.
+
+            limit (int): If specified, return the first ``limit`` number of
+                IDs from the match result.
+
+        Returns:
+            numpy.array: A numpy array of IDs.
+        """
         preserve_order = False
 
         if isinstance(group, six.string_types):
@@ -231,27 +230,27 @@ class NodePopulation(object):
             return np.unique(result)
 
     def get(self, group=None, properties=None):
-        """ Node properties as a pandas Series or DataFrame.
-
-            Args:
-                group (int/sequence/str/mapping/None): Which nodes will have their properties
-                    returned depends on the type of the ``group`` argument:
-
-                    - ``int``: returns properties of a single node.
-                    - ``sequence``: returns properties from a list of node.
-                    - ``str``: returns properties of a target name.
-                    - ``mapping``: returns properties of nodes matching a properties filter.
-                    - ``None``: returns properties of all nodes.
-
-                properties (set): If specified, return only the properties in the set.
-                    Otherwise return all properties.
-
-            Returns:
-                pandas.Series/pandas.DataFrame:
-                    If single node ID is passed as ``group`` returns a pandas Series.
-                    Otherwise return a pandas DataFrame indexed by node IDs.
         """
+        Node properties as a pandas Series or DataFrame.
 
+        Args:
+            group (int/sequence/str/mapping/None): Which nodes will have their properties
+                returned depends on the type of the ``group`` argument:
+
+                - ``int``: returns properties of a single node.
+                - ``sequence``: returns properties from a list of node.
+                - ``str``: returns properties of a target name.
+                - ``mapping``: returns properties of nodes matching a properties filter.
+                - ``None``: returns properties of all nodes.
+
+            properties (set): If specified, return only the properties in the set.
+                Otherwise return all properties.
+
+        Returns:
+            pandas.Series/pandas.DataFrame:
+                If single node ID is passed as ``group`` returns a pandas Series.
+                Otherwise return a pandas DataFrame indexed by node IDs.
+        """
         result = self._data
 
         if properties is not None:
@@ -352,12 +351,11 @@ class NodePopulation(object):
         Returns:
             int: The total number of nodes in a given group.
         """
-
         return len(self.ids(group))
 
     @cached_property
     def morph(self):
-        """ Access to node morphologies. """
+        """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
         return MorphHelper(
             self._circuit.config['components']['morphologies_dir'],

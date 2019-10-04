@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Access to circuit data.
-"""
+"""Access to circuit data."""
 
 from cached_property import cached_property
 
@@ -43,7 +41,8 @@ def _collect_populations(configs, cls, select=None):
 
 
 class Circuit(object):
-    """ Access to circuit data. """
+    """Access to circuit data."""
+
     def __init__(self, config, node_population=None, edge_population=None):
         self._config = Config(config).resolve()
         self._node_population = node_population
@@ -51,12 +50,12 @@ class Circuit(object):
 
     @property
     def config(self):
-        """ Network config dictionary. """
+        """Network config dictionary."""
         return self._config
 
     @cached_property
     def nodes(self):
-        """ Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
+        """Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
         return _collect_populations(
             self._config['networks']['nodes'],
             lambda cfg: NodePopulation(cfg, self),
@@ -65,7 +64,7 @@ class Circuit(object):
 
     @cached_property
     def edges(self):
-        """ Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
+        """Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
         return _collect_populations(
             self._config['networks']['edges'],
             lambda cfg: EdgePopulation(cfg, self),

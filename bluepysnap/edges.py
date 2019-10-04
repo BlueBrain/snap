@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Edge population access.
-"""
+"""Edge population access."""
 
 from builtins import map
 
@@ -47,7 +45,7 @@ def _get_population_name(h5_filepath):
 
 
 def _resolve_node_ids(nodes, group):
-    """ Node IDs corresponding to node group filter. """
+    """Node IDs corresponding to node group filter."""
     if group is None:
         return None
     return nodes.ids(group)
@@ -58,7 +56,7 @@ def _is_empty(xs):
 
 
 def _estimate_range_size(func, node_ids, n=3):
-    """ Median size of index second level for some node IDs from the provided list. """
+    """Median size of index second level for some node IDs from the provided list."""
     assert len(node_ids) > 0
     if len(node_ids) > n:
         node_ids = np.random.choice(node_ids, size=n, replace=False)
@@ -68,7 +66,7 @@ def _estimate_range_size(func, node_ids, n=3):
 
 
 class EdgePopulation(object):
-    """ Edge population access. """
+    """Edge population access."""
 
     def __init__(self, config, circuit):
         self._h5_filepath = config['edges_file']
@@ -81,12 +79,12 @@ class EdgePopulation(object):
 
     @cached_property
     def name(self):
-        """ Population name. """
+        """Population name."""
         return _get_population_name(self._h5_filepath)
 
     @property
     def size(self):
-        """ Population size. """
+        """Population size."""
         return self._population.size
 
     def _nodes(self, population):
@@ -105,12 +103,12 @@ class EdgePopulation(object):
 
     @property
     def source(self):
-        """ Source NodePopulation. """
+        """Source NodePopulation."""
         return self._nodes(self._population.source)
 
     @cached_property
     def target(self):
-        """ Target NodePopulation. """
+        """Target NodePopulation."""
         return self._nodes(self._population.target)
 
     @cached_property
@@ -123,7 +121,7 @@ class EdgePopulation(object):
 
     @property
     def property_names(self):
-        """ Set of available edge properties. """
+        """Set of available edge properties."""
         return self._property_names | self._dynamics_params_names
 
     def _get_property(self, prop, selection):
@@ -141,7 +139,7 @@ class EdgePopulation(object):
         return result
 
     def _get(self, selection, properties=None):
-        """ Get an array of edge IDs or DataFrame with edge properties. """
+        """Get an array of edge IDs or DataFrame with edge properties."""
         edge_ids = selection.flatten()
 
         if properties is None:
@@ -229,7 +227,7 @@ class EdgePopulation(object):
         Get efferent node IDs for given source ``node_id``.
 
         Args:
-            node_id (int): Source node ID
+            node_id (int): Source node ID.
             unique (bool): If ``True``, return only unique efferent node IDs.
 
         Returns:
@@ -321,11 +319,10 @@ class EdgePopulation(object):
         return self._get(selection, properties)
 
     def _iter_connections(self, source_node_ids, target_node_ids, unique_node_ids, shuffle):
-        """ Iterate through `source_node_ids` -> `target_node_ids` connections. """
-
+        """Iterate through `source_node_ids` -> `target_node_ids` connections."""
         # pylint: disable=too-many-branches,too-many-locals
         def _optimal_direction():
-            """ Choose between source and target node IDs for iterating. """
+            """Choose between source and target node IDs for iterating."""
             if target_node_ids is None and source_node_ids is None:
                 raise BlueSnapError("Either `source` or `target` should be specified")
             if source_node_ids is None:

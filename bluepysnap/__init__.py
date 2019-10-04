@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Simulation and Neural network Analysis Productivity layer.
-"""
+"""Simulation and Neural network Analysis Productivity layer."""
 
 from bluepysnap.circuit import Circuit
 from bluepysnap.exceptions import BlueSnapError

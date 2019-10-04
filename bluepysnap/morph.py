@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Morphology access.
-"""
+"""Morphology access."""
 
 import os
 
@@ -28,7 +26,7 @@ from bluepysnap.settings import MORPH_CACHE_SIZE
 
 
 class MorphHelper(object):
-    """ Collection of morphology-related methods. """
+    """Collection of morphology-related methods."""
 
     def __init__(self, morph_dir, nodes):
         self._morph_dir = morph_dir
@@ -42,7 +40,7 @@ class MorphHelper(object):
             self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
 
     def get_filepath(self, node_id):
-        """ Return path to SWC morphology file corresponding to `node_id`. """
+        """Return path to SWC morphology file corresponding to `node_id`."""
         name = self._nodes.get(node_id, 'morphology')
         return os.path.join(self._morph_dir, "%s.swc" % name)
 
