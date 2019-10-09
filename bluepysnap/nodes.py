@@ -179,11 +179,11 @@ class NodePopulation(object):
             group (int/sequence/str/mapping/None): Which IDs will be returned
                 depends on the type of the ``group`` argument:
 
-                - ``int``: returns a single node ID.
+                - ``int``: return a single node ID if it belongs to the circuit.
                 - ``sequence``: returns a list of node IDs.
                 - ``str``: returns a target name.
-                - ``mapping``: returns node IDs matching a properties filter.
-                - ``None``: returns all IDs.
+                - ``mapping``: returns IDs of nodes matching a properties filter.
+                - ``None``: returns all node IDs.
 
                 If ``group`` is a ``sequence``, the order of results is preserved.
                 Otherwise the result is sorted and contains no duplicates.
@@ -237,11 +237,11 @@ class NodePopulation(object):
             group (int/sequence/str/mapping/None): Which nodes will have their properties
                 returned depends on the type of the ``group`` argument:
 
-                - ``int``: returns properties of a single node.
-                - ``sequence``: returns properties from a list of node.
-                - ``str``: returns properties of a target name.
-                - ``mapping``: returns properties of nodes matching a properties filter.
-                - ``None``: returns properties of all nodes.
+                - ``int``: return the properties of a single node.
+                - ``sequence``: return the properties from a list of node.
+                - ``str``: return the properties of a target name.
+                - ``mapping``: return the properties of nodes matching a properties filter.
+                - ``None``: return the properties of all nodes.
 
             properties (set): If specified, return only the properties in the set.
                 Otherwise return all properties.
@@ -275,11 +275,11 @@ class NodePopulation(object):
             group (int/sequence/str/mapping/None): Which nodes will have their positions
                 returned depends on the type of the ``group`` argument:
 
-                - ``int``: returns positions of a single node.
-                - ``sequence``: returns positions from a list of node IDs.
-                - ``str``: returns positions of a target name.
-                - ``mapping``: returns positions of nodes matching a properties filter.
-                - ``None``: returns positions of all nodes.
+                - ``int``: return the position of a single node.
+                - ``sequence``: return the positions from a list of node IDs.
+                - ``str``: return the positions of a target name.
+                - ``mapping``: return the positions of nodes matching a properties filter.
+                - ``None``: return the positions of all nodes.
 
         Returns:
             pandas.Series/pandas.DataFrame:
@@ -299,11 +299,11 @@ class NodePopulation(object):
             group (int/sequence/str/mapping/None): Which nodes will have their positions
                 returned depends on the type of the ``group`` argument:
 
-                - ``int``: returns positions of a single node.
-                - ``sequence``: returns positions from a list of node IDs.
-                - ``str``: returns positions of a target name.
-                - ``mapping``: returns positions of nodes matching a properties filter.
-                - ``None``: returns positions of all nodes.
+                - ``int``: return the orientation of a single node.
+                - ``sequence``: return the orientations from a list of node IDs.
+                - ``str``: return the orientations of a target name.
+                - ``mapping``: return the orientations of nodes matching a properties filter.
+                - ``None``: return the orientations of all nodes.
 
         Returns:
             numpy.ndarry/pandas.Series:
@@ -342,11 +342,11 @@ class NodePopulation(object):
             group (int/sequence/str/mapping/None): Which nodes will have their positions
                 returned depends on the type of the ``group`` argument:
 
-                - ``int``: returns positions of a single node.
-                - ``sequence``: returns positions from a list of node IDs.
-                - ``str``: returns positions of a target name.
-                - ``mapping``: returns positions of nodes matching a properties filter.
-                - ``None``: returns positions of all nodes.
+                - ``int``: return the count of a single node.
+                - ``sequence``: return the count of nodes from a list of node IDs.
+                - ``str``: return the count of nodes of a target name.
+                - ``mapping``: return count of nodes matching a properties filter.
+                - ``None``: return the count of all nodes.
 
         Returns:
             int: The total number of nodes in a given group.
