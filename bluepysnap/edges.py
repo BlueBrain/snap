@@ -392,7 +392,7 @@ class EdgePopulation(object):
             source: source node group
             target: target node group
             unique_node_ids: if True, no node ID would be used more than once
-            shuffle: if True, result order would be (somewhat) randomised
+            shuffle: if True, result order would be (somewhat) randomized
             return_edge_count: if True, edge count is added to yield result
             return_edge_ids: if True, edge ID list is added to yield result
 
