@@ -44,8 +44,7 @@ def ensure_list(v):
 
 
 def euler2mat(az, ay, ax):
-    """
-    Build 3x3 rotation matrices from az, ay, ax rotation angles (in that order).
+    """Build 3x3 rotation matrices from az, ay, ax rotation angles (in that order).
 
     Args:
         az: rotation angles around Z (Nx1 NumPy array; radians)
@@ -55,7 +54,7 @@ def euler2mat(az, ay, ax):
     Returns:
         List with 3x3 rotation matrices corresponding to each of N angle triplets.
 
-    See also:
+    See Also:
         https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix (R = X1 * Y2 * Z3)
     """
     c1, s1 = np.cos(ax), np.sin(ax)

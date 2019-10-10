@@ -28,10 +28,9 @@ from bluepysnap import utils
 
 
 class Config(object):
-    """
-    SONATA network config parser.
+    """SONATA network config parser.
 
-    See also:
+    See Also:
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
 

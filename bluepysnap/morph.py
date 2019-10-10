@@ -45,8 +45,7 @@ class MorphHelper(object):
         return os.path.join(self._morph_dir, "%s.swc" % name)
 
     def get(self, node_id, transform=False):
-        """
-        Return NeuroM morphology object corresponding to `node_id`.
+        """Return NeuroM morphology object corresponding to `node_id`.
 
         If `transform` is True, rotate and translate morphology points
         according to `node_id` position in the circuit.

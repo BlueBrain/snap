@@ -42,8 +42,7 @@ def _get_population_name(h5_filepath):
 
 
 def _load_population(h5_filepath, csv_filepath, population):
-    """
-    Load node properties from SONATA Nodes.
+    """Load node properties from SONATA Nodes.
 
     Returns:
         pandas.DataFrame with node properties (zero-based index).
@@ -75,8 +74,7 @@ def _complex_query(prop, query):
 
 
 def _node_ids_by_filter(nodes, props):
-    """
-    Return index of `nodes` rows matching `props` dict.
+    """Return index of `nodes` rows matching `props` dict.
 
     `props` values could be:
         pairs (range match for floating dtype fields)
@@ -136,8 +134,7 @@ class NodePopulation(object):
         return set(self._data.columns)
 
     def property_values(self, prop):
-        """
-        Set of values for a given property.
+        """Set of values for a given property.
 
         Args:
            prop (str): Name of the property to retrieve.
@@ -172,8 +169,7 @@ class NodePopulation(object):
             raise BlueSnapError("No such property: '%s'" % prop)
 
     def ids(self, group=None, limit=None, sample=None):
-        """
-        Node IDs corresponding to node ``group``.
+        """Node IDs corresponding to node ``group``.
 
         Args:
             group (int/sequence/str/mapping/None): Which IDs will be returned
@@ -230,8 +226,7 @@ class NodePopulation(object):
             return np.unique(result)
 
     def get(self, group=None, properties=None):
-        """
-        Node properties as a pandas Series or DataFrame.
+        """Node properties as a pandas Series or DataFrame.
 
         Args:
             group (int/sequence/str/mapping/None): Which nodes will have their properties
@@ -268,8 +263,7 @@ class NodePopulation(object):
         return result
 
     def positions(self, group=None):
-        """
-        Node position(s) as pandas Series or DataFrame.
+        """Node position(s) as pandas Series or DataFrame.
 
         Args:
             group (int/sequence/str/mapping/None): Which nodes will have their positions
@@ -292,8 +286,7 @@ class NodePopulation(object):
         return result.astype(float)
 
     def orientations(self, group=None):
-        """
-        Node orientation(s) as a pandas Series or DataFrame.
+        """Node orientation(s) as a pandas Series or DataFrame.
 
         Args:
             group (int/sequence/str/mapping/None): Which nodes will have their positions
@@ -335,8 +328,7 @@ class NodePopulation(object):
         return result
 
     def count(self, group=None):
-        """
-        Total number of nodes for a given node group.
+        """Total number of nodes for a given node group.
 
         Args:
             group (int/sequence/str/mapping/None): Which nodes will have their positions

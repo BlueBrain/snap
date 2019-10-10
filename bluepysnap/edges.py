@@ -165,8 +165,7 @@ class EdgePopulation(object):
         return result
 
     def properties(self, edge_ids, properties):
-        """
-        Edge properties as pandas DataFrame.
+        """Edge properties as pandas DataFrame.
 
         Args:
             edge_ids (array-like): array-like of edge IDs
@@ -181,8 +180,7 @@ class EdgePopulation(object):
         return self._get(selection, properties)
 
     def positions(self, edge_ids, side, kind):
-        """
-        Edge positions as a pandas DataFrame.
+        """Edge positions as a pandas DataFrame.
 
         Args:
             edge_ids (array-like): array-like of edge IDs
@@ -204,8 +202,7 @@ class EdgePopulation(object):
         return result
 
     def afferent_nodes(self, node_id, unique=True):
-        """
-        Get afferent node IDs for given target ``node_id``.
+        """Get afferent node IDs for given target ``node_id``.
 
         Args:
             node_id (int): target node ID
@@ -223,8 +220,7 @@ class EdgePopulation(object):
         return result
 
     def efferent_nodes(self, node_id, unique=True):
-        """
-        Get efferent node IDs for given source ``node_id``.
+        """Get efferent node IDs for given source ``node_id``.
 
         Args:
             node_id (int): Source node ID.
@@ -242,8 +238,7 @@ class EdgePopulation(object):
         return result
 
     def afferent_edges(self, node_id, properties=None):
-        """
-        Get afferent edges for given ``node_id``.
+        """Get afferent edges for given ``node_id``.
 
         Args:
             node_id (int): Target node ID.
@@ -258,8 +253,7 @@ class EdgePopulation(object):
         return self.pathway_edges(source=None, target=node_id, properties=properties)
 
     def efferent_edges(self, node_id, properties=None):
-        """
-        Get efferent edges for given ``node_id``.
+        """Get efferent edges for given ``node_id``.
 
         Args:
             node_id: source node ID
@@ -273,8 +267,7 @@ class EdgePopulation(object):
         return self.pathway_edges(source=node_id, target=None, properties=properties)
 
     def pair_edges(self, source_node_id, target_node_id, properties=None):
-        """
-        Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
+        """Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
 
         Args:
             source_node_id: source node ID
@@ -291,8 +284,7 @@ class EdgePopulation(object):
         )
 
     def pathway_edges(self, source=None, target=None, properties=None):
-        """
-        Get edges corresponding to ``source`` -> ``target`` connections.
+        """Get edges corresponding to ``source`` -> ``target`` connections.
 
         Args:
             source: source node group
@@ -385,8 +377,7 @@ class EdgePopulation(object):
             self, source=None, target=None, unique_node_ids=False, shuffle=False,
             return_edge_ids=False, return_edge_count=False
     ):
-        """
-        Iterate through ``source`` -> ``target`` connections.
+        """Iterate through ``source`` -> ``target`` connections.
 
         Args:
             source: source node group
