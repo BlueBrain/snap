@@ -69,6 +69,7 @@ class EdgePopulation(object):
     """Edge population access."""
 
     def __init__(self, config, circuit):
+        """Initializes a EdgePopulation object from a config dictionary and a circuit."""
         self._h5_filepath = config['edges_file']
         self._csv_filepath = config['edge_types_file']
         self._circuit = circuit

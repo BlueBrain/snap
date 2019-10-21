@@ -35,6 +35,7 @@ class Config(object):
     """
 
     def __init__(self, filepath):
+        """Initializes a Config object form a path to the actual config."""
         configdir = os.path.abspath(os.path.dirname(filepath))
         content = utils.load_json(filepath)
         self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)

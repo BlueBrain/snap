@@ -44,6 +44,7 @@ class Circuit(object):
     """Access to circuit data."""
 
     def __init__(self, config, node_population=None, edge_population=None):
+        """Initializes a circuit object from a sonata config file."""
         self._config = Config(config).resolve()
         self._node_population = node_population
         self._edge_population = edge_population

@@ -110,6 +110,7 @@ class NodePopulation(object):
     """Node population access."""
 
     def __init__(self, config, circuit):
+        """Initializes a NodePopulation object from a config dictionary and a circuit."""
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']
         if 'node_sets_file' in config:
