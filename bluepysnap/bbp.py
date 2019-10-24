@@ -15,16 +15,15 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-BBP cell / synapse attribute namespace.
-"""
+"""BBP cell / synapse attribute namespace."""
 
 from bluepysnap import edges
 from bluepysnap import nodes
 
 
 class Cell(object):
-    """ Cell property names. """
+    """Cell property names."""
+
     MORPHOLOGY = "morphology"
     ME_COMBO = "me_combo"
     MTYPE = "mtype"
@@ -40,7 +39,8 @@ class Cell(object):
 
 
 class Synapse(object):
-    """ Synapse property names. """
+    """Synapse property names."""
+
     PRE_GID = edges.SOURCE_NODE_ID
     POST_GID = edges.TARGET_NODE_ID
 

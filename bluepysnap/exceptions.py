@@ -15,10 +15,8 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Exceptions used throughout the library.
-"""
+"""Exceptions used throughout the library."""
 
 
 class BlueSnapError(Exception):
-    """ Base SNAP exception """
+    """Base SNAP exception."""

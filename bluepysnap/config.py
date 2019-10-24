@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-SONATA network config parsing.
-"""
+"""SONATA network config parsing."""
 
 # TODO: move to `libsonata` library
 
@@ -30,13 +28,21 @@ from bluepysnap import utils
 
 
 class Config(object):
-    """
-    SONATA network config parser.
+    """SONATA network config parser.
 
-    See also:
+    See Also:
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
+
     def __init__(self, filepath):
+        """Initializes a Config object from a path to the actual config.
+
+        Args:
+            filepath (str): Path the SONATA configuration file.
+
+        Returns:
+             Config: A Config object.
+        """
         configdir = os.path.abspath(os.path.dirname(filepath))
         content = utils.load_json(filepath)
         self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)
@@ -92,10 +98,10 @@ class Config(object):
             return value
 
     def resolve(self):
-        """ Resolve variables in config file paths. """
+        """Resolve variables in config file paths."""
         return self._resolve(self.content)
 
     @staticmethod
     def parse(filepath):
-        """ Parse SONATA network config. """
+        """Parse SONATA network config."""
         return Config(filepath).resolve()
