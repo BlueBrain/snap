@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Morphology access.
-"""
+"""Morphology access."""
 
 import os
 
@@ -28,9 +26,18 @@ from bluepysnap.settings import MORPH_CACHE_SIZE
 
 
 class MorphHelper(object):
-    """ Collection of morphology-related methods. """
+    """Collection of morphology-related methods."""
 
     def __init__(self, morph_dir, nodes):
+        """Initializes a MorphHelper object from a directory path and a NodePopulation object.
+
+        Args:
+            morph_dir (str): Path to the directory containing the node morphologies.
+            nodes (NodePopulation): NodePopulation object used to query the nodes.
+
+        Returns:
+            MorphHelper: A MorphHelper object.
+        """
         self._morph_dir = morph_dir
         self._nodes = nodes
         self._load = nm.load_neuron
@@ -42,13 +49,12 @@ class MorphHelper(object):
             self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
 
     def get_filepath(self, node_id):
-        """ Return path to SWC morphology file corresponding to `node_id`. """
+        """Return path to SWC morphology file corresponding to `node_id`."""
         name = self._nodes.get(node_id, 'morphology')
         return os.path.join(self._morph_dir, "%s.swc" % name)
 
     def get(self, node_id, transform=False):
-        """
-        Return NeuroM morphology object corresponding to `node_id`.
+        """Return NeuroM morphology object corresponding to `node_id`.
 
         If `transform` is True, rotate and translate morphology points
         according to `node_id` position in the circuit.

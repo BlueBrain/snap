@@ -15,9 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""
-Edge population access.
-"""
+"""Edge population access."""
 
 from builtins import map
 
@@ -47,7 +45,7 @@ def _get_population_name(h5_filepath):
 
 
 def _resolve_node_ids(nodes, group):
-    """ Node IDs corresponding to node group filter. """
+    """Node IDs corresponding to node group filter."""
     if group is None:
         return None
     return nodes.ids(group)
@@ -58,7 +56,7 @@ def _is_empty(xs):
 
 
 def _estimate_range_size(func, node_ids, n=3):
-    """ Median size of index second level for some node IDs from the provided list. """
+    """Median size of index second level for some node IDs from the provided list."""
     assert len(node_ids) > 0
     if len(node_ids) > n:
         node_ids = np.random.choice(node_ids, size=n, replace=False)
@@ -68,9 +66,18 @@ def _estimate_range_size(func, node_ids, n=3):
 
 
 class EdgePopulation(object):
-    """ Edge population access. """
+    """Edge population access."""
 
     def __init__(self, config, circuit):
+        """Initializes a EdgePopulation object from a config dictionary and a circuit.
+
+        Args:
+            config (dict): A dictionary corresponding to a Sonata config file.
+            circuit (Circuit): The circuit object that contains the EdgePopulation.
+
+        Returns:
+            EdgePopulation: An EdgePopulation object.
+        """
         self._h5_filepath = config['edges_file']
         self._csv_filepath = config['edge_types_file']
         self._circuit = circuit
@@ -81,12 +88,12 @@ class EdgePopulation(object):
 
     @cached_property
     def name(self):
-        """ Population name. """
+        """Population name."""
         return _get_population_name(self._h5_filepath)
 
     @property
     def size(self):
-        """ Population size. """
+        """Population size."""
         return self._population.size
 
     def _nodes(self, population):
@@ -105,12 +112,12 @@ class EdgePopulation(object):
 
     @property
     def source(self):
-        """ Source NodePopulation. """
+        """Source NodePopulation."""
         return self._nodes(self._population.source)
 
     @cached_property
     def target(self):
-        """ Target NodePopulation. """
+        """Target NodePopulation."""
         return self._nodes(self._population.target)
 
     @cached_property
@@ -123,7 +130,7 @@ class EdgePopulation(object):
 
     @property
     def property_names(self):
-        """ Set of available edge properties. """
+        """Set of available edge properties."""
         return self._property_names | self._dynamics_params_names
 
     def _get_property(self, prop, selection):
@@ -141,7 +148,7 @@ class EdgePopulation(object):
         return result
 
     def _get(self, selection, properties=None):
-        """ Get an array of edge IDs or DataFrame with edge properties. """
+        """Get an array of edge IDs or DataFrame with edge properties."""
         edge_ids = selection.flatten()
 
         if properties is None:
@@ -167,29 +174,27 @@ class EdgePopulation(object):
         return result
 
     def properties(self, edge_ids, properties):
-        """
-        Edge properties as pandas DataFrame.
+        """Edge properties as pandas DataFrame.
 
         Args:
-            edge_ids: array-like of edge IDs
-            properties: edge property name | list of edge property names
+            edge_ids (array-like): array-like of edge IDs
+            properties (str/list): an edge property name or a list of edge property names
 
         Returns:
-            Pandas Series indexed by edge IDs if ``properties`` is scalar.
-
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            pandas.Series/pandas.DataFrame:
+                A pandas Series indexed by edge IDs if ``properties`` is scalar.
+                A pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         selection = libsonata.Selection(edge_ids)
         return self._get(selection, properties)
 
     def positions(self, edge_ids, side, kind):
-        """
-        Edge positions as pandas DataFrame.
+        """Edge positions as a pandas DataFrame.
 
         Args:
-            edge_ids: array-like of edge IDs
-            side: 'afferent' | 'efferent'
-            kind: 'center' | 'surface'
+            edge_ids (array-like): array-like of edge IDs
+            side (str): ``afferent`` or ``efferent``
+            kind (str): ``center`` or ``surface``
 
         Returns:
             Pandas Dataframe with ('x', 'y', 'z') columns indexed by edge IDs.
@@ -206,15 +211,14 @@ class EdgePopulation(object):
         return result
 
     def afferent_nodes(self, node_id, unique=True):
-        """
-        Get afferent node IDs for given target ``node_id``.
+        """Get afferent node IDs for given target ``node_id``.
 
         Args:
-            node_id: target node ID
+            node_id (int): target node ID
+            unique (bool): If ``True``, return only unique afferent node IDs.
 
         Returns:
-            Array of source node IDs.
-            By default, the array is uniq-ed and sorted.
+            numpy.ndarray: Afferent node IDs.
         """
         selection = self._population.afferent_edges(
             _resolve_node_ids(self.target, node_id)
@@ -225,15 +229,14 @@ class EdgePopulation(object):
         return result
 
     def efferent_nodes(self, node_id, unique=True):
-        """
-        Get efferent node IDs for given source ``node_id``.
+        """Get efferent node IDs for given source ``node_id``.
 
         Args:
-            node_id: source node ID
+            node_id (int): Source node ID.
+            unique (bool): If ``True``, return only unique efferent node IDs.
 
         Returns:
-            Array of target node IDs.
-            By default, the array is uniq-ed and sorted.
+            numpy.ndarray: Efferent node IDs.
         """
         selection = self._population.efferent_edges(
             _resolve_node_ids(self.source, node_id)
@@ -244,23 +247,22 @@ class EdgePopulation(object):
         return result
 
     def afferent_edges(self, node_id, properties=None):
-        """
-        Get afferent edges for given ``node_id``.
+        """Get afferent edges for given ``node_id``.
 
         Args:
-            node_id: target node ID
-            properties: None / edge property name / list of edge property names
+            node_id (int): Target node ID.
+            properties: An edge property name, a list of edge property names, or None.
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            pandas.Series/pandas.DataFrame/list:
+                A pandas Series indexed by edge ID if ``properties`` is a string.
+                A pandas DataFrame indexed by edge ID if ``properties`` is a list.
+                A list of edge IDs, if ``properties`` is None.
         """
         return self.pathway_edges(source=None, target=node_id, properties=properties)
 
     def efferent_edges(self, node_id, properties=None):
-        """
-        Get efferent edges for given ``node_id``.
+        """Get efferent edges for given ``node_id``.
 
         Args:
             node_id: source node ID
@@ -274,8 +276,7 @@ class EdgePopulation(object):
         return self.pathway_edges(source=node_id, target=None, properties=properties)
 
     def pair_edges(self, source_node_id, target_node_id, properties=None):
-        """
-        Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
+        """Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
 
         Args:
             source_node_id: source node ID
@@ -292,8 +293,7 @@ class EdgePopulation(object):
         )
 
     def pathway_edges(self, source=None, target=None, properties=None):
-        """
-        Get edges corresponding to ``source`` -> ``target`` connections.
+        """Get edges corresponding to ``source`` -> ``target`` connections.
 
         Args:
             source: source node group
@@ -321,11 +321,10 @@ class EdgePopulation(object):
         return self._get(selection, properties)
 
     def _iter_connections(self, source_node_ids, target_node_ids, unique_node_ids, shuffle):
-        """ Iterate through `source_node_ids` -> `target_node_ids` connections. """
-
+        """Iterate through `source_node_ids` -> `target_node_ids` connections."""
         # pylint: disable=too-many-branches,too-many-locals
         def _optimal_direction():
-            """ Choose between source and target node IDs for iterating. """
+            """Choose between source and target node IDs for iterating."""
             if target_node_ids is None and source_node_ids is None:
                 raise BlueSnapError("Either `source` or `target` should be specified")
             if source_node_ids is None:
@@ -387,14 +386,13 @@ class EdgePopulation(object):
             self, source=None, target=None, unique_node_ids=False, shuffle=False,
             return_edge_ids=False, return_edge_count=False
     ):
-        """
-        Iterate through ``source`` -> ``target`` connections.
+        """Iterate through ``source`` -> ``target`` connections.
 
         Args:
             source: source node group
             target: target node group
             unique_node_ids: if True, no node ID would be used more than once
-            shuffle: if True, result order would be (somewhat) randomised
+            shuffle: if True, result order would be (somewhat) randomized
             return_edge_count: if True, edge count is added to yield result
             return_edge_ids: if True, edge ID list is added to yield result
 
