@@ -110,7 +110,15 @@ class NodePopulation(object):
     """Node population access."""
 
     def __init__(self, config, circuit):
-        """Initializes a NodePopulation object from a config dictionary and a circuit."""
+        """Initializes a NodePopulation object from a config dictionary and a circuit.
+
+        Args:
+            config (dict): a dictionary corresponding to a sonata config file.
+            circuit (Circuit): the circuit object that contains the NodePopulation.
+
+        Returns:
+            a NodePopulation object.
+        """
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']
         if 'node_sets_file' in config:
@@ -178,7 +186,7 @@ class NodePopulation(object):
 
                 - ``int``: return a single node ID if it belongs to the circuit.
                 - ``sequence``: returns a list of node IDs.
-                - ``str``: returns a target name.
+                - ``str``: returns  a list of node IDs from a target name.
                 - ``mapping``: returns IDs of nodes matching a properties filter.
                 - ``None``: returns all node IDs.
 

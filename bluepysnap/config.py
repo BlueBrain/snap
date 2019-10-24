@@ -35,7 +35,14 @@ class Config(object):
     """
 
     def __init__(self, filepath):
-        """Initializes a Config object form a path to the actual config."""
+        """Initializes a Config object from a path to the actual config.
+
+        Args:
+            filepath (str): path the sonata configuration file.
+
+        Returns:
+             a Config object.
+        """
         configdir = os.path.abspath(os.path.dirname(filepath))
         content = utils.load_json(filepath)
         self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)

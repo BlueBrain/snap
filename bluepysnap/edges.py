@@ -69,7 +69,15 @@ class EdgePopulation(object):
     """Edge population access."""
 
     def __init__(self, config, circuit):
-        """Initializes a EdgePopulation object from a config dictionary and a circuit."""
+        """Initializes a EdgePopulation object from a config dictionary and a circuit.
+
+        Args:
+            config (dict): a dictionary corresponding to a sonata config file.
+            circuit (Circuit): the circuit object that contains the EdgePopulation.
+
+        Returns:
+            a EdgePopulation object.
+        """
         self._h5_filepath = config['edges_file']
         self._csv_filepath = config['edge_types_file']
         self._circuit = circuit

@@ -29,7 +29,15 @@ class MorphHelper(object):
     """Collection of morphology-related methods."""
 
     def __init__(self, morph_dir, nodes):
-        """Initializes a MorphHelper object from a directory path and a NodePopulation object."""
+        """Initializes a MorphHelper object from a directory path and a NodePopulation object.
+
+        Args:
+            morph_dir (str): path to the directory containing the node morphologies.
+            nodes (NodePopulation): NodePopulation object used to query the nodes.
+
+        Returns:
+            a MorphHelper object.
+        """
         self._morph_dir = morph_dir
         self._nodes = nodes
         self._load = nm.load_neuron
