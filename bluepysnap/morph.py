@@ -32,11 +32,11 @@ class MorphHelper(object):
         """Initializes a MorphHelper object from a directory path and a NodePopulation object.
 
         Args:
-            morph_dir (str): path to the directory containing the node morphologies.
+            morph_dir (str): Path to the directory containing the node morphologies.
             nodes (NodePopulation): NodePopulation object used to query the nodes.
 
         Returns:
-            a MorphHelper object.
+            MorphHelper: A MorphHelper object.
         """
         self._morph_dir = morph_dir
         self._nodes = nodes

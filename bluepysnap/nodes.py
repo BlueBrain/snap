@@ -113,11 +113,11 @@ class NodePopulation(object):
         """Initializes a NodePopulation object from a config dictionary and a circuit.
 
         Args:
-            config (dict): a dictionary corresponding to a sonata config file.
-            circuit (Circuit): the circuit object that contains the NodePopulation.
+            config (dict): A dictionary corresponding to a SONATA config file.
+            circuit (Circuit): The circuit object that contains the NodePopulation.
 
         Returns:
-            a NodePopulation object.
+            NodePopulation: A NodePopulation object.
         """
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']

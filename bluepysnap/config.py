@@ -38,10 +38,10 @@ class Config(object):
         """Initializes a Config object from a path to the actual config.
 
         Args:
-            filepath (str): path the sonata configuration file.
+            filepath (str): Path the SONATA configuration file.
 
         Returns:
-             a Config object.
+             Config: A Config object.
         """
         configdir = os.path.abspath(os.path.dirname(filepath))
         content = utils.load_json(filepath)
