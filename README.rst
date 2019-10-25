@@ -35,7 +35,7 @@ Among other dependencies, BlueBrain SNAP relies on BlueBrain Project provided li
 License
 -------
 
-BlueBrain SNAP is licensed under the LGPL. Refer to the
+BlueBrain SNAP is licensed under the LGPLv3. Refer to the
 `LICENSE.txt <https://github.com/BlueBrain/snap/blob/master/LICENSE.txt>`__ for details.
 
 .. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master
