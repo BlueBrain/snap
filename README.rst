@@ -1,9 +1,9 @@
-BlueBrain SNAP
+Blue Brain SNAP
 ==============
 
-BlueBrain Simulation and Neural network Analysis Productivity layer (BlueBrain SNAP).
+Blue Brain Simulation and Neural network Analysis Productivity layer (Blue Brain SNAP).
 
-BlueBrain SNAP is a Python library for accessing BlueBrain circuit models represented in
+Blue Brain SNAP is a Python library for accessing BlueBrain circuit models represented in
 `SONATA <https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md>`__ format.
 
 |build_status| |coverage|
@@ -11,7 +11,7 @@ BlueBrain SNAP is a Python library for accessing BlueBrain circuit models repres
 Installation
 ------------
 
-BlueBrain SNAP can be installed using ``pip``::
+Blue Brain SNAP can be installed using ``pip``::
 
    pip install bluepysnap
 
@@ -24,10 +24,10 @@ The main interface class exposed is ``Circuit``, which corresponds to the *stati
 - edge positions and properties
 - detailed morphologies
 
-Most of BlueBrain SNAP methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames,
+Most of Blue Brain SNAP methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames,
 indexed in a way to facilitate combining data from different sources (that is, by node or edge IDs).
 
-Among other dependencies, BlueBrain SNAP relies on BlueBrain Project provided libraries:
+Among other dependencies, Blue Brain SNAP relies on Blue Brain Project provided libraries:
 
 - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
 - `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
@@ -35,7 +35,7 @@ Among other dependencies, BlueBrain SNAP relies on BlueBrain Project provided li
 License
 -------
 
-BlueBrain SNAP is licensed under the LGPLv3. Refer to the
+Blue Brain SNAP is licensed under the LGPLv3. Refer to the
 `LICENSE.txt <https://github.com/BlueBrain/snap/blob/master/LICENSE.txt>`__ for details.
 
 .. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master
