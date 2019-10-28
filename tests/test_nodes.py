@@ -117,7 +117,8 @@ class TestNodePopulation:
         )
         assert(
             sorted(self.test_obj.node_sets) ==
-            ['Layer2', 'Layer23']
+            ['Failing', 'Layer2', 'Layer23', 'Node012', 'Node0_L6_Y',
+             'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
         )
 
     def test_property_values(self):
@@ -141,8 +142,16 @@ class TestNodePopulation:
         npt.assert_equal(_call(np.array([1, 0, 1])), np.array([1, 0, 1]))
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
         npt.assert_equal(_call('Layer23'), [0])
+        npt.assert_equal(_call('Node012'), [0, 1, 2])  # order preserved
+        npt.assert_equal(_call('Node122'), [1, 2, 2])  # order and duplicates preserved
+        npt.assert_equal(_call('Node12_L6_Y'), [1, 2])
+        npt.assert_equal(_call('Node2_L6_Y'), [2])
+        npt.assert_equal(_call('Node0_L6_Y'), [])  # return empty if disjoint samples
+
         with pytest.raises(BlueSnapError):
             _call('no-such-node-set')
+        with pytest.raises(BlueSnapError):
+            _call('Failing')
         with pytest.raises(BlueSnapError):
             _call(-1)  # node ID out of range (lower boundary)
         with pytest.raises(BlueSnapError):
@@ -166,6 +175,18 @@ class TestNodePopulation:
                 index=[1, 2]
             )
         )
+        pdt.assert_frame_equal(
+            _call("Node12_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]),
+            pd.DataFrame(
+                [
+                    [201., 'L6_Y', 6],
+                    [301., 'L6_Y', 6],
+                ],
+                columns=[Cell.X, Cell.MTYPE, Cell.LAYER],
+                index=[1, 2]
+            )
+        )
+        assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
         with pytest.raises(BlueSnapError):
             _call(0, properties='no-such-property')
         with pytest.raises(BlueSnapError):
