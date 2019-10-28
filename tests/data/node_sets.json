@@ -1,8 +1,35 @@
 {
-    "Layer2": {
-        "layer": 2
-    },
-    "Layer23": {
-        "layer": [2, 3]
-    }
+  "Layer2": {
+    "layer": 2
+  },
+  "Layer23": {
+    "layer": [2,3]
+  },
+  "Empty": {
+    "node_id": []
+  },
+  "Node012": {
+    "node_id": [0,1,2]
+  },
+  "Node122": {
+    "node_id": [1,2,2]
+  },
+  "Node12_L6_Y": {
+    "mtype": "L6_Y",
+    "node_id": [1,2]
+  },
+  "Node2_L6_Y": {
+    "mtype": "L6_Y",
+    "node_id": [2]
+  },
+  "Node0_L6_Y": {
+    "mtype": "L6_Y",
+    "node_id": [0]
+  },
+  "Empty_L6_Y": {
+    "node_id": [],
+    "mtype": "L6_Y"
+  },
+  "Failing": [],
+  "EmptyDict": {}
 }

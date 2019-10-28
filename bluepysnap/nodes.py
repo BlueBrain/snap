@@ -202,17 +202,27 @@ class NodePopulation(object):
         Returns:
             numpy.array: A numpy array of IDs.
         """
+        # pylint: disable=too-many-branches
         preserve_order = False
-
+        node_filter = slice(None, None, 1)
         if isinstance(group, six.string_types):
             if group not in self._node_sets:
                 raise BlueSnapError("Undefined node set: %s" % group)
             group = self._node_sets[group]
+            if not isinstance(group, collections.MutableMapping):
+                raise BlueSnapError("Node set values must be dict not: %s" % type(group))
+            if len(group) == 0:
+                group = None
+            elif "node_id" in group:
+                node_filter = group.pop("node_id")
+                node_filter = utils.ensure_list(node_filter)
+                if not group:
+                    group = np.asarray(node_filter)
 
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
-            result = _node_ids_by_filter(self._data, props=group)
+            result = _node_ids_by_filter(self._data.loc[node_filter], props=group)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)
