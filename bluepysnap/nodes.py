@@ -214,7 +214,8 @@ class NodePopulation(object):
             if len(group) == 0:
                 group = None
             elif "node_id" in group:
-                node_filter = utils.ensure_list(group.pop("node_id"))
+                node_filter = group.pop("node_id")
+                node_filter = utils.ensure_list(node_filter)
                 if not group:
                     group = np.asarray(node_filter)
 
