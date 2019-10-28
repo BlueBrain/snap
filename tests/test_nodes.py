@@ -117,8 +117,8 @@ class TestNodePopulation:
         )
         assert(
             sorted(self.test_obj.node_sets) ==
-            ['Failing', 'Layer2', 'Layer23', 'Node012', 'Node0_L6_Y',
-             'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
+            ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
+             'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
         )
 
     def test_property_values(self):
@@ -147,6 +147,9 @@ class TestNodePopulation:
         npt.assert_equal(_call('Node12_L6_Y'), [1, 2])
         npt.assert_equal(_call('Node2_L6_Y'), [2])
         npt.assert_equal(_call('Node0_L6_Y'), [])  # return empty if disjoint samples
+        npt.assert_equal(_call('Empty'), [])  # return empty if empty node_id = []
+        npt.assert_equal(_call('Empty_L6_Y'), [])  # return empty if empty node_id = []
+        npt.assert_equal(_call('EmptyDict'), _call())  # return all ids
 
         with pytest.raises(BlueSnapError):
             _call('no-such-node-set')
@@ -184,6 +187,18 @@ class TestNodePopulation:
                 ],
                 columns=[Cell.X, Cell.MTYPE, Cell.LAYER],
                 index=[1, 2]
+            )
+        )
+        pdt.assert_frame_equal(
+            _call("EmptyDict", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]),
+            pd.DataFrame(
+                [
+                    [101., 'L2_X', 2],
+                    [201., 'L6_Y', 6],
+                    [301., 'L6_Y', 6],
+                ],
+                columns=[Cell.X, Cell.MTYPE, Cell.LAYER],
+                index=[0, 1, 2]
             )
         )
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty

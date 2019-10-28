@@ -5,6 +5,9 @@
   "Layer23": {
     "layer": [2,3]
   },
+  "Empty": {
+    "node_id": []
+  },
   "Node012": {
     "node_id": [0,1,2]
   },
@@ -23,5 +26,10 @@
     "mtype": "L6_Y",
     "node_id": [0]
   },
-  "Failing": []
+  "Empty_L6_Y": {
+    "node_id": [],
+    "mtype": "L6_Y"
+  },
+  "Failing": [],
+  "EmptyDict": {}
 }

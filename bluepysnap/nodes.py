@@ -211,10 +211,12 @@ class NodePopulation(object):
             group = self._node_sets[group]
             if not isinstance(group, collections.MutableMapping):
                 raise BlueSnapError("Node set values must be dict not: %s" % type(group))
-            if "node_id" in group:
+            if len(group) == 0:
+                group = None
+            elif "node_id" in group:
                 node_filter = utils.ensure_list(group.pop("node_id"))
-            if not group:
-                group = np.asarray(node_filter)
+                if not group:
+                    group = np.asarray(node_filter)
 
         if group is None:
             result = self._data.index.values
