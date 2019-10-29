@@ -185,10 +185,10 @@ class NodePopulation(object):
                 depends on the type of the ``group`` argument:
 
                 - ``int``: return a single node ID if it belongs to the circuit.
-                - ``sequence``: returns a list of node IDs.
-                - ``str``: returns  a list of node IDs from a target name.
-                - ``mapping``: returns IDs of nodes matching a properties filter.
-                - ``None``: returns all node IDs.
+                - ``sequence``: return IDs of nodes in an array.
+                - ``str``: return IDs of nodes in a node set.
+                - ``mapping``: return IDs of nodes matching a properties filter.
+                - ``None``: return all node IDs.
 
                 If ``group`` is a ``sequence``, the order of results is preserved.
                 Otherwise the result is sorted and contains no duplicates.
@@ -253,7 +253,7 @@ class NodePopulation(object):
 
                 - ``int``: return the properties of a single node.
                 - ``sequence``: return the properties from a list of node.
-                - ``str``: return the properties of a target name.
+                - ``str``: return the properties of nodes in a node set.
                 - ``mapping``: return the properties of nodes matching a properties filter.
                 - ``None``: return the properties of all nodes.
 
@@ -290,7 +290,7 @@ class NodePopulation(object):
 
                 - ``int``: return the position of a single node.
                 - ``sequence``: return the positions from a list of node IDs.
-                - ``str``: return the positions of a target name.
+                - ``str``: return the positions of nodes in a node set.
                 - ``mapping``: return the positions of nodes matching a properties filter.
                 - ``None``: return the positions of all nodes.
 
@@ -313,7 +313,7 @@ class NodePopulation(object):
 
                 - ``int``: return the orientation of a single node.
                 - ``sequence``: return the orientations from a list of node IDs.
-                - ``str``: return the orientations of a target name.
+                - ``str``: return the orientations of nodes in a node set.
                 - ``mapping``: return the orientations of nodes matching a properties filter.
                 - ``None``: return the orientations of all nodes.
 
@@ -355,7 +355,7 @@ class NodePopulation(object):
 
                 - ``int``: return the count of a single node.
                 - ``sequence``: return the count of nodes from a list of node IDs.
-                - ``str``: return the count of nodes of a target name.
+                - ``str``: return the count of nodes in a node set.
                 - ``mapping``: return count of nodes matching a properties filter.
                 - ``None``: return the count of all nodes.
 
