@@ -1,14 +1,32 @@
 from __future__ import print_function
-import os
+
 import glob
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+from contextlib import contextmanager
+from difflib import Differ
+
 import six
 
-from .ipynb_tester import IpynbTester
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+@contextmanager
+def setup_tempdir(prefix, cleanup=True):
+    temp_dir = tempfile.mkdtemp(prefix=prefix)
+    try:
+        yield temp_dir
+    finally:
+        if cleanup:
+            shutil.rmtree(temp_dir)
 
 
 def get_notebooks():
     """Retrieve example notebooks."""
-    # examples are produced using python3 and matplotlib3
     notebook_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                  '../../doc/source/notebooks')
     notebooks = list()
@@ -17,10 +35,35 @@ def get_notebooks():
     return sorted(notebooks)
 
 
-def verifies_notebook(path, dry_run=False):
+def _sanitize(s):
+    """ Sanitizes string for comparison """
+    # ignore trailing newlines
+    s = s.rstrip('\r\n')
+    # normalize hex addresses:
+    s = re.sub(r'0x[A-Fa-f0-9]+', '0xFFFFFFFF', s)
+    # normalize UUIDs:
+    s = re.sub(r'[a-f0-9]{8}(\-[a-f0-9]{4}){3}\-[a-f0-9]{12}', 'U-U-I-D', s)
+    # normalize <th> and <tr> (pandas changed this multiple times for df outputs)
+    s = re.sub(r'<td|<th', '<t-', s)
+    s = re.sub(r'</td>|</th>', '</t->', s)
+    return s
+
+
+def verifies_notebook(path, dry_run):
     """Run the test and compare actual inputs to the newly produced ones."""
-    tester = IpynbTester(cell_timeout=-1, query_message_timeout=2)
-    tester.test_notebook(path, dry_run=dry_run)
+    with setup_tempdir(os.path.join(TEST_DIR, "tmp")) as tmp:
+        output = os.path.join(tmp, "tested.ipynb")
+        subprocess.call(
+            ["jupyter", "nbconvert", "--to", "notebook", "--execute", path, "--output", output])
+        if not dry_run:
+            ref = json.load(open(path))["cells"]
+            tested = json.load(open(output))["cells"]
+            for ref_cell, tested_cell in zip(ref, tested):
+                ref_cell = _sanitize(json.dumps(ref_cell))
+                tested_cell = _sanitize(json.dumps(tested_cell))
+                diff = Differ().compare(ref_cell.splitlines(True), tested_cell.splitlines(True))
+                # will show both lines
+                assert len(list(diff)) == 1
 
 
 def test_usecases():
