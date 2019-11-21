@@ -279,6 +279,22 @@ class TestNodePopulation:
             decimal=6
         )
 
+        # NodePopulation without rotation_angle
+        config = {
+            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_no_rotation.h5'),
+            'node_types_file': None,
+        }
+        circuit = Mock()
+        _call_no_rot = test_module.NodePopulation(config, circuit).orientations
+        pdt.assert_series_equal(
+            _call_no_rot([2, 0, 1]),
+            pd.Series(
+                [np.eye(3), np.eye(3), np.eye(3)],
+                index=[2, 0, 1],
+                name='orientation'
+            )
+        )
+
     def test_count(self):
         _call = self.test_obj.count
         assert _call(0) == 1
