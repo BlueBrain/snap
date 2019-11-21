@@ -23,6 +23,8 @@ import json
 import numpy as np
 import six
 
+from bluepysnap.exceptions import BlueSnapError
+
 
 def load_json(filepath):
     """Load JSON from file."""
@@ -52,11 +54,13 @@ def euler2mat(az, ay, ax):
         ax: rotation angles around X (Nx1 NumPy array; radians)
 
     Returns:
-        List with 3x3 rotation matrices corresponding to each of N angle triplets.
+        List with Nx3x3 rotation matrices corresponding to each of N angle triplets.
 
     See Also:
         https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix (R = X1 * Y2 * Z3)
     """
+    if len(az) != len(ay) or len(az) != len(ax):
+        raise BlueSnapError("All angles must have the same length.")
     c1, s1 = np.cos(ax), np.sin(ax)
     c2, s2 = np.cos(ay), np.sin(ay)
     c3, s3 = np.cos(az), np.sin(az)
@@ -68,3 +72,41 @@ def euler2mat(az, ay, ax):
     ])
 
     return [mm[..., i] for i in range(len(az))]
+
+
+def quaternion2mat(aq):
+    """Build 3x3 rotation matrices from quaternions.
+
+    Args:
+        aq: array of quaternions (Nx4 NumPy array; float)
+
+    Returns:
+        List with Nx3x3 rotation matrices corresponding to each of N quaternions.
+
+    See Also:
+        https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+    """
+    def normalize_quaternions(qs):
+        """Normalize a bunch of quaternions along axis==1.
+
+        Args:
+            qs: quaternions (Nx4 NumPy array; float)
+
+        Returns:
+           numpy array of normalized quaternions
+        """
+        return qs / np.sqrt(np.einsum('...i,...i', qs, qs)).reshape(-1, 1)
+
+    aq = np.asarray(aq, dtype=np.float64)
+    aq = normalize_quaternions(aq)
+
+    w = aq[:, 0]
+    x = aq[:, 1]
+    y = aq[:, 2]
+    z = aq[:, 3]
+
+    mm = np.array([[w * w + x * x - y * y - z * z, 2 * x * y - 2 * w * z, 2 * w * y + 2 * x * z],
+                   [2 * w * z + 2 * x * y, w * w - x * x + y * y - z * z, 2 * y * z - 2 * w * x],
+                   [2 * x * z - 2 * w * y, 2 * w * x + 2 * y * z, w * w - x * x - y * y + z * z]])
+
+    return [mm[..., i] for i in range(len(aq))]

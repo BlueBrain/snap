@@ -2,8 +2,10 @@ import os
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 import bluepysnap.utils as test_module
+from bluepysnap.exceptions import BlueSnapError
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +49,31 @@ def test_euler2mat():
             [ 0., -1.,  0.],
             [ 0.,  0., -1.],
             [ 1.,  0.,  0.],
+        ],
+    ])
+    npt.assert_almost_equal(actual, expected)
+
+    with pytest.raises(BlueSnapError):
+        test_module.euler2mat([pi2, pi2], [pi2, pi2], [pi2])  # ax|y|z not of same size
+
+
+def test_quaternion2mat():
+    actual = test_module.quaternion2mat([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1]])
+    expected = np.array([
+        [
+            [1., 0., 0.],
+            [0., 0., -1.],
+            [0., 1., 0.],
+        ],
+        [
+            [0., 0., 1.],
+            [0., 1., 0.],
+            [-1., 0., 0.],
+        ],
+        [
+            [0., -1., 0.],
+            [1., 0., 0.],
+            [0., 0., 1.],
         ],
     ])
     npt.assert_almost_equal(actual, expected)

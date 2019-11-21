@@ -266,7 +266,6 @@ class NodePopulation(object):
                 Otherwise return a pandas DataFrame indexed by node IDs.
         """
         result = self._data
-
         if properties is not None:
             for p in utils.ensure_list(properties):
                 self._check_property(p)
@@ -322,29 +321,26 @@ class NodePopulation(object):
                 A 3x3 rotation matrix if a single node ID is passed as ``group``.
                 Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """
-        props = [
-            'rotation_angle_xaxis',
-            'rotation_angle_yaxis',
-            'rotation_angle_zaxis',
-        ]
-        result = self.get(group=group, properties=props)
+        # need to keep this rotation_angle ordering for euler2mat (expects z, y, x)
+        props = np.array(
+            ['rotation_angle_zaxis',
+             'rotation_angle_yaxis',
+             'rotation_angle_xaxis',
+             ]
+        )
+        props_mask = np.isin(props, list(self.property_names))
+        result = self.get(group=group, properties=props[props_mask])
+
+        def _get_values(prop):
+            """Retrieve prop from the result Dataframe/Series."""
+            if isinstance(result, pd.Series):
+                return [result.get(prop, 0)]
+            return result.get(prop, np.zeros((result.shape[0],)))
+
+        args = [_get_values(prop) for prop in props]
         if isinstance(group, six.integer_types + (np.integer,)):
-            result = utils.euler2mat(
-                [result['rotation_angle_zaxis']],
-                [result['rotation_angle_yaxis']],
-                [result['rotation_angle_xaxis']],
-            )[0]
-        else:
-            result = pd.Series(
-                utils.euler2mat(
-                    result['rotation_angle_zaxis'].values,
-                    result['rotation_angle_yaxis'].values,
-                    result['rotation_angle_xaxis'].values,
-                ),
-                index=result.index,
-                name='orientation'
-            )
-        return result
+            return utils.euler2mat(*args)[0]
+        return pd.Series(utils.euler2mat(*args), index=result.index, name='orientation')
 
     def count(self, group=None):
         """Total number of nodes for a given node group.

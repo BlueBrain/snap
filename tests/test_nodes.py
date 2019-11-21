@@ -235,7 +235,7 @@ class TestNodePopulation:
             decimal=6
         )
         pdt.assert_series_equal(
-            _call([2, 0]),
+            _call([2, 0, 1]),
             pd.Series(
                 [
                     np.array([
@@ -245,13 +245,38 @@ class TestNodePopulation:
                     ]),
                     np.array([
                         [ 0.738219, 0.,  0.674560],
-                        [ 0.     ,  1.,  0.      ],
+                        [ 0.      , 1.,  0.      ],
                         [-0.674560, 0.,  0.738219],
+                    ]),
+                    np.array([
+                        [-0.86768965, -0.44169042, 0.22808825],
+                        [0.48942842, -0.8393853, 0.23641518],
+                        [0.0870316, 0.31676788, 0.94450178]
                     ])
                 ],
-                index=[2, 0],
+                index=[2, 0, 1],
                 name='orientation'
             )
+        )
+
+        # NodePopulation without rotation_angle[x|z]
+        config = {
+            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_no_xz_rotation.h5'),
+            'node_types_file': None,
+        }
+        circuit = Mock()
+        _call_no_xz = test_module.NodePopulation(config, circuit).orientations
+        # 0 and 2 node_ids have x|z rotation angles equal to zero
+        npt.assert_almost_equal(_call_no_xz(0), _call(0))
+        npt.assert_almost_equal(_call_no_xz(2), _call(2))
+        npt.assert_almost_equal(
+            _call_no_xz(1),
+            [
+                [0.97364046, - 0., 0.22808825],
+                [0.        ,   1., - 0.      ],
+                [-0.22808825,  0., 0.97364046]
+            ],
+            decimal=6
         )
 
     def test_count(self):
