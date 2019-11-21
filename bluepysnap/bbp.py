@@ -53,16 +53,16 @@ class Synapse(object):
     TYPE = "syn_type_id"
     U_SYN = "u_syn"
 
-    PRE_BRANCH_ORDER = "morpho_branch_order_pre"
-    PRE_NEURITE_DISTANCE = "morpho_neurite_distance_pre"
-    PRE_SECTION_DISTANCE = "morpho_section_distance_pre"
-    PRE_SECTION_ID = "morpho_section_id_pre"
+    PRE_SEGMENT_ID = "efferent_segment_id"
+    PRE_SEGMENT_OFFSET = "efferent_segment_offset"
+    PRE_SECTION_ID = "efferent_section_id"
+    PRE_SECTION_POS = "efferent_section_pos"
 
-    POST_BRANCH_ORDER = "morpho_branch_order_post"
-    POST_BRANCH_TYPE = "morpho_branch_type_post"
-    POST_NEURITE_DISTANCE = "morpho_neurite_distance_post"
-    POST_SECTION_DISTANCE = "morpho_section_distance_post"
-    POST_SECTION_ID = "morpho_section_id_post"
+    POST_SEGMENT_ID = "afferent_segment_id"
+    POST_SEGMENT_OFFSET = "afferent_segment_offset"
+    POST_BRANCH_TYPE = "afferent_section_type"
+    POST_SECTION_ID = "afferent_section_id"
+    POST_SECTION_POS = "efferent_section_pos"
 
     # presynaptic touch position (in the center of the segment)
     PRE_X_CENTER = "efferent_center_x"
