@@ -321,14 +321,31 @@ class NodePopulation(object):
                 A 3x3 rotation matrix if a single node ID is passed as ``group``.
                 Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """
-        # need to keep this rotation_angle ordering for euler2mat (expects z, y, x)
-        props = np.array(
-            ['rotation_angle_zaxis',
-             'rotation_angle_yaxis',
-             'rotation_angle_xaxis',
-             ]
-        )
+        # need to keep this quaternion ordering for quaternion2mat (expects w, x, y , z)
+        props = np.array([
+            "orientation_w",
+            "orientation_x",
+            "orientation_y",
+            "orientation_z"
+        ])
         props_mask = np.isin(props, list(self.property_names))
+        orientation_count = np.count_nonzero(props_mask)
+        if orientation_count == 4:
+            trans = utils.quaternion2mat
+        elif orientation_count in [1, 2, 3]:
+            raise BlueSnapError(
+                "Missing orientation fields. Should be 4 quaternions or euler angles or nothing")
+        else:
+            # need to keep this rotation_angle ordering for euler2mat (expects z, y, x)
+            props = np.array(
+                ['rotation_angle_zaxis',
+                 'rotation_angle_yaxis',
+                 'rotation_angle_xaxis',
+                 ]
+            )
+            props_mask = np.isin(props, list(self.property_names))
+            trans = utils.euler2mat
+
         result = self.get(group=group, properties=props[props_mask])
 
         def _get_values(prop):
@@ -339,8 +356,8 @@ class NodePopulation(object):
 
         args = [_get_values(prop) for prop in props]
         if isinstance(group, six.integer_types + (np.integer,)):
-            return utils.euler2mat(*args)[0]
-        return pd.Series(utils.euler2mat(*args), index=result.index, name='orientation')
+            return trans(*args)[0]
+        return pd.Series(trans(*args), index=result.index, name='orientation')
 
     def count(self, group=None):
         """Total number of nodes for a given node group.

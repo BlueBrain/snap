@@ -295,6 +295,61 @@ class TestNodePopulation:
             )
         )
 
+        # NodePopulation with quaternions
+        config = {
+            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_quaternions.h5'),
+            'node_types_file': None,
+        }
+        circuit = Mock()
+        _call_quat = test_module.NodePopulation(config, circuit).orientations
+        npt.assert_almost_equal(
+            _call_quat(0),
+            [
+                [1, 0., 0.],
+                [0., 0, -1.],
+                [0., 1., 0],
+            ],
+            decimal=6
+        )
+
+        series = _call_quat([2, 0, 1])
+        for i in range(len(series)):
+            series.iloc[i] = np.around(series.iloc[i], decimals=1).astype(np.float64)
+
+        pdt.assert_series_equal(
+            series,
+            pd.Series(
+                [
+                    np.array([
+                        [0., -1., 0.],
+                        [1., 0., 0.],
+                        [0., 0., 1.],
+                    ]),
+                    np.array([
+                        [1., 0., 0.],
+                        [0., 0., -1.],
+                        [0., 1., 0.],
+                    ]),
+                    np.array([
+                        [0., 0., 1.],
+                        [0., 1., 0.],
+                        [-1., 0., 0.],
+                    ])
+                ],
+                index=[2, 0, 1],
+                name='orientation'
+            )
+        )
+
+    config = {
+        'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_quaternions_w_missing.h5'),
+        'node_types_file': None,
+    }
+    circuit = Mock()
+    _call_missing_quat = test_module.NodePopulation(config, circuit).orientations
+    with pytest.raises(BlueSnapError):
+        _call_missing_quat(0)
+
     def test_count(self):
         _call = self.test_obj.count
         assert _call(0) == 1

@@ -74,11 +74,14 @@ def euler2mat(az, ay, ax):
     return [mm[..., i] for i in range(len(az))]
 
 
-def quaternion2mat(aq):
+def quaternion2mat(aqw, aqx, aqy, aqz):
     """Build 3x3 rotation matrices from quaternions.
 
     Args:
-        aq: array of quaternions (Nx4 NumPy array; float)
+        aqw: w component of quaternions (Nx1 NumPy array; float)
+        aqx: x component of quaternions (Nx1 NumPy array; float)
+        aqy: y component of quaternions (Nx1 NumPy array; float)
+        aqz: z component of quaternions (Nx1 NumPy array; float)
 
     Returns:
         List with Nx3x3 rotation matrices corresponding to each of N quaternions.
@@ -97,7 +100,7 @@ def quaternion2mat(aq):
         """
         return qs / np.sqrt(np.einsum('...i,...i', qs, qs)).reshape(-1, 1)
 
-    aq = np.asarray(aq, dtype=np.float64)
+    aq = np.dstack([np.asarray(aqw), np.asarray(aqx), np.asarray(aqy), np.asarray(aqz)])[0]
     aq = normalize_quaternions(aq)
 
     w = aq[:, 0]

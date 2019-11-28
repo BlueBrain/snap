@@ -34,6 +34,10 @@ class Cell(object):
     X = "x"
     Y = "y"
     Z = "z"
+    ORIENTATION_W = "orientation_w"
+    ORIENTATION_X = "orientation_x"
+    ORIENTATION_Y = "orientation_y"
+    ORIENTATION_Z = "orientation_z"
     HOLDING_CURRENT = nodes.DYNAMICS_PREFIX + 'holding_current'
     THRESHOLD_CURRENT = nodes.DYNAMICS_PREFIX + 'threshold_current'
 
@@ -52,17 +56,19 @@ class Synapse(object):
     NRRP = "NRRP"
     TYPE = "syn_type_id"
     U_SYN = "u_syn"
+    SPINE_LENGTH = "spine_length"
 
     PRE_SEGMENT_ID = "efferent_segment_id"
     PRE_SEGMENT_OFFSET = "efferent_segment_offset"
     PRE_SECTION_ID = "efferent_section_id"
     PRE_SECTION_POS = "efferent_section_pos"
+    PRE_MORPH_ID = "efferent_morphology_id"
 
     POST_SEGMENT_ID = "afferent_segment_id"
     POST_SEGMENT_OFFSET = "afferent_segment_offset"
     POST_BRANCH_TYPE = "afferent_section_type"
     POST_SECTION_ID = "afferent_section_id"
-    POST_SECTION_POS = "efferent_section_pos"
+    POST_SECTION_POS = "afferent_section_pos"
 
     # presynaptic touch position (in the center of the segment)
     PRE_X_CENTER = "efferent_center_x"

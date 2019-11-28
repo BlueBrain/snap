@@ -58,7 +58,7 @@ def test_euler2mat():
 
 
 def test_quaternion2mat():
-    actual = test_module.quaternion2mat([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1]])
+    actual = test_module.quaternion2mat([1, 1, 1], [1, 0, 0, ], [0, 1, 0], [0, 0, 1])
     expected = np.array([
         [
             [1., 0., 0.],
