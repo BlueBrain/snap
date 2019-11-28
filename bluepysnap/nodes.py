@@ -372,3 +372,12 @@ class NodePopulation(object):
             self._circuit.config['components']['morphologies_dir'],
             self
         )
+
+    @cached_property
+    def biophys(self):
+        """Access to node morphologies."""
+        from bluepysnap.biophys import BiophysHelper
+        return BiophysHelper(
+            self._circuit.config['components']['biophysical_neuron_models_dir'],
+            self
+        )
