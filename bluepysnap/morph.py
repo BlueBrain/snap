@@ -23,6 +23,7 @@ import numpy as np
 import neurom as nm
 
 from bluepysnap.settings import MORPH_CACHE_SIZE
+from bluepysnap.sonata_consts import Node
 
 
 class MorphHelper(object):
@@ -50,7 +51,7 @@ class MorphHelper(object):
 
     def get_filepath(self, node_id):
         """Return path to SWC morphology file corresponding to `node_id`."""
-        name = self._nodes.get(node_id, 'morphology')
+        name = self._nodes.get(node_id, Node.MORPHOLOGY)
         return os.path.join(self._morph_dir, "%s.swc" % name)
 
     def get(self, node_id, transform=False):

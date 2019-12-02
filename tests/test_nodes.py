@@ -107,12 +107,12 @@ class TestNodePopulation:
                 Cell.LAYER,
                 Cell.MORPHOLOGY,
                 Cell.MTYPE,
-                'rotation_angle_xaxis',
-                'rotation_angle_yaxis',
-                'rotation_angle_zaxis',
-                'x',
-                'y',
-                'z',
+                Cell.ROTATION_ANGLE_X,
+                Cell.ROTATION_ANGLE_Y,
+                Cell.ROTATION_ANGLE_Z,
+                Cell.X,
+                Cell.Y,
+                Cell.Z,
             ]
         )
         assert(
@@ -213,14 +213,14 @@ class TestNodePopulation:
         _call = self.test_obj.positions
         pdt.assert_series_equal(
             _call(0),
-            pd.Series([101., 102., 103.], index=list('xyz'), name=0)
+            pd.Series([101., 102., 103.], index=[Cell.X, Cell.Y, Cell.Z], name=0)
         )
         pdt.assert_frame_equal(
             _call([2, 0]),
             pd.DataFrame([
                 [301., 302., 303.],
                 [101., 102., 103.],
-            ], index=[2, 0], columns=list('xyz'))
+            ], index=[2, 0], columns=[Cell.X, Cell.Y, Cell.Z])
         )
 
     def test_orientations(self):
