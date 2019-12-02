@@ -5,7 +5,7 @@ import numpy.testing as npt
 import pytest
 
 import bluepysnap.utils as test_module
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -53,7 +53,7 @@ def test_euler2mat():
     ])
     npt.assert_almost_equal(actual, expected)
 
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         test_module.euler2mat([pi2, pi2], [pi2, pi2], [pi2])  # ax|y|z not of same size
 
 

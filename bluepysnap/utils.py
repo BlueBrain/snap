@@ -23,7 +23,7 @@ import json
 import numpy as np
 import six
 
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 
 def load_json(filepath):
@@ -60,7 +60,7 @@ def euler2mat(az, ay, ax):
         https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix (R = X1 * Y2 * Z3)
     """
     if len(az) != len(ay) or len(az) != len(ax):
-        raise BlueSnapError("All angles must have the same length.")
+        raise BluepySnapError("All angles must have the same length.")
     c1, s1 = np.cos(ax), np.sin(ax)
     c2, s2 = np.cos(ay), np.sin(ay)
     c3, s3 = np.cos(az), np.sin(az)

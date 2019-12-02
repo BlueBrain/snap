@@ -18,5 +18,5 @@
 """Exceptions used throughout the library."""
 
 
-class BlueSnapError(Exception):
+class BluepySnapError(Exception):
     """Base SNAP exception."""

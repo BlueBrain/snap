@@ -22,7 +22,7 @@ from cached_property import cached_property
 from bluepysnap.config import Config
 from bluepysnap.nodes import NodePopulation
 from bluepysnap.edges import EdgePopulation
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 
 def _collect_populations(configs, cls, select=None):
@@ -30,14 +30,14 @@ def _collect_populations(configs, cls, select=None):
     for cfg in configs:
         population = cls(cfg)
         if population.name in result:
-            raise BlueSnapError("Duplicate population: '%s'" % population.name)
+            raise BluepySnapError("Duplicate population: '%s'" % population.name)
         result[population.name] = population
     if select is None:
         return result
     elif select in result:
         return result[select]
     else:
-        raise BlueSnapError("No such population: '%s'" % select)
+        raise BluepySnapError("No such population: '%s'" % select)
 
 
 class Circuit(object):

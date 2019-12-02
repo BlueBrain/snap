@@ -10,7 +10,7 @@ import pytest
 from mock import patch, Mock
 
 from bluepysnap.bbp import Cell
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
@@ -24,7 +24,7 @@ def test_get_population_name_duplicate():
     storage.population_names = ['a', 'b']
     with patch(test_module.__name__ + '.libsonata.NodeStorage') as NodeStorage:
         NodeStorage.return_value = storage
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             test_module._get_population_name(mock.ANY)
 
 
@@ -46,7 +46,7 @@ def test_node_ids_by_filter():
             Cell.LAYER: (1, 2)
         })
     )
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         test_module._node_ids_by_filter(nodes, {'err': 23})
 
 
@@ -83,7 +83,7 @@ def test_node_ids_by_filter_complex_query():
         })
     )
     # '$regex' is the only query modifier supported for the moment
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         test_module._node_ids_by_filter(nodes, {Cell.MTYPE: {'err': '.*BP'}})
 
 
@@ -151,15 +151,15 @@ class TestNodePopulation:
         npt.assert_equal(_call('Empty_L6_Y'), [])  # return empty if empty node_id = []
         npt.assert_equal(_call('EmptyDict'), _call())  # return all ids
 
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call('Failing')
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(-1)  # node ID out of range (lower boundary)
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(999)  #  node ID out of range (upper boundary)
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call([1, 999])  # one of node IDs out of range
 
     def test_get(self):
@@ -202,11 +202,11 @@ class TestNodePopulation:
             )
         )
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(999)  # invalid node id
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call([0, 999])  # one of node ids is invalid
 
     def test_positions(self):
@@ -347,7 +347,7 @@ class TestNodePopulation:
     }
     circuit = Mock()
     _call_missing_quat = test_module.NodePopulation(config, circuit).orientations
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         _call_missing_quat(0)
 
     def test_count(self):
