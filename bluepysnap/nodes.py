@@ -299,7 +299,7 @@ class NodePopulation(object):
                 passed as ``group``. Otherwise, a pandas.DataFrame of ('x', 'y', 'z') indexed
                 by node IDs.
         """
-        result = self.get(group=group, properties=['x', 'y', 'z'])
+        result = self.get(group=group, properties=[Node.X, Node.Y, Node.Z])
         return result.astype(float)
 
     def orientations(self, group=None):
@@ -322,10 +322,10 @@ class NodePopulation(object):
         """
         # need to keep this quaternion ordering for quaternion2mat (expects w, x, y , z)
         props = np.array([
-            "orientation_w",
-            "orientation_x",
-            "orientation_y",
-            "orientation_z"
+            Node.ORIENTATION_W,
+            Node.ORIENTATION_X,
+            Node.ORIENTATION_Y,
+            Node.ORIENTATION_Z
         ])
         props_mask = np.isin(props, list(self.property_names))
         orientation_count = np.count_nonzero(props_mask)
@@ -336,12 +336,11 @@ class NodePopulation(object):
                 "Missing orientation fields. Should be 4 quaternions or euler angles or nothing")
         else:
             # need to keep this rotation_angle ordering for euler2mat (expects z, y, x)
-            props = np.array(
-                ['rotation_angle_zaxis',
-                 'rotation_angle_yaxis',
-                 'rotation_angle_xaxis',
-                 ]
-            )
+            props = np.array([
+                Node.ROTATION_ANGLE_Z,
+                Node.ROTATION_ANGLE_Y,
+                Node.ROTATION_ANGLE_X,
+            ])
             props_mask = np.isin(props, list(self.property_names))
             trans = utils.euler2mat
 
