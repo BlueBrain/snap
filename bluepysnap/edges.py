@@ -27,18 +27,15 @@ import pandas as pd
 
 from cached_property import cached_property
 
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import is_iterable
-
-SOURCE_NODE_ID = "@source_node"
-TARGET_NODE_ID = "@target_node"
-DYNAMICS_PREFIX = "@dynamics:"
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge
 
 
 def _get_population_name(h5_filepath):
     populations = libsonata.EdgeStorage(h5_filepath).population_names
     if len(populations) != 1:
-        raise BlueSnapError(
+        raise BluepySnapError(
             "Only single-population node collections are supported (found: %d)" % len(populations)
         )
     return list(populations)[0]
@@ -106,7 +103,7 @@ class EdgePopulation(object):
             result = nodes
 
         if result is None:
-            raise BlueSnapError("Undefined node population: '%s'" % population)
+            raise BluepySnapError("Undefined node population: '%s'" % population)
 
         return result
 
@@ -134,9 +131,9 @@ class EdgePopulation(object):
         return self._property_names | self._dynamics_params_names
 
     def _get_property(self, prop, selection):
-        if prop == SOURCE_NODE_ID:
+        if prop == Edge.SOURCE_NODE_ID:
             result = self._population.source_nodes(selection)
-        elif prop == TARGET_NODE_ID:
+        elif prop == Edge.TARGET_NODE_ID:
             result = self._population.target_nodes(selection)
         elif prop in self._property_names:
             result = self._population.get_attribute(prop, selection)
@@ -144,7 +141,7 @@ class EdgePopulation(object):
             result = self._population.get_dynamics_attribute(
                 prop.split(DYNAMICS_PREFIX)[1], selection)
         else:
-            raise BlueSnapError("No such property: %s" % prop)
+            raise BluepySnapError("No such property: %s" % prop)
         return result
 
     def _get(self, selection, properties=None):
@@ -306,7 +303,7 @@ class EdgePopulation(object):
             Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         if source is None and target is None:
-            raise BlueSnapError("Either `source` or `target` should be specified")
+            raise BluepySnapError("Either `source` or `target` should be specified")
 
         source_node_ids = _resolve_node_ids(self.source, source)
         target_edge_ids = _resolve_node_ids(self.target, target)
@@ -326,7 +323,7 @@ class EdgePopulation(object):
         def _optimal_direction():
             """Choose between source and target node IDs for iterating."""
             if target_node_ids is None and source_node_ids is None:
-                raise BlueSnapError("Either `source` or `target` should be specified")
+                raise BluepySnapError("Either `source` or `target` should be specified")
             if source_node_ids is None:
                 return 'target'
             if target_node_ids is None:
@@ -404,7 +401,7 @@ class EdgePopulation(object):
             (source_node_id, target_node_id) otherwise.
         """
         if return_edge_ids and return_edge_count:
-            raise BlueSnapError(
+            raise BluepySnapError(
                 "`return_edge_count` and `return_edge_ids` are mutually exclusive"
             )
 

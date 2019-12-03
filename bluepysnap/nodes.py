@@ -27,15 +27,14 @@ import six
 from cached_property import cached_property
 
 from bluepysnap import utils
-from bluepysnap.exceptions import BlueSnapError
-
-DYNAMICS_PREFIX = "@dynamics:"
+from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node
 
 
 def _get_population_name(h5_filepath):
     populations = libsonata.NodeStorage(h5_filepath).population_names
     if len(populations) != 1:
-        raise BlueSnapError(
+        raise BluepySnapError(
             "Only single-population node collections are supported (found: %d)" % len(populations)
         )
     return list(populations)[0]
@@ -69,7 +68,7 @@ def _complex_query(prop, query):
         if key == '$regex':
             result = np.logical_and(result, prop.str.match(value + "\\Z"))
         else:
-            raise BlueSnapError("Unknown query modifier: '%s'" % key)
+            raise BluepySnapError("Unknown query modifier: '%s'" % key)
     return result
 
 
@@ -87,7 +86,7 @@ def _node_ids_by_filter(nodes, props):
     # pylint: disable=assignment-from-no-return
     unknown_props = set(props) - set(nodes.columns)
     if unknown_props:
-        raise BlueSnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
+        raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
     mask = np.full(len(nodes), True)
     for prop, values in six.iteritems(props):
@@ -165,17 +164,17 @@ class NodePopulation(object):
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:
-            raise BlueSnapError("node ID not found: %d" % node_id)
+            raise BluepySnapError("node ID not found: %d" % node_id)
 
     def _check_ids(self, node_ids):
         """Check that node IDs belong to the circuit."""
         missing = pd.Index(node_ids).difference(self._data.index)
         if not missing.empty:
-            raise BlueSnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
+            raise BluepySnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
 
     def _check_property(self, prop):
         if prop not in self.property_names:
-            raise BlueSnapError("No such property: '%s'" % prop)
+            raise BluepySnapError("No such property: '%s'" % prop)
 
     def ids(self, group=None, limit=None, sample=None):
         """Node IDs corresponding to node ``group``.
@@ -207,14 +206,14 @@ class NodePopulation(object):
         node_filter = slice(None, None, 1)
         if isinstance(group, six.string_types):
             if group not in self._node_sets:
-                raise BlueSnapError("Undefined node set: %s" % group)
+                raise BluepySnapError("Undefined node set: %s" % group)
             group = self._node_sets[group]
             if not isinstance(group, collections.MutableMapping):
-                raise BlueSnapError("Node set values must be dict not: %s" % type(group))
+                raise BluepySnapError("Node set values must be dict not: %s" % type(group))
             if len(group) == 0:
                 group = None
-            elif "node_id" in group:
-                node_filter = group.pop("node_id")
+            elif NODE_ID_KEY in group:
+                node_filter = group.pop(NODE_ID_KEY)
                 node_filter = utils.ensure_list(node_filter)
                 if not group:
                     group = np.asarray(node_filter)
@@ -266,7 +265,6 @@ class NodePopulation(object):
                 Otherwise return a pandas DataFrame indexed by node IDs.
         """
         result = self._data
-
         if properties is not None:
             for p in utils.ensure_list(properties):
                 self._check_property(p)
@@ -301,7 +299,7 @@ class NodePopulation(object):
                 passed as ``group``. Otherwise, a pandas.DataFrame of ('x', 'y', 'z') indexed
                 by node IDs.
         """
-        result = self.get(group=group, properties=['x', 'y', 'z'])
+        result = self.get(group=group, properties=[Node.X, Node.Y, Node.Z])
         return result.astype(float)
 
     def orientations(self, group=None):
@@ -322,29 +320,42 @@ class NodePopulation(object):
                 A 3x3 rotation matrix if a single node ID is passed as ``group``.
                 Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """
-        props = [
-            'rotation_angle_xaxis',
-            'rotation_angle_yaxis',
-            'rotation_angle_zaxis',
-        ]
-        result = self.get(group=group, properties=props)
-        if isinstance(group, six.integer_types + (np.integer,)):
-            result = utils.euler2mat(
-                [result['rotation_angle_zaxis']],
-                [result['rotation_angle_yaxis']],
-                [result['rotation_angle_xaxis']],
-            )[0]
+        # need to keep this quaternion ordering for quaternion2mat (expects w, x, y , z)
+        props = np.array([
+            Node.ORIENTATION_W,
+            Node.ORIENTATION_X,
+            Node.ORIENTATION_Y,
+            Node.ORIENTATION_Z
+        ])
+        props_mask = np.isin(props, list(self.property_names))
+        orientation_count = np.count_nonzero(props_mask)
+        if orientation_count == 4:
+            trans = utils.quaternion2mat
+        elif orientation_count in [1, 2, 3]:
+            raise BluepySnapError(
+                "Missing orientation fields. Should be 4 quaternions or euler angles or nothing")
         else:
-            result = pd.Series(
-                utils.euler2mat(
-                    result['rotation_angle_zaxis'].values,
-                    result['rotation_angle_yaxis'].values,
-                    result['rotation_angle_xaxis'].values,
-                ),
-                index=result.index,
-                name='orientation'
-            )
-        return result
+            # need to keep this rotation_angle ordering for euler2mat (expects z, y, x)
+            props = np.array([
+                Node.ROTATION_ANGLE_Z,
+                Node.ROTATION_ANGLE_Y,
+                Node.ROTATION_ANGLE_X,
+            ])
+            props_mask = np.isin(props, list(self.property_names))
+            trans = utils.euler2mat
+
+        result = self.get(group=group, properties=props[props_mask])
+
+        def _get_values(prop):
+            """Retrieve prop from the result Dataframe/Series."""
+            if isinstance(result, pd.Series):
+                return [result.get(prop, 0)]
+            return result.get(prop, np.zeros((result.shape[0],)))
+
+        args = [_get_values(prop) for prop in props]
+        if isinstance(group, six.integer_types + (np.integer,)):
+            return trans(*args)[0]
+        return pd.Series(trans(*args), index=result.index, name='orientation')
 
     def count(self, group=None):
         """Total number of nodes for a given node group.

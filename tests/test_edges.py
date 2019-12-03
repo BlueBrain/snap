@@ -10,7 +10,7 @@ import pytest
 from mock import Mock, patch
 
 from bluepysnap.bbp import Synapse
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.edges as test_module
 
@@ -29,7 +29,7 @@ def test_get_population_name_duplicate():
     storage.population_names = ['a', 'b']
     with patch(test_module.__name__ + '.libsonata.EdgeStorage') as EdgeStorage:
         EdgeStorage.return_value = storage
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             test_module._get_population_name(mock.ANY)
 
 
@@ -99,7 +99,7 @@ class TestEdgePopulation(object):
 
     def test_nodes_1(self):
         assert self.test_obj._nodes('default').name == 'default'
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             self.test_obj._nodes('no-such-population')
 
     def test_nodes_2(self):
@@ -108,7 +108,7 @@ class TestEdgePopulation(object):
             'B': 'bb',
         }
         assert self.test_obj._nodes('B') == 'bb'
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             self.test_obj._nodes('no-such-population')
 
     def test_properties_1(self):
@@ -150,7 +150,7 @@ class TestEdgePopulation(object):
         )
 
     def test_properties_4(self):
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.properties([0], 'no-such-property')
 
     def test_positions_1(self):
@@ -308,7 +308,7 @@ class TestEdgePopulation(object):
         )
 
     def test_pathway_edges_5(self):
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.pathway_edges(None, None, None)
 
     def test_iter_connections_1(self):
@@ -336,7 +336,7 @@ class TestEdgePopulation(object):
         it = self.test_obj.iter_connections(
             None, None
         )
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             next(it)
 
     def test_iter_connections_5(self):
@@ -370,7 +370,7 @@ class TestEdgePopulation(object):
         assert list(it) == [(0, 1, 2), (2, 1, 1)]
 
     def test_iter_connections_10(self):
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.iter_connections(
                 [0, 2], [1], return_edge_ids=True, return_edge_count=True
             )

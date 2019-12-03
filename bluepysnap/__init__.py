@@ -18,4 +18,4 @@
 """Simulation and Neural network Analysis Productivity layer."""
 
 from bluepysnap.circuit import Circuit
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError

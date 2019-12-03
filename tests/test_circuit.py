@@ -4,7 +4,7 @@ import pytest
 
 from bluepysnap.nodes import NodePopulation
 from bluepysnap.edges import EdgePopulation
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.circuit as test_module
 
@@ -36,7 +36,7 @@ def test_no_population():
         os.path.join(TEST_DATA_DIR, 'circuit_config.json'),
         node_population='no-such-population'
     )
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         circuit.nodes
 
 
@@ -44,5 +44,5 @@ def test_duplicate_population():
     circuit = test_module.Circuit(
         os.path.join(TEST_DATA_DIR, 'circuit_config_duplicate.json')
     )
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         circuit.nodes

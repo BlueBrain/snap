@@ -10,7 +10,7 @@ import pytest
 from mock import patch, Mock
 
 from bluepysnap.bbp import Cell
-from bluepysnap.exceptions import BlueSnapError
+from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
@@ -24,7 +24,7 @@ def test_get_population_name_duplicate():
     storage.population_names = ['a', 'b']
     with patch(test_module.__name__ + '.libsonata.NodeStorage') as NodeStorage:
         NodeStorage.return_value = storage
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             test_module._get_population_name(mock.ANY)
 
 
@@ -46,7 +46,7 @@ def test_node_ids_by_filter():
             Cell.LAYER: (1, 2)
         })
     )
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         test_module._node_ids_by_filter(nodes, {'err': 23})
 
 
@@ -83,7 +83,7 @@ def test_node_ids_by_filter_complex_query():
         })
     )
     # '$regex' is the only query modifier supported for the moment
-    with pytest.raises(BlueSnapError):
+    with pytest.raises(BluepySnapError):
         test_module._node_ids_by_filter(nodes, {Cell.MTYPE: {'err': '.*BP'}})
 
 
@@ -107,12 +107,12 @@ class TestNodePopulation:
                 Cell.LAYER,
                 Cell.MORPHOLOGY,
                 Cell.MTYPE,
-                'rotation_angle_xaxis',
-                'rotation_angle_yaxis',
-                'rotation_angle_zaxis',
-                'x',
-                'y',
-                'z',
+                Cell.ROTATION_ANGLE_X,
+                Cell.ROTATION_ANGLE_Y,
+                Cell.ROTATION_ANGLE_Z,
+                Cell.X,
+                Cell.Y,
+                Cell.Z,
             ]
         )
         assert(
@@ -151,15 +151,15 @@ class TestNodePopulation:
         npt.assert_equal(_call('Empty_L6_Y'), [])  # return empty if empty node_id = []
         npt.assert_equal(_call('EmptyDict'), _call())  # return all ids
 
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call('Failing')
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(-1)  # node ID out of range (lower boundary)
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(999)  #  node ID out of range (upper boundary)
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call([1, 999])  # one of node IDs out of range
 
     def test_get(self):
@@ -202,25 +202,25 @@ class TestNodePopulation:
             )
         )
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call(999)  # invalid node id
-        with pytest.raises(BlueSnapError):
+        with pytest.raises(BluepySnapError):
             _call([0, 999])  # one of node ids is invalid
 
     def test_positions(self):
         _call = self.test_obj.positions
         pdt.assert_series_equal(
             _call(0),
-            pd.Series([101., 102., 103.], index=list('xyz'), name=0)
+            pd.Series([101., 102., 103.], index=[Cell.X, Cell.Y, Cell.Z], name=0)
         )
         pdt.assert_frame_equal(
             _call([2, 0]),
             pd.DataFrame([
                 [301., 302., 303.],
                 [101., 102., 103.],
-            ], index=[2, 0], columns=list('xyz'))
+            ], index=[2, 0], columns=[Cell.X, Cell.Y, Cell.Z])
         )
 
     def test_orientations(self):
@@ -235,7 +235,7 @@ class TestNodePopulation:
             decimal=6
         )
         pdt.assert_series_equal(
-            _call([2, 0]),
+            _call([2, 0, 1]),
             pd.Series(
                 [
                     np.array([
@@ -245,14 +245,110 @@ class TestNodePopulation:
                     ]),
                     np.array([
                         [ 0.738219, 0.,  0.674560],
-                        [ 0.     ,  1.,  0.      ],
+                        [ 0.      , 1.,  0.      ],
                         [-0.674560, 0.,  0.738219],
+                    ]),
+                    np.array([
+                        [-0.86768965, -0.44169042, 0.22808825],
+                        [0.48942842, -0.8393853, 0.23641518],
+                        [0.0870316, 0.31676788, 0.94450178]
                     ])
                 ],
-                index=[2, 0],
+                index=[2, 0, 1],
                 name='orientation'
             )
         )
+
+        # NodePopulation without rotation_angle[x|z]
+        config = {
+            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_no_xz_rotation.h5'),
+            'node_types_file': None,
+        }
+        circuit = Mock()
+        _call_no_xz = test_module.NodePopulation(config, circuit).orientations
+        # 0 and 2 node_ids have x|z rotation angles equal to zero
+        npt.assert_almost_equal(_call_no_xz(0), _call(0))
+        npt.assert_almost_equal(_call_no_xz(2), _call(2))
+        npt.assert_almost_equal(
+            _call_no_xz(1),
+            [
+                [0.97364046, - 0., 0.22808825],
+                [0.        ,   1., - 0.      ],
+                [-0.22808825,  0., 0.97364046]
+            ],
+            decimal=6
+        )
+
+        # NodePopulation without rotation_angle
+        config = {
+            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_no_rotation.h5'),
+            'node_types_file': None,
+        }
+        circuit = Mock()
+        _call_no_rot = test_module.NodePopulation(config, circuit).orientations
+        pdt.assert_series_equal(
+            _call_no_rot([2, 0, 1]),
+            pd.Series(
+                [np.eye(3), np.eye(3), np.eye(3)],
+                index=[2, 0, 1],
+                name='orientation'
+            )
+        )
+
+        # NodePopulation with quaternions
+        config = {
+            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_quaternions.h5'),
+            'node_types_file': None,
+        }
+        circuit = Mock()
+        _call_quat = test_module.NodePopulation(config, circuit).orientations
+        npt.assert_almost_equal(
+            _call_quat(0),
+            [
+                [1, 0., 0.],
+                [0., 0, -1.],
+                [0., 1., 0],
+            ],
+            decimal=6
+        )
+
+        series = _call_quat([2, 0, 1])
+        for i in range(len(series)):
+            series.iloc[i] = np.around(series.iloc[i], decimals=1).astype(np.float64)
+
+        pdt.assert_series_equal(
+            series,
+            pd.Series(
+                [
+                    np.array([
+                        [0., -1., 0.],
+                        [1., 0., 0.],
+                        [0., 0., 1.],
+                    ]),
+                    np.array([
+                        [1., 0., 0.],
+                        [0., 0., -1.],
+                        [0., 1., 0.],
+                    ]),
+                    np.array([
+                        [0., 0., 1.],
+                        [0., 1., 0.],
+                        [-1., 0., 0.],
+                    ])
+                ],
+                index=[2, 0, 1],
+                name='orientation'
+            )
+        )
+
+    config = {
+        'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_quaternions_w_missing.h5'),
+        'node_types_file': None,
+    }
+    circuit = Mock()
+    _call_missing_quat = test_module.NodePopulation(config, circuit).orientations
+    with pytest.raises(BluepySnapError):
+        _call_missing_quat(0)
 
     def test_count(self):
         _call = self.test_obj.count

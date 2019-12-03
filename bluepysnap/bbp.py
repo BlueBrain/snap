@@ -17,34 +17,28 @@
 
 """BBP cell / synapse attribute namespace."""
 
-from bluepysnap import edges
-from bluepysnap import nodes
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
 
 
-class Cell(object):
+class Cell(Node):
     """Cell property names."""
 
-    MORPHOLOGY = "morphology"
     ME_COMBO = "me_combo"
     MTYPE = "mtype"
     ETYPE = "etype"
     LAYER = "layer"
     REGION = "region"
     SYNAPSE_CLASS = "synapse_class"
-    X = "x"
-    Y = "y"
-    Z = "z"
-    HOLDING_CURRENT = nodes.DYNAMICS_PREFIX + 'holding_current'
-    THRESHOLD_CURRENT = nodes.DYNAMICS_PREFIX + 'threshold_current'
+    HOLDING_CURRENT = DYNAMICS_PREFIX + 'holding_current'
+    THRESHOLD_CURRENT = DYNAMICS_PREFIX + 'threshold_current'
 
 
-class Synapse(object):
+class Synapse(Edge):
     """Synapse property names."""
 
-    PRE_GID = edges.SOURCE_NODE_ID
-    POST_GID = edges.TARGET_NODE_ID
+    PRE_GID = Edge.SOURCE_NODE_ID
+    POST_GID = Edge.TARGET_NODE_ID
 
-    AXONAL_DELAY = "delay"
     D_SYN = "depression_time"
     DTC = "decay_time"
     F_SYN = "facilitation_time"
@@ -52,34 +46,12 @@ class Synapse(object):
     NRRP = "NRRP"
     TYPE = "syn_type_id"
     U_SYN = "u_syn"
+    SPINE_LENGTH = "spine_length"
 
-    PRE_BRANCH_ORDER = "morpho_branch_order_pre"
-    PRE_NEURITE_DISTANCE = "morpho_neurite_distance_pre"
-    PRE_SECTION_DISTANCE = "morpho_section_distance_pre"
-    PRE_SECTION_ID = "morpho_section_id_pre"
+    PRE_SEGMENT_ID = "efferent_segment_id"
+    PRE_SEGMENT_OFFSET = "efferent_segment_offset"
+    PRE_MORPH_ID = "efferent_morphology_id"
 
-    POST_BRANCH_ORDER = "morpho_branch_order_post"
-    POST_BRANCH_TYPE = "morpho_branch_type_post"
-    POST_NEURITE_DISTANCE = "morpho_neurite_distance_post"
-    POST_SECTION_DISTANCE = "morpho_section_distance_post"
-    POST_SECTION_ID = "morpho_section_id_post"
-
-    # presynaptic touch position (in the center of the segment)
-    PRE_X_CENTER = "efferent_center_x"
-    PRE_Y_CENTER = "efferent_center_y"
-    PRE_Z_CENTER = "efferent_center_z"
-
-    # presynaptic touch position (on the segment surface)
-    PRE_X_SURFACE = "efferent_surface_x"
-    PRE_Y_SURFACE = "efferent_surface_y"
-    PRE_Z_SURFACE = "efferent_surface_z"
-
-    # postsynaptic touch position (in the center of the segment)
-    POST_X_CENTER = "afferent_center_x"
-    POST_Y_CENTER = "afferent_center_y"
-    POST_Z_CENTER = "afferent_center_z"
-
-    # postsynaptic touch position (on the segment surface)
-    POST_X_SURFACE = "afferent_surface_x"
-    POST_Y_SURFACE = "afferent_surface_y"
-    POST_Z_SURFACE = "afferent_surface_z"
+    POST_SEGMENT_ID = "afferent_segment_id"
+    POST_SEGMENT_OFFSET = "afferent_segment_offset"
+    POST_BRANCH_TYPE = "afferent_section_type"
