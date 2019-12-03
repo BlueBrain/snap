@@ -23,7 +23,7 @@ import numpy as np
 import neurom as nm
 
 from bluepysnap.settings import MORPH_CACHE_SIZE
-from bluepysnap.sonata_consts import Node
+from bluepysnap.sonata_constants import Node
 
 
 class MorphHelper(object):

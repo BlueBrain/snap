@@ -17,7 +17,7 @@
 
 """BBP cell / synapse attribute namespace."""
 
-from bluepysnap.sonata_consts import DYNAMICS_PREFIX, Edge, Node
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
 
 
 class Cell(Node):

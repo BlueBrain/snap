@@ -29,7 +29,7 @@ from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import is_iterable
-from bluepysnap.sonata_consts import DYNAMICS_PREFIX, Edge
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge
 
 
 def _get_population_name(h5_filepath):

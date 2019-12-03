@@ -28,7 +28,7 @@ from cached_property import cached_property
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_consts import DYNAMICS_PREFIX, NODE_ID_KEY, Node
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node
 
 
 def _get_population_name(h5_filepath):

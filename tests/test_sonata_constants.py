@@ -1,6 +1,6 @@
 import pytest
 
-from bluepysnap.sonata_consts import ConstContainer
+from bluepysnap.sonata_constants import ConstContainer
 from bluepysnap.exceptions import BluepySnapError
 
 

@@ -17,7 +17,6 @@
 """Module including the sonata node and edge namespaces."""
 from bluepysnap.exceptions import BluepySnapError
 
-
 DYNAMICS_PREFIX = "@dynamics:"
 NODE_ID_KEY = "node_id"
 
@@ -52,7 +51,7 @@ class ConstContainer(object):
                 raise BluepySnapError(
                     "Container classes must derive from classes implementing key_set method")
         all_keys.update(
-            [name for name in vars(cls) if not name.startswith('_') and name != "key_set"])
+            name for name in vars(cls) if not name.startswith('_') and name != "key_set")
         return all_keys
 
 
