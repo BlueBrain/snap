@@ -150,7 +150,7 @@ class NodePopulation(object):
 
         Returns:
             list: A list of strings corresponding to the properties that you can use from the
-            container class
+                container class
 
         Examples:
             >>> from bluepysnap.sonata_constants import Node
@@ -162,7 +162,7 @@ class NodePopulation(object):
         if not inspect.isclass(container) or not issubclass(container, ConstContainer):
             raise BluepySnapError("'container' must be a subclass of ConstContainer")
         in_file = self.property_names
-        return [v for v in container.key_set() if container.get(v) in in_file]
+        return [k for k in container.key_set() if container.get(k) in in_file]
 
     def property_values(self, prop):
         """Set of values for a given property.
