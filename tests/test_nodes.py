@@ -10,10 +10,10 @@ import pytest
 from mock import patch, Mock
 
 from bluepysnap.bbp import Cell
+from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
-
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
@@ -100,36 +100,51 @@ class TestNodePopulation:
     def test_basic(self):
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
-        assert(
-            sorted(self.test_obj.property_names) ==
-            [
-                Cell.HOLDING_CURRENT,
-                Cell.LAYER,
-                Cell.MORPHOLOGY,
-                Cell.MTYPE,
-                Cell.ROTATION_ANGLE_X,
-                Cell.ROTATION_ANGLE_Y,
-                Cell.ROTATION_ANGLE_Z,
-                Cell.X,
-                Cell.Y,
-                Cell.Z,
-            ]
+        assert (
+                sorted(self.test_obj.property_names) ==
+                [
+                    Cell.HOLDING_CURRENT,
+                    Cell.LAYER,
+                    Cell.MORPHOLOGY,
+                    Cell.MTYPE,
+                    Cell.ROTATION_ANGLE_X,
+                    Cell.ROTATION_ANGLE_Y,
+                    Cell.ROTATION_ANGLE_Z,
+                    Cell.X,
+                    Cell.Y,
+                    Cell.Z,
+                ]
         )
-        assert(
-            sorted(self.test_obj.node_sets) ==
-            ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
-             'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
+        assert (
+                sorted(self.test_obj.node_sets) ==
+                ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
+                 'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
         )
 
     def test_property_values(self):
-        assert(
-            self.test_obj.property_values(Cell.LAYER) ==
-            {2, 6}
+        assert (
+                self.test_obj.property_values(Cell.LAYER) ==
+                {2, 6}
         )
-        assert(
-            self.test_obj.property_values(Cell.MORPHOLOGY) ==
-            {'morph-A', 'morph-B', 'morph-C'}
+        assert (
+                self.test_obj.property_values(Cell.MORPHOLOGY) ==
+                {'morph-A', 'morph-B', 'morph-C'}
         )
+
+    def test_container_properties(self):
+        expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'HOLDING_CURRENT', 'ROTATION_ANGLE_X',
+                    'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER'])
+        assert sorted(self.test_obj.container_property_names(Cell)) == expected
+        expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'ROTATION_ANGLE_X', 'ROTATION_ANGLE_Y',
+                    'ROTATION_ANGLE_Z'])
+        assert sorted(self.test_obj.container_property_names(Node)) == expected
+
+        with pytest.raises(BluepySnapError):
+            mapping = {"X": "x"}
+            self.test_obj.container_property_names(mapping)
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.container_property_names(int)
 
     def test_ids(self):
         _call = self.test_obj.ids
@@ -158,7 +173,7 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             _call(-1)  # node ID out of range (lower boundary)
         with pytest.raises(BluepySnapError):
-            _call(999)  #  node ID out of range (upper boundary)
+            _call(999)  # node ID out of range (upper boundary)
         with pytest.raises(BluepySnapError):
             _call([1, 999])  # one of node IDs out of range
 
@@ -228,9 +243,9 @@ class TestNodePopulation:
         npt.assert_almost_equal(
             _call(0),
             [
-                [ 0.738219, 0.,  0.674560],
-                [ 0.     ,  1.,  0.      ],
-                [-0.674560, 0.,  0.738219],
+                [0.738219, 0., 0.674560],
+                [0., 1., 0.],
+                [-0.674560, 0., 0.738219],
             ],
             decimal=6
         )
@@ -239,14 +254,14 @@ class TestNodePopulation:
             pd.Series(
                 [
                     np.array([
-                        [ 0.462986, 0.,  0.886365],
-                        [ 0.      , 1.,  0.      ],
-                        [-0.886365, 0.,  0.462986],
+                        [0.462986, 0., 0.886365],
+                        [0., 1., 0.],
+                        [-0.886365, 0., 0.462986],
                     ]),
                     np.array([
-                        [ 0.738219, 0.,  0.674560],
-                        [ 0.      , 1.,  0.      ],
-                        [-0.674560, 0.,  0.738219],
+                        [0.738219, 0., 0.674560],
+                        [0., 1., 0.],
+                        [-0.674560, 0., 0.738219],
                     ]),
                     np.array([
                         [-0.86768965, -0.44169042, 0.22808825],
@@ -273,8 +288,8 @@ class TestNodePopulation:
             _call_no_xz(1),
             [
                 [0.97364046, - 0., 0.22808825],
-                [0.        ,   1., - 0.      ],
-                [-0.22808825,  0., 0.97364046]
+                [0., 1., - 0.],
+                [-0.22808825, 0., 0.97364046]
             ],
             decimal=6
         )

@@ -20,6 +20,7 @@
 from builtins import map
 
 import collections
+import inspect
 
 import libsonata
 import numpy as np
@@ -29,7 +30,7 @@ from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import is_iterable
-from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 
 def _get_population_name(h5_filepath):
@@ -129,6 +130,28 @@ class EdgePopulation(object):
     def property_names(self):
         """Set of available edge properties."""
         return self._property_names | self._dynamics_params_names
+
+    def container_property_names(self, container):
+        """Lists the ConstContainer properties shared with the EdgePopulation.
+
+        Args:
+            container (ConstContainer): a container class for edge properties.
+
+        Returns:
+            list: A list of strings corresponding to the properties that you can use from the
+                container class
+
+        Examples:
+            >>> from bluepysnap.sonata_constants import Edge
+            >>> print(my_edge_population.container_property_names(Edge))
+            >>> ["AXONAL_DELAY", "SYN_WEIGHT"] # values you can use with my_edge_population
+            >>> my_edge_population.property_values(Edge.AXONAL_DELAY)
+            >>> my_edge_population.property_values(Edge.get("AXONAL_DELAY"))
+        """
+        if not inspect.isclass(container) or not issubclass(container, ConstContainer):
+            raise BluepySnapError("'container' must be a subclass of ConstContainer")
+        in_file = self.property_names
+        return [k for k in container.key_set() if container.get(k) in in_file]
 
     def _get_property(self, prop, selection):
         if prop == Edge.SOURCE_NODE_ID:

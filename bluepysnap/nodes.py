@@ -18,6 +18,7 @@
 """Node population access."""
 
 import collections
+import inspect
 
 import libsonata
 import numpy as np
@@ -28,7 +29,7 @@ from cached_property import cached_property
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node, ConstContainer
 
 
 def _get_population_name(h5_filepath):
@@ -140,6 +141,28 @@ class NodePopulation(object):
     def property_names(self):
         """Set of available node properties."""
         return set(self._data.columns)
+
+    def container_property_names(self, container):
+        """Lists the ConstContainer properties shared with the NodePopulation.
+
+        Args:
+            container (ConstContainer): a container class for node properties.
+
+        Returns:
+            list: A list of strings corresponding to the properties that you can use from the
+                container class
+
+        Examples:
+            >>> from bluepysnap.sonata_constants import Node
+            >>> print(my_node_population.container_property_names(Node))
+            >>> ["X", "Y", "Z"] # values from Node that you can use with my_node_population
+            >>> my_node_population.property_values(Node.X)
+            >>> my_node_population.property_values(Node.get("X"))
+        """
+        if not inspect.isclass(container) or not issubclass(container, ConstContainer):
+            raise BluepySnapError("'container' must be a subclass of ConstContainer")
+        in_file = self.property_names
+        return [k for k in container.key_set() if container.get(k) in in_file]
 
     def property_values(self, prop):
         """Set of values for a given property.

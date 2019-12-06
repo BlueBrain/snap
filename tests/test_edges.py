@@ -11,9 +11,9 @@ from mock import Mock, patch
 
 from bluepysnap.bbp import Synapse
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.sonata_constants import Edge
 
 import bluepysnap.edges as test_module
-
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
@@ -76,26 +76,39 @@ class TestEdgePopulation(object):
         assert self.test_obj.source.name == 'default'
         assert self.test_obj.target.name == 'default'
         assert self.test_obj.size, 4
-        assert(
-            sorted(self.test_obj.property_names) ==
-            sorted([
-                Synapse.AXONAL_DELAY,
-                Synapse.G_SYNX,
-                Synapse.POST_X_CENTER,
-                Synapse.POST_Y_CENTER,
-                Synapse.POST_Z_CENTER,
-                Synapse.POST_X_SURFACE,
-                Synapse.POST_Y_SURFACE,
-                Synapse.POST_Z_SURFACE,
-                Synapse.PRE_X_CENTER,
-                Synapse.PRE_Y_CENTER,
-                Synapse.PRE_Z_CENTER,
-                Synapse.PRE_X_SURFACE,
-                Synapse.PRE_Y_SURFACE,
-                Synapse.PRE_Z_SURFACE,
-                test_module.DYNAMICS_PREFIX + 'param1'
-            ])
+        assert (
+                sorted(self.test_obj.property_names) ==
+                sorted([
+                    Synapse.AXONAL_DELAY,
+                    Synapse.G_SYNX,
+                    Synapse.POST_X_CENTER,
+                    Synapse.POST_Y_CENTER,
+                    Synapse.POST_Z_CENTER,
+                    Synapse.POST_X_SURFACE,
+                    Synapse.POST_Y_SURFACE,
+                    Synapse.POST_Z_SURFACE,
+                    Synapse.PRE_X_CENTER,
+                    Synapse.PRE_Y_CENTER,
+                    Synapse.PRE_Z_CENTER,
+                    Synapse.PRE_X_SURFACE,
+                    Synapse.PRE_Y_SURFACE,
+                    Synapse.PRE_Z_SURFACE,
+                    test_module.DYNAMICS_PREFIX + 'param1'
+                ])
         )
+
+    def test_container_properties(self):
+        expected = sorted(
+            ['PRE_Y_SURFACE', 'PRE_Z_SURFACE', 'PRE_X_CENTER', 'POST_Y_CENTER', 'AXONAL_DELAY',
+             'POST_X_CENTER', 'POST_Y_SURFACE', 'POST_Z_SURFACE', 'PRE_Y_CENTER', 'POST_Z_CENTER',
+             'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE'])
+        assert sorted(self.test_obj.container_property_names(Edge)) == expected
+        with pytest.raises(BluepySnapError):
+            mapping = {"X": "x"}
+            self.test_obj.container_property_names(mapping)
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.container_property_names(int)
 
     def test_nodes_1(self):
         assert self.test_obj._nodes('default').name == 'default'
@@ -156,8 +169,8 @@ class TestEdgePopulation(object):
     def test_positions_1(self):
         actual = self.test_obj.positions([0], 'afferent', 'center')
         expected = pd.DataFrame([
-                [1110., 1120., 1130.]
-            ],
+            [1110., 1120., 1130.]
+        ],
             index=index_as_uint64([0]),
             columns=['x', 'y', 'z']
         )
@@ -166,8 +179,8 @@ class TestEdgePopulation(object):
     def test_positions_2(self):
         actual = self.test_obj.positions([1], 'afferent', 'surface')
         expected = pd.DataFrame([
-                [1211., 1221., 1231.]
-            ],
+            [1211., 1221., 1231.]
+        ],
             index=index_as_uint64([1]),
             columns=['x', 'y', 'z']
         )
@@ -176,8 +189,8 @@ class TestEdgePopulation(object):
     def test_positions_3(self):
         actual = self.test_obj.positions([2], 'efferent', 'center')
         expected = pd.DataFrame([
-                [2112., 2122., 2132.]
-            ],
+            [2112., 2122., 2132.]
+        ],
             index=index_as_uint64([2]),
             columns=['x', 'y', 'z']
         )
@@ -186,8 +199,8 @@ class TestEdgePopulation(object):
     def test_positions_4(self):
         actual = self.test_obj.positions([3], 'efferent', 'surface')
         expected = pd.DataFrame([
-                [2213., 2223., 2233.]
-            ],
+            [2213., 2223., 2233.]
+        ],
             index=index_as_uint64([3]),
             columns=['x', 'y', 'z']
         )

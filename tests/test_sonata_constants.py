@@ -35,3 +35,10 @@ def test_list_keys():
 
     with pytest.raises(BluepySnapError):
         FailingContainer.key_set()
+
+
+def test_get():
+    assert SubSubContainer1.get("VAR1") == "var1"
+    assert SubSubContainer1.get("VAR3") == "var3"
+    with pytest.raises(BluepySnapError):
+        SubSubContainer1.get("VAR4")
