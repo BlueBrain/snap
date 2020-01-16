@@ -38,11 +38,11 @@ class EggInfo(egg_info):
 with open('README.rst') as f:
     README = f.read()
 
-
 setup(
     name='bluepysnap',
     install_requires=[
         'cached_property>=1.0',
+        'click>=7.0',
         'functools32;python_version<"3.2"',
         'h5py>=2.2',
         'libsonata>=0.0.3',
@@ -59,6 +59,10 @@ setup(
     cmdclass={
         'egg_info': EggInfo,
     },
+    entry_points='''
+        [console_scripts]
+        snap=bluepysnap.circuit_validation:cli
+    ''',
     author="BlueBrain Project, EPFL",
     author_email="bbp-ou-nse@groupes.epfl.ch",
     description="Simulation and Neural network Analysis Productivity layer",
