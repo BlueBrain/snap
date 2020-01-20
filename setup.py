@@ -63,7 +63,7 @@ setup(
     },
     entry_points='''
         [console_scripts]
-        snap=bluepysnap.circuit_validation:cli
+        snap=bluepysnap.cli:cli
     ''',
     author="BlueBrain Project, EPFL",
     author_email="bbp-ou-nse@groupes.epfl.ch",

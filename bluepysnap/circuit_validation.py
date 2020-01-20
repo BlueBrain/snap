@@ -4,7 +4,6 @@ Standalone module that validates Sonata circuit. See ``validate`` and ``validate
 import warnings
 from pathlib2 import Path
 
-import click
 import h5py
 
 from bluepysnap.config import Config
@@ -222,23 +221,3 @@ def validate(config_file):
     _check_components(config)
     if _check_required_datasets(config):
         _check_populations(config)
-
-
-@click.group()
-def cli():
-    """The CLI object"""
-
-
-@cli.command('validate', short_help='Validate Sonata circuit')
-@click.argument('config_file', type=click.Path(exists=True, file_okay=True, dir_okay=False))
-def validate_cli(config_file):
-    """Cli command for validating of Sonata circuit
-
-    Args:
-        config_file: path to Sonata circuit config file
-    """
-    validate(config_file)
-
-
-if __name__ == '__main__':
-    validate('/home/sanin/workspace/snap/tests/data/circuit_config.json')
