@@ -57,15 +57,17 @@ def _check_components(config):
         warnings.warn('Invalid "biophysical_neuron_models_dir": {}'.format(biophysics))
 
 
-def _check_node_dynamics_params(params):
-    PARAMS_NAMES = ['holding_current', 'threshold_current']
-    missing_fields = set(PARAMS_NAMES) - set(params.keys())
-    if len(missing_fields) > 0:
-        warnings.warn('Dynamics Params {} of {} misses fields: {}'.format(
-            params, params.file.filename, missing_fields))
+def _find_nodes_population(node_population_name, nodes):
+    for nodes_dict in nodes:
+        nodes_file = nodes_dict.get('nodes_file')
+        if nodes_file:
+            with h5py.File(nodes_file) as f:
+                if '/nodes/' + node_population_name in f:
+                    return nodes_dict
+    return None
 
 
-def _check_node_group(group, config):
+def _check_nodes_group(group, config):
     GROUP_NAMES = [
         'model_type', 'model_template', 'morphology', 'orientation',
         'rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis',
@@ -75,8 +77,6 @@ def _check_node_group(group, config):
     if len(missing_fields) > 0:
         warnings.warn('Group {} of {} misses fields: {}'.format(
             group, group.file.filename, missing_fields))
-    if 'dynamics_params' in group:
-        _check_node_dynamics_params(group['dynamics_params'])
     morphology_ds = group.get('morphology')
     if morphology_ds:
         for morphology in morphology_ds[:]:
@@ -94,7 +94,7 @@ def _check_node_group(group, config):
                 ))
 
 
-def _check_node_population(nodes_dict, config):
+def _check_nodes_population(nodes_dict, config):
     POPULATION_DATASET_NAMES = ['node_type_id', 'node_id', 'node_group_id', 'node_group_index']
     nodes_file = nodes_dict.get('nodes_file')
     with h5py.File(nodes_file) as f:
@@ -110,15 +110,106 @@ def _check_node_population(nodes_dict, config):
                     population, nodes_file, missing_datasets))
             for name in children_names:
                 if isinstance(population[name], h5py.Group):
-                    _check_node_group(population[name], config)
+                    _check_nodes_group(population[name], config)
+
+
+def _check_edges_group(group):
+    GROUP_NAMES = [
+        'delay', 'syn_weight', 'model_template', 'dynamics_params',
+        'afferent_section_id', 'afferent_section_pos',
+        'efferent_section_id', 'efferent_section_pos',
+        'afferent_center_x', 'afferent_center_y', 'afferent_center_z',
+        'afferent_surface_x', 'afferent_surface_y', 'afferent_surface_z',
+        'efferent_center_x', 'efferent_center_y', 'efferent_center_z',
+        'efferent_surface_x', 'efferent_surface_y', 'efferent_surface_z',
+    ]
+
+    missing_fields = set(GROUP_NAMES) - set(group.keys())
+    if len(missing_fields) > 0:
+        warnings.warn('Group {} of {} misses fields: {}'.format(
+            group, group.file.filename, missing_fields))
+
+
+def _check_edges_node_ids(nodes_ds, nodes):
+    node_population_name = nodes_ds.attrs['node_population']
+    nodes_dict = _find_nodes_population(node_population_name, nodes)
+    if not nodes_dict:
+        warnings.warn('No node population for "{}"'.format(nodes_ds.name))
+        return
+    with h5py.File(nodes_dict['nodes_file']) as f:
+        node_population = f['/nodes/' + node_population_name]
+        if 'node_id' in node_population:
+            node_ids = node_population['node_id'][:]
+        elif 'node_type_id' in node_population:
+            node_ids = range(len(node_population['node_type_id']))
+        else:
+            warnings.warn('{} does not have node ids in its node population'.format(nodes_ds.name))
+            return
+    missing_ids = set(nodes_ds[:]) - set(node_ids)
+    if missing_ids:
+        warnings.warn('{} misses node ids in its node population: {}'.format(
+            nodes_ds.name, missing_ids))
+
+
+def _check_edges_indices(population):
+    def _check(indices, nodes_ds):
+        nodes_ranges = indices['node_id_to_ranges']
+        node_to_edges_ranges = indices['range_to_edge_id']
+        for node_id, nodes_range in enumerate(nodes_ranges[:]):
+            if 0 <= nodes_range[0] < nodes_range[1]:
+                edges_range = node_to_edges_ranges[nodes_range[0]:nodes_range[1]][0]
+                edge_node_ids = set(nodes_ds[edges_range[0]: edges_range[1]])
+                if len(edge_node_ids) > 1 or edge_node_ids.pop() != node_id:
+                    warnings.warn(
+                        'Population {} edges {} have node ids {} instead of single id {}'.format(
+                            population.file.filename, edge_node_ids, edges_range, node_id))
+
+    source_to_target = population['indices'].get('source_to_target')
+    target_to_source = population['indices'].get('target_to_source')
+    if not source_to_target:
+        warnings.warn('No "source_to_target" in {}'.format(population.file.filename))
+    if not target_to_source:
+        warnings.warn('No "target_to_source" in {}'.format(population.file.filename))
+    if target_to_source and source_to_target:
+        _check(source_to_target, population['source_node_id'])
+        _check(target_to_source, population['target_node_id'])
+
+
+def _check_edges_population(edges_dict, nodes):
+    POPULATION_DATASET_NAMES = [
+        'edge_type_id', 'source_node_id', 'target_node_id', 'edge_group_id', 'edge_group_index']
+    edges_file = edges_dict.get('edges_file')
+    with h5py.File(edges_file) as f:
+        edges = f.get('edges')
+        if not edges or len(edges.keys()) == 0:
+            warnings.warn('No "edges" in {}.'.format(edges_file))
+        for population_name in edges.keys():
+            population_path = '/edges/' + population_name
+            population = f[population_path]
+            children_names = population.keys()
+            missing_datasets = set(POPULATION_DATASET_NAMES) - set(children_names)
+            if len(missing_datasets) > 0:
+                warnings.warn('Population {} of {} misses datasets {}'.format(
+                    population, edges_file, missing_datasets))
+            for name in children_names - {'indices'}:
+                if isinstance(population[name], h5py.Group):
+                    _check_edges_group(population[name])
+            if 'source_node_id' in children_names:
+                _check_edges_node_ids(population['source_node_id'], nodes)
+            if 'target_node_id' in children_names:
+                _check_edges_node_ids(population['target_node_id'], nodes)
+            if 'indices' in children_names:
+                _check_edges_indices(population)
 
 
 def _check_populations(config):
     networks = config.get('networks')
     nodes = networks.get('nodes')
-    # edges = networks.get('edges')
     for nodes_dict in nodes:
-        _check_node_population(nodes_dict, config)
+        _check_nodes_population(nodes_dict, config)
+    edges = networks.get('edges')
+    for edges_dict in edges:
+        _check_edges_population(edges_dict, nodes)
 
 
 def validate(config_file):
