@@ -2,7 +2,7 @@
 Standalone module that validates Sonata circuit. See ``validate`` and ``validate_cli`` functions.
 """
 import warnings
-from os import path
+from pathlib2 import Path
 
 import click
 import h5py
@@ -26,17 +26,17 @@ def _check_required_datasets(config):
 
     for nodes_dict in nodes:
         nodes_file = nodes_dict.get('nodes_file')
-        if nodes_file is None or not path.isfile(nodes_file):
+        if nodes_file is None or not Path(nodes_file).is_file():
             warnings.warn('Invalid "nodes_file": {}'.format(nodes_file))
         types_file = nodes_dict.get('node_types_file')
-        if types_file is not None and not path.isfile(types_file):
-            warnings.warn('Invalid "node_types_file": {}'.format(nodes_file))
+        if types_file is not None and not Path(types_file).is_file():
+            warnings.warn('Invalid "node_types_file": {}'.format(types_file))
     for edges_dict in edges:
         edges_file = edges_dict.get('edges_file')
-        if edges_file is None or not path.isfile(edges_file):
+        if edges_file is None or not Path(edges_file).is_file():
             warnings.warn('Invalid "edges_file": {}'.format(edges_file))
         types_file = edges_dict.get('edge_types_file')
-        if types_file is not None and not path.isfile(types_file):
+        if types_file is not None and not Path(types_file).is_file():
             warnings.warn('Invalid "edge_types_file": {}'.format(types_file))
     return True
 
@@ -47,13 +47,13 @@ def _check_components(config):
         warnings.warn('No "components" in config')
         return
     morphologies = components.get('morphologies_dir')
-    if not morphologies or not path.isdir(morphologies):
+    if not morphologies or not Path(morphologies).is_dir():
         warnings.warn('Invalid "morphologies_dir": {}'.format(morphologies))
     mechanisms = components.get('mechanisms_dir')
-    if not mechanisms or path.isdir(mechanisms):
+    if not mechanisms or not Path(mechanisms).is_dir():
         warnings.warn('Invalid "mechanisms_dir": {}'.format(mechanisms))
     biophysics = components.get('biophysical_neuron_models_dir')
-    if not biophysics or path.isdir(biophysics):
+    if not biophysics or not Path(biophysics).is_dir():
         warnings.warn('Invalid "biophysical_neuron_models_dir": {}'.format(biophysics))
 
 
@@ -67,9 +67,9 @@ def _check_node_dynamics_params(params):
 
 def _check_node_group(group, config):
     GROUP_NAMES = [
-        'layer', 'model_template', 'morphology', 'mtype',
+        'model_type', 'model_template', 'morphology', 'orientation',
         'rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis',
-        'x', 'y', 'z', 'dynamics_params']
+        'x', 'y', 'z', 'recenter', 'dynamics_params']
 
     missing_fields = set(GROUP_NAMES) - set(group.keys())
     if len(missing_fields) > 0:
@@ -80,17 +80,17 @@ def _check_node_group(group, config):
     morphology_ds = group.get('morphology')
     if morphology_ds:
         for morphology in morphology_ds[:]:
-            if not path.isfile(path.join(config['components']['morphologies_dir'], morphology)):
+            if not Path(config['components']['morphologies_dir'], morphology).is_file():
                 warnings.warn('non-existent morphology file {} in group {} of {}'.format(
                     morphology, group, group.file.filename
                 ))
     model_template_ds = group.get('model_template')
     if model_template_ds:
         for model_template in model_template_ds[:]:
-            if not path.isfile(path.join(config['components']['biophysical_neuron_models_dir'],
-                    model_template.split('hoc:')[1])):
+            filename = model_template.split('hoc:')[1]
+            if not Path(config['components']['biophysical_neuron_models_dir'], filename).is_file():
                 warnings.warn('non-existent model_template file {} in group {} of {}'.format(
-                    model_template, group, group.file.filename
+                    filename, group, group.file.filename
                 ))
 
 
@@ -98,10 +98,11 @@ def _check_node_population(nodes_dict, config):
     POPULATION_DATASET_NAMES = ['node_type_id', 'node_id', 'node_group_id', 'node_group_index']
     nodes_file = nodes_dict.get('nodes_file')
     with h5py.File(nodes_file) as f:
-        assert 'nodes' in f
-        for population_name in f['nodes'].keys():
-            population_path = '/nodes/' + population_name
-            population = f[population_path]
+        nodes = f.get('nodes')
+        if not nodes or len(nodes.keys()) == 0:
+            warnings.warn('No "nodes" in {}.'.format(nodes_file))
+        for population_name in nodes.keys():
+            population = nodes[population_name]
             children_names = population.keys()
             missing_datasets = set(POPULATION_DATASET_NAMES) - set(children_names)
             if len(missing_datasets) > 0:

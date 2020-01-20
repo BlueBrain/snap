@@ -42,7 +42,6 @@ setup(
     name='bluepysnap',
     install_requires=[
         'cached_property>=1.0',
-        'click>=7.0',
         'functools32;python_version<"3.2"',
         'h5py>=2.2',
         'libsonata>=0.0.3',
@@ -51,6 +50,9 @@ setup(
         'pandas>=0.17',
         'six>=1.0',
     ],
+    extras_require={
+        'validation': ['click>=7.0', 'pathlib2>=2.3']
+    },
     packages=find_packages(),
     use_scm_version=True,
     setup_requires=[
