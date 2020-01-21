@@ -1,5 +1,5 @@
 """
-Standalone module that validates Sonata circuit. See ``validate`` and ``validate_cli`` functions.
+Standalone module that validates Sonata circuit. See ``validate`` function.
 """
 import warnings
 from pathlib2 import Path
@@ -9,7 +9,37 @@ import h5py
 from bluepysnap.config import Config
 
 
+def _check_components(config):
+    """Validates "components" part of the config.
+
+    For now it only validates morphologies, biophysical and mechanisms dirs.
+    Args:
+        config (dict): resolved bluepysnap config
+    """
+    components = config.get('components')
+    if not components:
+        warnings.warn('No "components" in config')
+        return
+    morphologies = components.get('morphologies_dir')
+    if not morphologies or not Path(morphologies).is_dir():
+        warnings.warn('Invalid "morphologies_dir": {}'.format(morphologies))
+    mechanisms = components.get('mechanisms_dir')
+    if not mechanisms or not Path(mechanisms).is_dir():
+        warnings.warn('Invalid "mechanisms_dir": {}'.format(mechanisms))
+    biophysics = components.get('biophysical_neuron_models_dir')
+    if not biophysics or not Path(biophysics).is_dir():
+        warnings.warn('Invalid "biophysical_neuron_models_dir": {}'.format(biophysics))
+
+
 def _check_required_datasets(config):
+    """Validates required datasets of "nodes" and "edges" in config
+
+    Args:
+        config (dict): resolved bluepysnap config
+
+    Returns:
+        True if everything is fine, otherwise False. Errors are printed as warnings.
+    """
     networks = config.get('networks')
     if not networks:
         warnings.warn('No "networks" in config')
@@ -40,23 +70,16 @@ def _check_required_datasets(config):
     return True
 
 
-def _check_components(config):
-    components = config.get('components')
-    if not components:
-        warnings.warn('No "components" in config')
-        return
-    morphologies = components.get('morphologies_dir')
-    if not morphologies or not Path(morphologies).is_dir():
-        warnings.warn('Invalid "morphologies_dir": {}'.format(morphologies))
-    mechanisms = components.get('mechanisms_dir')
-    if not mechanisms or not Path(mechanisms).is_dir():
-        warnings.warn('Invalid "mechanisms_dir": {}'.format(mechanisms))
-    biophysics = components.get('biophysical_neuron_models_dir')
-    if not biophysics or not Path(biophysics).is_dir():
-        warnings.warn('Invalid "biophysical_neuron_models_dir": {}'.format(biophysics))
-
-
 def _find_nodes_population(node_population_name, nodes):
+    """Finds node population item in config.
+
+    Args:
+        node_population_name (str): name of node population
+        nodes (list): "nodes" part of the resolved bluepysnap config
+
+    Returns:
+        A dict item of "nodes" of the resolved bluepysnap config. None if didn't find anything.
+    """
     for nodes_dict in nodes:
         nodes_file = nodes_dict.get('nodes_file')
         if nodes_file:
@@ -67,6 +90,14 @@ def _find_nodes_population(node_population_name, nodes):
 
 
 def _check_nodes_group(group, config):
+    """Validates nodes group in nodes population
+
+    Any errors are printed as warnings
+
+    Args:
+        group (h5py.Group): nodes group in nodes .h5 file
+        config (dict): resolved bluepysnap config
+    """
     GROUP_NAMES = [
         'model_type', 'model_template', 'morphology', 'orientation',
         'rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis',
@@ -94,6 +125,14 @@ def _check_nodes_group(group, config):
 
 
 def _check_nodes_population(nodes_dict, config):
+    """Validates nodes population
+
+    Any errors are printed as warnings
+
+    Args:
+        nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
+        config (dict): resolved bluepysnap config
+    """
     POPULATION_DATASET_NAMES = ['node_type_id', 'node_id', 'node_group_id', 'node_group_index']
     nodes_file = nodes_dict.get('nodes_file')
     with h5py.File(nodes_file) as f:
@@ -113,6 +152,13 @@ def _check_nodes_population(nodes_dict, config):
 
 
 def _check_edges_group(group):
+    """Validates edges group in edges population
+
+    Any errors are printed as warnings
+
+    Args:
+        group (h5py.Group): edges group in edges .h5 file
+    """
     GROUP_NAMES = [
         'delay', 'syn_weight', 'model_template', 'dynamics_params',
         'afferent_section_id', 'afferent_section_pos',
@@ -130,6 +176,14 @@ def _check_edges_group(group):
 
 
 def _check_edges_node_ids(nodes_ds, nodes):
+    """Validates that nodes ids in edges can be resolved to nodes ids in nodes populations
+
+    Any errors are printed as warnings
+
+    Args:
+        nodes_ds: nodes dataset in edges population
+        nodes (list): "nodes" part of the resolved bluepysnap config
+    """
     node_population_name = nodes_ds.attrs['node_population']
     nodes_dict = _find_nodes_population(node_population_name, nodes)
     if not nodes_dict:
@@ -151,6 +205,14 @@ def _check_edges_node_ids(nodes_ds, nodes):
 
 
 def _check_edges_indices(population):
+    """Validates edges population indices
+
+    Any errors are printed as warnings
+
+    Args:
+        population (h5py.Group): edges population
+    """
+
     def _check(indices, nodes_ds):
         nodes_ranges = indices['node_id_to_ranges']
         node_to_edges_ranges = indices['range_to_edge_id']
@@ -175,6 +237,14 @@ def _check_edges_indices(population):
 
 
 def _check_edges_population(edges_dict, nodes):
+    """Validates edges population
+
+    Any errors are printed as warnings
+
+    Args:
+        edges_dict (dict): edges population, represented by an item of "edges" in ``config``
+        nodes (list): "nodes" part of the resolved bluepysnap config
+    """
     POPULATION_DATASET_NAMES = [
         'edge_type_id', 'source_node_id', 'target_node_id', 'edge_group_id', 'edge_group_index']
     edges_file = edges_dict.get('edges_file')
@@ -202,6 +272,13 @@ def _check_edges_population(edges_dict, nodes):
 
 
 def _check_populations(config):
+    """Validates all nodes and edges populations in config
+
+    Any errors are printed as warnings
+
+    Args:
+        config (dict): resolved bluepysnap config
+    """
     networks = config.get('networks')
     nodes = networks.get('nodes')
     for nodes_dict in nodes:
@@ -214,8 +291,10 @@ def _check_populations(config):
 def validate(config_file):
     """Validates Sonata circuit
 
+    In case any problems warnings are printed
+
     Args:
-        config_file: path to Sonata circuit config file
+        config_file (str): path to Sonata circuit config file
     """
     config = Config(config_file).resolve()
     _check_components(config)
