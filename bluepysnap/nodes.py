@@ -33,7 +33,17 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node, Cons
 
 
 class NodeStorage(object):
+    """Node storage access."""
     def __init__(self, config, circuit):
+        """Initializes a NodeStorage object from a node config and a Circuit.
+
+        Args:
+            config (dict): a node config from the global circuit config
+            circuit (str): the circuit object that contains the NodePopulation from this storage.
+
+        Returns:
+            NodeStorage: A NodeStorage object.
+        """
         # cannot propagate the config here due to the list in the networks/nodes
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']
@@ -48,28 +58,40 @@ class NodeStorage(object):
 
     @cached_property
     def storage(self):
+        """Access to the libsonata node storage."""
         return libsonata.NodeStorage(self._h5_filepath)
 
     @cached_property
     def population_names(self):
+        """Returns all population names inside this file."""
         return self.storage.population_names
 
     @property
     def circuit(self):
+        """Returns the circuit object containing this storage."""
         return self._circuit
 
     @property
+    def file_path(self):
+        """Returns the file path for this storage."""
+        return self._h5_filepath
+
+    @property
     def node_sets(self):
-        """Node sets defined for this node population."""
+        """Returns the node sets defined for this node population."""
         return self._node_sets
 
     def population(self, population_name):
+        """Access the different populations from the storage."""
         if population_name not in self._populations:
             self._populations[population_name] = NodePopulation(self, population_name)
         return self._populations[population_name]
 
     def load_population_data(self, population):
         """Load node properties from SONATA Nodes.
+
+        Args:
+            population (str): a population name .
 
         Returns:
             pandas.DataFrame with node properties (zero-based index).
@@ -137,7 +159,7 @@ class NodePopulation(object):
     """Node population access."""
 
     def __init__(self, node_storage, population_name):
-        """Initializes a NodePopulation object from a config dictionary and a circuit.
+        """Initializes a NodePopulation object from a NodeStorage and population name.
 
         Args:
             node_storage (NodeStorage): the node storage containing the node population
@@ -145,7 +167,6 @@ class NodePopulation(object):
         Returns:
             NodePopulation: A NodePopulation object.
         """
-
         self._node_storage = node_storage
         self._name = population_name
 
@@ -161,6 +182,7 @@ class NodePopulation(object):
 
     @cached_property
     def _data(self):
+        """Collected data for the node population as a pandas.DataFrame."""
         return self._node_storage.load_population_data(self.name)
 
     @property
@@ -174,8 +196,9 @@ class NodePopulation(object):
         return set(self._data.columns)
 
     @cached_property
-    def h5_file_path(self):
-        return self._node_storage._h5_filepath
+    def file_path(self):
+        """Path of the file containing the population."""
+        return self._node_storage.file_path
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.

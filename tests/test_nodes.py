@@ -116,8 +116,9 @@ class TestNodeStorage:
         data = self.test_obj.load_population_data("default")
         assert isinstance(data, pd.DataFrame)
         assert sorted(list(data)) == sorted(['layer', 'morphology', 'mtype', 'rotation_angle_xaxis',
-                         'rotation_angle_yaxis', 'rotation_angle_zaxis', 'x', 'y', 'z',
-                         '@dynamics:holding_current'])
+                                             'rotation_angle_yaxis', 'rotation_angle_zaxis', 'x',
+                                             'y', 'z',
+                                             '@dynamics:holding_current'])
         assert len(data) == 3
 
 
@@ -143,7 +144,7 @@ class TestNodePopulation:
                                       'node_sets.json'))
 
     def test_basic(self):
-        assert self.test_obj.h5_file_path == os.path.join(TEST_DATA_DIR, 'nodes.h5')
+        assert self.test_obj.file_path == os.path.join(TEST_DATA_DIR, 'nodes.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
         assert (
@@ -179,10 +180,10 @@ class TestNodePopulation:
 
     def test_container_properties(self):
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'HOLDING_CURRENT', 'ROTATION_ANGLE_X',
-                    'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER'])
+                           'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER'])
         assert sorted(self.test_obj.container_property_names(Cell)) == expected
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'ROTATION_ANGLE_X', 'ROTATION_ANGLE_Y',
-                    'ROTATION_ANGLE_Z'])
+                           'ROTATION_ANGLE_Z'])
         assert sorted(self.test_obj.container_property_names(Node)) == expected
 
         with pytest.raises(BluepySnapError):
@@ -319,7 +320,6 @@ class TestNodePopulation:
                 name='orientation'
             )
         )
-
 
         # NodePopulation without rotation_angle[x|z]
         _call_no_xz = TestNodePopulation.create_object(

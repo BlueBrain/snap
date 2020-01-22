@@ -19,7 +19,6 @@
 
 from builtins import map
 
-import collections
 import inspect
 
 import libsonata
@@ -34,8 +33,18 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 
 class EdgeStorage(object):
+    """Edge storage access."""
     def __init__(self, config, circuit):
-        # cannot propagate the config here due to the list in the networks/nodes
+        """Initializes a EdgeStorage object from a node config and a Circuit.
+
+        Args:
+            config (dict): a edge config from the global circuit config
+            circuit (str): the circuit object that contains the EdgePopulation from this storage.
+
+        Returns:
+            EdgeStorage: A EdgeStorage object.
+        """
+        # cannot propagate the config here due to the list in the networks/edge
         self._h5_filepath = config['edges_file']
         self._csv_filepath = config['edge_types_file']
         self._circuit = circuit
@@ -45,17 +54,26 @@ class EdgeStorage(object):
 
     @cached_property
     def storage(self):
+        """Access to the libsonata edge storage."""
         return libsonata.EdgeStorage(self._h5_filepath)
 
     @cached_property
     def population_names(self):
+        """Returns all population names inside this file."""
         return self.storage.population_names
 
     @property
     def circuit(self):
+        """Returns the circuit object containing this storage."""
         return self._circuit
 
+    @property
+    def file_path(self):
+        """Returns the file path for this storage."""
+        return self._h5_filepath
+
     def population(self, population_name):
+        """Access the different populations from the storage."""
         if population_name not in self._populations:
             self._populations[population_name] = EdgePopulation(self, population_name)
         return self._populations[population_name]
@@ -86,10 +104,10 @@ class EdgePopulation(object):
     """Edge population access."""
 
     def __init__(self, edge_storage, population_name):
-        """Initializes a EdgePopulation object from a EdgeStorage and a Circuit
+        """Initializes a EdgePopulation object from a EdgeStorage and a population name.
 
         Args:
-            edge_storage (NodeStorage): the edge storage containing the edge population
+            edge_storage (EdgeStorage): the edge storage containing the edge population
             population_name (str): the name of the edge population
 
         Returns:
@@ -112,11 +130,11 @@ class EdgePopulation(object):
         """Population size."""
         return self._population.size
 
-    def _nodes(self, population):
-        """Returns the NodePopulation corresponding to population"""
-        result = self._edge_storage.circuit.nodes.get(population)
+    def _nodes(self, population_name):
+        """Returns the NodePopulation corresponding to population."""
+        result = self._edge_storage.circuit.nodes.get(population_name)
         if result is None:
-            raise BluepySnapError("Undefined node population: '%s'" % population)
+            raise BluepySnapError("Undefined node population: '%s'" % population_name)
         return result
 
     @cached_property
@@ -153,8 +171,9 @@ class EdgePopulation(object):
         return self._property_names | self._dynamics_params_names
 
     @cached_property
-    def h5_file_path(self):
-        return self._edge_storage._h5_filepath
+    def file_path(self):
+        """Path of the file containing the population."""
+        return self._edge_storage.file_path
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the EdgePopulation.

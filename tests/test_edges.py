@@ -47,6 +47,7 @@ def test_estimate_range_size_4():
     with pytest.raises(AssertionError):
         test_module._estimate_range_size(mock.ANY, [])
 
+
 class TestEdgeStorage:
     def setup(self):
         config = {
@@ -72,6 +73,7 @@ class TestEdgeStorage:
         pop2 = self.test_obj.population("default")
         assert pop is pop2
 
+
 class TestEdgePopulation(object):
 
     @staticmethod
@@ -82,7 +84,6 @@ class TestEdgePopulation(object):
         node_population._inc = lambda x: np.asarray(x) + 1
         node_population._dec = lambda x: np.asarray(x) - 1
         return node_population
-
 
     @staticmethod
     def create_object(filepath, pop_name):
@@ -102,7 +103,7 @@ class TestEdgePopulation(object):
             os.path.join(TEST_DATA_DIR, "edges.h5"), 'default')
 
     def test_basic(self):
-        assert self.test_obj.h5_file_path == os.path.join(TEST_DATA_DIR, 'edges.h5')
+        assert self.test_obj.file_path == os.path.join(TEST_DATA_DIR, 'edges.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.source_name == 'default'
         assert self.test_obj.target_name == 'default'

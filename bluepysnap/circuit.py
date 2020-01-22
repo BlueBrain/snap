@@ -39,7 +39,7 @@ def _collect_populations(partial_config, cls, select=None):
                     raise BluepySnapError("Duplicated population: '%s'" % population)
                 result[population] = storage.population(population)
     if select is not None:
-        missing =  set(select) - set(result.keys())
+        missing = set(select) - set(result.keys())
         if missing:
             raise BluepySnapError("Missing population(s): '%s'" % missing)
     return result
@@ -79,6 +79,7 @@ class Circuit(object):
 
     @property
     def node_populations(self):
+        """Returns the node population names for the circuit."""
         return list(self.nodes)
 
     @cached_property
@@ -92,4 +93,5 @@ class Circuit(object):
 
     @property
     def edge_populations(self):
+        """Returns the edge population names for the circuit."""
         return list(self.edges)
