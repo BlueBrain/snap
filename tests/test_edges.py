@@ -7,6 +7,7 @@ import pandas as pd
 import pandas.util.testing as pdt
 import pytest
 
+import libsonata
 from mock import Mock, patch
 
 from bluepysnap.bbp import Synapse
@@ -22,15 +23,6 @@ TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
 def index_as_uint64(values):
     '''have pandas index types match'''
     return np.array(values, dtype=np.uint64)
-
-
-def test_get_population_name_duplicate():
-    storage = Mock()
-    storage.population_names = ['a', 'b']
-    with patch(test_module.__name__ + '.libsonata.EdgeStorage') as EdgeStorage:
-        EdgeStorage.return_value = storage
-        with pytest.raises(BluepySnapError):
-            test_module._get_population_name(mock.ANY)
 
 
 def test_estimate_range_size_1():
@@ -55,26 +47,65 @@ def test_estimate_range_size_4():
     with pytest.raises(AssertionError):
         test_module._estimate_range_size(mock.ANY, [])
 
-
-class TestEdgePopulation(object):
+class TestEdgeStorage:
     def setup(self):
         config = {
-            'edges_file': os.path.join(TEST_DATA_DIR, "edges.h5"),
-            'edge_types_file': None
+            'edges_file': os.path.join(TEST_DATA_DIR, 'edges.h5'),
+            'edge_types_file': None,
         }
-        nodes = Mock()
-        nodes.name = 'default'
-        nodes.ids = lambda x: x
-        nodes._inc = lambda x: np.asarray(x) + 1
-        nodes._dec = lambda x: np.asarray(x) - 1
         circuit = Mock()
-        circuit.nodes = nodes
-        self.test_obj = test_module.EdgePopulation(config, circuit)
+        self.test_obj = test_module.EdgeStorage(config, circuit)
+
+    def test_storage(self):
+        assert isinstance(self.test_obj.storage, libsonata.EdgeStorage)
+
+    def test_population_names(self):
+        assert sorted(list(self.test_obj.population_names)) == ["default"]
+
+    def test_circuit(self):
+        pass
+
+    def test_population(self):
+        pop = self.test_obj.population("default")
+        assert isinstance(pop, test_module.EdgePopulation)
+        assert pop.name == "default"
+        pop2 = self.test_obj.population("default")
+        assert pop is pop2
+
+class TestEdgePopulation(object):
+
+    @staticmethod
+    def mocking_nodes(pop_name):
+        node_population = Mock()
+        node_population.name = pop_name
+        node_population.ids = lambda x: x
+        node_population._inc = lambda x: np.asarray(x) + 1
+        node_population._dec = lambda x: np.asarray(x) - 1
+        return node_population
+
+
+    @staticmethod
+    def create_object(filepath, pop_name):
+        config = {
+            'edges_file': filepath,
+            'edge_types_file': None,
+        }
+        node_population = TestEdgePopulation.mocking_nodes("default")
+        circuit = Mock()
+        circuit.nodes = {node_population.name: node_population}
+
+        storage = test_module.EdgeStorage(config, circuit)
+        return storage.population(pop_name)
+
+    def setup(self):
+        self.test_obj = TestEdgePopulation.create_object(
+            os.path.join(TEST_DATA_DIR, "edges.h5"), 'default')
 
     def test_basic(self):
+        assert self.test_obj.h5_file_path == os.path.join(TEST_DATA_DIR, 'edges.h5')
         assert self.test_obj.name == 'default'
-        assert self.test_obj.source.name == 'default'
-        assert self.test_obj.target.name == 'default'
+        assert self.test_obj.source_name == 'default'
+        assert self.test_obj.target_name == 'default'
         assert self.test_obj.size, 4
         assert (
                 sorted(self.test_obj.property_names) ==
@@ -116,7 +147,7 @@ class TestEdgePopulation(object):
             self.test_obj._nodes('no-such-population')
 
     def test_nodes_2(self):
-        self.test_obj._circuit.nodes = {
+        self.test_obj._edge_storage.circuit.nodes = {
             'A': 'aa',
             'B': 'bb',
         }

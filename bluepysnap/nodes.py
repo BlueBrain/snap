@@ -32,33 +32,60 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node, ConstContainer
 
 
-def _get_population_name(h5_filepath):
-    populations = libsonata.NodeStorage(h5_filepath).population_names
-    if len(populations) != 1:
-        raise BluepySnapError(
-            "Only single-population node collections are supported (found: %d)" % len(populations)
-        )
-    return list(populations)[0]
+class NodeStorage(object):
+    def __init__(self, config, circuit):
+        # cannot propagate the config here due to the list in the networks/nodes
+        self._h5_filepath = config['nodes_file']
+        self._csv_filepath = config['node_types_file']
+        if 'node_sets_file' in config:
+            self._node_sets = utils.load_json(config['node_sets_file'])
+        else:
+            self._node_sets = {}
+        self._circuit = circuit
 
+        # contains the populations
+        self._populations = {}
 
-def _load_population(h5_filepath, csv_filepath, population):
-    """Load node properties from SONATA Nodes.
+    @cached_property
+    def storage(self):
+        return libsonata.NodeStorage(self._h5_filepath)
 
-    Returns:
-        pandas.DataFrame with node properties (zero-based index).
-    """
-    nodes = libsonata.NodePopulation(h5_filepath, csv_filepath or '', population)
+    @cached_property
+    def population_names(self):
+        return self.storage.population_names
 
-    node_count = nodes.size
-    result = pd.DataFrame(index=np.arange(node_count))
+    @property
+    def circuit(self):
+        return self._circuit
 
-    _all = libsonata.Selection([(0, node_count)])
-    for attr in sorted(nodes.attribute_names):
-        result[attr] = nodes.get_attribute(attr, _all)
-    for attr in sorted(nodes.dynamics_attribute_names):
-        result['%s%s' % (DYNAMICS_PREFIX, attr)] = nodes.get_dynamics_attribute(attr, _all)
+    @property
+    def node_sets(self):
+        """Node sets defined for this node population."""
+        return self._node_sets
 
-    return result
+    def population(self, population_name):
+        if population_name not in self._populations:
+            self._populations[population_name] = NodePopulation(self, population_name)
+        return self._populations[population_name]
+
+    def load_population_data(self, population):
+        """Load node properties from SONATA Nodes.
+
+        Returns:
+            pandas.DataFrame with node properties (zero-based index).
+        """
+        nodes = self.storage.open_population(population)
+
+        node_count = nodes.size
+        result = pd.DataFrame(index=np.arange(node_count))
+
+        _all = libsonata.Selection([(0, node_count)])
+        for attr in sorted(nodes.attribute_names):
+            result[attr] = nodes.get_attribute(attr, _all)
+        for attr in sorted(nodes.dynamics_attribute_names):
+            result['%s%s' % (DYNAMICS_PREFIX, attr)] = nodes.get_dynamics_attribute(attr, _all)
+
+        return result
 
 
 # TODO: move to `libsonata` library
@@ -73,7 +100,7 @@ def _complex_query(prop, query):
     return result
 
 
-def _node_ids_by_filter(nodes, props):
+def _node_ids_by_filter(node_data, props):
     """Return index of `nodes` rows matching `props` dict.
 
     `props` values could be:
@@ -81,17 +108,17 @@ def _node_ids_by_filter(nodes, props):
         scalar or iterables (exact or "one of" match for other fields)
 
     E.g.:
-        >>> _node_ids_by_filter(nodes, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
-        >>> _node_ids_by_filter(nodes, { Node.LAYER: [2, 3] })
+        >>> _node_ids_by_filter(node_data, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
+        >>> _node_ids_by_filter(node_data, { Node.LAYER: [2, 3] })
     """
     # pylint: disable=assignment-from-no-return
-    unknown_props = set(props) - set(nodes.columns)
+    unknown_props = set(props) - set(node_data.columns)
     if unknown_props:
         raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
-    mask = np.full(len(nodes), True)
+    mask = np.full(len(node_data), True)
     for prop, values in six.iteritems(props):
-        prop = nodes[prop]
+        prop = node_data[prop]
         if issubclass(prop.dtype.type, np.floating):
             v1, v2 = values
             prop_mask = np.logical_and(prop >= v1, prop <= v2)
@@ -103,34 +130,38 @@ def _node_ids_by_filter(nodes, props):
             prop_mask = np.in1d(prop, values)
         mask = np.logical_and(mask, prop_mask)
 
-    return nodes.index[mask].values
+    return node_data.index[mask].values
 
 
 class NodePopulation(object):
     """Node population access."""
 
-    def __init__(self, config, circuit):
+    def __init__(self, node_storage, population_name):
         """Initializes a NodePopulation object from a config dictionary and a circuit.
 
         Args:
-            config (dict): A dictionary corresponding to a SONATA config file.
-            circuit (Circuit): The circuit object that contains the NodePopulation.
-
+            node_storage (NodeStorage): the node storage containing the node population
+            population_name (str): the name of the node population
         Returns:
             NodePopulation: A NodePopulation object.
         """
-        self._h5_filepath = config['nodes_file']
-        self._csv_filepath = config['node_types_file']
-        if 'node_sets_file' in config:
-            self._node_sets = utils.load_json(config['node_sets_file'])
-        else:
-            self._node_sets = {}
-        self._circuit = circuit
+
+        self._node_storage = node_storage
+        self._name = population_name
 
     @cached_property
     def name(self):
         """Node population name."""
-        return _get_population_name(self._h5_filepath)
+        return self._name
+
+    @property
+    def node_sets(self):
+        """Node sets defined for this node population."""
+        return self._node_storage.node_sets
+
+    @cached_property
+    def _data(self):
+        return self._node_storage.load_population_data(self.name)
 
     @property
     def size(self):
@@ -141,6 +172,10 @@ class NodePopulation(object):
     def property_names(self):
         """Set of available node properties."""
         return set(self._data.columns)
+
+    @cached_property
+    def h5_file_path(self):
+        return self._node_storage._h5_filepath
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.
@@ -174,15 +209,6 @@ class NodePopulation(object):
             set: A set of the unique values of the property in the node population.
         """
         return set(self.get(properties=prop).unique())
-
-    @property
-    def node_sets(self):
-        """Node sets defined for this node population."""
-        return self._node_sets
-
-    @cached_property
-    def _data(self):
-        return _load_population(self._h5_filepath, self._csv_filepath, self.name)
 
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
@@ -228,9 +254,9 @@ class NodePopulation(object):
         preserve_order = False
         node_filter = slice(None, None, 1)
         if isinstance(group, six.string_types):
-            if group not in self._node_sets:
+            if group not in self.node_sets:
                 raise BluepySnapError("Undefined node set: %s" % group)
-            group = self._node_sets[group]
+            group = self.node_sets[group]
             if not isinstance(group, collections.MutableMapping):
                 raise BluepySnapError("Node set values must be dict not: %s" % type(group))
             if len(group) == 0:
@@ -403,6 +429,6 @@ class NodePopulation(object):
         """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
         return MorphHelper(
-            self._circuit.config['components']['morphologies_dir'],
+            self._node_storage.circuit.config['components']['morphologies_dir'],
             self
         )
