@@ -79,11 +79,6 @@ class Circuit(object):
             select=self._node_populations
         )
 
-    @property
-    def node_populations(self):
-        """Returns the node population names for the circuit."""
-        return list(self.nodes)
-
     @cached_property
     def edges(self):
         """Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
@@ -92,8 +87,3 @@ class Circuit(object):
             lambda cfg: EdgeStorage(cfg, self),
             select=self._edge_populations
         )
-
-    @property
-    def edge_populations(self):
-        """Returns the edge population names for the circuit."""
-        return list(self.edges)
