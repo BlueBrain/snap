@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-from bluepysnap.nodes import NodePopulation, NodeStorage
-from bluepysnap.edges import EdgePopulation, EdgeStorage
+from bluepysnap.nodes import NodePopulation
+from bluepysnap.edges import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.circuit as test_module
@@ -25,9 +25,9 @@ def test_all():
     )
     assert isinstance(circuit.nodes, dict)
     assert isinstance(circuit.edges, dict)
-    assert circuit.edge_populations == ['default']
+    assert list(circuit.edges) == ['default']
     assert isinstance(circuit.edges['default'], EdgePopulation)
-    assert sorted(circuit.node_populations) == ['default', 'default2']
+    assert sorted(list(circuit.nodes)) == ['default', 'default2']
     assert isinstance(circuit.nodes['default'], NodePopulation)
     assert isinstance(circuit.nodes['default2'], NodePopulation)
 

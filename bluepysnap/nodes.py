@@ -39,12 +39,12 @@ class NodeStorage(object):
 
         Args:
             config (dict): a node config from the global circuit config
-            circuit (str): the circuit object that contains the NodePopulation from this storage.
+            circuit (bluepysnap.Circuit): the circuit object that contains the NodePopulation
+            from this storage.
 
         Returns:
             NodeStorage: A NodeStorage object.
         """
-        # cannot propagate the config here due to the list in the networks/nodes
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']
         if 'node_sets_file' in config:
@@ -52,8 +52,6 @@ class NodeStorage(object):
         else:
             self._node_sets = {}
         self._circuit = circuit
-
-        # contains the populations
         self._populations = {}
 
     @cached_property
@@ -72,7 +70,7 @@ class NodeStorage(object):
         return self._circuit
 
     @property
-    def file_path(self):
+    def h5_filepath(self):
         """Returns the file path for this storage."""
         return self._h5_filepath
 
@@ -196,9 +194,9 @@ class NodePopulation(object):
         return set(self._data.columns)
 
     @cached_property
-    def file_path(self):
+    def h5_filepath(self):
         """Path of the file containing the population."""
-        return self._node_storage.file_path
+        return self._node_storage.h5_filepath
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.

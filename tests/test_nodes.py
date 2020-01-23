@@ -1,6 +1,5 @@
 import os
 
-import mock
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -8,7 +7,7 @@ import pandas.util.testing as pdt
 import pytest
 
 import libsonata
-from mock import patch, Mock
+from mock import Mock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
@@ -86,8 +85,8 @@ class TestNodeStorage:
             'node_types_file': None,
             'node_sets_file': os.path.join(TEST_DATA_DIR, 'node_sets.json'),
         }
-        circuit = Mock()
-        self.test_obj = test_module.NodeStorage(config, circuit)
+        self.circuit = Mock()
+        self.test_obj = test_module.NodeStorage(config, self.circuit)
 
     def test_storage(self):
         assert isinstance(self.test_obj.storage, libsonata.NodeStorage)
@@ -96,7 +95,7 @@ class TestNodeStorage:
         assert sorted(list(self.test_obj.population_names)) == ["default", "default2"]
 
     def test_circuit(self):
-        pass
+        assert self.test_obj.circuit is self.circuit
 
     def test_node_sets(self):
         assert (
@@ -125,7 +124,7 @@ class TestNodeStorage:
 class TestNodePopulation:
 
     @staticmethod
-    def create_object(filepath, pop_name, nodeset_path=None):
+    def create_population(filepath, pop_name, nodeset_path=None):
         config = {
             'nodes_file': filepath,
             'node_types_file': None,
@@ -137,14 +136,14 @@ class TestNodePopulation:
         return storage.population(pop_name)
 
     def setup(self):
-        self.test_obj = TestNodePopulation.create_object(
+        self.test_obj = TestNodePopulation.create_population(
             os.path.join(TEST_DATA_DIR, 'nodes.h5'),
             "default",
             nodeset_path=os.path.join(TEST_DATA_DIR,
                                       'node_sets.json'))
 
     def test_basic(self):
-        assert self.test_obj.file_path == os.path.join(TEST_DATA_DIR, 'nodes.h5')
+        assert self.test_obj.h5_filepath == os.path.join(TEST_DATA_DIR, 'nodes.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
         assert (
@@ -322,7 +321,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle[x|z]
-        _call_no_xz = TestNodePopulation.create_object(
+        _call_no_xz = TestNodePopulation.create_population(
             os.path.join(TEST_DATA_DIR, 'nodes_no_xz_rotation.h5'),
             "default").orientations
         # 0 and 2 node_ids have x|z rotation angles equal to zero
@@ -339,7 +338,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle
-        _call_no_rot = TestNodePopulation.create_object(
+        _call_no_rot = TestNodePopulation.create_population(
             os.path.join(TEST_DATA_DIR, 'nodes_no_rotation.h5'),
             "default").orientations
 
@@ -353,7 +352,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation with quaternions
-        _call_quat = TestNodePopulation.create_object(
+        _call_quat = TestNodePopulation.create_population(
             os.path.join(TEST_DATA_DIR, 'nodes_quaternions.h5'),
             "default").orientations
 
@@ -396,7 +395,7 @@ class TestNodePopulation:
             )
         )
 
-        _call_missing_quat = TestNodePopulation.create_object(
+        _call_missing_quat = TestNodePopulation.create_population(
             os.path.join(TEST_DATA_DIR, 'nodes_quaternions_w_missing.h5'),
             "default").orientations
 
@@ -420,7 +419,7 @@ class TestNodePopulation:
         assert isinstance(self.test_obj.morph, MorphHelper)
 
     def test_NodePopulation_without_node_sets(self):
-        nodes = TestNodePopulation.create_object(
+        nodes = TestNodePopulation.create_population(
             os.path.join(TEST_DATA_DIR, 'nodes.h5'),
             "default")
 

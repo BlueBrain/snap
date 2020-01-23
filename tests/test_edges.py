@@ -8,7 +8,7 @@ import pandas.util.testing as pdt
 import pytest
 
 import libsonata
-from mock import Mock, patch
+from mock import Mock
 
 from bluepysnap.bbp import Synapse
 from bluepysnap.exceptions import BluepySnapError
@@ -54,8 +54,8 @@ class TestEdgeStorage:
             'edges_file': os.path.join(TEST_DATA_DIR, 'edges.h5'),
             'edge_types_file': None,
         }
-        circuit = Mock()
-        self.test_obj = test_module.EdgeStorage(config, circuit)
+        self.circuit = Mock()
+        self.test_obj = test_module.EdgeStorage(config, self.circuit)
 
     def test_storage(self):
         assert isinstance(self.test_obj.storage, libsonata.EdgeStorage)
@@ -64,7 +64,7 @@ class TestEdgeStorage:
         assert sorted(list(self.test_obj.population_names)) == ["default"]
 
     def test_circuit(self):
-        pass
+        assert self.test_obj.circuit is self.circuit
 
     def test_population(self):
         pop = self.test_obj.population("default")
@@ -81,12 +81,10 @@ class TestEdgePopulation(object):
         node_population = Mock()
         node_population.name = pop_name
         node_population.ids = lambda x: x
-        node_population._inc = lambda x: np.asarray(x) + 1
-        node_population._dec = lambda x: np.asarray(x) - 1
         return node_population
 
     @staticmethod
-    def create_object(filepath, pop_name):
+    def create_population(filepath, pop_name):
         config = {
             'edges_file': filepath,
             'edge_types_file': None,
@@ -99,11 +97,11 @@ class TestEdgePopulation(object):
         return storage.population(pop_name)
 
     def setup(self):
-        self.test_obj = TestEdgePopulation.create_object(
+        self.test_obj = TestEdgePopulation.create_population(
             os.path.join(TEST_DATA_DIR, "edges.h5"), 'default')
 
     def test_basic(self):
-        assert self.test_obj.file_path == os.path.join(TEST_DATA_DIR, 'edges.h5')
+        assert self.test_obj.h5_filepath == os.path.join(TEST_DATA_DIR, 'edges.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.source_name == 'default'
         assert self.test_obj.target_name == 'default'

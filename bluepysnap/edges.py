@@ -35,21 +35,19 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 class EdgeStorage(object):
     """Edge storage access."""
     def __init__(self, config, circuit):
-        """Initializes a EdgeStorage object from a node config and a Circuit.
+        """Initializes a EdgeStorage object from a edge config and a Circuit.
 
         Args:
             config (dict): a edge config from the global circuit config
-            circuit (str): the circuit object that contains the EdgePopulation from this storage.
+            circuit (bluepysnap.Circuit): the circuit object that contains the EdgePopulations
+            from this storage.
 
         Returns:
             EdgeStorage: A EdgeStorage object.
         """
-        # cannot propagate the config here due to the list in the networks/edge
         self._h5_filepath = config['edges_file']
         self._csv_filepath = config['edge_types_file']
         self._circuit = circuit
-
-        # contains the populations
         self._populations = {}
 
     @cached_property
@@ -68,7 +66,7 @@ class EdgeStorage(object):
         return self._circuit
 
     @property
-    def file_path(self):
+    def h5_filepath(self):
         """Returns the file path for this storage."""
         return self._h5_filepath
 
@@ -171,9 +169,9 @@ class EdgePopulation(object):
         return self._property_names | self._dynamics_params_names
 
     @cached_property
-    def file_path(self):
+    def h5_filepath(self):
         """Path of the file containing the population."""
-        return self._edge_storage.file_path
+        return self._edge_storage.h5_filepath
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the EdgePopulation.

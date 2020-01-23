@@ -54,7 +54,9 @@ class Circuit(object):
         Args:
             config (str): Path to a SONATA config file.
             node_populations (str/list): Name of the node populations used in the circuit.
+            node_populations=None will use all available populations.
             edge_populations (str/list): Name of the edge populations used in the circuit.
+            edge_populations=None will use all available populations.
 
         Returns:
             Circuit: A Circuit object.
