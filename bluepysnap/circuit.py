@@ -24,46 +24,31 @@ from bluepysnap.nodes import NodeStorage
 from bluepysnap.edges import EdgeStorage
 from bluepysnap.exceptions import BluepySnapError
 
-from bluepysnap.utils import ensure_list
 
-
-def _collect_populations(partial_config, cls, select=None):
+def _collect_populations(partial_config, cls):
     result = {}
-    if select is not None:
-        select = ensure_list(select)
     for file_config in partial_config:
         storage = cls(file_config)
         for population in storage.population_names:
-            if select is None or population in select:
-                if population in result:
-                    raise BluepySnapError("Duplicated population: '%s'" % population)
-                result[population] = storage.population(population)
-    if select is not None:
-        missing = set(select) - set(result.keys())
-        if missing:
-            raise BluepySnapError("Missing population(s): '%s'" % missing)
+            if population in result:
+                raise BluepySnapError("Duplicated population: '%s'" % population)
+            result[population] = storage.population(population)
     return result
 
 
 class Circuit(object):
     """Access to circuit data."""
 
-    def __init__(self, config, node_populations=None, edge_populations=None):
+    def __init__(self, config):
         """Initializes a circuit object from a SONATA config file.
 
         Args:
             config (str): Path to a SONATA config file.
-            node_populations (str/list): Name of the node populations used in the circuit.
-            node_populations=None will use all available populations.
-            edge_populations (str/list): Name of the edge populations used in the circuit.
-            edge_populations=None will use all available populations.
 
         Returns:
             Circuit: A Circuit object.
         """
         self._config = Config(config).resolve()
-        self._node_populations = node_populations
-        self._edge_populations = edge_populations
 
     @property
     def config(self):
@@ -75,8 +60,7 @@ class Circuit(object):
         """Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
         return _collect_populations(
             self._config['networks']['nodes'],
-            lambda cfg: NodeStorage(cfg, self),
-            select=self._node_populations
+            lambda cfg: NodeStorage(cfg, self)
         )
 
     @cached_property
@@ -84,6 +68,5 @@ class Circuit(object):
         """Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
         return _collect_populations(
             self._config['networks']['edges'],
-            lambda cfg: EdgeStorage(cfg, self),
-            select=self._edge_populations
+            lambda cfg: EdgeStorage(cfg, self)
         )

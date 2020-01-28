@@ -65,11 +65,6 @@ class EdgeStorage(object):
         """Returns the circuit object containing this storage."""
         return self._circuit
 
-    @property
-    def h5_filepath(self):
-        """Returns the file path for this storage."""
-        return self._h5_filepath
-
     def population(self, population_name):
         """Access the different populations from the storage."""
         if population_name not in self._populations:
@@ -112,16 +107,11 @@ class EdgePopulation(object):
             EdgePopulation: An EdgePopulation object.
         """
         self._edge_storage = edge_storage
-        self._name = population_name
+        self.name = population_name
 
     @cached_property
     def _population(self):
         return self._edge_storage.storage.open_population(self.name)
-
-    @property
-    def name(self):
-        """Population name."""
-        return self._name
 
     @property
     def size(self):
@@ -136,24 +126,14 @@ class EdgePopulation(object):
         return result
 
     @cached_property
-    def source_name(self):
-        """Source population name."""
-        return self._population.source
-
-    @cached_property
-    def target_name(self):
-        """Target population name."""
-        return self._population.target
-
-    @cached_property
     def source(self):
         """Source NodePopulation."""
-        return self._nodes(self.source_name)
+        return self._nodes(self._population.source)
 
     @cached_property
     def target(self):
         """Target NodePopulation."""
-        return self._nodes(self.target_name)
+        return self._nodes(self._population.target)
 
     @cached_property
     def _property_names(self):
@@ -167,11 +147,6 @@ class EdgePopulation(object):
     def property_names(self):
         """Set of available edge properties."""
         return self._property_names | self._dynamics_params_names
-
-    @cached_property
-    def h5_filepath(self):
-        """Path of the file containing the population."""
-        return self._edge_storage.h5_filepath
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the EdgePopulation.

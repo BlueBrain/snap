@@ -101,10 +101,10 @@ class TestEdgePopulation(object):
             os.path.join(TEST_DATA_DIR, "edges.h5"), 'default')
 
     def test_basic(self):
-        assert self.test_obj.h5_filepath == os.path.join(TEST_DATA_DIR, 'edges.h5')
+        assert self.test_obj._edge_storage._h5_filepath == os.path.join(TEST_DATA_DIR, 'edges.h5')
         assert self.test_obj.name == 'default'
-        assert self.test_obj.source_name == 'default'
-        assert self.test_obj.target_name == 'default'
+        assert self.test_obj.source.name == 'default'
+        assert self.test_obj.target.name == 'default'
         assert self.test_obj.size, 4
         assert (
                 sorted(self.test_obj.property_names) ==

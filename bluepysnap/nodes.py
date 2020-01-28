@@ -70,11 +70,6 @@ class NodeStorage(object):
         return self._circuit
 
     @property
-    def h5_filepath(self):
-        """Returns the file path for this storage."""
-        return self._h5_filepath
-
-    @property
     def node_sets(self):
         """Returns the node sets defined for this node population."""
         return self._node_sets
@@ -166,12 +161,7 @@ class NodePopulation(object):
             NodePopulation: A NodePopulation object.
         """
         self._node_storage = node_storage
-        self._name = population_name
-
-    @cached_property
-    def name(self):
-        """Node population name."""
-        return self._name
+        self.name = population_name
 
     @property
     def node_sets(self):
@@ -192,11 +182,6 @@ class NodePopulation(object):
     def property_names(self):
         """Set of available node properties."""
         return set(self._data.columns)
-
-    @cached_property
-    def h5_filepath(self):
-        """Path of the file containing the population."""
-        return self._node_storage.h5_filepath
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.

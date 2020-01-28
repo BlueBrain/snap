@@ -143,7 +143,7 @@ class TestNodePopulation:
                                       'node_sets.json'))
 
     def test_basic(self):
-        assert self.test_obj.h5_filepath == os.path.join(TEST_DATA_DIR, 'nodes.h5')
+        assert self.test_obj._node_storage._h5_filepath == os.path.join(TEST_DATA_DIR, 'nodes.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
         assert (

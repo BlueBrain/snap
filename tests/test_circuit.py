@@ -31,23 +31,6 @@ def test_all():
     assert isinstance(circuit.nodes['default'], NodePopulation)
     assert isinstance(circuit.nodes['default2'], NodePopulation)
 
-def test_no_population():
-    circuit = test_module.Circuit(
-        os.path.join(TEST_DATA_DIR, 'circuit_config.json'),
-        node_populations='no-such-population'
-    )
-    with pytest.raises(BluepySnapError):
-        circuit.nodes
-
-
-def test_missing_population():
-    circuit = test_module.Circuit(
-        os.path.join(TEST_DATA_DIR, 'circuit_config.json'),
-        node_populations=['default', 'no-such-population']
-    )
-    with pytest.raises(BluepySnapError):
-        circuit.nodes
-
 
 def test_duplicate_population():
     circuit = test_module.Circuit(
