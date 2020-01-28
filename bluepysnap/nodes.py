@@ -176,16 +176,23 @@ class NodePopulation(object):
     def _population(self):
         return self._node_storage.storage.open_population(self.name)
 
-    @property
+    @cached_property
     def size(self):
         """Node population size."""
         return self._population.size
 
+    @cached_property
+    def _property_names(self):
+        return set(self._population.attribute_names)
+
+    @cached_property
+    def _dynamics_params_names(self):
+        return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
+
     @property
     def property_names(self):
         """Set of available node properties."""
-        return set(self._population.attribute_names) | set(utils.add_dynamic_prefix(
-            self._population.dynamics_attribute_names))
+        return self._property_names | self._dynamics_params_names
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.
