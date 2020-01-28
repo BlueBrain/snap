@@ -97,9 +97,8 @@ class NodeStorage(object):
         _all = libsonata.Selection([(0, node_count)])
         for attr in sorted(nodes.attribute_names):
             result[attr] = nodes.get_attribute(attr, _all)
-        for attr in sorted(nodes.dynamics_attribute_names):
-            result['%s%s' % (DYNAMICS_PREFIX, attr)] = nodes.get_dynamics_attribute(attr, _all)
-
+        for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
+            result[attr] = nodes.get_dynamics_attribute(attr.split(DYNAMICS_PREFIX)[1], _all)
         return result
 
 
@@ -173,15 +172,20 @@ class NodePopulation(object):
         """Collected data for the node population as a pandas.DataFrame."""
         return self._node_storage.load_population_data(self.name)
 
+    @cached_property
+    def _population(self):
+        return self._node_storage.storage.open_population(self.name)
+
     @property
     def size(self):
         """Node population size."""
-        return len(self._data)
+        return self._population.size
 
     @property
     def property_names(self):
         """Set of available node properties."""
-        return set(self._data.columns)
+        return set(self._population.attribute_names) | set(utils.add_dynamic_prefix(
+            self._population.dynamics_attribute_names))
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.

@@ -28,7 +28,7 @@ import pandas as pd
 from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import is_iterable
+from bluepysnap import utils
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 
@@ -141,7 +141,7 @@ class EdgePopulation(object):
 
     @cached_property
     def _dynamics_params_names(self):
-        return {DYNAMICS_PREFIX + name for name in list(self._population.dynamics_attribute_names)}
+        return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
 
     @property
     def property_names(self):
@@ -191,7 +191,7 @@ class EdgePopulation(object):
         if properties is None:
             return edge_ids
 
-        if is_iterable(properties):
+        if utils.is_iterable(properties):
             if len(edge_ids) == 0:
                 result = pd.DataFrame(columns=properties)
             else:
