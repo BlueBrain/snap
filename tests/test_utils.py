@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pytest
 
 import bluepysnap.utils as test_module
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 from bluepysnap.exceptions import BluepySnapError
 
 
@@ -30,6 +31,10 @@ def test_ensure_list():
     assert test_module.ensure_list(iter([1])) == [1]
     assert test_module.ensure_list((2, 1)) == [2, 1]
     assert test_module.ensure_list('abc') == ['abc']
+
+
+def test_add_dynamic_prefix():
+    assert test_module.add_dynamic_prefix(["a", "b"]) == [DYNAMICS_PREFIX+"a", DYNAMICS_PREFIX+"b"]
 
 
 def test_euler2mat():

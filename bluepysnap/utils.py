@@ -48,7 +48,7 @@ def ensure_list(v):
 
 def add_dynamic_prefix(properties):
     """Add the dynamic prefix to a list of properties."""
-    return {DYNAMICS_PREFIX + name for name in list(properties)}
+    return [DYNAMICS_PREFIX + name for name in list(properties)]
 
 
 def euler2mat(az, ay, ax):
