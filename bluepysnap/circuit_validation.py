@@ -5,7 +5,7 @@ import itertools as it
 
 try:
     from pathlib import Path
-except:
+except ImportError:
     from pathlib2 import Path
 from enum import Enum
 import click
@@ -26,6 +26,12 @@ class Error(object):
 
     def __str__(self):
         return str(self.message)
+
+    def __eq__(self, other):
+        if not isinstance(other, Error):
+            return NotImplemented
+
+        return self.level == other.level and self.message == other.message
 
 
 class BbpError(Error):
@@ -380,7 +386,7 @@ def _check_populations(config):
     return errors
 
 
-def validate(config_file):
+def validate(config_file, bbp_check=False):
     """Validates Sonata circuit
 
     Args:
@@ -392,5 +398,7 @@ def validate(config_file):
         errors.append(fatal('No "components" in config'))
     if not errors:
         errors = _check_populations(config)
+    if not bbp_check:
+        errors = [e for e in errors if type(e) is not BbpError]
     print_errors(errors)
     return errors
