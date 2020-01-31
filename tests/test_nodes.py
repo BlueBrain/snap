@@ -1,13 +1,13 @@
 import os
 
-import mock
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.util.testing as pdt
 import pytest
 
-from mock import patch, Mock
+import libsonata
+from mock import Mock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
@@ -17,15 +17,6 @@ import bluepysnap.nodes as test_module
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
-
-
-def test_get_population_name_duplicate():
-    storage = Mock()
-    storage.population_names = ['a', 'b']
-    with patch(test_module.__name__ + '.libsonata.NodeStorage') as NodeStorage:
-        NodeStorage.return_value = storage
-        with pytest.raises(BluepySnapError):
-            test_module._get_population_name(mock.ANY)
 
 
 def test_node_ids_by_filter():
@@ -87,17 +78,72 @@ def test_node_ids_by_filter_complex_query():
         test_module._node_ids_by_filter(nodes, {Cell.MTYPE: {'err': '.*BP'}})
 
 
-class TestNodePopulation:
+class TestNodeStorage:
     def setup(self):
         config = {
             'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes.h5'),
             'node_types_file': None,
             'node_sets_file': os.path.join(TEST_DATA_DIR, 'node_sets.json'),
         }
+        self.circuit = Mock()
+        self.test_obj = test_module.NodeStorage(config, self.circuit)
+
+    def test_storage(self):
+        assert isinstance(self.test_obj.storage, libsonata.NodeStorage)
+
+    def test_population_names(self):
+        assert sorted(list(self.test_obj.population_names)) == ["default", "default2"]
+
+    def test_circuit(self):
+        assert self.test_obj.circuit is self.circuit
+
+    def test_node_sets(self):
+        assert (
+                sorted(self.test_obj.node_sets) ==
+                ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
+                 'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
+        )
+
+    def test_population(self):
+        pop = self.test_obj.population("default")
+        assert isinstance(pop, test_module.NodePopulation)
+        assert pop.name == "default"
+        pop2 = self.test_obj.population("default")
+        assert pop is pop2
+
+    def test_load_population_data(self):
+        data = self.test_obj.load_population_data("default")
+        assert isinstance(data, pd.DataFrame)
+        assert sorted(list(data)) == sorted(['layer', 'morphology', 'mtype', 'rotation_angle_xaxis',
+                                             'rotation_angle_yaxis', 'rotation_angle_zaxis', 'x',
+                                             'y', 'z',
+                                             '@dynamics:holding_current'])
+        assert len(data) == 3
+
+
+class TestNodePopulation:
+
+    @staticmethod
+    def create_population(filepath, pop_name, nodeset_path=None):
+        config = {
+            'nodes_file': filepath,
+            'node_types_file': None,
+        }
+        if nodeset_path:
+            config['node_sets_file'] = nodeset_path
         circuit = Mock()
-        self.test_obj = test_module.NodePopulation(config, circuit)
+        storage = test_module.NodeStorage(config, circuit)
+        return storage.population(pop_name)
+
+    def setup(self):
+        self.test_obj = TestNodePopulation.create_population(
+            os.path.join(TEST_DATA_DIR, 'nodes.h5'),
+            "default",
+            nodeset_path=os.path.join(TEST_DATA_DIR,
+                                      'node_sets.json'))
 
     def test_basic(self):
+        assert self.test_obj._node_storage._h5_filepath == os.path.join(TEST_DATA_DIR, 'nodes.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
         assert (
@@ -133,10 +179,10 @@ class TestNodePopulation:
 
     def test_container_properties(self):
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'HOLDING_CURRENT', 'ROTATION_ANGLE_X',
-                    'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER'])
+                           'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER'])
         assert sorted(self.test_obj.container_property_names(Cell)) == expected
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'ROTATION_ANGLE_X', 'ROTATION_ANGLE_Y',
-                    'ROTATION_ANGLE_Z'])
+                           'ROTATION_ANGLE_Z'])
         assert sorted(self.test_obj.container_property_names(Node)) == expected
 
         with pytest.raises(BluepySnapError):
@@ -275,12 +321,9 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle[x|z]
-        config = {
-            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_no_xz_rotation.h5'),
-            'node_types_file': None,
-        }
-        circuit = Mock()
-        _call_no_xz = test_module.NodePopulation(config, circuit).orientations
+        _call_no_xz = TestNodePopulation.create_population(
+            os.path.join(TEST_DATA_DIR, 'nodes_no_xz_rotation.h5'),
+            "default").orientations
         # 0 and 2 node_ids have x|z rotation angles equal to zero
         npt.assert_almost_equal(_call_no_xz(0), _call(0))
         npt.assert_almost_equal(_call_no_xz(2), _call(2))
@@ -295,12 +338,10 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle
-        config = {
-            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_no_rotation.h5'),
-            'node_types_file': None,
-        }
-        circuit = Mock()
-        _call_no_rot = test_module.NodePopulation(config, circuit).orientations
+        _call_no_rot = TestNodePopulation.create_population(
+            os.path.join(TEST_DATA_DIR, 'nodes_no_rotation.h5'),
+            "default").orientations
+
         pdt.assert_series_equal(
             _call_no_rot([2, 0, 1]),
             pd.Series(
@@ -311,12 +352,10 @@ class TestNodePopulation:
         )
 
         # NodePopulation with quaternions
-        config = {
-            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_quaternions.h5'),
-            'node_types_file': None,
-        }
-        circuit = Mock()
-        _call_quat = test_module.NodePopulation(config, circuit).orientations
+        _call_quat = TestNodePopulation.create_population(
+            os.path.join(TEST_DATA_DIR, 'nodes_quaternions.h5'),
+            "default").orientations
+
         npt.assert_almost_equal(
             _call_quat(0),
             [
@@ -356,14 +395,12 @@ class TestNodePopulation:
             )
         )
 
-    config = {
-        'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes_quaternions_w_missing.h5'),
-        'node_types_file': None,
-    }
-    circuit = Mock()
-    _call_missing_quat = test_module.NodePopulation(config, circuit).orientations
-    with pytest.raises(BluepySnapError):
-        _call_missing_quat(0)
+        _call_missing_quat = TestNodePopulation.create_population(
+            os.path.join(TEST_DATA_DIR, 'nodes_quaternions_w_missing.h5'),
+            "default").orientations
+
+        with pytest.raises(BluepySnapError):
+            _call_missing_quat(0)
 
     def test_count(self):
         _call = self.test_obj.count
@@ -374,18 +411,16 @@ class TestNodePopulation:
 
     def test_morph(self):
         from bluepysnap.morph import MorphHelper
-        self.test_obj._circuit.config = {
+        self.test_obj._node_storage.circuit.config = {
             'components': {
                 'morphologies_dir': 'test'
             }
         }
         assert isinstance(self.test_obj.morph, MorphHelper)
 
+    def test_NodePopulation_without_node_sets(self):
+        nodes = TestNodePopulation.create_population(
+            os.path.join(TEST_DATA_DIR, 'nodes.h5'),
+            "default")
 
-def test_NodePopulation_without_node_sets():
-    config = {
-        'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes.h5'),
-        'node_types_file': None,
-    }
-    nodes = test_module.NodePopulation(config, mock.ANY)
-    assert nodes.node_sets == {}
+        assert nodes.node_sets == {}

@@ -19,7 +19,6 @@
 
 from builtins import map
 
-import collections
 import inspect
 
 import libsonata
@@ -29,17 +28,48 @@ import pandas as pd
 from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import is_iterable
+from bluepysnap import utils
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 
-def _get_population_name(h5_filepath):
-    populations = libsonata.EdgeStorage(h5_filepath).population_names
-    if len(populations) != 1:
-        raise BluepySnapError(
-            "Only single-population node collections are supported (found: %d)" % len(populations)
-        )
-    return list(populations)[0]
+class EdgeStorage(object):
+    """Edge storage access."""
+    def __init__(self, config, circuit):
+        """Initializes a EdgeStorage object from a edge config and a Circuit.
+
+        Args:
+            config (dict): a edge config from the global circuit config
+            circuit (bluepysnap.Circuit): the circuit object that contains the EdgePopulations
+            from this storage.
+
+        Returns:
+            EdgeStorage: A EdgeStorage object.
+        """
+        self._h5_filepath = config['edges_file']
+        self._csv_filepath = config['edge_types_file']
+        self._circuit = circuit
+        self._populations = {}
+
+    @cached_property
+    def storage(self):
+        """Access to the libsonata edge storage."""
+        return libsonata.EdgeStorage(self._h5_filepath)
+
+    @cached_property
+    def population_names(self):
+        """Returns all population names inside this file."""
+        return self.storage.population_names
+
+    @property
+    def circuit(self):
+        """Returns the circuit object containing this storage."""
+        return self._circuit
+
+    def population(self, population_name):
+        """Access the different populations from the storage."""
+        if population_name not in self._populations:
+            self._populations[population_name] = EdgePopulation(self, population_name)
+        return self._populations[population_name]
 
 
 def _resolve_node_ids(nodes, group):
@@ -66,49 +96,36 @@ def _estimate_range_size(func, node_ids, n=3):
 class EdgePopulation(object):
     """Edge population access."""
 
-    def __init__(self, config, circuit):
-        """Initializes a EdgePopulation object from a config dictionary and a circuit.
+    def __init__(self, edge_storage, population_name):
+        """Initializes a EdgePopulation object from a EdgeStorage and a population name.
 
         Args:
-            config (dict): A dictionary corresponding to a Sonata config file.
-            circuit (Circuit): The circuit object that contains the EdgePopulation.
+            edge_storage (EdgeStorage): the edge storage containing the edge population
+            population_name (str): the name of the edge population
 
         Returns:
             EdgePopulation: An EdgePopulation object.
         """
-        self._h5_filepath = config['edges_file']
-        self._csv_filepath = config['edge_types_file']
-        self._circuit = circuit
+        self._edge_storage = edge_storage
+        self.name = population_name
 
     @cached_property
     def _population(self):
-        return libsonata.EdgePopulation(self._h5_filepath, self._csv_filepath or '', self.name)
-
-    @cached_property
-    def name(self):
-        """Population name."""
-        return _get_population_name(self._h5_filepath)
+        return self._edge_storage.storage.open_population(self.name)
 
     @property
     def size(self):
         """Population size."""
         return self._population.size
 
-    def _nodes(self, population):
-        nodes = self._circuit.nodes
-
-        result = None
-        if isinstance(nodes, collections.Mapping):
-            result = nodes.get(population)
-        elif nodes.name == population:
-            result = nodes
-
+    def _nodes(self, population_name):
+        """Returns the NodePopulation corresponding to population."""
+        result = self._edge_storage.circuit.nodes.get(population_name)
         if result is None:
-            raise BluepySnapError("Undefined node population: '%s'" % population)
-
+            raise BluepySnapError("Undefined node population: '%s'" % population_name)
         return result
 
-    @property
+    @cached_property
     def source(self):
         """Source NodePopulation."""
         return self._nodes(self._population.source)
@@ -124,7 +141,7 @@ class EdgePopulation(object):
 
     @cached_property
     def _dynamics_params_names(self):
-        return {DYNAMICS_PREFIX + name for name in list(self._population.dynamics_attribute_names)}
+        return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
 
     @property
     def property_names(self):
@@ -174,7 +191,7 @@ class EdgePopulation(object):
         if properties is None:
             return edge_ids
 
-        if is_iterable(properties):
+        if utils.is_iterable(properties):
             if len(edge_ids) == 0:
                 result = pd.DataFrame(columns=properties)
             else:

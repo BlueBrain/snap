@@ -24,6 +24,7 @@ import numpy as np
 import six
 
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
 
 def load_json(filepath):
@@ -43,6 +44,11 @@ def ensure_list(v):
         return list(v)
     else:
         return [v]
+
+
+def add_dynamic_prefix(properties):
+    """Add the dynamic prefix to a list of properties."""
+    return [DYNAMICS_PREFIX + name for name in list(properties)]
 
 
 def euler2mat(az, ay, ax):

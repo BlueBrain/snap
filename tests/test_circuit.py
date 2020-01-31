@@ -15,9 +15,7 @@ TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
 
 def test_all():
     circuit = test_module.Circuit(
-        os.path.join(TEST_DATA_DIR, 'circuit_config.json'),
-        node_population='default'
-    )
+        os.path.join(TEST_DATA_DIR, 'circuit_config.json'))
     assert(
         circuit.config['networks']['nodes'][0] ==
         {
@@ -25,19 +23,13 @@ def test_all():
             'node_types_file': None,
         }
     )
-    assert isinstance(circuit.nodes, NodePopulation)
+    assert isinstance(circuit.nodes, dict)
     assert isinstance(circuit.edges, dict)
     assert list(circuit.edges) == ['default']
     assert isinstance(circuit.edges['default'], EdgePopulation)
-
-
-def test_no_population():
-    circuit = test_module.Circuit(
-        os.path.join(TEST_DATA_DIR, 'circuit_config.json'),
-        node_population='no-such-population'
-    )
-    with pytest.raises(BluepySnapError):
-        circuit.nodes
+    assert sorted(list(circuit.nodes)) == ['default', 'default2']
+    assert isinstance(circuit.nodes['default'], NodePopulation)
+    assert isinstance(circuit.nodes['default2'], NodePopulation)
 
 
 def test_duplicate_population():
@@ -46,3 +38,4 @@ def test_duplicate_population():
     )
     with pytest.raises(BluepySnapError):
         circuit.nodes
+
