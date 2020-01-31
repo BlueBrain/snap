@@ -51,7 +51,7 @@ setup(
         'six>=1.0',
     ],
     extras_require={
-        'validation': ['click>=7.0', 'pathlib2>=2.3']
+        'validation': ['click>=7.0', 'pathlib2>=2.3', 'enum-compat>=0.0.2',]
     },
     packages=find_packages(),
     use_scm_version=True,
