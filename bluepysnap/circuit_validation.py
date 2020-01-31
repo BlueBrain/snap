@@ -28,6 +28,10 @@ class Error(object):
         return str(self.message)
 
 
+class BbpError(Error):
+    pass
+
+
 class MissingDirError(Error):
     def __init__(self, name, path, level, message=None):
         super().__init__(level, message)
@@ -70,10 +74,6 @@ def check_files(name, files, level):
 
 def fatal(message):
     return Error(ErrorLevel.FATAL, message)
-
-
-def warn(message):
-    return Error(ErrorLevel.WARNING, message)
 
 
 def print_errors(errors):
@@ -160,18 +160,26 @@ def _get_model_template_file(model_template):
 
 
 def _check_bio_nodes_group(group, config):
+    def _check_rotations():
+        angle_fields = {'rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis'}
+        has_angle_fields = len(angle_fields - set(group)) < len(angle_fields)
+        has_rotation_fields = 'orientation' in group or has_angle_fields
+        if not has_rotation_fields:
+            errors.append(fatal('Group {} of {} has no rotation fields'.
+                                format(group_name, group.file.filename)))
+        if not has_angle_fields:
+            bbp_orient_fields = {'orientation_w', 'orientation_x', 'orientation_y', 'orientation_z'}
+            if bbp_orient_fields - set(group):
+                errors.append(BbpError(ErrorLevel.FATAL, 'Group {} of {} has no rotation fields'.
+                                       format(group_name, group.file.filename)))
+
     errors = []
     group_name = _get_group_name(group)
     missing_fields = {'morphology', 'x', 'y', 'z'} - set(group)
     if missing_fields:
         errors.append(fatal('Group {} of {} misses biophysical fields: {}'.
                             format(group_name, group.file.filename, missing_fields)))
-    has_rotation_fields = 'orientation' in group \
-                          or {'rotation_angle_xaxis', 'rotation_angle_yaxis',
-                              'rotation_angle_zaxis'} - set(group) is not None
-    if not has_rotation_fields:
-        errors.append(fatal('Group {} of {} has no rotation fields'.
-                            format(group_name, group.file.filename)))
+    _check_rotations()
     components = config['components']
     errors += _check_components_dir('morphologies_dir', components, ErrorLevel.FATAL)
     errors += _check_components_dir('mechanisms_dir', components, ErrorLevel.FATAL)
@@ -228,9 +236,6 @@ def _check_nodes_population(nodes_dict, config):
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, nodes_file, missing_datasets)))
-            if 'node_id' not in population:
-                errors.append(warn('Population {} of {} misses "node_id" dataset'.
-                                   format(population_name, nodes_file)))
             for name in children_names:
                 if isinstance(population[name], h5py.Group):
                     errors += _check_nodes_group(population[name], config)
@@ -255,8 +260,8 @@ def _check_edges_group_bbp(group):
     errors = []
     missing_fields = set(GROUP_NAMES) - set(group)
     if len(missing_fields) > 0:
-        errors.append(fatal('Group {} of {} misses fields: {}'.
-                            format(_get_group_name(group), group.file.filename, missing_fields)))
+        errors.append(BbpError(ErrorLevel.FATAL, 'Group {} of {} misses fields: {}'.
+                               format(_get_group_name(group), group.file.filename, missing_fields)))
     return errors
 
 
@@ -346,9 +351,6 @@ def _check_edges_population(edges_dict, nodes):
             if len(missing_datasets) > 0:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, edges_file, missing_datasets)))
-            if 'edge_id' not in population:
-                errors.append(warn('Population {} of {} misses "edge_id" dataset'.
-                                   format(population_name, edges_file)))
             for name in children_names - {'indices'}:
                 if isinstance(population[name], h5py.Group):
                     errors += _check_edges_group_bbp(population[name])
