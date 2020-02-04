@@ -116,7 +116,7 @@ class TestNodeStorage:
         assert isinstance(data, pd.DataFrame)
         assert sorted(list(data)) == sorted(['layer', 'morphology', 'mtype', 'rotation_angle_xaxis',
                                              'rotation_angle_yaxis', 'rotation_angle_zaxis', 'x',
-                                             'y', 'z',
+                                             'y', 'z', 'model_template', 'model_type',
                                              '@dynamics:holding_current'])
         assert len(data) == 3
 
@@ -151,6 +151,8 @@ class TestNodePopulation:
                 [
                     Cell.HOLDING_CURRENT,
                     Cell.LAYER,
+                    Cell.MODEL_TEMPLATE,
+                    Cell.MODEL_TYPE,
                     Cell.MORPHOLOGY,
                     Cell.MTYPE,
                     Cell.ROTATION_ANGLE_X,
@@ -179,7 +181,8 @@ class TestNodePopulation:
 
     def test_container_properties(self):
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'HOLDING_CURRENT', 'ROTATION_ANGLE_X',
-                           'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER'])
+                           'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER',
+                           'MODEL_TEMPLATE', 'MODEL_TYPE'])
         assert sorted(self.test_obj.container_property_names(Cell)) == expected
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'ROTATION_ANGLE_X', 'ROTATION_ANGLE_Y',
                            'ROTATION_ANGLE_Z'])
@@ -225,7 +228,7 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 10)
+        assert _call().shape == (3, 12)
         assert _call(0, Cell.MTYPE) == 'L2_X'
         assert _call(np.int32(0), Cell.MTYPE) == 'L2_X'
         pdt.assert_frame_equal(

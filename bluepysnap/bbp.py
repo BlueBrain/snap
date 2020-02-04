@@ -23,6 +23,8 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
 class Cell(Node):
     """Cell property names."""
 
+    MODEL_TYPE = "model_type"
+    MODEL_TEMPLATE = "model_template"
     ME_COMBO = "me_combo"
     MTYPE = "mtype"
     ETYPE = "etype"
