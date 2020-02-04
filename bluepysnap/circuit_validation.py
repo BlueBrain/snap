@@ -326,8 +326,8 @@ def _get_node_ids(node_population):
     if 'node_id' in node_population:
         node_ids = node_population['node_id'][:]
     else:
-        node_size_ds = get_h5_path(node_population, 'node_type_id') or \
-                       get_h5_path(node_population, 'node_group_id')
+        node_size_ds = get_h5_path(node_population, 'node_type_id') or get_h5_path(node_population,
+                                                                                   'node_group_id')
         if node_size_ds:
             node_ids = range(len(node_size_ds))
     return node_ids
