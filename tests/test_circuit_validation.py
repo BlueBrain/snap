@@ -1,9 +1,10 @@
 import json
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
-from tempfile import TemporaryDirectory
 
 import h5py
+
+from utils import setup_tempdir
 
 try:
     from pathlib import Path
@@ -26,7 +27,7 @@ def _copy_circuit():
     Returns:
         yields a path to the copy of the config file
     """
-    with TemporaryDirectory() as tmp_dir:
+    with setup_tempdir() as tmp_dir:
         copy_tree(str(TEST_DATA_DIR), tmp_dir)
         circuit_copy_path = Path(tmp_dir)
         yield (circuit_copy_path, circuit_copy_path / 'circuit_config.json')
