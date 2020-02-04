@@ -1,6 +1,4 @@
-"""
-Standalone module that validates Sonata circuit. See ``validate`` function.
-"""
+"""Standalone module that validates Sonata circuit. See ``validate`` function."""
 import itertools as it
 
 try:
@@ -17,22 +15,30 @@ MAX_MISSING_FILES_DISPLAY = 10
 
 
 class ErrorLevel(Enum):
-    """Error level"""
+    """Error level."""
     FATAL = 0
     WARNING = 1
 
 
 class Error(object):
-    """Error used for reporting of validation errors"""
+    """Error used for reporting of validation errors."""
 
     def __init__(self, level, message=None):
+        """Error.
+
+        Args:
+            level (ErrorLevel): error level
+            message (str|None): message
+        """
         self.level = level
         self.message = message
 
     def __str__(self):
+        """Returns only message by default."""
         return str(self.message)
 
     def __eq__(self, other):
+        """Two errors are equal if their level and message are equal."""
         if not isinstance(other, Error):
             raise NotImplementedError
 
@@ -40,7 +46,7 @@ class Error(object):
 
 
 class BbpError(Error):
-    """Special class of errors for BBP specification of Sonata"""
+    """Special class of errors for BBP specification of Sonata."""
 
 
 def _check_components_dir(name, components):
@@ -60,7 +66,7 @@ def _check_components_dir(name, components):
 
 
 def _check_files(name, files, level):
-    """Checks for existence of files within an h5 group
+    """Checks for existence of files within an h5 group.
 
     Args:
         name (str): h5 group name
@@ -82,7 +88,7 @@ def _check_files(name, files, level):
 
 
 def fatal(message):
-    """Shortcut for a fatal error
+    """Shortcut for a fatal error.
 
     Args:
         message (str):
@@ -94,7 +100,7 @@ def fatal(message):
 
 
 def _print_errors(errors):
-    """Some fancy errors printing"""
+    """Some fancy errors printing."""
     colors = {
         ErrorLevel.WARNING: 'yellow',
         ErrorLevel.FATAL: 'red',
@@ -104,7 +110,7 @@ def _print_errors(errors):
 
 
 def _check_required_datasets(config):
-    """Validates required datasets of "nodes" and "edges" in config
+    """Validates required datasets of "nodes" and "edges" in config.
 
     Args:
         config (dict): resolved bluepysnap config
@@ -165,7 +171,7 @@ def _find_nodes_population(node_population_name, nodes):
 
 
 def _get_group_name(group):
-    """Gets group name of h5 group"""
+    """Gets group name of h5 group."""
     return Path(group.parent.name).name
 
 
@@ -183,13 +189,13 @@ def get_h5_path(h5, path):
 
 
 def _get_model_template_file(model_template):
-    """Resolves 'model_template' field of nodes group to a proper filename"""
+    """Resolves 'model_template' field of nodes group to a proper filename."""
     parts = model_template.split(':', 1)
     return parts[1] + '.' + parts[0]
 
 
 def _check_bio_nodes_group(group, config):
-    """Checks biophysical nodes group for errors
+    """Checks biophysical nodes group for errors.
 
     Args:
         group (h5py.Group): nodes group in nodes .h5 file
@@ -200,7 +206,7 @@ def _check_bio_nodes_group(group, config):
     """
 
     def _check_rotations():
-        """Checks for proper rotation fields"""
+        """Checks for proper rotation fields."""
         angle_fields = {'rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis'}
         has_angle_fields = len(angle_fields - set(group)) < len(angle_fields)
         has_rotation_fields = 'orientation' in group or has_angle_fields
@@ -239,7 +245,7 @@ def _check_bio_nodes_group(group, config):
 
 
 def _check_nodes_group(group, config):
-    """Validates nodes group in nodes population
+    """Validates nodes group in nodes population.
 
     Args:
         group (h5py.Group): nodes group in nodes .h5 file
@@ -259,7 +265,7 @@ def _check_nodes_group(group, config):
 
 
 def _check_nodes_population(nodes_dict, config):
-    """Validates nodes population
+    """Validates nodes population.
 
     Args:
         nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
@@ -289,7 +295,7 @@ def _check_nodes_population(nodes_dict, config):
 
 
 def _check_edges_group_bbp(group):
-    """Validates edges group in edges population according to BBP spec
+    """Validates edges group in edges population according to BBP spec.
 
     Not used for now. BBP only.
     Args:
@@ -315,7 +321,7 @@ def _check_edges_group_bbp(group):
 
 
 def _get_node_ids(node_population):
-    """Gets node ids of node population
+    """Gets node ids of node population.
 
     Args:
         node_population (h5py.Group): node population h5 instance
@@ -335,7 +341,7 @@ def _get_node_ids(node_population):
 
 
 def _check_edges_node_ids(nodes_ds, nodes):
-    """Checks that nodes ids in edges can be resolved to nodes ids in nodes populations
+    """Checks that nodes ids in edges can be resolved to nodes ids in nodes populations.
 
     Args:
         nodes_ds (h5py.Dataset): nodes dataset in edges population
@@ -364,7 +370,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
 
 
 def _check_edges_indices(population):
-    """Validates edges population indices
+    """Validates edges population indices.
 
     Args:
         population (h5py.Group): edges population
@@ -374,8 +380,11 @@ def _check_edges_indices(population):
     """
 
     def _check(indices, nodes_ds):
-        """The main indices check. It iterates over edge indices and verifies that each has its
-        nodes in place in nodes populations"""
+        """The main indices check.
+
+        It iterates over edge indices and verifies that each has its
+        nodes in place in nodes populations
+        """
         nodes_ranges = indices['node_id_to_ranges']
         node_to_edges_ranges = indices['range_to_edge_id']
         for node_id, nodes_range in enumerate(nodes_ranges[:]):
@@ -401,7 +410,7 @@ def _check_edges_indices(population):
 
 
 def _check_edges_population(edges_dict, nodes):
-    """Validates edges population
+    """Validates edges population.
 
     Args:
         edges_dict (dict): edges population, represented by an item of "edges" in ``config``
@@ -441,7 +450,7 @@ def _check_edges_population(edges_dict, nodes):
 
 
 def _check_populations(config):
-    """Validates all nodes and edges populations in config
+    """Validates all nodes and edges populations in config.
 
     Args:
         config (dict): resolved bluepysnap config
@@ -461,7 +470,7 @@ def _check_populations(config):
 
 
 def validate(config_file, bbp_check=False):
-    """Validates Sonata circuit
+    """Validates Sonata circuit.
 
     Args:
         config_file (str): path to Sonata circuit config file
