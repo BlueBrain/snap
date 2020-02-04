@@ -185,7 +185,7 @@ class TestNodePopulation:
                            'MODEL_TEMPLATE', 'MODEL_TYPE'])
         assert sorted(self.test_obj.container_property_names(Cell)) == expected
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'ROTATION_ANGLE_X', 'ROTATION_ANGLE_Y',
-                           'ROTATION_ANGLE_Z'])
+                           'ROTATION_ANGLE_Z', 'MODEL_TEMPLATE', 'MODEL_TYPE'])
         assert sorted(self.test_obj.container_property_names(Node)) == expected
 
         with pytest.raises(BluepySnapError):
