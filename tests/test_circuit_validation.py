@@ -10,7 +10,7 @@ try:
     from pathlib import Path
 except ImportError:
     from pathlib2 import Path
-
+from six import u as unicode
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import Error, ErrorLevel
 
@@ -50,7 +50,7 @@ def _edit_config(config_path):
         yield config
     finally:
         with config_path.open('w') as f:
-            json.dump(config, f)
+            f.write(unicode(json.dumps(config)))
 
 
 def test_correct_circuit():
