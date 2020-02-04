@@ -421,8 +421,8 @@ def _check_edges_population(edges_dict, nodes):
         for population_name in edges:
             population_path = '/edges/' + population_name
             population = h5f[population_path]
-            children_names = population.keys()
-            missing_datasets = sorted(set(POPULATION_DATASET_NAMES) - set(children_names))
+            children_names = set(population.keys())
+            missing_datasets = sorted(set(POPULATION_DATASET_NAMES) - children_names)
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, edges_file, missing_datasets)))
