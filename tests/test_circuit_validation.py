@@ -2,7 +2,13 @@ import json
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
 
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 import h5py
+import pytest
 
 from utils import setup_tempdir
 
@@ -12,7 +18,7 @@ except ImportError:
     from pathlib2 import Path
 from six import u as unicode
 import bluepysnap.circuit_validation as test_module
-from bluepysnap.circuit_validation import Error, ErrorLevel
+from bluepysnap.circuit_validation import Error, ErrorLevel, BbpError
 
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / 'data'
@@ -53,7 +59,13 @@ def _edit_config(config_path):
             f.write(unicode(json.dumps(config)))
 
 
-def test_correct_circuit():
+def test_error_comparison():
+    err = Error(ErrorLevel.WARNING, 'hello')
+    with pytest.raises(NotImplementedError):
+        assert err == 'hello'
+
+
+def test_ok_circuit():
     errors = test_module.validate(str(TEST_DATA_DIR / 'circuit_config.json'))
     assert errors == []
 
@@ -145,6 +157,15 @@ def test_no_nodes_h5():
         ]
 
 
+def test_ok_node_ids_dataset():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            h5f['nodes/default/node_id'] = list(range(len(h5f['nodes/default/node_type_id'])))
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
 def test_no_required_node_population_datasets():
     required_datasets = ['node_type_id', 'node_group_id', 'node_group_index']
     for ds in required_datasets:
@@ -168,6 +189,15 @@ def test_no_required_node_group_datasets():
         assert errors == [Error(ErrorLevel.FATAL,
                                 'Group default of {} misses required fields: {}'
                                 .format(nodes_file, required_datasets))]
+
+
+def test_ok_nonbio_node_group_datasets():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            h5f['nodes/default/0/model_type'][:] = ''
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
 
 
 def test_no_required_bio_node_group_datasets():
@@ -207,6 +237,7 @@ def test_no_bio_component_dirs():
                                         'Invalid components "{}": {}'.format(dir_, None))]
 
 
+@patch('bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY', 1)
 def test_no_morph_files():
     with _copy_circuit() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / 'nodes.h5'
@@ -216,6 +247,15 @@ def test_no_morph_files():
         assert errors == [Error(
             ErrorLevel.WARNING,
             'missing 1 files in group morphology: default[{}]:\n\tnoname.swc\n'.format(nodes_file))]
+
+        with h5py.File(nodes_file, 'r+') as h5f:
+            morph = h5f['nodes/default/0/morphology']
+            morph[:] = ['noname' + str(i) for i in range(len(morph))]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(
+            ErrorLevel.WARNING,
+            'missing 3 files in group morphology: default[{}]:\n\tnoname0.swc\n\t...\n'.format(
+                nodes_file))]
 
 
 def test_no_template_files():
@@ -250,6 +290,27 @@ def test_no_required_edge_population_datasets():
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(ErrorLevel.FATAL, 'Population default of {} misses datasets {}'.
                                 format(edges_file, required_datasets))]
+
+
+def test_no_required_bbp_edge_group_datasets():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0/syn_weight']
+        errors = test_module.validate(str(config_copy_path), True)
+        assert errors == [BbpError(ErrorLevel.FATAL, 'Group default of {} misses fields: {}'.
+                                   format(edges_file, ['syn_weight']))]
+
+
+def test_no_edge_source_to_target():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/indices/source_to_target']
+            del h5f['edges/default/indices/target_to_source']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(ErrorLevel.FATAL, 'No "source_to_target" in {}'.format(edges_file)),
+                          Error(ErrorLevel.FATAL, 'No "target_to_source" in {}'.format(edges_file))]
 
 
 def test_no_edge_all_node_ids():

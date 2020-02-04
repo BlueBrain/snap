@@ -5,13 +5,15 @@ import itertools as it
 
 try:
     from pathlib import Path
-except ImportError:
+except ImportError:  # pragma: nocover
     from pathlib2 import Path
 from enum import Enum
 import click
 import h5py
 
 from bluepysnap.config import Config
+
+MAX_MISSING_FILES_DISPLAY = 10
 
 
 class ErrorLevel(Enum):
@@ -32,7 +34,7 @@ class Error(object):
 
     def __eq__(self, other):
         if not isinstance(other, Error):
-            return NotImplemented
+            raise NotImplementedError
 
         return self.level == other.level and self.message == other.message
 
@@ -68,11 +70,10 @@ def _check_files(name, files, level):
     Returns:
         List of errors, empty if no errors
     """
-    missing = {f for f in files if not f.is_file()}
+    missing = sorted({f for f in files if not f.is_file()})
     if missing:
-        max_count = 10
-        examples = [e.name for e in it.islice(missing, max_count)]
-        if len(missing) > max_count:
+        examples = [e.name for e in it.islice(missing, MAX_MISSING_FILES_DISPLAY)]
+        if len(missing) > MAX_MISSING_FILES_DISPLAY:
             examples.append('...')
         filenames = ''.join('\t%s\n' % e for e in examples)
         return [Error(level,
@@ -351,7 +352,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
         return errors
     with h5py.File(nodes_dict['nodes_file'], 'r') as h5f:
         node_ids = _get_node_ids(h5f['/nodes/' + node_population_name])
-        if node_ids:
+        if node_ids is not None:
             missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
             if missing_ids:
                 errors.append(fatal('{} misses node ids in its node population: {}'.

@@ -123,6 +123,11 @@ class TestEdgePopulation(object):
                     Synapse.PRE_X_SURFACE,
                     Synapse.PRE_Y_SURFACE,
                     Synapse.PRE_Z_SURFACE,
+                    Synapse.POST_SECTION_ID,
+                    Synapse.POST_SECTION_POS,
+                    Synapse.PRE_SECTION_ID,
+                    Synapse.PRE_SECTION_POS,
+                    Synapse.SYN_WEIGHT,
                     test_module.DYNAMICS_PREFIX + 'param1'
                 ])
         )
@@ -131,7 +136,8 @@ class TestEdgePopulation(object):
         expected = sorted(
             ['PRE_Y_SURFACE', 'PRE_Z_SURFACE', 'PRE_X_CENTER', 'POST_Y_CENTER', 'AXONAL_DELAY',
              'POST_X_CENTER', 'POST_Y_SURFACE', 'POST_Z_SURFACE', 'PRE_Y_CENTER', 'POST_Z_CENTER',
-             'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE'])
+             'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE', 'POST_SECTION_ID', 'PRE_SECTION_ID',
+             'POST_SECTION_POS', 'PRE_SECTION_POS', 'SYN_WEIGHT'])
         assert sorted(self.test_obj.container_property_names(Edge)) == expected
         with pytest.raises(BluepySnapError):
             mapping = {"X": "x"}
