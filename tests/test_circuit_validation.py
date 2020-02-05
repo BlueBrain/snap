@@ -1,6 +1,7 @@
 import json
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
+
 try:
     from unittest.mock import patch
 except ImportError:
@@ -15,6 +16,7 @@ import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import Error, BbpError
 
 from utils import setup_tempdir, TEST_DATA_DIR
+
 
 @contextmanager
 def _copy_circuit():
@@ -53,7 +55,8 @@ def _edit_config(config_path):
 
 def test_error_comparison():
     err = Error(Error.WARNING, 'hello')
-    assert err != 'hello'
+    # we don't use `err == 'hello'` because of py27 compatibility
+    assert (err == 'hello') is False
 
 
 def test_ok_circuit():
@@ -205,15 +208,30 @@ def test_no_required_bio_node_group_datasets():
 
 
 def test_no_rotation_bio_node_group_datasets():
-    required_datasets = ['rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis']
+    angle_datasets = ['rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis']
     with _copy_circuit() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / 'nodes.h5'
         with h5py.File(nodes_file, 'r+') as h5f:
-            for ds in required_datasets:
+            for ds in angle_datasets:
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.WARNING,
                                 'Group default of {} has no rotation fields'.format(nodes_file))]
+
+
+def test_no_rotation_bbp_node_group_datasets():
+    angle_datasets = ['rotation_angle_xaxis', 'rotation_angle_yaxis', 'rotation_angle_zaxis']
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            for ds in angle_datasets:
+                del h5f['nodes/default/0/' + ds]
+            h5f['nodes/default/0/orientation_w'] = 0
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == [
+            Error(Error.WARNING, 'Group default of {} has no rotation fields'.format(nodes_file)),
+            BbpError(Error.WARNING, 'Group default of {} has no rotation fields'.format(nodes_file))
+        ]
 
 
 def test_no_bio_component_dirs():
@@ -334,7 +352,7 @@ def test_invalid_edge_node_ids():
             Error(Error.FATAL,
                   '/edges/default/target_node_id misses node ids in its node population: [99999]'),
             Error(Error.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
-                                    'single id 2'.format(edges_file)),
+                               'single id 2'.format(edges_file)),
             Error(Error.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
-                                    'single id 0'.format(edges_file)),
+                               'single id 0'.format(edges_file)),
         ]
