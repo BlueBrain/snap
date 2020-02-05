@@ -38,6 +38,7 @@ class EggInfo(egg_info):
 with open('README.rst') as f:
     README = f.read()
 
+VALIDATION = ['click>=7.0', 'pathlib2>=2.3']
 
 setup(
     name='bluepysnap',
@@ -51,6 +52,9 @@ setup(
         'pandas>=0.17',
         'six>=1.0',
     ],
+    extras_require={
+        'validation': VALIDATION
+    },
     packages=find_packages(),
     use_scm_version=True,
     setup_requires=[
@@ -59,6 +63,10 @@ setup(
     cmdclass={
         'egg_info': EggInfo,
     },
+    entry_points='''
+        [console_scripts]
+        snap=bluepysnap.cli:cli
+    ''',
     author="BlueBrain Project, EPFL",
     author_email="bbp-ou-nse@groupes.epfl.ch",
     description="Simulation and Neural network Analysis Productivity layer",

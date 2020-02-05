@@ -1,5 +1,3 @@
-import os
-
 import mock
 import numpy as np
 import numpy.testing as npt
@@ -16,8 +14,7 @@ from bluepysnap.sonata_constants import Edge
 
 import bluepysnap.edges as test_module
 
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
+from utils import TEST_DATA_DIR
 
 
 def index_as_uint64(values):
@@ -51,7 +48,7 @@ def test_estimate_range_size_4():
 class TestEdgeStorage:
     def setup(self):
         config = {
-            'edges_file': os.path.join(TEST_DATA_DIR, 'edges.h5'),
+            'edges_file': str(TEST_DATA_DIR / 'edges.h5'),
             'edge_types_file': None,
         }
         self.circuit = Mock()
@@ -98,10 +95,10 @@ class TestEdgePopulation(object):
 
     def setup(self):
         self.test_obj = TestEdgePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, "edges.h5"), 'default')
+            str(TEST_DATA_DIR / "edges.h5"), 'default')
 
     def test_basic(self):
-        assert self.test_obj._edge_storage._h5_filepath == os.path.join(TEST_DATA_DIR, 'edges.h5')
+        assert self.test_obj._edge_storage._h5_filepath == str(TEST_DATA_DIR / 'edges.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.source.name == 'default'
         assert self.test_obj.target.name == 'default'
@@ -123,6 +120,11 @@ class TestEdgePopulation(object):
                     Synapse.PRE_X_SURFACE,
                     Synapse.PRE_Y_SURFACE,
                     Synapse.PRE_Z_SURFACE,
+                    Synapse.POST_SECTION_ID,
+                    Synapse.POST_SECTION_POS,
+                    Synapse.PRE_SECTION_ID,
+                    Synapse.PRE_SECTION_POS,
+                    Synapse.SYN_WEIGHT,
                     test_module.DYNAMICS_PREFIX + 'param1'
                 ])
         )
@@ -131,7 +133,8 @@ class TestEdgePopulation(object):
         expected = sorted(
             ['PRE_Y_SURFACE', 'PRE_Z_SURFACE', 'PRE_X_CENTER', 'POST_Y_CENTER', 'AXONAL_DELAY',
              'POST_X_CENTER', 'POST_Y_SURFACE', 'POST_Z_SURFACE', 'PRE_Y_CENTER', 'POST_Z_CENTER',
-             'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE'])
+             'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE', 'POST_SECTION_ID', 'PRE_SECTION_ID',
+             'POST_SECTION_POS', 'PRE_SECTION_POS', 'SYN_WEIGHT'])
         assert sorted(self.test_obj.container_property_names(Edge)) == expected
         with pytest.raises(BluepySnapError):
             mapping = {"X": "x"}

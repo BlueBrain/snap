@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -8,13 +6,11 @@ import bluepysnap.utils as test_module
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 from bluepysnap.exceptions import BluepySnapError
 
-
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
+from utils import TEST_DATA_DIR
 
 
 def test_load_json():
-    actual = test_module.load_json(os.path.join(TEST_DATA_DIR, 'circuit_config.json'))
+    actual = test_module.load_json(str(TEST_DATA_DIR / 'circuit_config.json'))
     assert actual['manifest']['$BASE_DIR'] == '.'
 
 

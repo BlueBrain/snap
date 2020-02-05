@@ -86,6 +86,9 @@ class Node(ConstContainer):
 
     RECENTER = "recenter"
 
+    MODEL_TYPE = "model_type"
+    MODEL_TEMPLATE = "model_template"
+
 
 class Edge(ConstContainer):
     """Edge property names."""

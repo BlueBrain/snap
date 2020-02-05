@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -8,21 +6,19 @@ from mock import Mock, patch
 
 import bluepysnap.morph as test_module
 
-
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
+from utils import TEST_DATA_DIR
 
 
 class TestMorphHelper(object):
     def setup(self):
         self.nodes = Mock()
-        self.morph_path = os.path.join(TEST_DATA_DIR, 'morphologies')
-        self.test_obj = test_module.MorphHelper(self.morph_path, self.nodes)
+        self.morph_path = TEST_DATA_DIR / 'morphologies'
+        self.test_obj = test_module.MorphHelper(str(self.morph_path), self.nodes)
 
     def test_get_filepath(self):
         self.nodes.get.return_value = 'test'
         actual = self.test_obj.get_filepath(42)
-        expected = os.path.join(self.morph_path, 'test.swc')
+        expected = str(self.morph_path / 'test.swc')
         assert actual == expected
 
     def test_get_1(self):

@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from bluepysnap.nodes import NodePopulation
@@ -7,19 +5,16 @@ from bluepysnap.edges import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.circuit as test_module
-
-
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
+from utils import TEST_DATA_DIR
 
 
 def test_all():
     circuit = test_module.Circuit(
-        os.path.join(TEST_DATA_DIR, 'circuit_config.json'))
+        str(TEST_DATA_DIR / 'circuit_config.json'))
     assert(
         circuit.config['networks']['nodes'][0] ==
         {
-            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes.h5'),
+            'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
             'node_types_file': None,
         }
     )
@@ -34,7 +29,7 @@ def test_all():
 
 def test_duplicate_population():
     circuit = test_module.Circuit(
-        os.path.join(TEST_DATA_DIR, 'circuit_config_duplicate.json')
+        str(TEST_DATA_DIR / 'circuit_config_duplicate.json')
     )
     with pytest.raises(BluepySnapError):
         circuit.nodes
