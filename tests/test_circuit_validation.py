@@ -1,28 +1,20 @@
 import json
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
-
 try:
     from unittest.mock import patch
 except ImportError:
     from mock import patch
-
-import h5py
-import pytest
-
-from utils import setup_tempdir
-
 try:
     from pathlib import Path
 except ImportError:
     from pathlib2 import Path
+import h5py
 from six import u as unicode
 import bluepysnap.circuit_validation as test_module
-from bluepysnap.circuit_validation import Error, ErrorLevel, BbpError
+from bluepysnap.circuit_validation import Error, BbpError
 
-TEST_DIR = Path(__file__).resolve().parent
-TEST_DATA_DIR = TEST_DIR / 'data'
-
+from utils import setup_tempdir, TEST_DATA_DIR
 
 @contextmanager
 def _copy_circuit():
@@ -60,9 +52,8 @@ def _edit_config(config_path):
 
 
 def test_error_comparison():
-    err = Error(ErrorLevel.WARNING, 'hello')
-    with pytest.raises(NotImplementedError):
-        assert err == 'hello'
+    err = Error(Error.WARNING, 'hello')
+    assert err != 'hello'
 
 
 def test_ok_circuit():
@@ -75,7 +66,7 @@ def test_no_config_components():
         with _edit_config(config_copy_path) as config:
             del config['components']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'No "components" in config')]
+        assert errors == [Error(Error.FATAL, 'No "components" in config')]
 
 
 def test_no_config_networks():
@@ -83,7 +74,7 @@ def test_no_config_networks():
         with _edit_config(config_copy_path) as config:
             del config['networks']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'No "networks" in config')]
+        assert errors == [Error(Error.FATAL, 'No "networks" in config')]
 
 
 def test_no_config_nodes():
@@ -91,7 +82,7 @@ def test_no_config_nodes():
         with _edit_config(config_copy_path) as config:
             del config['networks']['nodes']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'No "nodes" in config "networks"')]
+        assert errors == [Error(Error.FATAL, 'No "nodes" in config "networks"')]
 
 
 def test_no_config_edges():
@@ -99,7 +90,7 @@ def test_no_config_edges():
         with _edit_config(config_copy_path) as config:
             del config['networks']['edges']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'No "edges" in config "networks"')]
+        assert errors == [Error(Error.FATAL, 'No "edges" in config "networks"')]
 
 
 def test_invalid_config_nodes_file():
@@ -107,12 +98,12 @@ def test_invalid_config_nodes_file():
         with _edit_config(config_copy_path) as config:
             del config['networks']['nodes'][0]['nodes_file']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Invalid "nodes_file": None')]
+        assert errors == [Error(Error.FATAL, 'Invalid "nodes_file": None')]
 
         with _edit_config(config_copy_path) as config:
             config['networks']['nodes'][0]['nodes_file'] = '/'
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Invalid "nodes_file": /')]
+        assert errors == [Error(Error.FATAL, 'Invalid "nodes_file": /')]
 
 
 def test_invalid_config_nodes_type_file():
@@ -120,7 +111,7 @@ def test_invalid_config_nodes_type_file():
         with _edit_config(config_copy_path) as config:
             config['networks']['nodes'][0]['node_types_file'] = '/'
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Invalid "node_types_file": /')]
+        assert errors == [Error(Error.FATAL, 'Invalid "node_types_file": /')]
 
 
 def test_invalid_config_edges_file():
@@ -128,20 +119,20 @@ def test_invalid_config_edges_file():
         with _edit_config(config_copy_path) as config:
             del config['networks']['edges'][0]['edges_file']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Invalid "edges_file": None')]
+        assert errors == [Error(Error.FATAL, 'Invalid "edges_file": None')]
 
         with _edit_config(config_copy_path) as config:
             config['networks']['edges'][0]['edges_file'] = '/'
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Invalid "edges_file": /')]
+        assert errors == [Error(Error.FATAL, 'Invalid "edges_file": /')]
 
 
-def test_invalid_config_edges_type_file():
+def test_invalid_config_edge_types_file():
     with _copy_circuit() as (_, config_copy_path):
         with _edit_config(config_copy_path) as config:
             config['networks']['edges'][0]['edge_types_file'] = '/'
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Invalid "edge_types_file": /')]
+        assert errors == [Error(Error.FATAL, 'Invalid "edge_types_file": /')]
 
 
 def test_no_nodes_h5():
@@ -151,9 +142,9 @@ def test_no_nodes_h5():
             del h5f['nodes']
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(ErrorLevel.FATAL, 'No "nodes" in {}.'.format(nodes_file)),
-            Error(ErrorLevel.FATAL, 'No node population for "/edges/default/source_node_id"'),
-            Error(ErrorLevel.FATAL, 'No node population for "/edges/default/target_node_id"'),
+            Error(Error.FATAL, 'No "nodes" in {}.'.format(nodes_file)),
+            Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
         ]
 
 
@@ -174,7 +165,7 @@ def test_no_required_node_population_datasets():
             with h5py.File(nodes_file, 'r+') as h5f:
                 del h5f['nodes/default/' + ds]
             errors = test_module.validate(str(config_copy_path))
-            assert errors == [Error(ErrorLevel.FATAL, 'Population default of {} misses datasets {}'.
+            assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
                                     format(nodes_file, [ds]))]
 
 
@@ -186,7 +177,7 @@ def test_no_required_node_group_datasets():
             for ds in required_datasets:
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL,
+        assert errors == [Error(Error.FATAL,
                                 'Group default of {} misses required fields: {}'
                                 .format(nodes_file, required_datasets))]
 
@@ -208,7 +199,7 @@ def test_no_required_bio_node_group_datasets():
             for ds in required_datasets:
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL,
+        assert errors == [Error(Error.FATAL,
                                 'Group default of {} misses biophysical fields: {}'
                                 .format(nodes_file, required_datasets))]
 
@@ -221,7 +212,7 @@ def test_no_rotation_bio_node_group_datasets():
             for ds in required_datasets:
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL,
+        assert errors == [Error(Error.WARNING,
                                 'Group default of {} has no rotation fields'.format(nodes_file))]
 
 
@@ -233,7 +224,7 @@ def test_no_bio_component_dirs():
                 del config['components'][dir_]
             errors = test_module.validate(str(config_copy_path))
             # multiplication by 2 because we have 2 populations, each produces the same error.
-            assert errors == 2 * [Error(ErrorLevel.FATAL,
+            assert errors == 2 * [Error(Error.FATAL,
                                         'Invalid components "{}": {}'.format(dir_, None))]
 
 
@@ -245,7 +236,7 @@ def test_no_morph_files():
             h5f['nodes/default/0/morphology'][0] = 'noname'
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(
-            ErrorLevel.WARNING,
+            Error.WARNING,
             'missing 1 files in group morphology: default[{}]:\n\tnoname.swc\n'.format(nodes_file))]
 
         with h5py.File(nodes_file, 'r+') as h5f:
@@ -253,7 +244,7 @@ def test_no_morph_files():
             morph[:] = ['noname' + str(i) for i in range(len(morph))]
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(
-            ErrorLevel.WARNING,
+            Error.WARNING,
             'missing 3 files in group morphology: default[{}]:\n\tnoname0.swc\n\t...\n'.format(
                 nodes_file))]
 
@@ -265,7 +256,7 @@ def test_no_template_files():
             h5f['nodes/default/0/model_template'][0] = 'hoc:noname'
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(ErrorLevel.WARNING,
+            Error(Error.WARNING,
                   'missing 1 files in group model_template: default[{}]:\n\tnoname.hoc\n'
                   .format(nodes_file))]
 
@@ -276,7 +267,7 @@ def test_no_edges_h5():
         with h5py.File(edges_file, 'r+') as h5f:
             del h5f['edges']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'No "edges" in {}.'.format(edges_file))]
+        assert errors == [Error(Error.FATAL, 'No "edges" in {}.'.format(edges_file))]
 
 
 def test_no_required_edge_population_datasets():
@@ -288,7 +279,7 @@ def test_no_required_edge_population_datasets():
             for ds in required_datasets:
                 del h5f['edges/default/' + ds]
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'Population default of {} misses datasets {}'.
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
                                 format(edges_file, required_datasets))]
 
 
@@ -298,7 +289,7 @@ def test_no_required_bbp_edge_group_datasets():
         with h5py.File(edges_file, 'r+') as h5f:
             del h5f['edges/default/0/syn_weight']
         errors = test_module.validate(str(config_copy_path), True)
-        assert errors == [BbpError(ErrorLevel.FATAL, 'Group default of {} misses fields: {}'.
+        assert errors == [BbpError(Error.WARNING, 'Group default of {} misses fields: {}'.
                                    format(edges_file, ['syn_weight']))]
 
 
@@ -309,8 +300,8 @@ def test_no_edge_source_to_target():
             del h5f['edges/default/indices/source_to_target']
             del h5f['edges/default/indices/target_to_source']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(ErrorLevel.FATAL, 'No "source_to_target" in {}'.format(edges_file)),
-                          Error(ErrorLevel.FATAL, 'No "target_to_source" in {}'.format(edges_file))]
+        assert errors == [Error(Error.FATAL, 'No "source_to_target" in {}'.format(edges_file)),
+                          Error(Error.FATAL, 'No "target_to_source" in {}'.format(edges_file))]
 
 
 def test_no_edge_all_node_ids():
@@ -322,11 +313,11 @@ def test_no_edge_all_node_ids():
                 del h5f['nodes/default/' + ds]
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(ErrorLevel.FATAL,
+            Error(Error.FATAL,
                   'Population default of {} misses datasets {}'.format(nodes_file, node_ids_ds)),
-            Error(ErrorLevel.FATAL,
+            Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
-            Error(ErrorLevel.FATAL,
+            Error(Error.FATAL,
                   '/edges/default/target_node_id does not have node ids in its node population')]
 
 
@@ -338,12 +329,12 @@ def test_invalid_edge_node_ids():
             h5f['edges/default/target_node_id'][0] = 99999
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(ErrorLevel.FATAL,
+            Error(Error.FATAL,
                   '/edges/default/source_node_id misses node ids in its node population: [99999]'),
-            Error(ErrorLevel.FATAL,
+            Error(Error.FATAL,
                   '/edges/default/target_node_id misses node ids in its node population: [99999]'),
-            Error(ErrorLevel.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
+            Error(Error.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
                                     'single id 2'.format(edges_file)),
-            Error(ErrorLevel.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
+            Error(Error.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
                                     'single id 0'.format(edges_file)),
         ]

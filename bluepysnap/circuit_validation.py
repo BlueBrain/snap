@@ -1,11 +1,10 @@
 """Standalone module that validates Sonata circuit. See ``validate`` function."""
 import itertools as it
-
+import numpy as np
 try:
     from pathlib import Path
 except ImportError:  # pragma: nocover
     from pathlib2 import Path
-from enum import Enum
 import click
 import h5py
 
@@ -14,20 +13,16 @@ from bluepysnap.config import Config
 MAX_MISSING_FILES_DISPLAY = 10
 
 
-class ErrorLevel(Enum):
-    """Error level."""
-    FATAL = 0
-    WARNING = 1
-
-
 class Error(object):
     """Error used for reporting of validation errors."""
+    FATAL = 'FATAL'
+    WARNING = 'WARNING'
 
     def __init__(self, level, message=None):
         """Error.
 
         Args:
-            level (ErrorLevel): error level
+            level (str): error level
             message (str|None): message
         """
         self.level = level
@@ -38,15 +33,26 @@ class Error(object):
         return str(self.message)
 
     def __eq__(self, other):
-        """Two errors are equal if their level and message are equal."""
+        """Two errors are equal if inherit from Error and their level, message are equal."""
         if not isinstance(other, Error):
-            raise NotImplementedError
-
+            return False
         return self.level == other.level and self.message == other.message
 
 
 class BbpError(Error):
     """Special class of errors for BBP specification of Sonata."""
+
+
+def fatal(message):
+    """Shortcut for a fatal error.
+
+    Args:
+        message (str): text message
+
+    Returns:
+        Error: Error with level FATAL
+    """
+    return Error(Error.FATAL, message)
 
 
 def _check_components_dir(name, components):
@@ -57,7 +63,7 @@ def _check_components_dir(name, components):
         components (dict): ref to config's components
 
     Returns:
-        List of errors, empty if no errors
+        list: List of errors, empty if no errors
     """
     dirpath = components.get(name)
     if not dirpath or not Path(dirpath).is_dir():
@@ -71,10 +77,10 @@ def _check_files(name, files, level):
     Args:
         name (str): h5 group name
         files (Iterable): files to check for existence
-        level (ErrorLevel): level of generated errors for missing files
+        level (str): level of generated errors for missing files
 
     Returns:
-        List of errors, empty if no errors
+        list: List of errors, empty if no errors
     """
     missing = sorted({f for f in files if not f.is_file()})
     if missing:
@@ -87,26 +93,14 @@ def _check_files(name, files, level):
     return []
 
 
-def fatal(message):
-    """Shortcut for a fatal error.
-
-    Args:
-        message (str):
-
-    Returns:
-        Error
-    """
-    return Error(ErrorLevel.FATAL, message)
-
-
 def _print_errors(errors):
     """Some fancy errors printing."""
     colors = {
-        ErrorLevel.WARNING: 'yellow',
-        ErrorLevel.FATAL: 'red',
+        Error.WARNING: 'yellow',
+        Error.FATAL: 'red',
     }
     for error in errors:
-        print(click.style(error.level.name + ': ', fg=colors[error.level]) + str(error))
+        print(click.style(error.level + ': ', fg=colors[error.level]) + str(error))
 
 
 def _check_required_datasets(config):
@@ -116,7 +110,7 @@ def _check_required_datasets(config):
         config (dict): resolved bluepysnap config
 
     Returns:
-        List of errors, empty if no errors
+        list: List of errors, empty if no errors
     """
     errors = []
     networks = config.get('networks')
@@ -159,7 +153,8 @@ def _find_nodes_population(node_population_name, nodes):
         nodes (list): "nodes" part of the resolved bluepysnap config
 
     Returns:
-        A dict item of "nodes" of the resolved bluepysnap config. None if didn't find anything.
+        dict/None: A dict item of "nodes" of the resolved bluepysnap config.
+        None if it finds nothing.
     """
     for nodes_dict in nodes:
         nodes_file = nodes_dict.get('nodes_file')
@@ -175,7 +170,7 @@ def _get_group_name(group):
     return Path(group.parent.name).name
 
 
-def get_h5_path(h5, path):
+def _get_h5_data(h5, path):
     """Resolves and returns an h5 group/dataset by a path. Returns None if didn't find any.
 
     Args:
@@ -183,7 +178,7 @@ def get_h5_path(h5, path):
         path: path within ``h5``
 
     Returns:
-        a resolved h5 group/dataset
+        h5py.Group/h5py.Dataset/None: A resolved h5 group/dataset or None if it finds nothing.
     """
     return h5[path] if path in h5 else None
 
@@ -202,7 +197,7 @@ def _check_bio_nodes_group(group, config):
         config (dict): resolved bluepysnap config
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
 
     def _check_rotations():
@@ -211,12 +206,12 @@ def _check_bio_nodes_group(group, config):
         has_angle_fields = len(angle_fields - set(group)) < len(angle_fields)
         has_rotation_fields = 'orientation' in group or has_angle_fields
         if not has_rotation_fields:
-            errors.append(fatal('Group {} of {} has no rotation fields'.
+            errors.append(Error(Error.WARNING, 'Group {} of {} has no rotation fields'.
                                 format(group_name, group.file.filename)))
         if not has_angle_fields:
             bbp_orient_fields = {'orientation_w', 'orientation_x', 'orientation_y', 'orientation_z'}
             if bbp_orient_fields - set(group):
-                errors.append(BbpError(ErrorLevel.FATAL, 'Group {} of {} has no rotation fields'.
+                errors.append(BbpError(Error.WARNING, 'Group {} of {} has no rotation fields'.
                                        format(group_name, group.file.filename)))
 
     errors = []
@@ -235,12 +230,12 @@ def _check_bio_nodes_group(group, config):
     errors += _check_files(
         'morphology: {}[{}]'.format(group_name, group.file.filename),
         (Path(components['morphologies_dir'], m + '.swc') for m in group['morphology']),
-        ErrorLevel.WARNING)
+        Error.WARNING)
     bio_path = Path(components['biophysical_neuron_models_dir'])
     errors += _check_files(
         'model_template: {}[{}]'.format(group_name, group.file.filename),
         (bio_path / _get_model_template_file(m) for m in group['model_template']),
-        ErrorLevel.WARNING)
+        Error.WARNING)
     return errors
 
 
@@ -252,7 +247,7 @@ def _check_nodes_group(group, config):
         config (dict): resolved bluepysnap config
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     REQUIRED_GROUP_NAMES = ['model_type', 'model_template']
     missing_fields = sorted(set(REQUIRED_GROUP_NAMES) - set(group))
@@ -272,13 +267,13 @@ def _check_nodes_population(nodes_dict, config):
         config (dict): resolved bluepysnap config
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     POPULATION_DATASET_NAMES = ['node_type_id', 'node_group_id', 'node_group_index']
     errors = []
     nodes_file = nodes_dict.get('nodes_file')
     with h5py.File(nodes_file, 'r') as h5f:
-        nodes = get_h5_path(h5f, 'nodes')
+        nodes = _get_h5_data(h5f, 'nodes')
         if not nodes or len(nodes) == 0:
             errors.append(fatal('No "nodes" in {}.'.format(nodes_file)))
             return errors
@@ -302,7 +297,7 @@ def _check_edges_group_bbp(group):
         group (h5py.Group): edges group in edges .h5 file
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     GROUP_NAMES = [
         'delay', 'syn_weight', 'dynamics_params',
@@ -315,7 +310,7 @@ def _check_edges_group_bbp(group):
     ]
     missing_fields = sorted(set(GROUP_NAMES) - set(group))
     if missing_fields:
-        return [BbpError(ErrorLevel.FATAL, 'Group {} of {} misses fields: {}'.
+        return [BbpError(Error.WARNING, 'Group {} of {} misses fields: {}'.
                          format(_get_group_name(group), group.file.filename, missing_fields))]
     return []
 
@@ -327,16 +322,16 @@ def _get_node_ids(node_population):
         node_population (h5py.Group): node population h5 instance
 
     Returns:
-        List of node ids or None if couldn't find any
+        np.ndarray: Numpy array of node ids, empty if couldn't find any
     """
-    node_ids = None
+    node_ids = np.empty(0)
     if 'node_id' in node_population:
         node_ids = node_population['node_id'][:]
     else:
-        node_size_ds = get_h5_path(node_population, 'node_type_id') or get_h5_path(node_population,
-                                                                                   'node_group_id')
+        node_size_ds = _get_h5_data(node_population, 'node_type_id') \
+            or _get_h5_data(node_population, 'node_group_id')
         if node_size_ds:
-            node_ids = range(len(node_size_ds))
+            node_ids = np.arange(len(node_size_ds))
     return node_ids
 
 
@@ -348,7 +343,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
         nodes (list): "nodes" part of the resolved bluepysnap config
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     errors = []
     node_population_name = nodes_ds.attrs['node_population']
@@ -358,7 +353,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
         return errors
     with h5py.File(nodes_dict['nodes_file'], 'r') as h5f:
         node_ids = _get_node_ids(h5f['/nodes/' + node_population_name])
-        if node_ids is not None:
+        if node_ids.size > 0:
             missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
             if missing_ids:
                 errors.append(fatal('{} misses node ids in its node population: {}'.
@@ -376,7 +371,7 @@ def _check_edges_indices(population):
         population (h5py.Group): edges population
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
 
     def _check(indices, nodes_ds):
@@ -397,8 +392,8 @@ def _check_edges_indices(population):
                             population.file.filename, edge_node_ids, edges_range, node_id)))
 
     errors = []
-    source_to_target = get_h5_path(population['indices'], 'source_to_target')
-    target_to_source = get_h5_path(population['indices'], 'target_to_source')
+    source_to_target = _get_h5_data(population['indices'], 'source_to_target')
+    target_to_source = _get_h5_data(population['indices'], 'target_to_source')
     if not source_to_target:
         errors.append(fatal('No "source_to_target" in {}'.format(population.file.filename)))
     if not target_to_source:
@@ -417,14 +412,14 @@ def _check_edges_population(edges_dict, nodes):
         nodes (list): "nodes" part of the resolved bluepysnap config
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     POPULATION_DATASET_NAMES = [
         'edge_type_id', 'source_node_id', 'target_node_id', 'edge_group_id', 'edge_group_index']
     errors = []
     edges_file = edges_dict.get('edges_file')
     with h5py.File(edges_file, 'r') as h5f:
-        edges = get_h5_path(h5f, 'edges')
+        edges = _get_h5_data(h5f, 'edges')
         if not edges or len(edges) == 0:
             errors.append(fatal('No "edges" in {}.'.format(edges_file)))
             return errors
@@ -456,7 +451,7 @@ def _check_populations(config):
         config (dict): resolved bluepysnap config
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     errors = []
     networks = config.get('networks')
@@ -478,7 +473,7 @@ def validate(config_file, bbp_check=False):
         official checks.
 
     Returns:
-        List of errors, empty if none.
+        list: List of errors, empty if no errors
     """
     config = Config(config_file).resolve()
     errors = _check_required_datasets(config)

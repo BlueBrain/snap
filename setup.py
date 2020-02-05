@@ -38,7 +38,7 @@ class EggInfo(egg_info):
 with open('README.rst') as f:
     README = f.read()
 
-VALIDATION = ['click>=7.0', 'pathlib2>=2.3', 'enum-compat>=0.0.2', ]
+VALIDATION = ['click>=7.0', 'pathlib2>=2.3']
 
 setup(
     name='bluepysnap',
