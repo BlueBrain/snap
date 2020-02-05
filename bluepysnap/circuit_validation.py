@@ -210,7 +210,7 @@ def _check_bio_nodes_group(group, config):
                                 format(group_name, group.file.filename)))
         if not has_angle_fields:
             bbp_orient_fields = {'orientation_w', 'orientation_x', 'orientation_y', 'orientation_z'}
-            if bbp_orient_fields - set(group):
+            if 0 < len(bbp_orient_fields - set(group)) < len(bbp_orient_fields):
                 errors.append(BbpError(Error.WARNING, 'Group {} of {} has no rotation fields'.
                                        format(group_name, group.file.filename)))
 
