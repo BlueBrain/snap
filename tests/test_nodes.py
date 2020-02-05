@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -15,8 +13,7 @@ from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(TEST_DIR, 'data')
+from utils import TEST_DATA_DIR
 
 
 def test_node_ids_by_filter():
@@ -81,9 +78,9 @@ def test_node_ids_by_filter_complex_query():
 class TestNodeStorage:
     def setup(self):
         config = {
-            'nodes_file': os.path.join(TEST_DATA_DIR, 'nodes.h5'),
+            'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
             'node_types_file': None,
-            'node_sets_file': os.path.join(TEST_DATA_DIR, 'node_sets.json'),
+            'node_sets_file': str(TEST_DATA_DIR / 'node_sets.json'),
         }
         self.circuit = Mock()
         self.test_obj = test_module.NodeStorage(config, self.circuit)
@@ -137,13 +134,12 @@ class TestNodePopulation:
 
     def setup(self):
         self.test_obj = TestNodePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, 'nodes.h5'),
+            str(TEST_DATA_DIR / 'nodes.h5'),
             "default",
-            nodeset_path=os.path.join(TEST_DATA_DIR,
-                                      'node_sets.json'))
+            nodeset_path=str(TEST_DATA_DIR / 'node_sets.json'))
 
     def test_basic(self):
-        assert self.test_obj._node_storage._h5_filepath == os.path.join(TEST_DATA_DIR, 'nodes.h5')
+        assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
         assert (
@@ -325,7 +321,7 @@ class TestNodePopulation:
 
         # NodePopulation without rotation_angle[x|z]
         _call_no_xz = TestNodePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, 'nodes_no_xz_rotation.h5'),
+            str(TEST_DATA_DIR / 'nodes_no_xz_rotation.h5'),
             "default").orientations
         # 0 and 2 node_ids have x|z rotation angles equal to zero
         npt.assert_almost_equal(_call_no_xz(0), _call(0))
@@ -342,7 +338,7 @@ class TestNodePopulation:
 
         # NodePopulation without rotation_angle
         _call_no_rot = TestNodePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, 'nodes_no_rotation.h5'),
+            str(TEST_DATA_DIR / 'nodes_no_rotation.h5'),
             "default").orientations
 
         pdt.assert_series_equal(
@@ -356,7 +352,7 @@ class TestNodePopulation:
 
         # NodePopulation with quaternions
         _call_quat = TestNodePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, 'nodes_quaternions.h5'),
+            str(TEST_DATA_DIR / 'nodes_quaternions.h5'),
             "default").orientations
 
         npt.assert_almost_equal(
@@ -399,7 +395,7 @@ class TestNodePopulation:
         )
 
         _call_missing_quat = TestNodePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, 'nodes_quaternions_w_missing.h5'),
+            str(TEST_DATA_DIR / 'nodes_quaternions_w_missing.h5'),
             "default").orientations
 
         with pytest.raises(BluepySnapError):
@@ -423,7 +419,7 @@ class TestNodePopulation:
 
     def test_NodePopulation_without_node_sets(self):
         nodes = TestNodePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, 'nodes.h5'),
+            str(TEST_DATA_DIR / 'nodes.h5'),
             "default")
 
         assert nodes.node_sets == {}

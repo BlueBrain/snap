@@ -1,5 +1,3 @@
-import os
-
 import mock
 import numpy as np
 import numpy.testing as npt
@@ -16,8 +14,7 @@ from bluepysnap.sonata_constants import Edge
 
 import bluepysnap.edges as test_module
 
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
+from utils import TEST_DATA_DIR
 
 
 def index_as_uint64(values):
@@ -51,7 +48,7 @@ def test_estimate_range_size_4():
 class TestEdgeStorage:
     def setup(self):
         config = {
-            'edges_file': os.path.join(TEST_DATA_DIR, 'edges.h5'),
+            'edges_file': str(TEST_DATA_DIR / 'edges.h5'),
             'edge_types_file': None,
         }
         self.circuit = Mock()
@@ -98,10 +95,10 @@ class TestEdgePopulation(object):
 
     def setup(self):
         self.test_obj = TestEdgePopulation.create_population(
-            os.path.join(TEST_DATA_DIR, "edges.h5"), 'default')
+            str(TEST_DATA_DIR / "edges.h5"), 'default')
 
     def test_basic(self):
-        assert self.test_obj._edge_storage._h5_filepath == os.path.join(TEST_DATA_DIR, 'edges.h5')
+        assert self.test_obj._edge_storage._h5_filepath == str(TEST_DATA_DIR / 'edges.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.source.name == 'default'
         assert self.test_obj.target.name == 'default'
