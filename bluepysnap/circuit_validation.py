@@ -1,11 +1,9 @@
 """Standalone module that validates Sonata circuit. See ``validate`` function."""
 import itertools as it
+
 import numpy as np
-try:
-    from pathlib import Path
-except ImportError:  # pragma: nocover
-    from pathlib2 import Path
 import click
+from pathlib2 import Path
 import h5py
 
 from bluepysnap.config import Config
