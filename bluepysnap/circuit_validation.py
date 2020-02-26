@@ -15,6 +15,7 @@ class Error(object):
     """Error used for reporting of validation errors."""
     FATAL = 'FATAL'
     WARNING = 'WARNING'
+    INFO = 'INFO'
 
     def __init__(self, level, message=None):
         """Error.
@@ -96,7 +97,12 @@ def _print_errors(errors):
     colors = {
         Error.WARNING: 'yellow',
         Error.FATAL: 'red',
+        Error.INFO: 'green'
     }
+
+    if not errors:
+        print(click.style('No Error: Success.', fg=colors[Error.INFO]))
+
     for error in errors:
         print(click.style(error.level + ': ', fg=colors[error.level]) + str(error))
 
