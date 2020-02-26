@@ -1,5 +1,5 @@
 Blue Brain SNAP
-==============
+===============
 
 Blue Brain Simulation and Neural network Analysis Productivity layer (Blue Brain SNAP).
 
@@ -31,6 +31,30 @@ Among other dependencies, Blue Brain SNAP relies on Blue Brain Project provided 
 
 - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
 - `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
+
+Tools
+-----
+
+Blue Brain SNAP also provides a sonata circuit validator that aims at verifying sonata circuits.
+
+The validation includes:
+
+- integrity of the circuit config file.
+- existence of the different node/edges files and ``components`` directories.
+- presence of the "sonata required" field for node/edges files.
+- the correctness of the edge to node population/ids bindings.
+- existence of the morphology files for the nodes.
+
+This functionality is provided by either the cli function::
+
+    bluepysnap validate my/circuit/path/circuit_config.json
+
+
+Or a python free function::
+
+    from bluepysnap.circuit_validation import validate
+    errors = validate("my/circuit/path/circuit_config.json")
+
 
 License
 -------
