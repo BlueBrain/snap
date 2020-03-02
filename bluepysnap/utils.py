@@ -22,6 +22,7 @@ import json
 
 import numpy as np
 import six
+from pathlib2 import Path
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
@@ -49,6 +50,14 @@ def ensure_list(v):
 def add_dynamic_prefix(properties):
     """Add the dynamic prefix to a list of properties."""
     return [DYNAMICS_PREFIX + name for name in list(properties)]
+
+
+def is_path(path):
+    try:
+        Path(path)
+        return True
+    except TypeError:
+        return False
 
 
 def euler2mat(az, ay, ax):
