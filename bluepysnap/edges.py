@@ -483,7 +483,7 @@ class StandaloneEdgeStorage(EdgeStorage):
         if not utils.is_path_like(h5_filepath):
             raise BluepySnapError("h5_filepath must be a path compatible object")
         config = {'edges_file': h5_filepath, 'edge_types_file': csv_file}
-        super().__init__(config, None)
+        super(StandaloneEdgeStorage, self).__init__(config, None)
 
     @property
     def circuit(self):
@@ -528,7 +528,7 @@ class StandaloneEdgePopulation(EdgePopulation):
         if not utils.is_path_like(h5_filepath):
             raise BluepySnapError("h5_filepath must be a path compatible object")
         storage = StandaloneEdgeStorage(h5_filepath, csv_file=csv_file)
-        super().__init__(storage, population_name)
+        super(StandaloneEdgePopulation, self).__init__(storage, population_name)
 
     @staticmethod
     def _resolve_node_ids(nodes, group):

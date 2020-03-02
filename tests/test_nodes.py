@@ -468,11 +468,11 @@ class TestStandaloneNodePopulation(TestNodePopulation):
     def test_morph(self):
         from bluepysnap.morph import MorphHelper
         tested = self.create_population(str(TEST_DATA_DIR / 'nodes.h5'),
-                               "default",
-                               morphologies_dir="morphologies")
+                                        "default",
+                                        morphologies_dir="morphologies")
         assert isinstance(tested.morph, MorphHelper)
 
         tested = self.create_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
-        
+
         with pytest.raises(BluepySnapError):
             tested.morph, MorphHelper

@@ -476,7 +476,7 @@ class StandaloneNodeStorage(NodeStorage):
             config['node_sets_file'] = node_sets_file
         self._node_sets_file = node_sets_file
         self._morphologies_dir = morphologies_dir
-        super().__init__(config, None)
+        super(StandaloneNodeStorage, self).__init__(config, None)
 
     @property
     def circuit(self):
@@ -528,7 +528,7 @@ class StandaloneNodePopulation(NodePopulation):
         storage = StandaloneNodeStorage(h5_filepath, csv_file=csv_file,
                                         node_sets_file=node_sets_file)
         self._morphologies_dir = morphologies_dir
-        super().__init__(storage, population_name)
+        super(StandaloneNodePopulation, self).__init__(storage, population_name)
 
     @cached_property
     def morph(self):
