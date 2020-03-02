@@ -118,16 +118,38 @@ class TestNodeStorage:
         assert len(data) == 3
 
 
+class TestStandaloneNodeStorage(TestNodeStorage):
+    def setup(self):
+        self.test_obj = test_module.StandaloneNodeStorage(str(TEST_DATA_DIR / 'nodes.h5'),
+                                                          node_sets_file=str(
+                                                              TEST_DATA_DIR / 'node_sets.json'))
+
+    def test_raise_init(self):
+        with pytest.raises(BluepySnapError):
+            test_module.StandaloneNodeStorage({1: 1})
+
+    def test_circuit(self):
+        with pytest.raises(BluepySnapError):
+            self.test_obj.circuit
+
+    def test_population(self):
+        pop = self.test_obj.population("default")
+        assert isinstance(pop, test_module.StandaloneNodePopulation)
+        assert pop.name == "default"
+        pop2 = self.test_obj.population("default")
+        assert pop is pop2
+
+
 class TestNodePopulation:
 
     @staticmethod
-    def create_population(filepath, pop_name, nodeset_path=None):
+    def create_population(filepath, pop_name, node_sets_path=None):
         config = {
             'nodes_file': filepath,
             'node_types_file': None,
         }
-        if nodeset_path:
-            config['node_sets_file'] = nodeset_path
+        if node_sets_path:
+            config['node_sets_file'] = node_sets_path
         circuit = Mock()
         storage = test_module.NodeStorage(config, circuit)
         return storage.population(pop_name)
@@ -136,7 +158,7 @@ class TestNodePopulation:
         self.test_obj = TestNodePopulation.create_population(
             str(TEST_DATA_DIR / 'nodes.h5'),
             "default",
-            nodeset_path=str(TEST_DATA_DIR / 'node_sets.json'))
+            node_sets_path=str(TEST_DATA_DIR / 'node_sets.json'))
 
     def test_basic(self):
         assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
@@ -423,3 +445,34 @@ class TestNodePopulation:
             "default")
 
         assert nodes.node_sets == {}
+
+
+class TestStandaloneNodePopulation(TestNodePopulation):
+
+    @staticmethod
+    def create_population(filepath, pop_name, node_sets_path=None, morphologies_dir=None):
+        return test_module.StandaloneNodePopulation(filepath, pop_name,
+                                                    node_sets_file=node_sets_path,
+                                                    morphologies_dir=morphologies_dir)
+
+    def setup(self):
+        self.test_obj = self.create_population(
+            str(TEST_DATA_DIR / 'nodes.h5'),
+            "default",
+            node_sets_path=str(TEST_DATA_DIR / 'node_sets.json'))
+
+    def test_raise_init(self):
+        with pytest.raises(BluepySnapError):
+            self.create_population(1, "")
+
+    def test_morph(self):
+        from bluepysnap.morph import MorphHelper
+        tested = self.create_population(str(TEST_DATA_DIR / 'nodes.h5'),
+                               "default",
+                               morphologies_dir="morphologies")
+        assert isinstance(tested.morph, MorphHelper)
+
+        tested = self.create_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
+        
+        with pytest.raises(BluepySnapError):
+            tested.morph, MorphHelper

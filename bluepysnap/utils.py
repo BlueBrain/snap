@@ -52,7 +52,11 @@ def add_dynamic_prefix(properties):
     return [DYNAMICS_PREFIX + name for name in list(properties)]
 
 
-def is_path(path):
+def is_path_like(path):
+    """Returns True if type(path) could be a type used for a path.
+
+    This function does not check the validity of the path itself just the correct type.
+    """
     try:
         Path(path)
         return True
@@ -104,6 +108,7 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     See Also:
         https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     """
+
     def normalize_quaternions(qs):
         """Normalize a bunch of quaternions along axis==1.
 

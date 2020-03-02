@@ -37,6 +37,7 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 class EdgeStorage(object):
     """Edge storage access."""
+
     def __init__(self, config, circuit):
         """Initializes a EdgeStorage object from a edge config and a Circuit.
 
@@ -121,7 +122,8 @@ class EdgePopulation(object):
             raise BluepySnapError("Undefined node population: '%s'" % population_name)
         return result
 
-    def _resolve_node_ids(self, nodes, group):
+    @staticmethod
+    def _resolve_node_ids(nodes, group):
         """Node IDs corresponding to node group filter."""
         if group is None:
             return None
@@ -463,45 +465,82 @@ class EdgePopulation(object):
 
 
 class StandaloneEdgeStorage(EdgeStorage):
+    """Standalone edge storage access."""
+
     def __init__(self, h5_filepath, csv_file=None):
-        if not utils.is_path(h5_filepath):
+        """Initializes a StandaloneEdgeStorage object from a h5_filepath.
+
+        This class allows to open edge files without a circuit config. If you have a circuit
+        config available for your usecase please use the Circuit class instead.
+
+        Args:
+            h5_filepath (str): path to a h5 sonata node file.
+            csv_file (str): path to csv sonata node file.
+
+        Returns:
+            StandaloneEdgeStorage: A StandaloneEdgeStorage object.
+        """
+        if not utils.is_path_like(h5_filepath):
             raise BluepySnapError("h5_filepath must be a path compatible object")
         config = {'edges_file': h5_filepath, 'edge_types_file': csv_file}
         super().__init__(config, None)
 
     @property
     def circuit(self):
-        """Returns the circuit object containing this storage."""
+        """Cannot return the circuit object for a standalone object."""
         raise BluepySnapError("You cannot access circuit from standalone object.")
 
     def population(self, population_name):
-        """Access the different populations from the storage."""
+        """Access the different populations from the storage.
+
+        Args:
+            population_name(str): name of the population you want to retrieve.
+
+        Returns:
+            StandaloneEdgePopulation: a standalone population with its own StandaloneEdgeStorage.
+            (the StandaloneEdgeStorage is not sharded between the different extracted populations.)
+        """
         if population_name not in self._populations:
-            # Really standalone StandaloneEdgePopulation, bind to their own StandaloneEdgeStorage
+            # Really standalone StandaloneEdgePopulation, binds to its own StandaloneEdgeStorage
             pop = StandaloneEdgePopulation(self._h5_filepath, population_name)
             self._populations[population_name] = pop
         return self._populations[population_name]
 
 
 class StandaloneEdgePopulation(EdgePopulation):
-    """Standalone class for a edge population.
-    """
+    """Standalone edge population access."""
+
     def __init__(self, h5_filepath, population_name, csv_file=None):
-        if not utils.is_path(h5_filepath):
+        """Initializes a StandaloneNodePopulation object from a h5_filepath and a population name.
+
+        This class allows to open node population without a circuit config. If you have a circuit
+        config available for your usecase please use the Circuit class instead.
+
+        Args:
+            h5_filepath (str): path to a h5 sonata node file.
+            population_name(str): name of the population you want to retrieve.
+            csv_file (str): path to csv sonata node file.
+            morphology_dir(str): the morphology directory containing the morphologies.
+
+        Returns:
+            StandaloneNodeStorage: A StandaloneNodeStorage object.
+        """
+        if not utils.is_path_like(h5_filepath):
             raise BluepySnapError("h5_filepath must be a path compatible object")
-        storage = StandaloneEdgeStorage(h5_filepath,csv_file= csv_file)
+        storage = StandaloneEdgeStorage(h5_filepath, csv_file=csv_file)
         super().__init__(storage, population_name)
 
-    def _resolve_node_ids(self, nodes, group):
-        """Node IDs corresponding to node group filter.
+    @staticmethod
+    def _resolve_node_ids(nodes, group):
+        """Override of the EdgePopulation._resolve_node_ids method.
 
-        For standalone edgepopulation this is limited to
+        For StandaloneEdgePopulation groups are limited to int/list/tuple/np.array.
         """
         if group is None:
             return None
         if isinstance(group, (six.string_types, collections.Mapping)):
             raise BluepySnapError("Can't use this kind of groups with standalone EdgePopulation"
-                                  "Only int or list/tuple/np.array are allowed.")
+                                  "Only int/list/tuple/np.array are allowed.")
         return utils.ensure_list(group)
 
     def _nodes(self, population_name):

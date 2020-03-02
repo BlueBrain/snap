@@ -21,7 +21,6 @@ import collections
 import inspect
 
 import libsonata
-import pathlib2
 import numpy as np
 import pandas as pd
 import six
@@ -35,6 +34,7 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node, Cons
 
 class NodeStorage(object):
     """Node storage access."""
+
     def __init__(self, config, circuit):
         """Initializes a NodeStorage object from a node config and a Circuit.
 
@@ -162,7 +162,6 @@ class NodePopulation(object):
         """
         self._node_storage = node_storage
         self.name = population_name
-
 
     @property
     def node_sets(self):
@@ -454,36 +453,91 @@ class NodePopulation(object):
 
 
 class StandaloneNodeStorage(NodeStorage):
-    def __init__(self, h5_filepath, csv_file=None):
-        if not utils.is_path(h5_filepath):
+    """Standalone node storage population access."""
+    def __init__(self, h5_filepath, csv_file=None, node_sets_file=None, morphologies_dir=None):
+        """Initializes a StandaloneNodeStorage object from a h5_filepath.
+
+        This class allows to open node files without a circuit config. If you have a circuit
+        config available for your usecase please use the Circuit class instead.
+
+        Args:
+            h5_filepath (str): path to a h5 sonata node file.
+            csv_file (str): path to csv sonata node file.
+            node_sets_file(str): path to node_sets sonata file.
+
+        Returns:
+            StandaloneNodeStorage: A StandaloneNodeStorage object.
+        """
+        if not utils.is_path_like(h5_filepath):
             raise BluepySnapError("h5_filepath must be a path compatible object")
-        config = {'nodes_file': h5_filepath, 'node_types_file': csv_file}
+        config = {'nodes_file': h5_filepath,
+                  'node_types_file': csv_file}
+        if node_sets_file is not None:
+            config['node_sets_file'] = node_sets_file
+        self._node_sets_file = node_sets_file
+        self._morphologies_dir = morphologies_dir
         super().__init__(config, None)
 
     @property
     def circuit(self):
-        """Returns the circuit object containing this storage."""
+        """Cannot return the circuit object for a standalone object."""
         raise BluepySnapError("You cannot access circuit from standalone object.")
 
     def population(self, population_name):
-        """Access the different populations from the storage."""
+        """Access the different populations from the storage.
+
+        Args:
+            population_name(str): name of the population you want to retrieve.
+            morphology_dir(str): path the morphology directory containing the morphologies.
+
+        Returns:
+            StandaloneNodePopulation: a standalone population with its own StandaloneStorage.
+            (the StandaloneStorage is not sharded between the different extracted populations.)
+        """
         if population_name not in self._populations:
-            # Really standalone StandaloneNodePopulation, bind to their own StandaloneNodeStorage
-            pop = StandaloneNodePopulation(self._h5_filepath, population_name)
+            # Really standalone StandaloneNodePopulation, binds to its own StandaloneNodeStorage
+            pop = StandaloneNodePopulation(self._h5_filepath,
+                                           population_name,
+                                           morphologies_dir=self._morphologies_dir,
+                                           node_sets_file=self._node_sets_file
+                                           )
             self._populations[population_name] = pop
         return self._populations[population_name]
 
 
 class StandaloneNodePopulation(NodePopulation):
-    def __init__(self, h5_filepath, population_name, csv_file=None):
-        if not utils.is_path(h5_filepath):
-            raise BluepySnapError("h5_filepath must be a path compatible object")
-        config = {'nodes_file': h5_filepath, 'node_types_file': csv_file}
-        storage = NodeStorage(config, None)
+    """Standalone node population access."""
+    def __init__(self, h5_filepath, population_name, csv_file=None,
+                 morphologies_dir=None, node_sets_file=None):
+        """Initializes a StandaloneNodePopulation object from a h5_filepath and a population name.
+
+        This class allows to open node population without a circuit config. If you have a circuit
+        config available for your usecase please use the Circuit class instead.
+
+        Args:
+            h5_filepath (str): path to a h5 sonata node file.
+            population_name(str): name of the population you want to retrieve.
+            csv_file (str): path to csv sonata node file.
+            morphologies_dir(str): the morphology directory containing the morphologies.
+
+        Returns:
+            StandaloneNodeStorage: A StandaloneNodeStorage object.
+        """
+        if not utils.is_path_like(h5_filepath):
+            raise BluepySnapError("h5_filepath must be a path compatible object.")
+        storage = StandaloneNodeStorage(h5_filepath, csv_file=csv_file,
+                                        node_sets_file=node_sets_file)
+        self._morphologies_dir = morphologies_dir
         super().__init__(storage, population_name)
 
     @cached_property
     def morph(self):
-        raise BluepySnapError("StandaloneNodePopulation cannot access morphologies. "
-                              "No circuit linked to this population."
-                              )
+        """Access to node morphologies."""
+        if self._morphologies_dir is None:
+            raise BluepySnapError("You need to specify the morphologies_dir in the constructor.")
+
+        from bluepysnap.morph import MorphHelper
+        return MorphHelper(
+            self._morphologies_dir,
+            self
+        )
