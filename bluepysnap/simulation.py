@@ -19,7 +19,21 @@
 from cached_property import cached_property
 
 from bluepysnap.config import Config
+from bluepysnap.exceptions import BluepySnapError
+
 from bluepysnap import utils
+
+
+def _collect_frame_reports(sim):
+    res = {}
+    for name, report in sim.config["reports"].items():
+        if report["sections"] == "soma":
+            from bluepysnap.frame_report import SomaReport
+            cls = SomaReport
+        else:
+            raise BluepySnapError("Not yet supported report format.")
+        res[name] = cls(sim, name)
+    return res
 
 
 class Simulation(object):
@@ -87,3 +101,8 @@ class Simulation(object):
         """Access to the SpikeReport."""
         from bluepysnap.spike_report import SpikeReport
         return SpikeReport(self)
+
+    @cached_property
+    def reports(self):
+        """Access to the SpikeReport."""
+        return _collect_frame_reports(self)

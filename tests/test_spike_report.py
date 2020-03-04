@@ -1,4 +1,3 @@
-from pathlib2 import Path
 from libsonata import SpikeReader
 import pandas.testing as pdt
 import pandas as pd
@@ -28,7 +27,7 @@ class TestSpikeReport:
     def test_t_start(self):
         assert self.test_obj.t_start == 0.
 
-    def test_t_top(self):
+    def test_t_stop(self):
         assert self.test_obj.t_stop == 1000.
 
     def test_dt(self):

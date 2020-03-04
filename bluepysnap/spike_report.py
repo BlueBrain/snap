@@ -46,6 +46,7 @@ class PopulationSpikeReport(object):
 
         Args:
             spike_report (SpikeReport): SpikeReport containing this spike report population.
+            population_name (str): the population name corresponding to this report.
 
         Returns:
             PopulationSpikeReport: A PopulationSpikeReport object.
@@ -83,6 +84,7 @@ class PopulationSpikeReport(object):
         return result
 
     def _resolve_nodes(self, group):
+        """Transform a node group into a node_id array."""
         return self.nodes.ids(group=group)
 
     def get(self, group=None, t_start=None, t_stop=None):
@@ -94,10 +96,7 @@ class PopulationSpikeReport(object):
         Returns:
             pandas.Series: spiking node_ids indexed by sorted spike time.
         """
-        if group is None:
-            node_ids = []
-        else:
-            node_ids = self._resolve_nodes(group).tolist()
+        node_ids = [] if group is None else self._resolve_nodes(group).tolist()
 
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
@@ -150,7 +149,7 @@ class SpikeReport(object):
 
     @property
     def t_stop(self):
-        """Returns the stoping time of the simulation."""
+        """Returns the stopping time of the simulation."""
         return self._sim.t_stop
 
     @property
@@ -168,7 +167,7 @@ class SpikeReport(object):
         """Context manager for the spike log file."""
         path = Path(self.config["output_dir"]) / self.config["log_file"]
         if not path.exists():
-            raise BluepySnapError("Cannot find the log file for the spike report")
+            raise BluepySnapError("Cannot find the log file for the spike report.")
         yield open(path, "r")
 
     @cached_property

@@ -2,6 +2,41 @@ import h5py
 import numpy as np
 
 
+def write_soma_report(filepath):
+    population_names = ['default', 'default2']
+    node_ids = np.arange(0, 3)
+    index_pointers = np.arange(0, 3)
+    element_ids = np.zeros(3)
+    times = (0.0, 1.0, 0.1)
+    data = [node_ids + j*0.1 for j in range(10)]
+    string_dtype = h5py.special_dtype(vlen=str)
+    with h5py.File(filepath, 'w') as h5f:
+        root = h5f.create_group('report')
+        gpop_all = h5f.create_group('/report/' + population_names[0])
+        ddata = gpop_all.create_dataset('data', data=data, dtype=np.float32)
+        ddata.attrs.create('units', data="mV", dtype=string_dtype)
+        gmapping = h5f.create_group('/report/' + population_names[0] + '/mapping')
+
+        dnodes = gmapping.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
+        dnodes.attrs.create('sorted', data=True, dtype=np.uint8)
+        gmapping.create_dataset('index_pointers', data=index_pointers, dtype=np.uint64)
+        gmapping.create_dataset('element_ids', data=element_ids, dtype=np.uint32)
+        dtimes = gmapping.create_dataset('time', data=times, dtype=np.double)
+        dtimes.attrs.create('units', data="ms", dtype=string_dtype)
+
+        gpop_soma1 = h5f.create_group('/report/' + population_names[1])
+        ddata = gpop_soma1.create_dataset('data', data=data, dtype=np.float32)
+        ddata.attrs.create('units', data="mV", dtype=string_dtype)
+        gmapping = h5f.create_group('/report/' + population_names[1] + '/mapping')
+
+        dnodes = gmapping.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
+        dnodes.attrs.create('sorted', data=True, dtype=np.uint8)
+        gmapping.create_dataset('index_pointers', data=index_pointers, dtype=np.uint64)
+        gmapping.create_dataset('element_ids', data=element_ids, dtype=np.uint32)
+        dtimes = gmapping.create_dataset('time', data=times, dtype=np.double)
+        dtimes.attrs.create('units', data="ms", dtype=string_dtype)
+
+
 def write_spikes(filepath):
     population_names = ['default', 'default2']
     timestamps_base = (0.3, 0.1, 0.2, 1.3, 0.7)
@@ -27,3 +62,4 @@ def write_spikes(filepath):
 
 if __name__ == "__main__":
     write_spikes("spikes.h5")
+    write_soma_report("soma_report.h5")

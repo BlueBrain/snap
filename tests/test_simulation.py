@@ -1,5 +1,6 @@
 import bluepysnap.simulation as test_module
 from bluepysnap.spike_report import SpikeReport
+from bluepysnap.frame_report import SomaReport
 
 from utils import TEST_DATA_DIR
 
@@ -23,3 +24,6 @@ def test_all():
     assert simulation.node_sets == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
 
+    assert sorted(list(simulation.reports)) == ['soma_report', 'soma_report2']
+    assert isinstance(simulation.reports['soma_report'], SomaReport)
+    assert isinstance(simulation.reports['soma_report2'], SomaReport)
