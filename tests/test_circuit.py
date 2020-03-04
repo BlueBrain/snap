@@ -16,6 +16,7 @@ def test_all():
         {
             'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
             'node_types_file': None,
+            "node_sets_file": str(TEST_DATA_DIR / "node_sets.json")
         }
     )
     assert isinstance(circuit.nodes, dict)

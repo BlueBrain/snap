@@ -382,7 +382,7 @@ class NodePopulation(object):
                 - ``None``: return the orientations of all nodes.
 
         Returns:
-            numpy.ndarry/pandas.Series:
+            numpy.ndarray/pandas.Series:
                 A 3x3 rotation matrix if a single node ID is passed as ``group``.
                 Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """

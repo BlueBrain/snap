@@ -1,0 +1,89 @@
+# Copyright (c) 2019, EPFL/Blue Brain Project
+
+# This file is part of BlueBrain SNAP library <https://github.com/BlueBrain/snap>
+
+# This library is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License version 3.0 as published
+# by the Free Software Foundation.
+
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+
+# You should have received a copy of the GNU Lesser General Public License
+# along with this library; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+"""Simulation access."""
+
+from cached_property import cached_property
+
+from bluepysnap.config import Config
+from bluepysnap import utils
+
+
+class Simulation(object):
+    """Access to Simulation data."""
+
+    def __init__(self, config):
+        """Initializes a simulation object from a SONATA simulation config file.
+
+        Args:
+            config (str): Path to a SONATA simulation config file.
+
+        Returns:
+            Simulation: A Simulation object.
+        """
+        self._config = Config(config).resolve()
+
+    @property
+    def config(self):
+        """Simulation config dictionary."""
+        return self._config
+
+    @cached_property
+    def circuit(self):
+        """Access to the circuit used for the simulation."""
+        from bluepysnap.circuit import Circuit
+        return Circuit(self._config["network"])
+
+    @property
+    def run(self):
+        """Access to the complete run dictionary for this simulation."""
+        return self._config["run"]
+
+    @property
+    def t_start(self):
+        """Returns the starting time of the simulation. Default is zero."""
+        return self.run.get("tstart", 0)
+
+    @property
+    def t_stop(self):
+        """Returns the stoping time of the simulation."""
+        return self.run["tstop"]
+
+    @property
+    def dt(self):
+        """Returns the frequency of reporting in milliseconds."""
+        return self.run.get("dt", None)
+
+    @property
+    def conditions(self):
+        """Access to the conditions dictionary for this simulation."""
+        return self._config.get("conditions", {})
+
+    @property
+    def simulator(self):
+        """Returns the targeted simulator."""
+        return self._config["target_simulator"]
+
+    @cached_property
+    def node_sets(self):
+        """Return the node set used for the simulation."""
+        return utils.load_json(self._config['node_sets_file'])
+
+    @cached_property
+    def spikes(self):
+        """Access to the SpikeReport."""
+        from bluepysnap.spike_report import SpikeReport
+        return SpikeReport(self)

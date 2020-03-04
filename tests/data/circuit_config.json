@@ -13,7 +13,8 @@
     "nodes": [
       {
         "nodes_file": "$NETWORK_DIR/nodes.h5",
-        "node_types_file": null
+        "node_types_file": null,
+        "node_sets_file": "$NETWORK_DIR/node_sets.json"
       }
     ],
     "edges": [
