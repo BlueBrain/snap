@@ -55,6 +55,11 @@ Or a python free function::
     from bluepysnap.circuit_validation import validate
     errors = validate("my/circuit/path/circuit_config.json")
 
+Acknowledgements
+----------------
+
+This project/research has received funding from the European Union’s Horizon 2020 Framework Programme for Research and Innovation under the Specific Grant Agreement No. 785907 (Human Brain Project SGA2).
+
 
 License
 -------
