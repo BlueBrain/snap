@@ -1,6 +1,6 @@
 import bluepysnap.simulation as test_module
-from bluepysnap.spike_report import SpikeReport
-from bluepysnap.frame_report import SomaReport
+from bluepysnap.spike_report import SpikeReport, PopulationSpikeReport
+from bluepysnap.frame_report import SomaReport, PopulationSomaReport
 
 from utils import TEST_DATA_DIR
 
@@ -23,7 +23,12 @@ def test_all():
 
     assert simulation.node_sets == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
+    assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
     assert sorted(list(simulation.reports)) == ['soma_report', 'soma_report2']
     assert isinstance(simulation.reports['soma_report'], SomaReport)
     assert isinstance(simulation.reports['soma_report2'], SomaReport)
+
+    rep = simulation.reports['soma_report']
+    assert sorted(list(rep.population_names)) == ["default", "default2"]
+    assert isinstance(rep['default'], PopulationSomaReport)

@@ -57,7 +57,7 @@ class PopulationFrameReport(object):
         """
 
         self._frame_report = frame_report
-        self._frame_population = _get_reader(frame_report, population_name)
+        self._frame_population = self._get_reader(frame_report, population_name)
         self._population_name = population_name
 
     @staticmethod

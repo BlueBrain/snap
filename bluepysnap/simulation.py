@@ -27,7 +27,7 @@ from bluepysnap import utils
 def _collect_frame_reports(sim):
     res = {}
     for name, report in sim.config["reports"].items():
-        if report["sections"] == "soma":
+        if report.get(["sections"], "soma") == "soma":
             from bluepysnap.frame_report import SomaReport
             cls = SomaReport
         else:
