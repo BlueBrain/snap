@@ -105,7 +105,7 @@ class TestPopulationSomasReport:
         assert self.test_obj.population.get(group=2, properties=Cell.MTYPE) == "L6_Y"
 
     def test_population_2(self):
-        test_obj = test_module.FrameReport(self.simulation, "soma_report")["default2"]
+        test_obj = test_module.SomasReport(self.simulation, "soma_report")["default2"]
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
             test_obj.population
@@ -165,7 +165,7 @@ class TestPopulationCompartmentsReport(TestPopulationSomasReport):
         self.test_obj = test_module.CompartmentsReport(self.simulation, "section_report")["default"]
 
     def test_times(self):
-        assert self.test_obj.times == (0.0, 4.0, 0.8)
+        assert self.test_obj.times == (0.0, 1.0, 0.1)
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
