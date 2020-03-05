@@ -15,7 +15,7 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
-
+from abc import ABC
 from cached_property import cached_property
 
 from pathlib2 import Path
@@ -42,7 +42,7 @@ def _get_reader(reader_report, cls):
     return cls(path)
 
 
-class PopulationFrameReport(object):
+class PopulationFrameReport(ABC):
     """Access to PopulationFrameReport data."""
 
     def __init__(self, frame_report, population_name):
@@ -62,12 +62,8 @@ class PopulationFrameReport(object):
 
     @staticmethod
     def _get_reader(frame_report, population_name):
-        """Return the population reader for this kind of reports.
-
-        This allows overriding of the reader, lazy imports and strong typing of the reports.
-        """
-        from libsonata import ReportReader
-        return _get_reader(frame_report, ReportReader)[population_name]
+        """Access to the reader for this kind of report."""
+        raise NotImplementedError
 
     @property
     def name(self):
@@ -82,7 +78,7 @@ class PopulationFrameReport(object):
     @property
     def times(self):
         """Access to the times attribute. Returns (tstart, tend, tstep) of the population."""
-        return self._frame_population.times()
+        return self._frame_population.times
 
     @property
     def time_units(self):
@@ -132,7 +128,7 @@ class PopulationFrameReport(object):
         return res
 
 
-class FrameReport(object):
+class FrameReport(ABC):
     """Access to FrameReport data."""
 
     def __init__(self, sim, report_name):
@@ -179,13 +175,12 @@ class FrameReport(object):
 
     @cached_property
     def _frame_reader(self):
-        """Lazy access to the frame reader.
+        """Access to the frame reader.
 
         Notes:
             should be override.
         """
-        from libsonata import ReportReader
-        return _get_reader(self, ReportReader)
+        raise NotImplementedError
 
     @cached_property
     def population_names(self):
@@ -206,47 +201,47 @@ class FrameReport(object):
         return self._population_report.__iter__()
 
 
-class PopulationSomaReport(PopulationFrameReport):
+class PopulationSomasReport(PopulationFrameReport):
     """Access to PopulationSomaReport data."""
     @staticmethod
     def _get_reader(frame_report, population_name):
         """Access to the population soma reader."""
-        from libsonata import ReportReader as SomaReader
-        return _get_reader(frame_report, SomaReader)[population_name]
+        from libsonata import SomasReportReader
+        return _get_reader(frame_report, SomasReportReader)[population_name]
 
 
-class SomaReport(FrameReport):
+class SomasReport(FrameReport):
     """Access to a SomaReport data """
     @cached_property
     def _frame_reader(self):
         """Access to the soma report reader."""
-        from libsonata import ReportReader as SomaReader
-        return _get_reader(self, SomaReader)
+        from libsonata import SomasReportReader
+        return _get_reader(self, SomasReportReader)
 
     @cached_property
     def _population_report(self):
         """Collect the different PopulationSomaReport."""
-        return _collect_reports(self, PopulationSomaReport)
+        return _collect_reports(self, PopulationSomasReport)
 
 
-class PopulationSectionReport(PopulationFrameReport):
+class PopulationCompartmentsReport(PopulationFrameReport):
     """Access to PopulationSomaReport data."""
     @staticmethod
     def _get_reader(frame_report, population_name):
         """Access to the population soma reader."""
-        from libsonata import ReportReader as SectionReader
-        return _get_reader(frame_report, SectionReader)[population_name]
+        from libsonata import CompartmentsReportReader
+        return _get_reader(frame_report, CompartmentsReportReader)[population_name]
 
 
-class SectionReport(FrameReport):
+class CompartmentsReport(FrameReport):
     """Access to a SomaReport data """
     @cached_property
     def _frame_reader(self):
         """Access to the soma report reader."""
-        from libsonata import ReportReader as SectionReader
-        return _get_reader(self, SectionReader)
+        from libsonata import CompartmentsReportReader
+        return _get_reader(self, CompartmentsReportReader)
 
     @cached_property
     def _population_report(self):
         """Collect the different PopulationSomaReport."""
-        return _collect_reports(self, PopulationSectionReport)
+        return _collect_reports(self, PopulationCompartmentsReport)

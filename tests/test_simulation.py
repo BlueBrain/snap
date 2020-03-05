@@ -3,8 +3,8 @@ import pytest
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.simulation as test_module
 from bluepysnap.spike_report import SpikeReport, PopulationSpikeReport
-from bluepysnap.frame_report import (SomaReport, PopulationSomaReport,
-                                     SectionReport, PopulationSectionReport)
+from bluepysnap.frame_report import (SomasReport, PopulationSomasReport,
+                                     CompartmentsReport, PopulationCompartmentsReport)
 
 
 from utils import TEST_DATA_DIR
@@ -13,7 +13,6 @@ from utils import TEST_DATA_DIR
 def test_all():
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
-    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
     assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
     assert list(simulation.circuit.edges) == ['default']
 
@@ -31,16 +30,16 @@ def test_all():
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
     assert sorted(list(simulation.reports)) == sorted(list(['soma_report', 'section_report']))
-    assert isinstance(simulation.reports['soma_report'], SomaReport)
-    assert isinstance(simulation.reports['section_report'], SectionReport)
+    assert isinstance(simulation.reports['soma_report'], SomasReport)
+    assert isinstance(simulation.reports['section_report'], CompartmentsReport)
 
     rep = simulation.reports['soma_report']
     assert sorted(list(rep.population_names)) == ["default", "default2"]
-    assert isinstance(rep['default'], PopulationSomaReport)
+    assert isinstance(rep['default'], PopulationSomasReport)
 
     rep = simulation.reports['section_report']
-    assert sorted(list(rep.population_names)) == ["default", "default2"]
-    assert isinstance(rep['default'], PopulationSectionReport)
+    assert sorted(list(rep.population_names)) == ["default"]
+    assert isinstance(rep['default'], PopulationCompartmentsReport)
 
 
 def test_unknonw_report():
