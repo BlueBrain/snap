@@ -60,6 +60,7 @@ Acknowledgements
 
 This project/research has received funding from the European Union’s Horizon 2020 Framework Programme for Research and Innovation under the Specific Grant Agreement No. 785907 (Human Brain Project SGA2).
 
+The Blue Brain Project would like to thank `Dr Eilif Muller <https://github.com/markovg>`_, the author of the precursor to Blue Brain SNAP, for his invaluable insights and contributions
 
 License
 -------
