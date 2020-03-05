@@ -17,7 +17,7 @@ class TestFrameReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.FrameReport(self.simulation, "soma_report")
-        self.test_obj_info = test_module.FrameReport(self.simulation, "soma_report2")
+        self.test_obj_info = test_module.FrameReport(self.simulation, "section_report")
 
     def test_config(self):
         assert self.test_obj.config == {"cells": "Layer23", "variable_name": "m",
@@ -73,19 +73,19 @@ class TestPopulationFrameReport:
     def test_data_units(self):
         assert self.test_obj.data_units == "mV"
 
-    def test__resolve_nodes(self):
-        npt.assert_array_equal(self.test_obj._resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
-        assert self.test_obj._resolve_nodes({Cell.MTYPE: "L2_X"}) == [0]
-        npt.assert_array_equal(self.test_obj._resolve_nodes("Node12_L6_Y"), [1, 2])
+    def test__resolve(self):
+        npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
+        assert self.test_obj._resolve({Cell.MTYPE: "L2_X"}) == [0]
+        npt.assert_array_equal(self.test_obj._resolve("Node12_L6_Y"), [1, 2])
 
-    def test_nodes(self):
-        assert self.test_obj.nodes.get(group=2, properties=Cell.MTYPE) == "L6_Y"
+    def test_population(self):
+        assert self.test_obj.population.get(group=2, properties=Cell.MTYPE) == "L6_Y"
 
-    def test_nodes_2(self):
+    def test_population_2(self):
         test_obj = test_module.FrameReport(self.simulation, "soma_report")["default2"]
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
-            test_obj.nodes
+            test_obj.population
 
     def test_get(self):
         values = np.linspace(0, 0.9, 10)
@@ -131,7 +131,7 @@ class TestPopulationFrameReport:
         with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
 
-    @patch(test_module.__name__ + '.PopulationFrameReport._resolve_nodes',
+    @patch(test_module.__name__ + '.PopulationFrameReport._resolve',
            return_value=np.asarray([4]))
     def test_get2(self, mock):
         pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())

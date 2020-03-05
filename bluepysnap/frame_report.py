@@ -95,31 +95,36 @@ class PopulationFrameReport(object):
         return self._frame_population.data_units
 
     @cached_property
-    def nodes(self):
-        """Returns the NodePopulation corresponding to this spike report."""
+    def population(self):
+        """Returns the Population corresponding to this report.
+
+        Notes:
+            The name population is to envision the future synapse report with witch we will
+            connect to a edge population.
+        """
         result = self._frame_report.sim.circuit.nodes.get(self._population_name)
         if result is None:
             raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
         return result
 
-    def _resolve_nodes(self, group):
-        """Transform a node group into a node_id array."""
-        return self.nodes.ids(group=group)
+    def _resolve(self, group):
+        """Transform a group into ids array."""
+        return self.population.ids(group=group)
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch data from the report.
 
-        If `node_ids` is provided, filter by node_ids.
+        If `group` is provided, filter by frame ids.
         If `t_start` and/or `t_end` is provided, filter by spike time.
 
         Returns:
             pandas.DataFrame: with timestamps as index and frame as columns.
         """
-        node_ids = [] if group is None else self._resolve_nodes(group).tolist()
+        ids = [] if group is None else self._resolve(group).tolist()
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
 
-        res = self._frame_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
+        res = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
         if not res.data:
             return pd.DataFrame()
         res = pd.DataFrame(data=res.data, index=res.index)
@@ -177,7 +182,7 @@ class FrameReport(object):
         """Lazy access to the frame reader.
 
         Notes:
-            should be override
+            should be override.
         """
         from libsonata import ReportReader
         return _get_reader(self, ReportReader)
@@ -222,3 +227,26 @@ class SomaReport(FrameReport):
     def _population_report(self):
         """Collect the different PopulationSomaReport."""
         return _collect_reports(self, PopulationSomaReport)
+
+
+class PopulationSectionReport(PopulationFrameReport):
+    """Access to PopulationSomaReport data."""
+    @staticmethod
+    def _get_reader(frame_report, population_name):
+        """Access to the population soma reader."""
+        from libsonata import ReportReader as SectionReader
+        return _get_reader(frame_report, SectionReader)[population_name]
+
+
+class SectionReport(FrameReport):
+    """Access to a SomaReport data """
+    @cached_property
+    def _frame_reader(self):
+        """Access to the soma report reader."""
+        from libsonata import ReportReader as SectionReader
+        return _get_reader(self, SectionReader)
+
+    @cached_property
+    def _population_report(self):
+        """Collect the different PopulationSomaReport."""
+        return _collect_reports(self, PopulationSectionReport)
