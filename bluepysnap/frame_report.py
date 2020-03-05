@@ -46,7 +46,7 @@ class PopulationFrameReport(object):
     """Access to PopulationFrameReport data."""
 
     def __init__(self, frame_report, population_name):
-        """Initializes a PopulationSpikeReport object from a SpikeReport.
+        """Initializes a PopulationFrameReport object from a FrameReport.
 
         Args:
             frame_report (FrameReport): FrameReport containing this spike report population.
@@ -62,7 +62,10 @@ class PopulationFrameReport(object):
 
     @staticmethod
     def _get_reader(frame_report, population_name):
-        """Allow overriding of the Reader."""
+        """Return the population reader for this kind of reports.
+
+        This allows overriding of the reader, lazy imports and strong typing of the reports.
+        """
         from libsonata import ReportReader
         return _get_reader(frame_report, ReportReader)[population_name]
 
@@ -74,7 +77,7 @@ class PopulationFrameReport(object):
     @property
     def sorted(self):
         """Access to the sorted attribute."""
-        return self._frame_population.sorted()
+        return self._frame_population.sorted
 
     @property
     def times(self):
@@ -84,12 +87,12 @@ class PopulationFrameReport(object):
     @property
     def time_units(self):
         """Returns the times unit for this simulation."""
-        return self._frame_population.timeUnits()
+        return self._frame_population.time_units
 
     @property
     def data_units(self):
         """Returns the data unit for this simulation."""
-        return self._frame_population.dataUnits()
+        return self._frame_population.data_units
 
     @cached_property
     def nodes(self):
@@ -116,8 +119,12 @@ class PopulationFrameReport(object):
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
 
-        res = self._frame_population.get(node_ids=node_ids, tstart=t_start, tend=t_stop)
-        return pd.DataFrame(data=res.data, index=res.index)
+        res = self._frame_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
+        if not res.data:
+            return pd.DataFrame()
+        res = pd.DataFrame(data=res.data, index=res.index)
+        res.sort_index(inplace=True)
+        return res
 
 
 class FrameReport(object):
@@ -130,7 +137,7 @@ class FrameReport(object):
             sim (Simulation): Simulation containing this frame report.
 
         Returns:
-            FrameReport: A SpikeReport object.
+            FrameReport: A FrameReport object.
         """
         self._sim = sim
         self.name = report_name
@@ -167,47 +174,51 @@ class FrameReport(object):
 
     @cached_property
     def _frame_reader(self):
+        """Lazy access to the frame reader.
+
+        Notes:
+            should be override
+        """
         from libsonata import ReportReader
         return _get_reader(self, ReportReader)
 
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return self._frame_reader.getPopulationsNames()
+        return self._frame_reader.get_populations_names()
 
     @cached_property
-    def _population(self):
+    def _population_report(self):
         """Collect the different PopulationFrameReport."""
         return _collect_reports(self, PopulationFrameReport)
 
     def __getitem__(self, population_name):
         """Access the PopulationFrameReports corresponding to the population 'population_name'."""
-        return self._population[population_name]
+        return self._population_report[population_name]
 
     def __iter__(self):
         """Allows iteration over the different PopulationFrameReports."""
-        return self._population.__iter__()
+        return self._population_report.__iter__()
 
 
 class PopulationSomaReport(PopulationFrameReport):
     """Access to PopulationSomaReport data."""
     @staticmethod
     def _get_reader(frame_report, population_name):
-        """Allow overriding of the Reader."""
+        """Access to the population soma reader."""
         from libsonata import ReportReader as SomaReader
         return _get_reader(frame_report, SomaReader)[population_name]
 
 
 class SomaReport(FrameReport):
     """Access to a SomaReport data """
-
     @cached_property
     def _frame_reader(self):
-        """Override of the frame reader."""
+        """Access to the soma report reader."""
         from libsonata import ReportReader as SomaReader
         return _get_reader(self, SomaReader)
 
     @cached_property
-    def _population(self):
-        """Override of the population collection."""
+    def _population_report(self):
+        """Collect the different PopulationSomaReport."""
         return _collect_reports(self, PopulationSomaReport)

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import numpy.testing as npt
 import pytest
+from mock import patch
 
 from bluepysnap.simulation import Simulation
 import bluepysnap.frame_report as test_module
@@ -87,6 +88,50 @@ class TestPopulationFrameReport:
             test_obj.nodes
 
     def test_get(self):
-        # pdt.assert_frame_equal(self.test_obj.get(),)
-        assert True
+        values = np.linspace(0, 0.9, 10)
+        data = {(0, 0): values, (1, 0): values + 1, (2, 0): values + 2}
+        df = pd.DataFrame(data=data, index=values)
+        pdt.assert_frame_equal(self.test_obj.get(), df)
 
+        pdt.assert_frame_equal(self.test_obj.get(2), df.loc[:, [(2, 0)]])
+
+        pdt.assert_frame_equal(self.test_obj.get([2, 0]), df.loc[:, [(0, 0), (2, 0)]])
+
+        pdt.assert_frame_equal(self.test_obj.get([0, 2]), df.loc[:, [(0, 0), (2, 0)]])
+
+        pdt.assert_frame_equal(self.test_obj.get(np.asarray([0, 2])), df.loc[:, [(0, 0), (2, 0)]])
+
+        pdt.assert_frame_equal(self.test_obj.get([2], t_stop=0.5), df.iloc[:5].loc[:, [(2, 0)]])
+
+        pdt.assert_frame_equal(self.test_obj.get([2], t_stop=0.55), df.iloc[:5].loc[:, [(2, 0)]])
+
+        pdt.assert_frame_equal(self.test_obj.get([2], t_start=0.5), df.iloc[5:].loc[:, [(2, 0)]])
+
+        pdt.assert_frame_equal(
+            self.test_obj.get([2], t_start=0.5, t_stop=0.8), df.iloc[5:8].loc[:, [(2, 0)]])
+
+        pdt.assert_frame_equal(
+            self.test_obj.get([2, 1], t_start=0.5, t_stop=0.8),  df.iloc[5:8].loc[:, [(1, 0), (2, 0)]])
+
+        pdt.assert_frame_equal(
+            self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8), df.iloc[2:8].loc[:, [(1, 0), (2, 0)]])
+
+        # print("\n")
+        # print(self.test_obj.get([0, 2], t_start=15))
+
+        pdt.assert_frame_equal(
+            self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8), df.iloc[2:8].loc[:, [(1, 0), (2, 0)]])
+
+        pdt.assert_frame_equal(
+            self.test_obj.get(group={Cell.MTYPE: "L2_X"}), df.loc[:, [(0, 0)]])
+
+        pdt.assert_frame_equal(
+            self.test_obj.get(group="Layer23"), df.loc[:, [(0, 0)]])
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(4)
+
+    @patch(test_module.__name__ + '.PopulationFrameReport._resolve_nodes',
+           return_value=np.asarray([4]))
+    def test_get2(self, mock):
+        pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())

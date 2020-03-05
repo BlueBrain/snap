@@ -68,7 +68,7 @@ class PopulationSpikeReport(object):
             'by_time' if the report is sorted by timestamps
             'none' if not sorted.
         """
-        return self._spike_population.sorting()
+        return self._spike_population.sorting
 
     @property
     def name(self):
@@ -102,7 +102,7 @@ class PopulationSpikeReport(object):
         t_stop = -1 if t_stop is None else t_stop
         series_name = "{}_node_ids".format(self._population_name)
 
-        res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tend=t_stop)
+        res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         if not res:
             return pd.Series(data=[], index=[], name=series_name)
 
@@ -178,7 +178,7 @@ class SpikeReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return self._spike_reader.getPopulationsNames()
+        return self._spike_reader.get_populations_names()
 
     @cached_property
     def _population(self):

@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import numpy.testing as npt
 import pytest
+from mock import patch
 
 from bluepysnap.simulation import Simulation
 import bluepysnap.spike_report as test_module
@@ -142,6 +143,9 @@ class TestPopulationSpikeReport:
             self.test_obj.get(group="Layer23"),
             pd.Series([0, 0], index=[0.2, 1.3], name="default_node_ids"))
 
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(4)
+
     def test_get2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         assert test_obj.sorting == "by_id"
@@ -151,6 +155,12 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(test_obj.get([0, 2]),
                                 pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
                                           name="default2_node_ids"))
+
+    @patch(test_module.__name__ + '.PopulationSpikeReport._resolve_nodes',
+           return_value=np.asarray([4]))
+    def test_get3(self, mock):
+        pdt.assert_series_equal(self.test_obj.get(4),
+                                pd.Series([], index=[], name="default_node_ids"))
 
     def test_get_gid(self):
         npt.assert_allclose(self.test_obj.get_node_id(0), [0.2, 1.3])
