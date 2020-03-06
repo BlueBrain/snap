@@ -54,3 +54,19 @@ def test_unknonw_report():
 
     with pytest.raises(BluepySnapError):
         simulation.reports
+
+
+def test__resolve_config():
+    simulation = test_module.Simulation(str(TEST_DATA_DIR / 'config.json'))
+    assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
+    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+
+    simulation = test_module.Simulation(str(TEST_DATA_DIR / 'config_sim_no_network.json'))
+    assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
+    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+
+
+def test_no_network_config():
+    simulation = test_module.Simulation(str(TEST_DATA_DIR / 'simulation_config_no_network.json'))
+    with pytest.raises(BluepySnapError):
+        simulation.circuit

@@ -149,14 +149,12 @@ class TestPopulationSpikeReport:
     def test_get2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         assert test_obj.sorting == "by_id"
-        print(test_obj.get([2, 0]))      # TODO: FIXME PB SONATA
-        # pdt.assert_series_equal(test_obj.get([2, 0]),
-        #                         pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-        #                                   name="default2_node_ids"))
-        # pdt.assert_series_equal(test_obj.get([0, 2]),
-        #                         pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-        #                                   name="default2_node_ids"))
-
+        pdt.assert_series_equal(test_obj.get([2, 0]),
+                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
+                                          name="default2_node_ids"))
+        pdt.assert_series_equal(test_obj.get([0, 2]),
+                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
+                                          name="default2_node_ids"))
 
     @patch(test_module.__name__ + '.PopulationSpikeReport._resolve_nodes',
            return_value=np.asarray([4]))

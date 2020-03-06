@@ -24,7 +24,31 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap import utils
 
 
+def _resolve_config(filepath):
+    """Resolve the config file if global ('network' and 'simulation' keys).
+
+    Args:
+        filepath (str): the path to the configuration file.
+
+    Returns:
+        dict: the complete simulation config file.
+    """
+    from pathlib2 import Path
+
+    filepath = Path(filepath)
+    content = utils.load_json(str(filepath))
+    parent = filepath.parent
+    if "simulation" in content and "network" in content:
+        simulation_path = parent / content["simulation"]
+        res = Config(str(simulation_path)).resolve()
+        if "network" not in res:
+            res["network"] = str(parent / content["network"])
+        return res
+    return Config(str(filepath)).resolve()
+
+
 def _collect_frame_reports(sim):
+    """Collect the different frame reports."""
     res = {}
     for name, report in sim.config["reports"].items():
         report_type = report.get("sections", "soma")
@@ -52,7 +76,7 @@ class Simulation(object):
         Returns:
             Simulation: A Simulation object.
         """
-        self._config = Config(config).resolve()
+        self._config = _resolve_config(config)
 
     @property
     def config(self):
@@ -63,6 +87,8 @@ class Simulation(object):
     def circuit(self):
         """Access to the circuit used for the simulation."""
         from bluepysnap.circuit import Circuit
+        if "network" not in self._config:
+            raise BluepySnapError("No 'network' set in the simulation/global config file.")
         return Circuit(self._config["network"])
 
     @property
