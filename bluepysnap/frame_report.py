@@ -15,7 +15,6 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
-from abc import ABC
 from cached_property import cached_property
 
 from pathlib2 import Path
@@ -27,7 +26,7 @@ from bluepysnap.exceptions import BluepySnapError
 FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
 
-def _collect_reports(frame_report, cls):
+def _collect_population_reports(frame_report, cls):
     result = {}
     for population in frame_report.population_names:
         result[population] = cls(frame_report, population)
@@ -42,7 +41,7 @@ def _get_reader(reader_report, cls):
     return cls(path)
 
 
-class PopulationFrameReport(ABC):
+class PopulationFrameReport(object):
     """Access to PopulationFrameReport data."""
 
     def __init__(self, frame_report, population_name):
@@ -62,8 +61,9 @@ class PopulationFrameReport(ABC):
 
     @staticmethod
     def _get_reader(frame_report, population_name):
-        """Access to the reader for this kind of report."""
-        raise NotImplementedError
+        """Access to the population compartment reader."""
+        from libsonata import ElementsReportReader
+        return _get_reader(frame_report, ElementsReportReader)[population_name]
 
     @property
     def name(self):
@@ -96,7 +96,7 @@ class PopulationFrameReport(ABC):
 
         Notes:
             The name population is to envision the future synapse report with witch we will
-            connect to a edge population.
+            connect to a edge population (maybe).
         """
         result = self._frame_report.sim.circuit.nodes.get(self._population_name)
         if result is None:
@@ -106,6 +106,10 @@ class PopulationFrameReport(ABC):
     def _resolve(self, group):
         """Transform a group into ids array."""
         return self.population.ids(group=group)
+
+    @staticmethod
+    def _wrap_columns(data):
+        return pd.MultiIndex.from_tuples(list(data))
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch data from the report.
@@ -120,15 +124,17 @@ class PopulationFrameReport(ABC):
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
 
-        res = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
-        if not res.data:
+        view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
+        if not view.data:
             return pd.DataFrame()
-        res = pd.DataFrame(data=res.data, index=res.index)
+        res = pd.DataFrame(data=view.data, index=view.index)
+        # rename from multi index to index cannot be achieved easily through df.rename
+        res.columns = self._wrap_columns(view.data)
         res.sort_index(inplace=True)
         return res
 
 
-class FrameReport(ABC):
+class FrameReport(object):
     """Access to FrameReport data."""
 
     def __init__(self, sim, report_name):
@@ -175,12 +181,9 @@ class FrameReport(ABC):
 
     @cached_property
     def _frame_reader(self):
-        """Access to the frame reader.
-
-        Notes:
-            should be override.
-        """
-        raise NotImplementedError
+        """Access to the compartment report reader."""
+        from libsonata import ElementsReportReader
+        return _get_reader(self, ElementsReportReader)
 
     @cached_property
     def population_names(self):
@@ -190,7 +193,7 @@ class FrameReport(ABC):
     @cached_property
     def _population_report(self):
         """Collect the different PopulationFrameReport."""
-        return _collect_reports(self, PopulationFrameReport)
+        return _collect_population_reports(self, PopulationFrameReport)
 
     def __getitem__(self, population_name):
         """Access the PopulationFrameReports corresponding to the population 'population_name'."""
@@ -201,47 +204,29 @@ class FrameReport(ABC):
         return self._population_report.__iter__()
 
 
-class PopulationSomasReport(PopulationFrameReport):
-    """Access to PopulationSomaReport data."""
-    @staticmethod
-    def _get_reader(frame_report, population_name):
-        """Access to the population soma reader."""
-        from libsonata import SomasReportReader
-        return _get_reader(frame_report, SomasReportReader)[population_name]
-
-
-class SomasReport(FrameReport):
-    """Access to a SomaReport data """
-    @cached_property
-    def _frame_reader(self):
-        """Access to the soma report reader."""
-        from libsonata import SomasReportReader
-        return _get_reader(self, SomasReportReader)
-
-    @cached_property
-    def _population_report(self):
-        """Collect the different PopulationSomaReport."""
-        return _collect_reports(self, PopulationSomasReport)
-
-
 class PopulationCompartmentsReport(PopulationFrameReport):
-    """Access to PopulationSomaReport data."""
-    @staticmethod
-    def _get_reader(frame_report, population_name):
-        """Access to the population soma reader."""
-        from libsonata import CompartmentsReportReader
-        return _get_reader(frame_report, CompartmentsReportReader)[population_name]
+    """Access to PopulationCompartmentsReport data."""
 
 
 class CompartmentsReport(FrameReport):
-    """Access to a SomaReport data """
-    @cached_property
-    def _frame_reader(self):
-        """Access to the soma report reader."""
-        from libsonata import CompartmentsReportReader
-        return _get_reader(self, CompartmentsReportReader)
-
+    """Access to a CompartmentsReport data """
     @cached_property
     def _population_report(self):
         """Collect the different PopulationSomaReport."""
-        return _collect_reports(self, PopulationCompartmentsReport)
+        return _collect_population_reports(self, PopulationCompartmentsReport)
+
+
+class PopulationSomasReport(PopulationFrameReport):
+    """Access to PopulationSomaReport data."""
+    @staticmethod
+    def _wrap_columns(data):
+        return pd.Index([k[0] for k in data.keys()])
+
+
+class SomasReport(FrameReport):
+    """Access to a SomaReport data."""
+    @cached_property
+    def _population_report(self):
+        """Collect the different PopulationSomaReport."""
+        return _collect_population_reports(self, PopulationSomasReport)
+
