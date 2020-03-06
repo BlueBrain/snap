@@ -97,7 +97,7 @@ class Simulation(object):
 
     @cached_property
     def node_sets(self):
-        """Return the node set used for the simulation."""
+        """Return the node sets used for the simulation."""
         return utils.load_json(self._config['node_sets_file'])
 
     @cached_property
@@ -108,5 +108,9 @@ class Simulation(object):
 
     @cached_property
     def reports(self):
-        """Access to the SpikeReport."""
+        """Access to the FrameReport.
+
+        Notes:
+            Supported FrameReport are the soma and compartment reports.
+        """
         return _collect_frame_reports(self)

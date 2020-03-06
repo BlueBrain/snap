@@ -108,8 +108,9 @@ class PopulationFrameReport(object):
         return self.population.ids(group=group)
 
     @staticmethod
-    def _wrap_columns(data):
-        return pd.MultiIndex.from_tuples(list(data))
+    def _wrap_columns(columns):
+        """Should be overloaded for soma or other report types."""
+        return columns
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch data from the report.
@@ -129,7 +130,7 @@ class PopulationFrameReport(object):
             return pd.DataFrame()
         res = pd.DataFrame(data=view.data, index=view.index)
         # rename from multi index to index cannot be achieved easily through df.rename
-        res.columns = self._wrap_columns(view.data)
+        res.columns = self._wrap_columns(res.columns)
         res.sort_index(inplace=True)
         return res
 
@@ -212,15 +213,15 @@ class CompartmentsReport(FrameReport):
     """Access to a CompartmentsReport data """
     @cached_property
     def _population_report(self):
-        """Collect the different PopulationSomaReport."""
+        """Collect the different PopulationCompartmentsReport."""
         return _collect_population_reports(self, PopulationCompartmentsReport)
 
 
 class PopulationSomasReport(PopulationFrameReport):
     """Access to PopulationSomaReport data."""
     @staticmethod
-    def _wrap_columns(data):
-        return pd.Index([k[0] for k in data.keys()])
+    def _wrap_columns(columns):
+        return columns.levels[0]
 
 
 class SomasReport(FrameReport):

@@ -168,7 +168,7 @@ class SpikeReport(object):
         path = Path(self.config["output_dir"]) / self.config["log_file"]
         if not path.exists():
             raise BluepySnapError("Cannot find the log file for the spike report.")
-        yield open(path, "r")
+        yield open(str(path), "r")
 
     @cached_property
     def _spike_reader(self):

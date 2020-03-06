@@ -160,7 +160,7 @@ class TestPopulationCompartmentsReport:
         pdt.assert_frame_equal(
             self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8), self.df.iloc[2:9].loc[:, [1, 2]])
 
-        # assert self.test_obj.get([0, 2], t_start=15).empty # TODO: FIX ME
+        pdt.assert_frame_equal( self.test_obj.get([0, 2], t_start=15), pd.DataFrame())
 
         pdt.assert_frame_equal(
             self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8), self.df.iloc[2:9].loc[:, [1, 2]])

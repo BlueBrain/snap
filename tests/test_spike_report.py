@@ -127,9 +127,9 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8),
                                 pd.Series([1, 2], index=[0.3, 0.7], name="default_node_ids"))
 
-        # pdt.assert_series_equal(self.test_obj.get([0, 2], t_start=12), # TODO: FIXME PB SONATA
-        #                         pd.Series([], index=[],
-        #                                   name="default_node_ids"))
+        pdt.assert_series_equal(self.test_obj.get([0, 2], t_start=12),
+                                pd.Series([], index=[],
+                                          name="default_node_ids"))
 
         pdt.assert_series_equal(
             self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8),
@@ -149,8 +149,8 @@ class TestPopulationSpikeReport:
     def test_get2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         assert test_obj.sorting == "by_id"
-
-        # pdt.assert_series_equal(test_obj.get([2, 0]), # TODO: FIXME PB SONATA
+        print(test_obj.get([2, 0]))      # TODO: FIXME PB SONATA
+        # pdt.assert_series_equal(test_obj.get([2, 0]),
         #                         pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
         #                                   name="default2_node_ids"))
         # pdt.assert_series_equal(test_obj.get([0, 2]),
