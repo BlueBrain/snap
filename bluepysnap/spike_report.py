@@ -56,7 +56,7 @@ class PopulationSpikeReport(object):
         self._population_name = population_name
 
     @property
-    def _sorting(self):
+    def _sorted_by(self):
         """Access to the sorting attribute.
 
         Returns:
@@ -112,7 +112,7 @@ class PopulationSpikeReport(object):
 
         node_ids, times = zip(*res)
         res = pd.Series(data=node_ids, index=times, name=series_name)
-        if self._sorting != "by_time":
+        if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
         if isinstance(group, int):
             return res.index.to_numpy()
@@ -155,6 +155,7 @@ class SpikeReport(object):
 
     @property
     def time_units(self):
+        """Returns the time unit of reporting."""
         raise NotImplementedError
 
     @property

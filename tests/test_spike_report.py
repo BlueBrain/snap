@@ -75,8 +75,8 @@ class TestPopulationSpikeReport:
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.SpikeReport(self.simulation)["default"]
 
-    def test__sorting(self):
-        assert self.test_obj._sorting == "by_time"
+    def test__sorted_by(self):
+        assert self.test_obj._sorted_by == "by_time"
 
     def test_name(self):
         assert self.test_obj.name == "default"
@@ -155,7 +155,7 @@ class TestPopulationSpikeReport:
 
     def test_get2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
-        assert test_obj._sorting == "by_id"
+        assert test_obj._sorted_by == "by_id"
         pdt.assert_series_equal(test_obj.get([2, 0]),
                                 pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
                                           name="default2_node_ids"))
