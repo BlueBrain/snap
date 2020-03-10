@@ -15,4 +15,4 @@ def test_cli_no_config():
     runner = CliRunner()
     result = runner.invoke(cli, ['validate'])
     assert result.exit_code == 2
-    assert 'Missing argument "CONFIG_FILE"' in result.stdout
+    assert "Missing argument 'CONFIG_FILE'" in result.stdout
