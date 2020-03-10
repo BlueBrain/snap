@@ -54,7 +54,6 @@ class PopulationFrameReport(object):
         Returns:
             PopulationFrameReport: A PopulationFrameReport object.
         """
-
         self._frame_report = frame_report
         self._frame_population = self._get_reader(frame_report, population_name)
         self._population_name = population_name
@@ -95,8 +94,8 @@ class PopulationFrameReport(object):
         """Returns the Population corresponding to this report.
 
         Notes:
-            The name population is to envision the future synapse report with witch we will
-            connect to a edge population (maybe).
+            In the future it is envisioned that a synapse report will be provided
+            which will be connected to an edge population.
         """
         result = self._frame_report.sim.circuit.nodes.get(self._population_name)
         if result is None:
@@ -115,11 +114,13 @@ class PopulationFrameReport(object):
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch data from the report.
 
-        If `group` is provided, filter by frame ids.
-        If `t_start` and/or `t_end` is provided, filter by spike time.
+        Args:
+            group (dict): Get frames filtered by group.
+            t_start (float): Include only frames occuring after this time.
+            t_end (float): Include only frames occuring before this time.
 
         Returns:
-            pandas.DataFrame: with timestamps as index and frame as columns.
+            pandas.DataFrame: frame as columns indexed by timestamps.
         """
         ids = [] if group is None else self._resolve(group).tolist()
         t_start = -1 if t_start is None else t_start
@@ -143,6 +144,7 @@ class FrameReport(object):
 
         Args:
             sim (Simulation): Simulation containing this frame report.
+            report_name (str): The name of this frame report.
 
         Returns:
             FrameReport: A FrameReport object.
@@ -157,7 +159,7 @@ class FrameReport(object):
 
     @property
     def t_start(self):
-        """Returns the starting time of the report. Default is zero."""
+        """Returns the starting time of the report."""
         return self.config.get("start_time", self._sim.t_start)
 
     @property
@@ -172,7 +174,7 @@ class FrameReport(object):
 
     @property
     def node_set(self):
-        """Returns the frequency of reporting in milliseconds."""
+        """Returns the node set for the report."""
         return self.sim.node_sets[self.config["cells"]]
 
     @property
@@ -210,7 +212,8 @@ class PopulationCompartmentsReport(PopulationFrameReport):
 
 
 class CompartmentsReport(FrameReport):
-    """Access to a CompartmentsReport data """
+    """Access to a CompartmentsReport data."""
+
     @cached_property
     def _population_report(self):
         """Collect the different PopulationCompartmentsReport."""
@@ -230,4 +233,3 @@ class SomasReport(FrameReport):
     def _population_report(self):
         """Collect the different PopulationSomaReport."""
         return _collect_population_reports(self, PopulationSomasReport)
-

@@ -59,7 +59,7 @@ def _collect_frame_reports(sim):
             from bluepysnap.frame_report import CompartmentsReport
             cls = CompartmentsReport
         else:
-            raise BluepySnapError("Not yet supported report format.")
+            raise BluepySnapError("Report format not yet supported.")
         res[name] = cls(sim, name)
     return res
 
@@ -98,7 +98,7 @@ class Simulation(object):
 
     @property
     def t_start(self):
-        """Returns the starting time of the simulation. Default is zero."""
+        """Returns the starting time of the simulation."""
         return self.run.get("tstart", 0)
 
     @property
@@ -134,9 +134,9 @@ class Simulation(object):
 
     @cached_property
     def reports(self):
-        """Access to the FrameReport.
+        """Access all available FrameReports.
 
         Notes:
-            Supported FrameReport are the soma and compartment reports.
+            Supported FrameReports are soma and compartment reports.
         """
         return _collect_frame_reports(self)

@@ -62,11 +62,11 @@ class PopulationSpikeReport(object):
         Returns:
             str: the type of sorting used for this spike report.
 
-        Notes:
-            Returned values is:
-            'by_id' if the report is sorted by population node_ids
-            'by_time' if the report is sorted by timestamps
-            'none' if not sorted.
+            Returned values are:
+
+               - ``'by_id'`` if the report is sorted by population node_ids
+               - ``'by_time'`` if the report is sorted by timestamps
+               - ``'none'`` if not sorted.
         """
         return self._spike_population.sorting
 
@@ -77,7 +77,7 @@ class PopulationSpikeReport(object):
 
     @cached_property
     def nodes(self):
-        """Returns the NodePopulation corresponding to this spike report."""
+        """Return the NodePopulation corresponding to this spike report."""
         result = self._spike_report.sim.circuit.nodes.get(self._population_name)
         if result is None:
             raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
@@ -90,8 +90,10 @@ class PopulationSpikeReport(object):
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch spikes from the report.
 
-        If `node_ids` is provided, filter by node_ids.
-        If `t_start` and/or `t_end` is provided, filter by spike time.
+        Args:
+            group (dict): Get spikes filtered by group.
+            t_start (float): Include only spikes occuring after this time.
+            t_end (float): Include only spikes occuring before this time.
 
         Returns:
             pandas.Series: spiking node_ids indexed by sorted spike time.
@@ -115,7 +117,10 @@ class PopulationSpikeReport(object):
     def get_node_id(self, node_id, t_start=None, t_stop=None):
         """Fetch spikes from the report for a given `node_id`.
 
-        If `t_start` and/or `t_end` is provided, filter by spike time.
+        Args:
+            node_id (int): Return spikes for this `node_id`.
+            t_start (float): Include only spikes occuring after this time.
+            t_end (float): Include only spikes occuring before this time.
 
         Returns:
             numpy.ndarray: with sorted spike times.
