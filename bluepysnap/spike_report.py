@@ -56,7 +56,7 @@ class PopulationSpikeReport(object):
         self._population_name = population_name
 
     @property
-    def sorting(self):
+    def _sorting(self):
         """Access to the sorting attribute.
 
         Returns:
@@ -76,27 +76,29 @@ class PopulationSpikeReport(object):
         return self._population_name
 
     @cached_property
-    def nodes(self):
+    def population(self):
         """Return the NodePopulation corresponding to this spike report."""
-        result = self._spike_report.sim.circuit.nodes.get(self._population_name)
+        result = self._spike_report.simulation.circuit.nodes.get(self._population_name)
         if result is None:
             raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
         return result
 
     def _resolve_nodes(self, group):
         """Transform a node group into a node_id array."""
-        return self.nodes.ids(group=group)
+        return self.population.ids(group=group)
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch spikes from the report.
 
         Args:
-            group (dict): Get spikes filtered by group.
-            t_start (float): Include only spikes occuring after this time.
-            t_end (float): Include only spikes occuring before this time.
+            group (int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only spikes occurring after this time.
+            t_stop (float): Include only spikes occurring before this time.
 
         Returns:
-            pandas.Series: spiking node_ids indexed by sorted spike time.
+            pandas.Series/np.array:
+                If single node ID is passed as ``group`` returns a np.array of spiking times.
+                Otherwise return spiking node_ids indexed by sorted spike time.
         """
         node_ids = [] if group is None else self._resolve_nodes(group).tolist()
 
@@ -110,62 +112,55 @@ class PopulationSpikeReport(object):
 
         node_ids, times = zip(*res)
         res = pd.Series(data=node_ids, index=times, name=series_name)
-        if self.sorting == "by_time":
-            return res
-        return res.sort_index()
-
-    def get_node_id(self, node_id, t_start=None, t_stop=None):
-        """Fetch spikes from the report for a given `node_id`.
-
-        Args:
-            node_id (int): Return spikes for this `node_id`.
-            t_start (float): Include only spikes occuring after this time.
-            t_end (float): Include only spikes occuring before this time.
-
-        Returns:
-            numpy.ndarray: with sorted spike times.
-        """
-        return self.get(node_id, t_start=t_start, t_stop=t_stop).index.to_numpy()
+        if self._sorting != "by_time":
+            res.sort_index(inplace=True)
+        if isinstance(group, int):
+            return res.index.to_numpy()
+        return res
 
 
 class SpikeReport(object):
     """Access to SpikeReport data."""
 
-    def __init__(self, sim):
+    def __init__(self, simulation):
         """Initializes a SpikeReport object from a simulation object.
 
         Args:
-            sim (Simulation): Simulation containing this spike report.
+            simulation (Simulation): Simulation containing this spike report.
 
         Returns:
             SpikeReport: A SpikeReport object.
         """
-        self._sim = sim
+        self._simulation = simulation
 
     @property
     def config(self):
         """Access to the spike 'output' config part."""
-        return self._sim.config["output"]
+        return self._simulation.config["output"]
 
     @property
-    def t_start(self):
+    def time_start(self):
         """Returns the starting time of the simulation. Default is zero."""
-        return self._sim.t_start
+        return self._simulation.time_start
 
     @property
-    def t_stop(self):
+    def time_stop(self):
         """Returns the stopping time of the simulation."""
-        return self._sim.t_stop
+        return self._simulation.time_stop
 
     @property
     def dt(self):
         """Returns the frequency of reporting in milliseconds."""
-        return self._sim.dt
+        return self._simulation.dt
 
     @property
-    def sim(self):
+    def time_units(self):
+        raise NotImplementedError
+
+    @property
+    def simulation(self):
         """Return the Simulation object related to this spike report."""
-        return self._sim
+        return self._simulation
 
     @contextmanager
     def log(self):

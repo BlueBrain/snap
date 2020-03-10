@@ -34,7 +34,7 @@ def _collect_population_reports(frame_report, cls):
 
 
 def _get_reader(reader_report, cls):
-    path = reader_report.sim.config["output"]["output_dir"]
+    path = reader_report.simulation.config["output"]["output_dir"]
     ext = FORMAT_TO_EXT[reader_report.config.get("format", "HDF5")]
     file_name = reader_report.config.get("file_name", reader_report.name) + ext
     path = str(Path(path, file_name))
@@ -69,26 +69,6 @@ class PopulationFrameReport(object):
         """Access to the population name."""
         return self._population_name
 
-    @property
-    def sorted(self):
-        """Access to the sorted attribute."""
-        return self._frame_population.sorted
-
-    @property
-    def times(self):
-        """Access to the times attribute. Returns (tstart, tend, tstep) of the population."""
-        return self._frame_population.times
-
-    @property
-    def time_units(self):
-        """Returns the times unit for this simulation."""
-        return self._frame_population.time_units
-
-    @property
-    def data_units(self):
-        """Returns the data unit for this simulation."""
-        return self._frame_population.data_units
-
     @cached_property
     def population(self):
         """Returns the Population corresponding to this report.
@@ -97,7 +77,7 @@ class PopulationFrameReport(object):
             In the future it is envisioned that a synapse report will be provided
             which will be connected to an edge population.
         """
-        result = self._frame_report.sim.circuit.nodes.get(self._population_name)
+        result = self._frame_report.simulation.circuit.nodes.get(self._population_name)
         if result is None:
             raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
         return result
@@ -115,9 +95,9 @@ class PopulationFrameReport(object):
         """Fetch data from the report.
 
         Args:
-            group (dict): Get frames filtered by group.
-            t_start (float): Include only frames occuring after this time.
-            t_end (float): Include only frames occuring before this time.
+            group (int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring after this time.
+            t_stop (float): Include only frames occurring before this time.
 
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.
@@ -139,54 +119,70 @@ class PopulationFrameReport(object):
 class FrameReport(object):
     """Access to FrameReport data."""
 
-    def __init__(self, sim, report_name):
+    def __init__(self, simulation, report_name):
         """Initializes a FrameReport object from a simulation object.
 
         Args:
-            sim (Simulation): Simulation containing this frame report.
+            simulation (Simulation): Simulation containing this frame report.
             report_name (str): The name of this frame report.
 
         Returns:
             FrameReport: A FrameReport object.
         """
-        self._sim = sim
+        self._simulation = simulation
         self.name = report_name
-
-    @property
-    def config(self):
-        """Access to the report config part."""
-        return self._sim.config["reports"][self.name]
-
-    @property
-    def t_start(self):
-        """Returns the starting time of the report."""
-        return self.config.get("start_time", self._sim.t_start)
-
-    @property
-    def t_stop(self):
-        """Returns the stopping time of the report."""
-        return self.config.get("end_time", self._sim.t_stop)
-
-    @property
-    def dt(self):
-        """Returns the frequency of reporting in milliseconds."""
-        return self.config.get("dt", self._sim.dt)
-
-    @property
-    def node_set(self):
-        """Returns the node set for the report."""
-        return self.sim.node_sets[self.config["cells"]]
-
-    @property
-    def sim(self):
-        """Return the Simulation object related to this frame report."""
-        return self._sim
 
     @cached_property
     def _frame_reader(self):
         """Access to the compartment report reader."""
         from libsonata import ElementsReportReader
         return _get_reader(self, ElementsReportReader)
+
+    @property
+    def config(self):
+        """Access to the report config part."""
+        return self._simulation.config["reports"][self.name]
+
+    @property
+    def time_start(self):
+        """Returns the starting time of the report."""
+        return self.config.get("start_time", self._simulation.time_start)
+
+    @property
+    def time_stop(self):
+        """Returns the stopping time of the report."""
+        return self.config.get("end_time", self._simulation.time_stop)
+
+    @property
+    def dt(self):
+        """Returns the frequency of reporting in milliseconds."""
+        return self.config.get("dt", self._simulation.dt)
+
+    @property
+    def time_units(self):
+        """Returns the data unit for this report."""
+        units = {self._frame_reader[pop].time_units for pop in self.population_names}
+        if len(units) > 1:
+            raise BluepySnapError("Multiple time units found in the different populations.")
+        return units.pop()
+
+    @cached_property
+    def data_units(self):
+        """Returns the data unit for this report."""
+        units = {self._frame_reader[pop].data_units for pop in self.population_names}
+        if len(units) > 1:
+            raise BluepySnapError("Multiple data units found in the different populations.")
+        return units.pop()
+
+    @property
+    def node_set(self):
+        """Returns the node set for the report."""
+        return self.simulation.node_sets[self.config["cells"]]
+
+    @property
+    def simulation(self):
+        """Return the Simulation object related to this frame report."""
+        return self._simulation
 
     @cached_property
     def population_names(self):

@@ -23,27 +23,37 @@ class TestFrameReport:
         assert self.test_obj.config == {"cells": "Layer23", "variable_name": "m",
                                         "sections": "soma", "enabled": True}
 
-    def test_t_start(self):
-        assert self.test_obj.t_start == 0.
-        assert self.test_obj_info.t_start == 0.2
+    def test_time_start(self):
+        assert self.test_obj.time_start == 0.
+        assert self.test_obj_info.time_start == 0.2
 
-    def test_t_stop(self):
-        assert self.test_obj.t_stop == 1000.
-        assert self.test_obj_info.t_stop == 0.8
+    def test_time_stop(self):
+        assert self.test_obj.time_stop == 1000.
+        assert self.test_obj_info.time_stop == 0.8
 
     def test_dt(self):
         assert self.test_obj.dt == 0.01
         assert self.test_obj_info.dt == 0.02
 
+    def test_time_units(self):
+        assert self.test_obj.time_units == "ms"
+        with pytest.raises(BluepySnapError):
+            self.test_obj_info.time_units
+
+    def test_data_units(self):
+        assert self.test_obj.data_units == "mV"
+        with pytest.raises(BluepySnapError):
+            self.test_obj_info.data_units
+
     def test_sim(self):
-        assert isinstance(self.test_obj.sim, Simulation)
+        assert isinstance(self.test_obj.simulation, Simulation)
 
     def test_node_set(self):
         assert self.test_obj.node_set == {"layer": [2, 3]}
 
     def test_population_names(self):
         assert sorted(self.test_obj.population_names) == ["default", "default2"]
-        assert sorted(self.test_obj_info.population_names) == ["default"]
+        assert sorted(self.test_obj_info.population_names) == ["default", "default2"]
 
     def test_get_population(self):
         assert isinstance(self.test_obj["default"], test_module.PopulationFrameReport)
@@ -54,7 +64,7 @@ class TestFrameReport:
         for report in self.test_obj:
             isinstance(report, test_module.PopulationFrameReport)
 
-        assert list(self.test_obj_info) == ["default"]
+        assert list(self.test_obj_info) == ["default", "default2"]
         for report in self.test_obj_info:
             isinstance(report, test_module.PopulationFrameReport)
 
@@ -68,7 +78,7 @@ class TestCompartmentsReport:
         assert isinstance(self.test_obj["default"], test_module.PopulationCompartmentsReport)
 
     def test_iter(self):
-        assert list(self.test_obj) == ["default"]
+        assert list(self.test_obj) == ["default", "default2"]
         for report in self.test_obj:
             isinstance(report, test_module.PopulationCompartmentsReport)
 
@@ -94,18 +104,6 @@ class TestPopulationFrameReport:
 
     def test_name(self):
         assert self.test_obj.name == "default"
-
-    def test_sorted(self):
-        assert self.test_obj.sorted
-
-    def test_times(self):
-        assert self.test_obj.times == (0.0, 1.0, 0.1)
-
-    def test_time_units(self):
-        assert self.test_obj.time_units == "ms"
-
-    def test_data_units(self):
-        assert self.test_obj.data_units == "mV"
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])

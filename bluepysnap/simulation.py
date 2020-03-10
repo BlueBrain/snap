@@ -97,19 +97,25 @@ class Simulation(object):
         return self._config["run"]
 
     @property
-    def t_start(self):
+    def time_start(self):
         """Returns the starting time of the simulation."""
         return self.run.get("tstart", 0)
 
     @property
-    def t_stop(self):
-        """Returns the stoping time of the simulation."""
+    def time_stop(self):
+        """Returns the stopping time of the simulation."""
         return self.run["tstop"]
 
     @property
     def dt(self):
         """Returns the frequency of reporting in milliseconds."""
         return self.run.get("dt", None)
+
+    @property
+    def time_units(self):
+        """Returns the times unit for this simulation."""
+        # Assuming ms at the simulation level
+        return "ms"
 
     @property
     def conditions(self):

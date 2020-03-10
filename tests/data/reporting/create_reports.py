@@ -62,7 +62,7 @@ def write_soma_report(filepath):
 
 
 def write_element_report(filepath):
-    population_names = ['default']
+    population_names = ['default', 'default2']
     node_ids = np.arange(0, 3)
     index_pointers = np.arange(0, 8, 2)
     element_ids = np.array([0, 1] * 3)
@@ -84,6 +84,19 @@ def write_element_report(filepath):
         gmapping.create_dataset('element_ids', data=element_ids, dtype=np.uint32)
         dtimes = gmapping.create_dataset('time', data=times, dtype=np.double)
         dtimes.attrs.create('units', data="ms", dtype=string_dtype)
+
+        gpop_element1 = h5f.create_group('/report/' + population_names[1])
+        d1 = np.array([np.arange(6) + j * 0.1 for j in range(10)])
+        ddata = gpop_element1.create_dataset('data', data=d1, dtype=np.float32)
+        ddata.attrs.create('units', data="mR", dtype=string_dtype)
+        gmapping = h5f.create_group('/report/' + population_names[1] + '/mapping')
+
+        dnodes = gmapping.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
+        dnodes.attrs.create('sorted', data=True, dtype=np.uint8)
+        gmapping.create_dataset('index_pointers', data=index_pointers, dtype=np.uint64)
+        gmapping.create_dataset('element_ids', data=element_ids, dtype=np.uint32)
+        dtimes = gmapping.create_dataset('time', data=times, dtype=np.double)
+        dtimes.attrs.create('units', data="mR", dtype=string_dtype)
 
 
 if __name__ == "__main__":

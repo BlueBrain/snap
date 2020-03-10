@@ -18,9 +18,10 @@ def test_all():
 
     assert simulation.run == {"tstop": 1000.0, "dt": 0.01, "spike_threshold": -15,
                               "nsteps_block": 10000, "seed": 42}
-    assert simulation.t_start == 0.
-    assert simulation.t_stop == 1000.
+    assert simulation.time_start == 0.
+    assert simulation.time_stop == 1000.
     assert simulation.dt == 0.01
+    assert simulation.time_units == "ms"
 
     assert simulation.simulator == "my_simulator"
     assert simulation.conditions == {"celsius": 34.0, "v_init": -80, "other": "something"}
@@ -38,7 +39,7 @@ def test_all():
     assert isinstance(rep['default'], PopulationSomasReport)
 
     rep = simulation.reports['section_report']
-    assert sorted(list(rep.population_names)) == ["default"]
+    assert sorted(list(rep.population_names)) == ["default", "default2"]
     assert isinstance(rep['default'], PopulationCompartmentsReport)
 
 

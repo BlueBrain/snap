@@ -25,31 +25,21 @@ class TestSpikeReport:
                                         "spikes_file": "spikes.h5",
                                         "spikes_sort_order": "time"}
 
-    def test_t_start(self):
-        assert self.test_obj.t_start == 0.
+    def test_time_start(self):
+        assert self.test_obj.time_start == 0.
 
-    def test_t_stop(self):
-        assert self.test_obj.t_stop == 1000.
+    def test_time_stop(self):
+        assert self.test_obj.time_stop == 1000.
 
     def test_dt(self):
         assert self.test_obj.dt == 0.01
 
-    def test_sim(self):
-        assert isinstance(self.test_obj.sim, Simulation)
+    def test_time_units(self):
+        with pytest.raises(NotImplementedError):
+            self.test_obj.time_units
 
-    def test___spike_reader(self):
-        assert isinstance(self.test_obj._spike_reader, SpikeReader)
-
-    def test_population_names(self):
-        assert sorted(self.test_obj.population_names) == ["default", "default2"]
-
-    def test_get_population(self):
-        assert isinstance(self.test_obj["default"], test_module.PopulationSpikeReport)
-
-    def test_iter(self):
-        assert sorted(list(self.test_obj)) == ["default", "default2"]
-        for spikes in self.test_obj:
-            isinstance(spikes, test_module.PopulationSpikeReport)
+    def test_simulation(self):
+        assert isinstance(self.test_obj.simulation, Simulation)
 
     def test_log(self):
         lines = ["Log for spikes.", "Second line."]
@@ -65,27 +55,41 @@ class TestSpikeReport:
             with test_obj.log() as log:
                 log.readlines()
 
+    def test___spike_reader(self):
+        assert isinstance(self.test_obj._spike_reader, SpikeReader)
+
+    def test_population_names(self):
+        assert sorted(self.test_obj.population_names) == ["default", "default2"]
+
+    def test_get_population(self):
+        assert isinstance(self.test_obj["default"], test_module.PopulationSpikeReport)
+
+    def test_iter(self):
+        assert sorted(list(self.test_obj)) == ["default", "default2"]
+        for spikes in self.test_obj:
+            isinstance(spikes, test_module.PopulationSpikeReport)
+
 
 class TestPopulationSpikeReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.SpikeReport(self.simulation)["default"]
 
-    def test_sorting(self):
-        assert self.test_obj.sorting == "by_time"
+    def test__sorting(self):
+        assert self.test_obj._sorting == "by_time"
 
     def test_name(self):
         assert self.test_obj.name == "default"
 
-    def test_nodes(self):
+    def test_population(self):
         node_ids = self.test_obj.get([2], t_start=0.5).to_numpy()[0]
-        assert self.test_obj.nodes.get(group=node_ids, properties=Cell.MTYPE) == "L6_Y"
+        assert self.test_obj.population.get(group=node_ids, properties=Cell.MTYPE) == "L6_Y"
 
-    def test_nodes_2(self):
+    def test_population_2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
-            test_obj.nodes
+            test_obj.population
 
     def test__resolve_nodes(self):
         npt.assert_array_equal(self.test_obj._resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
@@ -97,8 +101,11 @@ class TestPopulationSpikeReport:
                                 pd.Series([2, 0, 1, 2, 0], index=[0.1, 0.2, 0.3, 0.7, 1.3],
                                           name="default_node_ids"))
 
-        pdt.assert_series_equal(self.test_obj.get(2),
-                                pd.Series([2, 2], index=[0.1, 0.7], name="default_node_ids"))
+        npt.assert_allclose(self.test_obj.get(2), np.array([0.1, 0.7]))
+        npt.assert_allclose(self.test_obj.get(0, t_start=1.), [1.3])
+        npt.assert_allclose(self.test_obj.get(0, t_stop=1.), [0.2])
+        npt.assert_allclose(self.test_obj.get(0, t_start=1., t_stop=12), [1.3])
+        npt.assert_allclose(self.test_obj.get(0, t_start=0.1, t_stop=12), [0.2, 1.3])
 
         pdt.assert_series_equal(self.test_obj.get([2, 0]),
                                 pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
@@ -148,7 +155,7 @@ class TestPopulationSpikeReport:
 
     def test_get2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
-        assert test_obj.sorting == "by_id"
+        assert test_obj._sorting == "by_id"
         pdt.assert_series_equal(test_obj.get([2, 0]),
                                 pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
                                           name="default2_node_ids"))
@@ -161,10 +168,3 @@ class TestPopulationSpikeReport:
     def test_get3(self, mock):
         pdt.assert_series_equal(self.test_obj.get(4),
                                 pd.Series([], index=[], name="default_node_ids"))
-
-    def test_get_gid(self):
-        npt.assert_allclose(self.test_obj.get_node_id(0), [0.2, 1.3])
-        npt.assert_allclose(self.test_obj.get_node_id(0, t_start=1.), [1.3])
-        npt.assert_allclose(self.test_obj.get_node_id(0, t_stop=1.), [0.2])
-        npt.assert_allclose(self.test_obj.get_node_id(0, t_start=1., t_stop=12), [1.3])
-        npt.assert_allclose(self.test_obj.get_node_id(0, t_start=0.1, t_stop=12), [0.2, 1.3])
