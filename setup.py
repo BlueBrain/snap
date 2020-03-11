@@ -38,6 +38,7 @@ class EggInfo(egg_info):
 with open('README.rst') as f:
     README = f.read()
 
+
 setup(
     name='bluepysnap',
     install_requires=[
@@ -54,6 +55,7 @@ setup(
     ],
     extras_require={
         'docs': ['sphinx<3.0.0', 'sphinx-bluebrain-theme'],
+	'plots': ["matplotlib>=2.2.5"],
     },
     packages=find_packages(),
     use_scm_version=True,

@@ -25,7 +25,7 @@ import numpy as np
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import fix_libsonata_empty_list
-
+import bluepysnap._plotting
 
 def _get_reader(spike_report):
     from libsonata import SpikeReader
@@ -118,6 +118,10 @@ class PopulationSpikeReport(object):
         if np.issubdtype(type(group), np.integer):
             return res.index.to_numpy()
         return res
+
+    # plotting function for the PopulationSpikeReport
+    firing_rate_histogram = bluepysnap._plotting.firing_rate_histogram
+    raster = bluepysnap._plotting.raster
 
 
 class SpikeReport(object):

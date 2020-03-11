@@ -19,6 +19,7 @@
 
 import collections
 import json
+import types
 
 import numpy as np
 import six
@@ -103,6 +104,7 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     See Also:
         https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     """
+
     def normalize_quaternions(qs):
         """Normalize a bunch of quaternions along axis==1.
 
