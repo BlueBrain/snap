@@ -76,7 +76,7 @@ class PopulationSpikeReport(object):
         return self._population_name
 
     @cached_property
-    def population(self):
+    def nodes(self):
         """Return the NodePopulation corresponding to this spike report."""
         result = self._spike_report.simulation.circuit.nodes.get(self._population_name)
         if result is None:
@@ -85,7 +85,7 @@ class PopulationSpikeReport(object):
 
     def _resolve_nodes(self, group):
         """Transform a node group into a node_id array."""
-        return self.population.ids(group=group)
+        return self.nodes.ids(group=group)
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch spikes from the report.

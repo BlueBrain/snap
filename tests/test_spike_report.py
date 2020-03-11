@@ -83,13 +83,13 @@ class TestPopulationSpikeReport:
 
     def test_population(self):
         node_ids = self.test_obj.get([2], t_start=0.5).to_numpy()[0]
-        assert self.test_obj.population.get(group=node_ids, properties=Cell.MTYPE) == "L6_Y"
+        assert self.test_obj.nodes.get(group=node_ids, properties=Cell.MTYPE) == "L6_Y"
 
     def test_population_2(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
-            test_obj.population
+            test_obj.nodes
 
     def test__resolve_nodes(self):
         npt.assert_array_equal(self.test_obj._resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
