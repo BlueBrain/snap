@@ -19,9 +19,9 @@ from cached_property import cached_property
 
 from pathlib2 import Path
 import pandas as pd
+from libsonata import ElementsReportReader
 
 from bluepysnap.exceptions import BluepySnapError
-
 
 FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
@@ -61,7 +61,6 @@ class PopulationFrameReport(object):
     @staticmethod
     def _get_reader(frame_report, population_name):
         """Access to the population compartment reader."""
-        from libsonata import ElementsReportReader
         return _get_reader(frame_report, ElementsReportReader)[population_name]
 
     @property
@@ -69,26 +68,13 @@ class PopulationFrameReport(object):
         """Access to the population name."""
         return self._population_name
 
-    @cached_property
-    def population(self):
-        """Returns the Population corresponding to this report.
-
-        Notes:
-            In the future it is envisioned that a synapse report will be provided
-            which will be connected to an edge population.
-        """
-        result = self._frame_report.simulation.circuit.nodes.get(self._population_name)
-        if result is None:
-            raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
-        return result
-
     def _resolve(self, group):
         """Transform a group into ids array."""
-        return self.population.ids(group=group)
+        raise NotImplementedError
 
     @staticmethod
     def _wrap_columns(columns):
-        """Should be overloaded for soma or other report types."""
+        """Allows to change the columns names if needed."""
         return columns
 
     def get(self, group=None, t_start=None, t_stop=None):
@@ -135,7 +121,6 @@ class FrameReport(object):
     @cached_property
     def _frame_reader(self):
         """Access to the compartment report reader."""
-        from libsonata import ElementsReportReader
         return _get_reader(self, ElementsReportReader)
 
     @property
@@ -206,6 +191,18 @@ class FrameReport(object):
 class PopulationCompartmentsReport(PopulationFrameReport):
     """Access to PopulationCompartmentsReport data."""
 
+    @cached_property
+    def nodes(self):
+        """Returns the NodePopulation corresponding to this report."""
+        result = self._frame_report.simulation.circuit.nodes.get(self._population_name)
+        if result is None:
+            raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
+        return result
+
+    def _resolve(self, group):
+        """Transform a group into a node_id array."""
+        return self.nodes.ids(group=group)
+
 
 class CompartmentsReport(FrameReport):
     """Access to a CompartmentsReport data."""
@@ -216,16 +213,25 @@ class CompartmentsReport(FrameReport):
         return _collect_population_reports(self, PopulationCompartmentsReport)
 
 
-class PopulationSomasReport(PopulationFrameReport):
+class PopulationSomasReport(PopulationCompartmentsReport):
     """Access to PopulationSomaReport data."""
+
     @staticmethod
     def _wrap_columns(columns):
+        """Transform pandas.MultiIndex into pandas.Index for the pandas.DataFrame columns.
+
+        Notes:
+            the libsonata.ElementsReader.get() returns tuple as columns for the data. For the
+            soma reports it means: pandas.MultiIndex([(0, 0), (1, 0), ..., (last_node_id, 0)]).
+            So we convert this into pandas.Index([0,1,..., last_node_id]).
+        """
         return columns.levels[0]
 
 
 class SomasReport(FrameReport):
     """Access to a SomaReport data."""
+
     @cached_property
     def _population_report(self):
-        """Collect the different PopulationSomaReport."""
+        """Collect the different PopulationSomasReport."""
         return _collect_population_reports(self, PopulationSomasReport)

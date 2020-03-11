@@ -17,6 +17,7 @@
 """Simulation access."""
 
 from cached_property import cached_property
+from pathlib2 import Path
 
 from bluepysnap.config import Config
 from bluepysnap.exceptions import BluepySnapError
@@ -33,8 +34,6 @@ def _resolve_config(filepath):
     Returns:
         dict: the complete simulation config file.
     """
-    from pathlib2 import Path
-
     filepath = Path(filepath)
     content = utils.load_json(str(filepath))
     parent = filepath.parent

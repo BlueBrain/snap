@@ -106,18 +106,8 @@ class TestPopulationFrameReport:
         assert self.test_obj.name == "default"
 
     def test__resolve(self):
-        npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
-        assert self.test_obj._resolve({Cell.MTYPE: "L2_X"}) == [0]
-        npt.assert_array_equal(self.test_obj._resolve("Node12_L6_Y"), [1, 2])
-
-    def test_population(self):
-        assert self.test_obj.population.get(group=2, properties=Cell.MTYPE) == "L6_Y"
-
-    def test_population_2(self):
-        test_obj = test_module.SomasReport(self.simulation, "soma_report")["default2"]
-        test_obj._population_name = "unknown"
-        with pytest.raises(BluepySnapError):
-            test_obj.population
+        with pytest.raises(NotImplementedError):
+            self.test_obj._resolve([1])
 
 
 class TestPopulationCompartmentsReport:
@@ -131,8 +121,21 @@ class TestPopulationCompartmentsReport:
                 (2, 0): data[:, 4], (2, 1): data[:, 5]}
         self.df = pd.DataFrame(data=data, index=values)
 
-    def test_get(self):
+    def test__resolve(self):
+        npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
+        assert self.test_obj._resolve({Cell.MTYPE: "L2_X"}) == [0]
+        npt.assert_array_equal(self.test_obj._resolve("Node12_L6_Y"), [1, 2])
 
+    def test_nodes(self):
+        assert self.test_obj.nodes.get(group=2, properties=Cell.MTYPE) == "L6_Y"
+
+    def test_nodes_2(self):
+        test_obj = self.test_obj.__class__(self.test_obj._frame_report, self.test_obj.name)
+        test_obj._population_name = "unknown"
+        with pytest.raises(BluepySnapError):
+            test_obj.nodes
+
+    def test_get(self):
         pdt.assert_frame_equal(self.test_obj.get(), self.df)
 
         pdt.assert_frame_equal(self.test_obj.get(2), self.df.loc[:, [2]])
@@ -153,15 +156,16 @@ class TestPopulationCompartmentsReport:
             self.test_obj.get([2], t_start=0.5, t_stop=0.8), self.df.iloc[5:9].loc[:, [2]])
 
         pdt.assert_frame_equal(
-            self.test_obj.get([2, 1], t_start=0.5, t_stop=0.8),  self.df.iloc[5:9].loc[:, [1, 2]])
+            self.test_obj.get([2, 1], t_start=0.5, t_stop=0.8), self.df.iloc[5:9].loc[:, [1, 2]])
 
         pdt.assert_frame_equal(
             self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8), self.df.iloc[2:9].loc[:, [1, 2]])
 
-        pdt.assert_frame_equal( self.test_obj.get([0, 2], t_start=15), pd.DataFrame())
+        pdt.assert_frame_equal(self.test_obj.get([0, 2], t_start=15), pd.DataFrame())
 
         pdt.assert_frame_equal(
-            self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8), self.df.iloc[2:9].loc[:, [1, 2]])
+            self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8),
+            self.df.iloc[2:9].loc[:, [1, 2]])
 
         pdt.assert_frame_equal(
             self.test_obj.get(group={Cell.MTYPE: "L2_X"}), self.df.loc[:, [0]])
@@ -172,10 +176,9 @@ class TestPopulationCompartmentsReport:
         with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
 
-    @patch(test_module.__name__ + '.PopulationFrameReport._resolve',
-           return_value=np.asarray([4]))
-    def test_get2(self, mock):
-        pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
+    def test_get2(self):
+        with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
+            pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
 
 
 class TestPopulationSomasReport(TestPopulationCompartmentsReport):

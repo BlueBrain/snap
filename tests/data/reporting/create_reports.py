@@ -9,21 +9,20 @@ def write_spikes(filepath):
     node_ids_base = (1, 2, 0, 0, 2)
 
     sorting_type = h5py.enum_dtype({"none": 0, "by_id": 1, "by_time": 2})
-    string_dtype = h5py.special_dtype(vlen=str)
 
     with h5py.File(filepath, 'w') as h5f:
-        root = h5f.create_group('spikes')
-        gpop_all = h5f.create_group('/spikes/' + population_names[0])
-        gpop_all.attrs.create('sorting', data=2, dtype=sorting_type)
+        h5f.create_group('spikes')
+        gpop_spikes = h5f.create_group('/spikes/' + population_names[0])
+        gpop_spikes.attrs.create('sorting', data=2, dtype=sorting_type)
         timestamps, node_ids = zip(*sorted(zip(timestamps_base, node_ids_base)))
-        set = gpop_all.create_dataset('timestamps', data=timestamps, dtype=np.double)
-        gpop_all.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
+        gpop_spikes.create_dataset('timestamps', data=timestamps, dtype=np.double)
+        gpop_spikes.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
 
-        gpop_spikes1 = h5f.create_group('/spikes/' + population_names[1])
-        gpop_spikes1.attrs.create('sorting', data=1, dtype=sorting_type)
+        gpop_spikes2 = h5f.create_group('/spikes/' + population_names[1])
+        gpop_spikes2.attrs.create('sorting', data=1, dtype=sorting_type)
         node_ids, timestamps = zip(*sorted(zip(node_ids_base, timestamps_base)))
-        gpop_spikes1.create_dataset('timestamps', data=timestamps, dtype=np.double)
-        gpop_spikes1.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
+        gpop_spikes2.create_dataset('timestamps', data=timestamps, dtype=np.double)
+        gpop_spikes2.create_dataset('node_ids', data=node_ids, dtype=np.uint64)
 
 
 def write_soma_report(filepath):
@@ -35,7 +34,7 @@ def write_soma_report(filepath):
     data = [node_ids + j*0.1 for j in range(10)]
     string_dtype = h5py.special_dtype(vlen=str)
     with h5py.File(filepath, 'w') as h5f:
-        root = h5f.create_group('report')
+        h5f.create_group('report')
         gpop_all = h5f.create_group('/report/' + population_names[0])
         ddata = gpop_all.create_dataset('data', data=data, dtype=np.float32)
         ddata.attrs.create('units', data="mV", dtype=string_dtype)
@@ -48,8 +47,8 @@ def write_soma_report(filepath):
         dtimes = gmapping.create_dataset('time', data=times, dtype=np.double)
         dtimes.attrs.create('units', data="ms", dtype=string_dtype)
 
-        gpop_soma1 = h5f.create_group('/report/' + population_names[1])
-        ddata = gpop_soma1.create_dataset('data', data=data, dtype=np.float32)
+        gpop_soma2 = h5f.create_group('/report/' + population_names[1])
+        ddata = gpop_soma2.create_dataset('data', data=data, dtype=np.float32)
         ddata.attrs.create('units', data="mV", dtype=string_dtype)
         gmapping = h5f.create_group('/report/' + population_names[1] + '/mapping')
 
@@ -71,10 +70,10 @@ def write_element_report(filepath):
 
     string_dtype = h5py.special_dtype(vlen=str)
     with h5py.File(filepath, 'w') as h5f:
-        root = h5f.create_group('report')
-        gpop_all = h5f.create_group('/report/' + population_names[0])
+        h5f.create_group('report')
+        gpop_element = h5f.create_group('/report/' + population_names[0])
         d1 = np.array([np.arange(6) + j*0.1 for j in range(10)])
-        ddata = gpop_all.create_dataset('data', data=d1, dtype=np.float32)
+        ddata = gpop_element.create_dataset('data', data=d1, dtype=np.float32)
         ddata.attrs.create('units', data="mV", dtype=string_dtype)
         gmapping = h5f.create_group('/report/' + population_names[0] + '/mapping')
 
@@ -85,9 +84,9 @@ def write_element_report(filepath):
         dtimes = gmapping.create_dataset('time', data=times, dtype=np.double)
         dtimes.attrs.create('units', data="ms", dtype=string_dtype)
 
-        gpop_element1 = h5f.create_group('/report/' + population_names[1])
+        gpop_element2 = h5f.create_group('/report/' + population_names[1])
         d1 = np.array([np.arange(6) + j * 0.1 for j in range(10)])
-        ddata = gpop_element1.create_dataset('data', data=d1, dtype=np.float32)
+        ddata = gpop_element2.create_dataset('data', data=d1, dtype=np.float32)
         ddata.attrs.create('units', data="mR", dtype=string_dtype)
         gmapping = h5f.create_group('/report/' + population_names[1] + '/mapping')
 
