@@ -69,6 +69,7 @@ setup(
     description="Simulation and Neural network Analysis Productivity layer",
     long_description=README,
     long_description_content_type='text/markdown',
+    license="LGPLv3",
     url='https://github.com/BlueBrain/snap',
     keywords=[
         'SONATA',
@@ -81,7 +82,6 @@ setup(
         'Operating System :: POSIX',
         'Topic :: Scientific/Engineering',
         'Topic :: Utilities',
-        'License :: OSI Approved :: GNU Lesser General Public '
-        'License v3 (LGPLv3)',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
     ]
 )

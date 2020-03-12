@@ -6,5 +6,6 @@ doc/source/submodules
 *.pyc
 *.swp
 *.egg-info
+dist/
 venv/
 .ipynb_checkpoints/
