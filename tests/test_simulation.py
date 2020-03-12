@@ -43,7 +43,7 @@ def test_all():
     assert isinstance(rep['default'], PopulationCompartmentsReport)
 
 
-def test_unknonw_report():
+def test_unknown_report():
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
     simulation.config["reports"] = {
         "soma_report": {

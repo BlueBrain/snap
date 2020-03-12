@@ -81,11 +81,11 @@ class TestPopulationSpikeReport:
     def test_name(self):
         assert self.test_obj.name == "default"
 
-    def test_population(self):
+    def test_nodes(self):
         node_ids = self.test_obj.get([2], t_start=0.5).to_numpy()[0]
         assert self.test_obj.nodes.get(group=node_ids, properties=Cell.MTYPE) == "L6_Y"
 
-    def test_population_2(self):
+    def test_nodes_invalid_population(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
@@ -165,6 +165,6 @@ class TestPopulationSpikeReport:
 
     @patch(test_module.__name__ + '.PopulationSpikeReport._resolve_nodes',
            return_value=np.asarray([4]))
-    def test_get3(self, mock):
+    def test_get_not_in_report(self, mock):
         pdt.assert_series_equal(self.test_obj.get(4),
                                 pd.Series([], index=[], name="default_node_ids"))

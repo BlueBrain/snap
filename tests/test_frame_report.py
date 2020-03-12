@@ -47,9 +47,11 @@ class TestFrameReport:
 
     def test_sim(self):
         assert isinstance(self.test_obj.simulation, Simulation)
+        assert isinstance(self.test_obj_info.simulation, Simulation)
 
     def test_node_set(self):
         assert self.test_obj.node_set == {"layer": [2, 3]}
+        assert self.test_obj_info.node_set == {"layer": [2, 3]}
 
     def test_population_names(self):
         assert sorted(self.test_obj.population_names) == ["default", "default2"]
@@ -114,12 +116,12 @@ class TestPopulationCompartmentsReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.CompartmentsReport(self.simulation, "section_report")["default"]
-        values = np.linspace(0, 0.9, 10)
+        timestamps = np.linspace(0, 0.9, 10)
         data = np.array([np.arange(6) + j * 0.1 for j in range(10)])
 
         data = {(0, 0): data[:, 0], (0, 1): data[:, 1], (1, 0): data[:, 2], (1, 1): data[:, 3],
                 (2, 0): data[:, 4], (2, 1): data[:, 5]}
-        self.df = pd.DataFrame(data=data, index=values)
+        self.df = pd.DataFrame(data=data, index=timestamps)
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
@@ -129,7 +131,7 @@ class TestPopulationCompartmentsReport:
     def test_nodes(self):
         assert self.test_obj.nodes.get(group=2, properties=Cell.MTYPE) == "L6_Y"
 
-    def test_nodes_2(self):
+    def test_nodes_invalid_population(self):
         test_obj = self.test_obj.__class__(self.test_obj._frame_report, self.test_obj.name)
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
@@ -176,7 +178,7 @@ class TestPopulationCompartmentsReport:
         with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
 
-    def test_get2(self):
+    def test_get_not_in_report(self):
         with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
             pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
 
@@ -185,6 +187,6 @@ class TestPopulationSomasReport(TestPopulationCompartmentsReport):
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.SomasReport(self.simulation, "soma_report")["default"]
-        values = np.linspace(0, 0.9, 10)
-        data = {0: values, 1: values + 1, 2: values + 2}
-        self.df = pd.DataFrame(data=data, index=values, columns=[0, 1, 2])
+        timestamps = np.linspace(0, 0.9, 10)
+        data = {0: timestamps, 1: timestamps + 1, 2: timestamps + 2}
+        self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2])
