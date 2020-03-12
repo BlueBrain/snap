@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 from libsonata import ElementReportReader
 
+import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import fix_libsonata_empty_list
 
@@ -241,6 +242,8 @@ class PopulationSomaReport(PopulationCompartmentReport):
         """
         return columns.levels[0]
 
+    # plotting functions for the PopulationSomasReport
+    trace = bluepysnap._plotting.trace
 
 class SomaReport(FrameReport):
     """Access to a SomaReport data."""

@@ -119,9 +119,11 @@ class PopulationSpikeReport(object):
             return res.index.to_numpy()
         return res
 
-    # plotting function for the PopulationSpikeReport
+    # plotting functions for the PopulationSpikeReport
     firing_rate_histogram = bluepysnap._plotting.firing_rate_histogram
     raster = bluepysnap._plotting.raster
+    isi = bluepysnap._plotting.isi
+    firing_animation = bluepysnap._plotting.firing_animation
 
 
 class SpikeReport(object):
