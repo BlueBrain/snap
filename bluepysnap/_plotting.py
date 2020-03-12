@@ -37,8 +37,8 @@ def _get_pyplot():
     return plt
 
 
-def firing_rate_histogram(spikes, group=None, t_start=None,
-                          t_stop=None, binsize=None, ax=None):  #  pragma: no cover
+def spikes_firing_rate_histogram(spikes, group=None, t_start=None,
+                                 t_stop=None, binsize=None, ax=None):  #  pragma: no cover
     """PopulationSpikeReport firing rate histogram.
 
     Args:
@@ -84,7 +84,7 @@ def firing_rate_histogram(spikes, group=None, t_start=None,
     return ax
 
 
-def raster(spikes, group=None, t_start=None, t_stop=None, ax=None):  # pragma: no cover
+def spikes_raster(spikes, group=None, t_start=None, t_stop=None, ax=None):  # pragma: no cover
     """PopulationSpikeReport raster plot.
 
     Args:
@@ -119,8 +119,8 @@ def raster(spikes, group=None, t_start=None, t_stop=None, ax=None):  # pragma: n
     return ax
 
 
-def isi(spikes, group=None, t_start=None, t_stop=None,
-        use_frequency=False, binsize=None, ax=None):  # pragma: no cover
+def spikes_isi(spikes, group=None, t_start=None, t_stop=None,
+               use_frequency=False, binsize=None, ax=None):  # pragma: no cover
     # pylint: disable=too-many-arguments
     """PopulationSpikeReport Interspike interval histogram.
 
@@ -171,9 +171,9 @@ def isi(spikes, group=None, t_start=None, t_stop=None,
     return ax
 
 
-def firing_animation(spikes, group=None, t_start=None,
-                     t_stop=None, x_axis=Node.X, y_axis=Node.Y,
-                     dt=20, ax=None):  # pragma: no cover
+def spikes_firing_animation(spikes, group=None, t_start=None,
+                            t_stop=None, x_axis=Node.X, y_axis=Node.Y,
+                            dt=20, ax=None):  # pragma: no cover
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
     """PopulationSpikeReport simple animation of simulation spikes.
 
@@ -254,7 +254,7 @@ def firing_animation(spikes, group=None, t_start=None,
     return anim, ax
 
 
-def trace(frames, group=None, t_start=None, t_stop=None, plot_type='mean', ax=None):  # pragma: no cover
+def somas_trace(frames, group=None, t_start=None, t_stop=None, plot_type='mean', ax=None):  # pragma: no cover
     # pylint: disable=too-many-arguments
     """PopulationSomasReport potential plot displaying the voltage as a function of time.
 
