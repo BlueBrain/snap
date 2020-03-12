@@ -19,7 +19,7 @@
 
 project = 'BlueBrain SNAP'
 author = 'BlueBrain Project, EPFL'
-copyright = " Copyright Blue Brain Project/EPFL 2005-2019. All rights reserved"
+copyright = " Copyright Blue Brain Project/EPFL 2005-2020. All rights reserved"
 
 
 # -- General configuration ---------------------------------------------------
