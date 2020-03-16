@@ -19,7 +19,7 @@ from cached_property import cached_property
 
 from pathlib2 import Path
 import pandas as pd
-from libsonata import ElementsReportReader
+from libsonata import ElementReportReader
 
 from bluepysnap.exceptions import BluepySnapError
 
@@ -54,14 +54,14 @@ class PopulationFrameReport(object):
         Returns:
             PopulationFrameReport: A PopulationFrameReport object.
         """
-        self._frame_report = frame_report
+        self.frame_report = frame_report
         self._frame_population = self._get_reader(frame_report, population_name)
         self._population_name = population_name
 
     @staticmethod
     def _get_reader(frame_report, population_name):
         """Access to the population compartment reader."""
-        return _get_reader(frame_report, ElementsReportReader)[population_name]
+        return _get_reader(frame_report, ElementReportReader)[population_name]
 
     @property
     def name(self):
@@ -121,7 +121,7 @@ class FrameReport(object):
     @cached_property
     def _frame_reader(self):
         """Access to the compartment report reader."""
-        return _get_reader(self, ElementsReportReader)
+        return _get_reader(self, ElementReportReader)
 
     @property
     def config(self):
@@ -188,13 +188,13 @@ class FrameReport(object):
         return self._population_report.__iter__()
 
 
-class PopulationCompartmentsReport(PopulationFrameReport):
+class PopulationCompartmentReport(PopulationFrameReport):
     """Access to PopulationCompartmentsReport data."""
 
     @cached_property
     def nodes(self):
         """Returns the NodePopulation corresponding to this report."""
-        result = self._frame_report.simulation.circuit.nodes.get(self._population_name)
+        result = self.frame_report.simulation.circuit.nodes.get(self._population_name)
         if result is None:
             raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
         return result
@@ -204,16 +204,16 @@ class PopulationCompartmentsReport(PopulationFrameReport):
         return self.nodes.ids(group=group)
 
 
-class CompartmentsReport(FrameReport):
+class CompartmentReport(FrameReport):
     """Access to a CompartmentsReport data."""
 
     @cached_property
     def _population_report(self):
         """Collect the different PopulationCompartmentsReport."""
-        return _collect_population_reports(self, PopulationCompartmentsReport)
+        return _collect_population_reports(self, PopulationCompartmentReport)
 
 
-class PopulationSomasReport(PopulationCompartmentsReport):
+class PopulationSomaReport(PopulationCompartmentReport):
     """Access to PopulationSomaReport data."""
 
     @staticmethod
@@ -228,10 +228,10 @@ class PopulationSomasReport(PopulationCompartmentsReport):
         return columns.levels[0]
 
 
-class SomasReport(FrameReport):
+class SomaReport(FrameReport):
     """Access to a SomaReport data."""
 
     @cached_property
     def _population_report(self):
         """Collect the different PopulationSomasReport."""
-        return _collect_population_reports(self, PopulationSomasReport)
+        return _collect_population_reports(self, PopulationSomaReport)

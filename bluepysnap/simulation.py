@@ -52,11 +52,11 @@ def _collect_frame_reports(sim):
     for name, report in sim.config["reports"].items():
         report_type = report.get("sections", "soma")
         if report_type == "soma":
-            from bluepysnap.frame_report import SomasReport
-            cls = SomasReport
+            from bluepysnap.frame_report import SomaReport
+            cls = SomaReport
         elif report_type == "all":
-            from bluepysnap.frame_report import CompartmentsReport
-            cls = CompartmentsReport
+            from bluepysnap.frame_report import CompartmentReport
+            cls = CompartmentReport
         else:
             raise BluepySnapError("Report format not yet supported.")
         res[name] = cls(sim, name)

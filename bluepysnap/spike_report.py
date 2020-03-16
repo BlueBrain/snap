@@ -51,8 +51,8 @@ class PopulationSpikeReport(object):
         Returns:
             PopulationSpikeReport: A PopulationSpikeReport object.
         """
-        self._spike_report = spike_report
-        self._spike_population = _get_reader(self._spike_report)[population_name]
+        self.spike_report = spike_report
+        self._spike_population = _get_reader(self.spike_report)[population_name]
         self._population_name = population_name
 
     @property
@@ -78,7 +78,7 @@ class PopulationSpikeReport(object):
     @cached_property
     def nodes(self):
         """Return the NodePopulation corresponding to this spike report."""
-        result = self._spike_report.simulation.circuit.nodes.get(self._population_name)
+        result = self.spike_report.simulation.circuit.nodes.get(self._population_name)
         if result is None:
             raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
         return result

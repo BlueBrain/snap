@@ -3,8 +3,8 @@ import pytest
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.simulation as test_module
 from bluepysnap.spike_report import SpikeReport, PopulationSpikeReport
-from bluepysnap.frame_report import (SomasReport, PopulationSomasReport,
-                                     CompartmentsReport, PopulationCompartmentsReport)
+from bluepysnap.frame_report import (SomaReport, PopulationSomaReport,
+                                     CompartmentReport, PopulationCompartmentReport)
 
 
 from utils import TEST_DATA_DIR
@@ -31,16 +31,16 @@ def test_all():
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
     assert sorted(list(simulation.reports)) == sorted(list(['soma_report', 'section_report']))
-    assert isinstance(simulation.reports['soma_report'], SomasReport)
-    assert isinstance(simulation.reports['section_report'], CompartmentsReport)
+    assert isinstance(simulation.reports['soma_report'], SomaReport)
+    assert isinstance(simulation.reports['section_report'], CompartmentReport)
 
     rep = simulation.reports['soma_report']
     assert sorted(list(rep.population_names)) == ["default", "default2"]
-    assert isinstance(rep['default'], PopulationSomasReport)
+    assert isinstance(rep['default'], PopulationSomaReport)
 
     rep = simulation.reports['section_report']
     assert sorted(list(rep.population_names)) == ["default", "default2"]
-    assert isinstance(rep['default'], PopulationCompartmentsReport)
+    assert isinstance(rep['default'], PopulationCompartmentReport)
 
 
 def test_unknown_report():

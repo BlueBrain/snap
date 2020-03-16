@@ -71,32 +71,32 @@ class TestFrameReport:
             isinstance(report, test_module.PopulationFrameReport)
 
 
-class TestCompartmentsReport:
+class TestCompartmentReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
-        self.test_obj = test_module.CompartmentsReport(self.simulation, "section_report")
+        self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")
 
     def test_get_population(self):
-        assert isinstance(self.test_obj["default"], test_module.PopulationCompartmentsReport)
+        assert isinstance(self.test_obj["default"], test_module.PopulationCompartmentReport)
 
     def test_iter(self):
         assert list(self.test_obj) == ["default", "default2"]
         for report in self.test_obj:
-            isinstance(report, test_module.PopulationCompartmentsReport)
+            isinstance(report, test_module.PopulationCompartmentReport)
 
 
-class TestSomasReport:
+class TestSomaReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
-        self.test_obj = test_module.SomasReport(self.simulation, "soma_report")
+        self.test_obj = test_module.SomaReport(self.simulation, "soma_report")
 
     def test_get_population(self):
-        assert isinstance(self.test_obj["default"], test_module.PopulationSomasReport)
+        assert isinstance(self.test_obj["default"], test_module.PopulationSomaReport)
 
     def test_iter(self):
         assert sorted(list(self.test_obj)) == ["default", "default2"]
         for report in self.test_obj:
-            isinstance(report, test_module.PopulationSomasReport)
+            isinstance(report, test_module.PopulationSomaReport)
 
 
 class TestPopulationFrameReport:
@@ -112,10 +112,10 @@ class TestPopulationFrameReport:
             self.test_obj._resolve([1])
 
 
-class TestPopulationCompartmentsReport:
+class TestPopulationCompartmentReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
-        self.test_obj = test_module.CompartmentsReport(self.simulation, "section_report")["default"]
+        self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
         data = np.array([np.arange(6) + j * 0.1 for j in range(10)])
 
@@ -132,7 +132,7 @@ class TestPopulationCompartmentsReport:
         assert self.test_obj.nodes.get(group=2, properties=Cell.MTYPE) == "L6_Y"
 
     def test_nodes_invalid_population(self):
-        test_obj = self.test_obj.__class__(self.test_obj._frame_report, self.test_obj.name)
+        test_obj = self.test_obj.__class__(self.test_obj.frame_report, self.test_obj.name)
         test_obj._population_name = "unknown"
         with pytest.raises(BluepySnapError):
             test_obj.nodes
@@ -183,10 +183,10 @@ class TestPopulationCompartmentsReport:
             pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
 
 
-class TestPopulationSomasReport(TestPopulationCompartmentsReport):
+class TestPopulationSomaReport(TestPopulationCompartmentReport):
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
-        self.test_obj = test_module.SomasReport(self.simulation, "soma_report")["default"]
+        self.test_obj = test_module.SomaReport(self.simulation, "soma_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
         data = {0: timestamps, 1: timestamps + 1, 2: timestamps + 2}
         self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2])
