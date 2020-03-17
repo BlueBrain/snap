@@ -1,3 +1,5 @@
+|banner|
+
 Blue Brain SNAP
 ===============
 
@@ -76,3 +78,6 @@ Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.
 .. |coverage| image:: https://codecov.io/github/BlueBrain/snap/coverage.svg?branch=master
    :target: https://codecov.io/github/BlueBrain/snap?branch=master
    :alt: codecov.io
+
+.. substitutions
+.. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
