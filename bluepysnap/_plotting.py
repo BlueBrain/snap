@@ -254,7 +254,7 @@ def spikes_firing_animation(spikes, group=None, t_start=None,
     return anim, ax
 
 
-def somas_trace(frames, group=None, t_start=None, t_stop=None, plot_type='mean', ax=None):  # pragma: no cover
+def soma_trace(frames, group=None, t_start=None, t_stop=None, plot_type='mean', ax=None):  # pragma: no cover
     # pylint: disable=too-many-arguments
     """PopulationSomasReport potential plot displaying the voltage as a function of time.
 

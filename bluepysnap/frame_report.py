@@ -243,7 +243,8 @@ class PopulationSomaReport(PopulationCompartmentReport):
         return columns.levels[0]
 
     # plotting functions for the PopulationSomasReport
-    trace = bluepysnap._plotting.somas_trace
+    trace = bluepysnap._plotting.soma_trace
+
 
 class SomaReport(FrameReport):
     """Access to a SomaReport data."""
