@@ -50,7 +50,7 @@ class EdgeStorage(object):
         self._circuit = circuit
         self._populations = {}
 
-    @cached_property
+    @property
     def storage(self):
         """Access to the libsonata edge storage."""
         return libsonata.EdgeStorage(self._h5_filepath)
@@ -109,7 +109,7 @@ class EdgePopulation(object):
         self._edge_storage = edge_storage
         self.name = population_name
 
-    @cached_property
+    @property
     def _population(self):
         return self._edge_storage.storage.open_population(self.name)
 

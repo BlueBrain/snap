@@ -54,7 +54,7 @@ class NodeStorage(object):
         self._circuit = circuit
         self._populations = {}
 
-    @cached_property
+    @property
     def storage(self):
         """Access to the libsonata node storage."""
         return libsonata.NodeStorage(self._h5_filepath)
@@ -172,7 +172,7 @@ class NodePopulation(object):
         """Collected data for the node population as a pandas.DataFrame."""
         return self._node_storage.load_population_data(self.name)
 
-    @cached_property
+    @property
     def _population(self):
         return self._node_storage.storage.open_population(self.name)
 
