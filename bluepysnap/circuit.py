@@ -70,3 +70,12 @@ class Circuit(object):
             self._config['networks']['edges'],
             lambda cfg: EdgeStorage(cfg, self)
         )
+
+    def close_contexts(self):
+        """Close the context for all populations."""
+        if self.nodes:
+            for population in self.nodes.values():
+                population.close_context()
+        if self.edges:
+            for population in self.edges.values():
+                population.close_context()

@@ -1,4 +1,5 @@
 import pytest
+import h5py
 
 from bluepysnap.nodes import NodePopulation
 from bluepysnap.edges import EdgePopulation
@@ -11,12 +12,12 @@ from utils import TEST_DATA_DIR
 def test_all():
     circuit = test_module.Circuit(
         str(TEST_DATA_DIR / 'circuit_config.json'))
-    assert(
-        circuit.config['networks']['nodes'][0] ==
-        {
-            'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
-            'node_types_file': None,
-        }
+    assert (
+            circuit.config['networks']['nodes'][0] ==
+            {
+                'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
+                'node_types_file': None,
+            }
     )
     assert isinstance(circuit.nodes, dict)
     assert isinstance(circuit.edges, dict)
@@ -34,3 +35,20 @@ def test_duplicate_population():
     with pytest.raises(BluepySnapError):
         circuit.nodes
 
+
+def test_close_contexts():
+    circuit = test_module.Circuit(
+        str(TEST_DATA_DIR / 'circuit_config.json')
+    )
+    circuit.edges['default'].size
+    circuit.nodes['default'].size
+    node_file = circuit.config['networks']['nodes'][0]['nodes_file']
+    edge_file = circuit.config['networks']['edges'][0]['edges_file']
+
+    circuit.close_contexts()
+
+    with h5py.File(node_file, "r+") as h5:
+        list(h5)
+
+    with h5py.File(edge_file, "r+") as h5:
+        list(h5)

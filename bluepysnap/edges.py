@@ -109,11 +109,16 @@ class EdgePopulation(object):
         self._edge_storage = edge_storage
         self.name = population_name
 
-    @property
+    @cached_property
     def _population(self):
         return self._edge_storage.storage.open_population(self.name)
 
-    @property
+    def close_context(self):
+        """Close the h5 context for edge population."""
+        if "_population" in self.__dict__:
+            del self.__dict__["_population"]
+
+    @cached_property
     def size(self):
         """Population size."""
         return self._population.size
@@ -396,7 +401,6 @@ class EdgePopulation(object):
             secondary_node_ids = np.unique(secondary_node_ids)
 
         secondary_node_ids_used = set()
-
         for key_node_id in primary_node_ids:
             connected_node_ids = get_connected_node_ids(key_node_id, unique=False)
             connected_node_ids_with_count = np.stack(
