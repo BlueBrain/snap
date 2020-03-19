@@ -176,11 +176,6 @@ class NodePopulation(object):
     def _population(self):
         return self._node_storage.storage.open_population(self.name)
 
-    def close_context(self):
-        """Close the h5 context for node population."""
-        if "_population" in self.__dict__:
-            del self.__dict__["_population"]
-
     @cached_property
     def size(self):
         """Node population size."""

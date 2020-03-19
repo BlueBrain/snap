@@ -73,9 +73,15 @@ class Circuit(object):
 
     def close_contexts(self):
         """Close the context for all populations."""
+
+        def _close_context(pop):
+            """Close the h5 context for population."""
+            if "_population" in pop.__dict__:
+                del pop.__dict__["_population"]
+
         if self.nodes:
             for population in self.nodes.values():
-                population.close_context()
+                _close_context(population)
         if self.edges:
             for population in self.edges.values():
-                population.close_context()
+                _close_context(population)
