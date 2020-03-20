@@ -6,21 +6,16 @@
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+from pkg_resources import get_distribution
 
 # -- Project information -----------------------------------------------------
 
-project = 'BlueBrain SNAP'
-author = 'BlueBrain Project, EPFL'
-copyright = " Copyright Blue Brain Project/EPFL 2005-2020. All rights reserved"
+project = 'Blue Brain SNAP'
+author = 'Blue Brain Project, EPFL'
+copyright = "Blue Brain Project/EPFL 2005-2020. All rights reserved"
 
+release = get_distribution('bluepysnap').version
+version = release
 
 # -- General configuration ---------------------------------------------------
 
@@ -41,12 +36,10 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'sphinx_rtd_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -55,7 +48,7 @@ html_theme = 'sphinx_rtd_theme'
 # html_static_path = ['_static']
 
 # ensure a useful title is used
-html_title = "BlueBrain SNAP"
+html_title = "Blue Brain SNAP"
 
 # hide source links
 html_show_sourcelink = False

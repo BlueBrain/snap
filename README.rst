@@ -1,3 +1,5 @@
+|banner|
+
 Blue Brain SNAP
 ===============
 
@@ -67,12 +69,19 @@ Or a python free function:
     from bluepysnap.circuit_validation import validate
     errors = validate("my/circuit/path/circuit_config.json")
 
+Acknowledgements
+----------------
+
+This project/research has received funding from the European Union’s Horizon 2020 Framework Programme for Research and Innovation under the Specific Grant Agreement No. 785907 (Human Brain Project SGA2).
+
+The Blue Brain Project would like to thank `Dr Eilif Muller <https://github.com/markovg>`_, the author of the precursor to Blue Brain SNAP, for his invaluable insights and contributions
 
 License
 -------
 
-Blue Brain SNAP is licensed under the LGPLv3. Refer to the
-`LICENSE.txt <https://github.com/BlueBrain/snap/blob/master/LICENSE.txt>`__ for details.
+Blue Brain SNAP is licensed under the terms of the GNU Lesser General Public License version 3.
+Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER>`__ and
+`COPYING <https://github.com/BlueBrain/snap/blob/master/COPYING>`__ for details.
 
 .. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master
    :target: https://travis-ci.com/BlueBrain/snap
@@ -81,3 +90,6 @@ Blue Brain SNAP is licensed under the LGPLv3. Refer to the
 .. |coverage| image:: https://codecov.io/github/BlueBrain/snap/coverage.svg?branch=master
    :target: https://codecov.io/github/BlueBrain/snap?branch=master
    :alt: codecov.io
+
+.. substitutions
+.. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
