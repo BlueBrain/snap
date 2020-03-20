@@ -9,3 +9,5 @@
    api
 
 .. |banner| image:: /_images/BlueBrainSNAP.jpg
+.. |circuit| replace:: :class:`.Circuit`
+.. |simulation| replace:: :class:`.Simulation`

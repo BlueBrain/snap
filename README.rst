@@ -22,13 +22,13 @@ Usage
 
 There are two main interface classes provided by Blue Brain SNAP:
 
-:class:`.Circuit` corresponds to the *static* structure of a neural network, that is:
+|circuit| corresponds to the *static* structure of a neural network, that is:
 
 - node positions and properties,
 - edge positions and properties, and,
 - detailed morphologies.
 
-:class:`.Simulation` corresponds to the *dynamic* data for a neural network simulation, including:
+|simulation| corresponds to the *dynamic* data for a neural network simulation, including:
 
 - spike reports,
 - soma reports, and,
@@ -93,3 +93,5 @@ Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.
 
 .. substitutions
 .. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
+.. |circuit| replace:: *Circuit*
+.. |simulation| replace:: *Simulation*
