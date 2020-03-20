@@ -111,7 +111,9 @@ class EdgePopulation(object):
 
     @cached_property
     def _population(self):
-        return self._edge_storage.storage.open_population(self.name)
+        if self._edge_storage.circuit.is_open:
+            return self._edge_storage.storage.open_population(self.name)
+        raise BluepySnapError("I/O error. Cannot access the h5 files with closed context.")
 
     @cached_property
     def size(self):

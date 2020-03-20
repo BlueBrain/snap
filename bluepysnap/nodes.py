@@ -174,7 +174,9 @@ class NodePopulation(object):
 
     @cached_property
     def _population(self):
-        return self._node_storage.storage.open_population(self.name)
+        if self._node_storage.circuit.is_open:
+            return self._node_storage.storage.open_population(self.name)
+        raise BluepySnapError("I/O error. Cannot access the h5 files with closed context.")
 
     @cached_property
     def size(self):

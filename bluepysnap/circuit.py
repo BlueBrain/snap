@@ -49,7 +49,7 @@ class Circuit(object):
             Circuit: A Circuit object.
         """
         self._config = Config(config).resolve()
-        self._open = True
+        self.is_open = True
 
     @property
     def config(self):
@@ -59,7 +59,7 @@ class Circuit(object):
     @cached_property
     def nodes(self):
         """Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
-        if self._open:
+        if self.is_open:
             return _collect_populations(
                 self._config['networks']['nodes'],
                 lambda cfg: NodeStorage(cfg, self)
@@ -69,7 +69,7 @@ class Circuit(object):
     @cached_property
     def edges(self):
         """Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
-        if self._open:
+        if self.is_open:
             return _collect_populations(
                 self._config['networks']['edges'],
                 lambda cfg: EdgeStorage(cfg, self)
@@ -93,7 +93,8 @@ class Circuit(object):
 
         del self.__dict__["nodes"]
         del self.__dict__["edges"]
-        self._open = False
+        self.is_open = False
 
     def __enter__(self):
+        """Enter the context manager for circuit."""
         return self
