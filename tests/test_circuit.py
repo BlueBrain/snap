@@ -51,14 +51,21 @@ def test_close_contexts():
     with h5py.File(edge_file, "r+") as h5:
         list(h5)
 
-
-def test_close_contexts_error():
+def test_close_contexts_errors_extracted_obj():
     with test_module.Circuit(str(TEST_DATA_DIR / 'circuit_config.json')) as circuit:
-        circuit.edges['default'].size
-        circuit.nodes['default'].size
+        edges = circuit.edges['default']
+        edges.size
+        nodes = circuit.nodes['default']
+        nodes.size
 
     with pytest.raises(BluepySnapError):
         circuit.nodes
 
     with pytest.raises(BluepySnapError):
         circuit.edges
+
+    with pytest.raises(BluepySnapError):
+        nodes.property_names
+
+    with pytest.raises(BluepySnapError):
+        edges.property_names
