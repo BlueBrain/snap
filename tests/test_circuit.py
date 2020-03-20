@@ -37,18 +37,28 @@ def test_duplicate_population():
 
 
 def test_close_contexts():
-    circuit = test_module.Circuit(
-        str(TEST_DATA_DIR / 'circuit_config.json')
-    )
-    circuit.edges['default'].size
-    circuit.nodes['default'].size
-    node_file = circuit.config['networks']['nodes'][0]['nodes_file']
-    edge_file = circuit.config['networks']['edges'][0]['edges_file']
-
-    circuit.close_contexts()
+    with test_module.Circuit(str(TEST_DATA_DIR / 'circuit_config.json')) as circuit:
+        edge = circuit.edges['default']
+        edge.size
+        node = circuit.nodes['default']
+        node.size
+        node_file = circuit.config['networks']['nodes'][0]['nodes_file']
+        edge_file = circuit.config['networks']['edges'][0]['edges_file']
 
     with h5py.File(node_file, "r+") as h5:
         list(h5)
 
     with h5py.File(edge_file, "r+") as h5:
         list(h5)
+
+
+def test_close_contexts_error():
+    with test_module.Circuit(str(TEST_DATA_DIR / 'circuit_config.json')) as circuit:
+        circuit.edges['default'].size
+        circuit.nodes['default'].size
+
+    with pytest.raises(BluepySnapError):
+        circuit.nodes
+
+    with pytest.raises(BluepySnapError):
+        circuit.edges
