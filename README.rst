@@ -93,5 +93,5 @@ Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.
 
 .. substitutions
 .. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
-.. |circuit| replace:: *Circuit*
-.. |simulation| replace:: *Simulation*
+.. |circuit| replace:: **Circuit**
+.. |simulation| replace:: **Simulation**
