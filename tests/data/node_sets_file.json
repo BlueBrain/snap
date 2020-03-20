@@ -1,0 +1,18 @@
+{
+  "double_combined": ["combined", "other"],
+
+  "Node2_L6_Y": {
+    "mtype": "L6_Y",
+    "node_id": [2]
+  },
+    "Layer23": {
+    "layer": [2,3]
+  },
+  "other": {
+    "something": [2,3],
+    "something_2": ["a","b"],
+    "mtype": "L2_X"
+  },
+  "combined": ["Node2_L6_Y", "Layer23"],
+  "alone": {"alone": true}
+}

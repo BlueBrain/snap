@@ -29,7 +29,7 @@ from cached_property import cached_property
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, Node, ConstContainer
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, POPULATION_KEY, Node, ConstContainer
 
 
 class NodeStorage(object):
@@ -47,10 +47,6 @@ class NodeStorage(object):
         """
         self._h5_filepath = config['nodes_file']
         self._csv_filepath = config['node_types_file']
-        if 'node_sets_file' in config:
-            self._node_sets = utils.load_json(config['node_sets_file'])
-        else:
-            self._node_sets = {}
         self._circuit = circuit
         self._populations = {}
 
@@ -68,11 +64,6 @@ class NodeStorage(object):
     def circuit(self):
         """Returns the circuit object containing this storage."""
         return self._circuit
-
-    @property
-    def node_sets(self):
-        """Returns the node sets defined for this node population."""
-        return self._node_sets
 
     def population(self, population_name):
         """Access the different populations from the storage."""
@@ -163,9 +154,9 @@ class NodePopulation(object):
         self.name = population_name
 
     @property
-    def node_sets(self):
+    def _node_sets(self):
         """Node sets defined for this node population."""
-        return self._node_storage.node_sets
+        return self._node_storage.circuit.node_sets
 
     @cached_property
     def _data(self):
@@ -271,11 +262,16 @@ class NodePopulation(object):
         preserve_order = False
         node_filter = slice(None, None, 1)
         if isinstance(group, six.string_types):
-            if group not in self.node_sets:
+            if group not in self._node_sets:
                 raise BluepySnapError("Undefined node set: %s" % group)
-            group = self.node_sets[group]
+            group = self._node_sets[group]
             if not isinstance(group, collections.MutableMapping):
                 raise BluepySnapError("Node set values must be dict not: %s" % type(group))
+
+            if POPULATION_KEY in group:
+                if group[POPULATION_KEY] != self.name:
+                    return []
+
             if len(group) == 0:
                 group = None
             elif NODE_ID_KEY in group:

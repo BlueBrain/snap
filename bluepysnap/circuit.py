@@ -20,6 +20,7 @@
 from cached_property import cached_property
 
 from bluepysnap.config import Config
+from bluepysnap.node_sets import NodeSets
 from bluepysnap.nodes import NodeStorage
 from bluepysnap.edges import EdgeStorage
 from bluepysnap.exceptions import BluepySnapError
@@ -54,6 +55,13 @@ class Circuit(object):
     def config(self):
         """Network config dictionary."""
         return self._config
+
+    @cached_property
+    def node_sets(self):
+        if "node_sets_file" in self._config:
+            return NodeSets(self._config["node_sets_file"])
+        else:
+            return {}
 
     @cached_property
     def nodes(self):
