@@ -1,6 +1,5 @@
 {
   "double_combined": ["combined", "other"],
-
   "Node2_L6_Y": {
     "mtype": "L6_Y",
     "node_id": [2]
@@ -14,5 +13,6 @@
     "mtype": "L2_X"
   },
   "combined": ["Node2_L6_Y", "Layer23"],
-  "alone": {"alone": true}
+  "alone": {"alone": true},
+  "empty_dict": {}
 }

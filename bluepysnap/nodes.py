@@ -30,7 +30,7 @@ from cached_property import cached_property
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, POPULATION_KEY, Node, ConstContainer
-
+from bluepysnap.node_sets import POPULATION_NODES_KEY
 
 class NodeStorage(object):
     """Node storage access."""
@@ -233,6 +233,28 @@ class NodePopulation(object):
         if prop not in self.property_names:
             raise BluepySnapError("No such property: '%s'" % prop)
 
+    def _resolve_node_set(self, group):
+        node_filter = slice(None, None, 1)
+        if group not in self._node_sets:
+            raise BluepySnapError("Undefined node set: %s" % group)
+
+        group = self._node_sets[group].copy()
+        if group == {}:
+            return None, node_filter
+
+        if POPULATION_KEY in group:
+            if self.name not in utils.ensure_list(group[POPULATION_KEY]):
+                return [], node_filter
+            group.pop(POPULATION_KEY)
+
+        if NODE_ID_KEY in group:
+            node_filter = group.pop(NODE_ID_KEY)
+            node_filter = utils.ensure_list(node_filter)
+            if not group:
+                group = np.asarray(node_filter)
+
+        return group, node_filter
+
     def ids(self, group=None, limit=None, sample=None):
         """Node IDs corresponding to node ``group``.
 
@@ -262,23 +284,7 @@ class NodePopulation(object):
         preserve_order = False
         node_filter = slice(None, None, 1)
         if isinstance(group, six.string_types):
-            if group not in self._node_sets:
-                raise BluepySnapError("Undefined node set: %s" % group)
-            group = self._node_sets[group]
-            if not isinstance(group, collections.MutableMapping):
-                raise BluepySnapError("Node set values must be dict not: %s" % type(group))
-
-            if POPULATION_KEY in group:
-                if group[POPULATION_KEY] != self.name:
-                    return []
-
-            if len(group) == 0:
-                group = None
-            elif NODE_ID_KEY in group:
-                node_filter = group.pop(NODE_ID_KEY)
-                node_filter = utils.ensure_list(node_filter)
-                if not group:
-                    group = np.asarray(node_filter)
+            group, node_filter = self._resolve_node_set(group)
 
         if group is None:
             result = self._data.index.values

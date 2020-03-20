@@ -9,6 +9,7 @@ from mock import Mock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
+from bluepysnap.node_sets import NodeSets
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
@@ -79,8 +80,7 @@ class TestNodeStorage:
     def setup(self):
         config = {
             'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
-            'node_types_file': None,
-            'node_sets_file': str(TEST_DATA_DIR / 'node_sets.json'),
+            'node_types_file': None
         }
         self.circuit = Mock()
         self.test_obj = test_module.NodeStorage(config, self.circuit)
@@ -93,13 +93,6 @@ class TestNodeStorage:
 
     def test_circuit(self):
         assert self.test_obj.circuit is self.circuit
-
-    def test_node_sets(self):
-        assert (
-                sorted(self.test_obj.node_sets) ==
-                ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
-                 'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
-        )
 
     def test_population(self):
         pop = self.test_obj.population("default")
@@ -121,22 +114,20 @@ class TestNodeStorage:
 class TestNodePopulation:
 
     @staticmethod
-    def create_population(filepath, pop_name, nodeset_path=None):
+    def create_population(filepath, pop_name):
         config = {
             'nodes_file': filepath,
             'node_types_file': None,
         }
-        if nodeset_path:
-            config['node_sets_file'] = nodeset_path
         circuit = Mock()
+        circuit.node_sets = NodeSets(str(TEST_DATA_DIR / 'node_sets.json'))
         storage = test_module.NodeStorage(config, circuit)
         return storage.population(pop_name)
 
     def setup(self):
         self.test_obj = TestNodePopulation.create_population(
             str(TEST_DATA_DIR / 'nodes.h5'),
-            "default",
-            nodeset_path=str(TEST_DATA_DIR / 'node_sets.json'))
+            "default")
 
     def test_basic(self):
         assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
@@ -160,7 +151,7 @@ class TestNodePopulation:
                 ]
         )
         assert (
-                sorted(self.test_obj.node_sets) ==
+                sorted(self.test_obj._node_sets) ==
                 ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
                  'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
         )
@@ -417,9 +408,9 @@ class TestNodePopulation:
         }
         assert isinstance(self.test_obj.morph, MorphHelper)
 
-    def test_NodePopulation_without_node_sets(self):
-        nodes = TestNodePopulation.create_population(
-            str(TEST_DATA_DIR / 'nodes.h5'),
-            "default")
-
-        assert nodes.node_sets == {}
+    # def test_NodePopulation_without_node_sets(self):
+    #     nodes = TestNodePopulation.create_population(
+    #         str(TEST_DATA_DIR / 'nodes.h5'),
+    #         "default")
+    #
+    #     assert nodes.node_sets == {}
