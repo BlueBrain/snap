@@ -27,10 +27,8 @@ FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
 
 def _collect_population_reports(frame_report, cls):
-    result = {}
-    for population in frame_report.population_names:
-        result[population] = cls(frame_report, population)
-    return result
+    return {population: cls(frame_report, population) for population in
+            frame_report.population_names}
 
 
 def _get_reader(reader_report, cls):
@@ -69,7 +67,12 @@ class PopulationFrameReport(object):
         return self._population_name
 
     def _resolve(self, group):
-        """Transform a group into ids array."""
+        """Transform a group into ids array.
+
+        Notes:
+            The type of ids depends on the type of report and so this function needs to be
+            implemented for all type of reports. It can return node or edge ids or something else.
+        """
         raise NotImplementedError
 
     @staticmethod
@@ -125,7 +128,7 @@ class FrameReport(object):
 
     @property
     def config(self):
-        """Access to the report config part."""
+        """Access the report config."""
         return self._simulation.config["reports"][self.name]
 
     @property
@@ -185,7 +188,7 @@ class FrameReport(object):
 
     def __iter__(self):
         """Allows iteration over the different PopulationFrameReports."""
-        return self._population_report.__iter__()
+        return iter(self._population_report)
 
 
 class PopulationCompartmentReport(PopulationFrameReport):

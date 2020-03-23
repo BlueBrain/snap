@@ -58,7 +58,8 @@ def _collect_frame_reports(sim):
             from bluepysnap.frame_report import CompartmentReport
             cls = CompartmentReport
         else:
-            raise BluepySnapError("Report format not yet supported.")
+            raise BluepySnapError(
+                "Report {}: format {} not yet supported.".format(name, report_type))
         res[name] = cls(sim, name)
     return res
 

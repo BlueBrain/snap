@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from pathlib2 import Path
 from cached_property import cached_property
 import pandas as pd
+import numpy as np
 
 from bluepysnap.exceptions import BluepySnapError
 
@@ -32,10 +33,8 @@ def _get_reader(spike_report):
 
 
 def _collect_spikes(spike_report):
-    result = {}
-    for population in spike_report.population_names:
-        result[population] = PopulationSpikeReport(spike_report, population)
-    return result
+    return {population: PopulationSpikeReport(spike_report, population) for population in
+            spike_report.population_names}
 
 
 class PopulationSpikeReport(object):
@@ -108,13 +107,12 @@ class PopulationSpikeReport(object):
 
         res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         if not res:
-            return pd.Series(data=[], index=[], name=series_name)
+            return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
 
-        node_ids, times = zip(*res)
-        res = pd.Series(data=node_ids, index=times, name=series_name)
+        res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        if isinstance(group, int):
+        if isinstance(group, (np.integer, int)):
             return res.index.to_numpy()
         return res
 
@@ -192,4 +190,4 @@ class SpikeReport(object):
 
     def __iter__(self):
         """Allows iteration over the different PopulationSpikeReports."""
-        return self._population.__iter__()
+        return iter(self._population)

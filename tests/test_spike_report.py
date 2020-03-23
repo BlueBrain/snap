@@ -14,6 +14,12 @@ from bluepysnap.bbp import Cell
 from utils import TEST_DATA_DIR
 
 
+def _create_series(node_ids, index, name="default_node_ids"):
+    def _get_index(ids):
+        return pd.Index(ids, name="times")
+    return pd.Series(node_ids, index=_get_index(index), name=name)
+
+
 class TestSpikeReport:
     def setup(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
@@ -98,8 +104,7 @@ class TestPopulationSpikeReport:
 
     def test_get(self):
         pdt.assert_series_equal(self.test_obj.get(),
-                                pd.Series([2, 0, 1, 2, 0], index=[0.1, 0.2, 0.3, 0.7, 1.3],
-                                          name="default_node_ids"))
+                                _create_series([2, 0, 1, 2, 0], [0.1, 0.2, 0.3, 0.7, 1.3]))
 
         npt.assert_allclose(self.test_obj.get(2), np.array([0.1, 0.7]))
         npt.assert_allclose(self.test_obj.get(0, t_start=1.), [1.3])
@@ -108,47 +113,38 @@ class TestPopulationSpikeReport:
         npt.assert_allclose(self.test_obj.get(0, t_start=0.1, t_stop=12), [0.2, 1.3])
 
         pdt.assert_series_equal(self.test_obj.get([2, 0]),
-                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-                                          name="default_node_ids"))
+                                _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]))
 
         pdt.assert_series_equal(self.test_obj.get([0, 2]),
-                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-                                          name="default_node_ids"))
+                                _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]))
 
         pdt.assert_series_equal(self.test_obj.get(np.asarray([0, 2])),
-                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-                                          name="default_node_ids"))
+                                _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]))
 
-        pdt.assert_series_equal(self.test_obj.get([2], t_stop=0.5),
-                                pd.Series([2], index=[0.1], name="default_node_ids"))
+        pdt.assert_series_equal(self.test_obj.get([2], t_stop=0.5), _create_series([2], [0.1]))
 
-        pdt.assert_series_equal(self.test_obj.get([2], t_start=0.5),
-                                pd.Series([2], index=[0.7], name="default_node_ids"))
+        pdt.assert_series_equal(self.test_obj.get([2], t_start=0.5), _create_series([2], [0.7]))
 
         pdt.assert_series_equal(self.test_obj.get([2], t_start=0.5, t_stop=0.8),
-                                pd.Series([2], index=[0.7], name="default_node_ids"))
+                                _create_series([2], [0.7]))
 
         pdt.assert_series_equal(self.test_obj.get([2, 1], t_start=0.5, t_stop=0.8),
-                                pd.Series([2], index=[0.7], name="default_node_ids"))
+                                _create_series([2], [0.7]))
 
         pdt.assert_series_equal(self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8),
-                                pd.Series([1, 2], index=[0.3, 0.7], name="default_node_ids"))
+                                _create_series([1, 2], [0.3, 0.7]))
 
-        pdt.assert_series_equal(self.test_obj.get([0, 2], t_start=12),
-                                pd.Series([], index=[],
-                                          name="default_node_ids"))
+        pdt.assert_series_equal(self.test_obj.get([0, 2], t_start=12), _create_series([], []))
 
         pdt.assert_series_equal(
             self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8),
-            pd.Series([1, 2], index=[0.3, 0.7], name="default_node_ids"))
+            _create_series([1, 2], [0.3, 0.7]))
 
         pdt.assert_series_equal(
-            self.test_obj.get(group={Cell.MTYPE: "L2_X"}),
-            pd.Series([0, 0], index=[0.2, 1.3], name="default_node_ids"))
+            self.test_obj.get(group={Cell.MTYPE: "L2_X"}), _create_series([0, 0], [0.2, 1.3]))
 
         pdt.assert_series_equal(
-            self.test_obj.get(group="Layer23"),
-            pd.Series([0, 0], index=[0.2, 1.3], name="default_node_ids"))
+            self.test_obj.get(group="Layer23"), _create_series([0, 0], [0.2, 1.3]))
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
@@ -157,14 +153,15 @@ class TestPopulationSpikeReport:
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
         assert test_obj._sorted_by == "by_id"
         pdt.assert_series_equal(test_obj.get([2, 0]),
-                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-                                          name="default2_node_ids"))
+                                _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3],
+                                               name="default2_node_ids"))
+
         pdt.assert_series_equal(test_obj.get([0, 2]),
-                                pd.Series([2, 0, 2, 0], index=[0.1, 0.2, 0.7, 1.3],
-                                          name="default2_node_ids"))
+                                _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3],
+                                               name="default2_node_ids"))
 
     @patch(test_module.__name__ + '.PopulationSpikeReport._resolve_nodes',
            return_value=np.asarray([4]))
     def test_get_not_in_report(self, mock):
         pdt.assert_series_equal(self.test_obj.get(4),
-                                pd.Series([], index=[], name="default_node_ids"))
+                                _create_series([], []))
