@@ -4,7 +4,6 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap import utils
 from bluepysnap.sonata_constants import POPULATION_KEY, NODE_ID_KEY
 
-
 POPULATION_NODES_KEY = "population_nodes"
 
 
@@ -12,11 +11,6 @@ def _sanitize(node_set):
     node_set = dict(node_set)
     for key, values in node_set.items():
         if key == POPULATION_NODES_KEY:
-            # combined [(pop, [1,2,3]) (pop, [7,8])] --> (pop, [1,2,3,7,8])
-            d = collections.defaultdict(set)
-            for popname, node_ids in values:
-                d[popname].update(node_ids)
-            node_set[key] = [(popname, list(node_ids)) for popname, node_ids in d.items()]
             continue
         if isinstance(values, list):
             if len(values) == 1:
@@ -24,6 +18,18 @@ def _sanitize(node_set):
             else:
                 # sorted unique value list
                 node_set[key] = np.unique(np.asarray(values)).tolist()
+
+    if POPULATION_NODES_KEY in node_set:
+        # combined [(pop, [1,2,3]) (pop, [7,8])] --> [(pop, [1,2,3,7,8])]
+        # combined [(pop1, [1,2]), (pop2, [3,4])] if "node_ids": [7,8] -->
+        #      [(pop1, [1,2,7,8]), (pop2, [3,4,7,8])]
+        d = collections.defaultdict(set)
+        extra_node_ids = node_set.pop(NODE_ID_KEY, [])
+        for popname, node_ids in node_set[POPULATION_NODES_KEY]:
+            d[popname].update(node_ids)
+        node_set[POPULATION_NODES_KEY] = [
+            (popname, np.unique(np.asarray(list(node_ids) + extra_node_ids)).tolist()) for
+            popname, node_ids in d.items()]
     return node_set
 
 
@@ -54,10 +60,10 @@ class NodeSets:
         for sub_set_name in set_value:
             sub_res_dict = self._resolve_set(resolved, sub_set_name)
             resolved[sub_set_name] = _sanitize(sub_res_dict)
-
             for key, value in sub_res_dict.items():
                 # case where 2 node sets have the same key
                 res[key].extend(utils.ensure_list(value))
+
         return _sanitize(res)
 
     def _resolve(self):

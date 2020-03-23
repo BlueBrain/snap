@@ -220,10 +220,10 @@ class NodePopulation(object):
                 queries[NODE_ID_KEY] = np.asarray(nodes)
                 break
         else:
-            queries[POPULATION_KEY] = None
+            queries[POPULATION_KEY] = queries.get(POPULATION_KEY, None)
 
-        population = queries.pop(POPULATION_KEY)
-        if population is not None and population != self.name:
+        populations = queries.pop(POPULATION_KEY)
+        if populations is not None and self.name not in set(utils.ensure_list(populations)):
             return queries, []
 
         node_ids = queries.pop(NODE_ID_KEY, [])
@@ -250,7 +250,7 @@ class NodePopulation(object):
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
         queries, mask = self._population_queries(queries)
-        if not mask:
+        if len(mask) == 0:
             return []
 
         for prop, values in six.iteritems(queries):

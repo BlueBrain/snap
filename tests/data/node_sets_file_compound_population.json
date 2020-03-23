@@ -11,6 +11,11 @@
     "population": "pop1",
     "node_id": [8, 7]
   },
+  "extra_ids": {
+    "something": "something",
+    "node_id": [8, 7]
+  },
   "combined": ["ns_pop1", "ns_pop2"],
-  "combined2": ["ns_pop1", "ns_pop1_2"]
+  "combined2": ["ns_pop1", "ns_pop1_2"],
+  "combined_extra": ["ns_pop1", "extra_ids", "ns_pop2"]
 }
