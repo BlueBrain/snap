@@ -105,39 +105,6 @@ def _complex_query(prop, query):
     return result
 
 
-def _node_ids_by_filter(node_data, props):
-    """Return index of `nodes` rows matching `props` dict.
-
-    `props` values could be:
-        pairs (range match for floating dtype fields)
-        scalar or iterables (exact or "one of" match for other fields)
-
-    E.g.:
-        >>> _node_ids_by_filter(node_data, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
-        >>> _node_ids_by_filter(node_data, { Node.LAYER: [2, 3] })
-    """
-    # pylint: disable=assignment-from-no-return
-    unknown_props = set(props) - set(node_data.columns)
-    if unknown_props:
-        raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
-
-    mask = np.full(len(node_data), True)
-    for prop, values in six.iteritems(props):
-        prop = node_data[prop]
-        if issubclass(prop.dtype.type, np.floating):
-            v1, v2 = values
-            prop_mask = np.logical_and(prop >= v1, prop <= v2)
-        elif isinstance(values, six.string_types) and values.startswith('regex:'):
-            prop_mask = _complex_query(prop, {'$regex': values[6:]})
-        elif isinstance(values, collections.Mapping):
-            prop_mask = _complex_query(prop, values)
-        else:
-            prop_mask = np.in1d(prop, values)
-        mask = np.logical_and(mask, prop_mask)
-
-    return node_data.index[mask].values
-
-
 class NodePopulation(object):
     """Node population access."""
 
@@ -234,26 +201,72 @@ class NodePopulation(object):
             raise BluepySnapError("No such property: '%s'" % prop)
 
     def _resolve_node_set(self, group):
-        node_filter = slice(None, None, 1)
         if group not in self._node_sets:
             raise BluepySnapError("Undefined node set: %s" % group)
-
-        group = self._node_sets[group].copy()
         if group == {}:
-            return None, node_filter
+            return None
+        return group
 
-        if POPULATION_KEY in group:
-            if self.name not in utils.ensure_list(group[POPULATION_KEY]):
-                return [], node_filter
-            group.pop(POPULATION_KEY)
+    def _positional_mask(self, node_ids):
+        mask = np.full(len(self._data), fill_value=False)
+        mask[node_ids] = True
+        return mask
 
-        if NODE_ID_KEY in group:
-            node_filter = group.pop(NODE_ID_KEY)
-            node_filter = utils.ensure_list(node_filter)
-            if not group:
-                group = np.asarray(node_filter)
+    def _population_queries(self, queries):
+        population_nodes = queries.pop(POPULATION_NODES_KEY, [])
+        for pop, nodes in population_nodes:
+            if pop == self.name:
+                queries[POPULATION_KEY] = pop
+                queries[NODE_ID_KEY] = np.asarray(nodes)
+                break
+        else:
+            queries[POPULATION_KEY] = None
 
-        return group, node_filter
+        population = queries.pop(POPULATION_KEY)
+        if population is not None and population != self.name:
+            return queries, []
+
+        node_ids = queries.pop(NODE_ID_KEY, [])
+
+        mask = self._positional_mask(node_ids) if node_ids else np.full(len(self._data), True)
+        return queries, mask
+
+    def _node_ids_by_filter(self, queries):
+        """Return index of `nodes` rows matching `props` dict.
+
+        `props` values could be:
+            pairs (range match for floating dtype fields)
+            scalar or iterables (exact or "one of" match for other fields)
+
+        E.g.:
+            >>> _node_ids_by_filter(node_data, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
+            >>> _node_ids_by_filter(node_data, { Node.LAYER: [2, 3] })
+        """
+        # pylint: disable=assignment-from-no-return
+        queries = queries.copy()
+
+        unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY, POPULATION_NODES_KEY})
+        if unknown_props:
+            raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
+
+        queries, mask = self._population_queries(queries)
+        if not mask:
+            return []
+
+        for prop, values in six.iteritems(queries):
+            prop = self._data[prop]
+            if issubclass(prop.dtype.type, np.floating):
+                v1, v2 = values
+                prop_mask = np.logical_and(prop >= v1, prop <= v2)
+            elif isinstance(values, six.string_types) and values.startswith('regex:'):
+                prop_mask = _complex_query(prop, {'$regex': values[6:]})
+            elif isinstance(values, collections.Mapping):
+                prop_mask = _complex_query(prop, values)
+            else:
+                prop_mask = np.in1d(prop, values)
+            mask = np.logical_and(mask, prop_mask)
+
+        return self._data.index[mask].values
 
     def ids(self, group=None, limit=None, sample=None):
         """Node IDs corresponding to node ``group``.
@@ -282,14 +295,13 @@ class NodePopulation(object):
         """
         # pylint: disable=too-many-branches
         preserve_order = False
-        node_filter = slice(None, None, 1)
         if isinstance(group, six.string_types):
-            group, node_filter = self._resolve_node_set(group)
+            group = self._resolve_node_set(group)
 
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
-            result = _node_ids_by_filter(self._data.loc[node_filter], props=group)
+            result = self._node_ids_by_filter(queries=group)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)
@@ -305,7 +317,7 @@ class NodePopulation(object):
         if limit is not None:
             result = result[:limit]
 
-        result = np.array(result, dtype=int)
+        result = np.array(result, dtype=np.int64)
         if preserve_order:
             return result
         else:

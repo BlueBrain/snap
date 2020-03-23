@@ -12,6 +12,7 @@ def _sanitize(node_set):
     node_set = dict(node_set)
     for key, values in node_set.items():
         if key == POPULATION_NODES_KEY:
+            # combined [(pop, [1,2,3]) (pop, [7,8])] --> (pop, [1,2,3,7,8])
             d = collections.defaultdict(set)
             for popname, node_ids in values:
                 d[popname].update(node_ids)
@@ -42,7 +43,7 @@ class NodeSets:
             raise BluepySnapError("Unknown node_set: '{}'".format(set_name))
 
         if isinstance(set_value, collections.MutableMapping):
-            # need to combine when population + id is present (for compound)
+            # need to combine (population, id) when present at the same time (for compound)
             if POPULATION_KEY in set_value and NODE_ID_KEY in set_value:
                 set_value[POPULATION_NODES_KEY] = [(
                     set_value.pop(POPULATION_KEY), set_value.pop(NODE_ID_KEY))]
@@ -69,4 +70,4 @@ class NodeSets:
         return self.resolved[item]
 
     def __iter__(self):
-        return self.resolved.__iter__()
+        return iter(self.resolved)
