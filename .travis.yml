@@ -1,5 +1,4 @@
-sudo: false
-dist: xenial   # required for Python >= 3.7
+dist: bionic   # required for Python >= 3.7
 language: python
 python:
   - 2.7
