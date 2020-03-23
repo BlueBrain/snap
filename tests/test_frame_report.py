@@ -66,7 +66,7 @@ class TestFrameReport:
         for report in self.test_obj:
             isinstance(report, test_module.PopulationFrameReport)
 
-        assert list(self.test_obj_info) == ["default", "default2"]
+        assert sorted(list(self.test_obj_info)) == ["default", "default2"]
         for report in self.test_obj_info:
             isinstance(report, test_module.PopulationFrameReport)
 
@@ -80,7 +80,7 @@ class TestCompartmentReport:
         assert isinstance(self.test_obj["default"], test_module.PopulationCompartmentReport)
 
     def test_iter(self):
-        assert list(self.test_obj) == ["default", "default2"]
+        assert sorted(list(self.test_obj)) == ["default", "default2"]
         for report in self.test_obj:
             isinstance(report, test_module.PopulationCompartmentReport)
 
