@@ -64,8 +64,7 @@ setup(
         [console_scripts]
         bluepysnap=bluepysnap.cli:cli
     ''',
-    author="BlueBrain Project, EPFL",
-    author_email="bbp-ou-nse@groupes.epfl.ch",
+    author="Blue Brain Project, EPFL",
     description="Simulation and Neural network Analysis Productivity layer",
     long_description=README,
     long_description_content_type='text/markdown',
