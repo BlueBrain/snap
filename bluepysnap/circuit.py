@@ -49,6 +49,7 @@ class Circuit(object):
             Circuit: A Circuit object.
         """
         self._config = Config(config).resolve()
+        self.is_open = True
 
     @property
     def config(self):
@@ -58,15 +59,42 @@ class Circuit(object):
     @cached_property
     def nodes(self):
         """Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
-        return _collect_populations(
-            self._config['networks']['nodes'],
-            lambda cfg: NodeStorage(cfg, self)
-        )
+        if self.is_open:
+            return _collect_populations(
+                self._config['networks']['nodes'],
+                lambda cfg: NodeStorage(cfg, self)
+            )
+        raise BluepySnapError("I/O error. Cannot access the h5 files with closed context.")
 
     @cached_property
     def edges(self):
         """Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
-        return _collect_populations(
-            self._config['networks']['edges'],
-            lambda cfg: EdgeStorage(cfg, self)
-        )
+        if self.is_open:
+            return _collect_populations(
+                self._config['networks']['edges'],
+                lambda cfg: EdgeStorage(cfg, self)
+            )
+        raise BluepySnapError("I/O error. Cannot access the h5 files with closed context.")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close the context for all populations."""
+
+        def _close_context(pop):
+            """Close the h5 context for population."""
+            if "_population" in pop.__dict__:
+                del pop.__dict__["_population"]
+
+        if self.nodes:
+            for population in self.nodes.values():
+                _close_context(population)
+        if self.edges:
+            for population in self.edges.values():
+                _close_context(population)
+
+        del self.__dict__["nodes"]
+        del self.__dict__["edges"]
+        self.is_open = False
+
+    def __enter__(self):
+        """Enter the context manager for circuit."""
+        return self

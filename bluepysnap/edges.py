@@ -50,7 +50,7 @@ class EdgeStorage(object):
         self._circuit = circuit
         self._populations = {}
 
-    @cached_property
+    @property
     def storage(self):
         """Access to the libsonata edge storage."""
         return libsonata.EdgeStorage(self._h5_filepath)
@@ -111,9 +111,11 @@ class EdgePopulation(object):
 
     @cached_property
     def _population(self):
-        return self._edge_storage.storage.open_population(self.name)
+        if self._edge_storage.circuit.is_open:
+            return self._edge_storage.storage.open_population(self.name)
+        raise BluepySnapError("I/O error. Cannot access the h5 files with closed context.")
 
-    @property
+    @cached_property
     def size(self):
         """Population size."""
         return self._population.size
@@ -396,7 +398,6 @@ class EdgePopulation(object):
             secondary_node_ids = np.unique(secondary_node_ids)
 
         secondary_node_ids_used = set()
-
         for key_node_id in primary_node_ids:
             connected_node_ids = get_connected_node_ids(key_node_id, unique=False)
             connected_node_ids_with_count = np.stack(

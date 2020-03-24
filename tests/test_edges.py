@@ -4,6 +4,7 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
+import h5py
 
 import libsonata
 from mock import Mock
