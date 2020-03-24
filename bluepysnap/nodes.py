@@ -202,10 +202,9 @@ class NodePopulation(object):
 
     def _resolve_node_set(self, group):
         if group not in self._node_sets:
-            raise BluepySnapError("Undefined node set: %s" % group)
-        if self._node_sets[group] == {}:
-            return None
-        return self._node_sets[group]
+            raise BluepySnapError("Undefined node set: '%s'" % group)
+        res = self._node_sets[group]
+        return None if res == {} else res
 
     def _positional_mask(self, node_ids):
         """Positional mask inside the node_ids."""
@@ -216,10 +215,9 @@ class NodePopulation(object):
     def _population_queries(self, queries):
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
-            return queries, np.full(len(self._data), False)
+            return queries, None
 
         node_ids = queries.pop(NODE_ID_KEY, [])
-
         mask = self._positional_mask(node_ids) if node_ids else np.full(len(self._data), True)
         return queries, mask
 
@@ -231,8 +229,8 @@ class NodePopulation(object):
             scalar or iterables (exact or "one of" match for other fields)
 
         E.g.:
-            >>> _node_ids_by_filter(node_data, { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
-            >>> _node_ids_by_filter(node_data, { Node.LAYER: [2, 3] })
+            >>> _mask_by_filter({ Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
+            >>> _mask_by_filter({ Node.LAYER: [2, 3] })
         """
         # pylint: disable=assignment-from-no-return
         unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY})
@@ -240,6 +238,9 @@ class NodePopulation(object):
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
         queries, mask = self._population_queries(queries)
+        if mask is None:
+            # Avoid fail and/or processing time if wrong population
+            return np.full(len(self._data), False)
 
         for prop, values in six.iteritems(queries):
             prop = self._data[prop]
@@ -256,7 +257,6 @@ class NodePopulation(object):
         return mask
 
     def _operator_mask(self, queries):
-
         queries = queries.copy()
         first_key = list(queries)[0]
         if first_key == '$or':
@@ -266,19 +266,11 @@ class NodePopulation(object):
             queries = queries.pop("$and")
             operator = np.logical_and
         else:
-            queries = [queries]
-            operator = lambda x, y: y
+            return self._mask_by_filter(queries)
 
         mask = np.full(len(self._data), first_key != "$or")
         for query in queries:
-            q_first_key = list(query)[0]
-            if q_first_key == '$or':
-                sub_mask = self._operator_mask(query)
-            elif q_first_key == '$and':
-                sub_mask = self._operator_mask(query)
-            else:
-                sub_mask = self._mask_by_filter(query)
-            mask = operator(mask, sub_mask)
+            mask = operator(mask, self._operator_mask(query))
         return mask
 
     def _node_ids_by_filter(self, queries):
@@ -313,7 +305,7 @@ class NodePopulation(object):
         preserve_order = False
         if isinstance(group, six.string_types):
             group = self._resolve_node_set(group)
-        print(group)
+
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
