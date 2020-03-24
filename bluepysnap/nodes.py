@@ -30,7 +30,7 @@ from cached_property import cached_property
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, POPULATION_KEY, Node, ConstContainer
-from bluepysnap.node_sets import POPULATION_NODES_KEY
+
 
 class NodeStorage(object):
     """Node storage access."""
@@ -203,36 +203,28 @@ class NodePopulation(object):
     def _resolve_node_set(self, group):
         if group not in self._node_sets:
             raise BluepySnapError("Undefined node set: %s" % group)
-        if group == {}:
+        if self._node_sets[group] == {}:
             return None
-        return group
+        return self._node_sets[group]
 
     def _positional_mask(self, node_ids):
+        """Positional mask inside the node_ids."""
         mask = np.full(len(self._data), fill_value=False)
         mask[node_ids] = True
         return mask
 
     def _population_queries(self, queries):
-        population_nodes = queries.pop(POPULATION_NODES_KEY, [])
-        for pop, nodes in population_nodes:
-            if pop == self.name:
-                queries[POPULATION_KEY] = pop
-                queries[NODE_ID_KEY] = np.asarray(nodes)
-                break
-        else:
-            queries[POPULATION_KEY] = queries.get(POPULATION_KEY, None)
-
-        populations = queries.pop(POPULATION_KEY)
+        populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
-            return queries, []
+            return queries, np.full(len(self._data), False)
 
         node_ids = queries.pop(NODE_ID_KEY, [])
 
         mask = self._positional_mask(node_ids) if node_ids else np.full(len(self._data), True)
         return queries, mask
 
-    def _node_ids_by_filter(self, queries):
-        """Return index of `nodes` rows matching `props` dict.
+    def _mask_by_filter(self, queries):
+        """Return mask of `nodes` rows matching `props` dict.
 
         `props` values could be:
             pairs (range match for floating dtype fields)
@@ -243,15 +235,11 @@ class NodePopulation(object):
             >>> _node_ids_by_filter(node_data, { Node.LAYER: [2, 3] })
         """
         # pylint: disable=assignment-from-no-return
-        queries = queries.copy()
-
-        unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY, POPULATION_NODES_KEY})
+        unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY})
         if unknown_props:
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
         queries, mask = self._population_queries(queries)
-        if len(mask) == 0:
-            return []
 
         for prop, values in six.iteritems(queries):
             prop = self._data[prop]
@@ -265,8 +253,36 @@ class NodePopulation(object):
             else:
                 prop_mask = np.in1d(prop, values)
             mask = np.logical_and(mask, prop_mask)
+        return mask
 
-        return self._data.index[mask].values
+    def _operator_mask(self, queries):
+
+        queries = queries.copy()
+        first_key = list(queries)[0]
+        if first_key == '$or':
+            queries = queries.pop("$or")
+            operator = np.logical_or
+        elif first_key == '$and':
+            queries = queries.pop("$and")
+            operator = np.logical_and
+        else:
+            queries = [queries]
+            operator = lambda x, y: y
+
+        mask = np.full(len(self._data), first_key != "$or")
+        for query in queries:
+            q_first_key = list(query)[0]
+            if q_first_key == '$or':
+                sub_mask = self._operator_mask(query)
+            elif q_first_key == '$and':
+                sub_mask = self._operator_mask(query)
+            else:
+                sub_mask = self._mask_by_filter(query)
+            mask = operator(mask, sub_mask)
+        return mask
+
+    def _node_ids_by_filter(self, queries):
+        return self._data.index[self._operator_mask(queries)].values
 
     def ids(self, group=None, limit=None, sample=None):
         """Node IDs corresponding to node ``group``.
@@ -297,7 +313,7 @@ class NodePopulation(object):
         preserve_order = False
         if isinstance(group, six.string_types):
             group = self._resolve_node_set(group)
-
+        print(group)
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
