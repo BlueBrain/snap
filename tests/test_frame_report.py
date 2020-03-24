@@ -33,7 +33,9 @@ class TestFrameReport:
 
     def test_dt(self):
         assert self.test_obj.dt == 0.01
-        assert self.test_obj_info.dt == 0.02
+        with patch('bluepysnap.frame_report.L') as log_mock:
+            assert self.test_obj_info.dt == 0.02
+            assert log_mock.warning.call_count == 1
 
     def test_time_units(self):
         assert self.test_obj.time_units == "ms"

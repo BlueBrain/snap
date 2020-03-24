@@ -112,7 +112,7 @@ class PopulationSpikeReport(object):
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        if isinstance(group, (np.integer, int)):
+        if np.issubdtype(type(group), np.integer):
             return res.index.to_numpy()
         return res
 

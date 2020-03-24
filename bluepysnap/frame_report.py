@@ -16,12 +16,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
 from cached_property import cached_property
+import logging
 
 from pathlib2 import Path
 import pandas as pd
 from libsonata import ElementReportReader
 
 from bluepysnap.exceptions import BluepySnapError
+
+L = logging.getLogger(__name__)
+
 
 FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
@@ -144,7 +148,10 @@ class FrameReport(object):
     @property
     def dt(self):
         """Returns the frequency of reporting in milliseconds."""
-        return self.config.get("dt", self._simulation.dt)
+        dt = self.config.get("dt", self._simulation.dt)
+        if dt != self._simulation.dt:
+            L.warning("dt from the report differs from the global simulation dt.")
+        return dt
 
     @property
     def time_units(self):
