@@ -15,9 +15,9 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
-from cached_property import cached_property
 import logging
 
+from cached_property import cached_property
 from pathlib2 import Path
 import pandas as pd
 from libsonata import ElementReportReader
