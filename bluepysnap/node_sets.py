@@ -18,6 +18,7 @@
 """Access to node set data."""
 
 import collections
+from copy import deepcopy
 
 import numpy as np
 from bluepysnap.exceptions import BluepySnapError
@@ -63,7 +64,7 @@ class NodeSets:
             raise BluepySnapError("Ambiguous node_set: '{}'".format({set_name: set_value}))
 
         # keep the self.content intact
-        set_value = set_value.copy()
+        set_value = deepcopy(set_value)
 
         if isinstance(set_value, collections.Mapping):
             return _sanitize(set_value)
