@@ -19,6 +19,7 @@
 from cached_property import cached_property
 from pathlib2 import Path
 
+from bluepysnap.node_sets import NodeSets
 from bluepysnap.config import Config
 from bluepysnap.exceptions import BluepySnapError
 
@@ -129,8 +130,10 @@ class Simulation(object):
 
     @cached_property
     def node_sets(self):
-        """Return the node sets used for the simulation."""
-        return utils.load_json(self._config['node_sets_file'])
+        if "node_sets_file" in self._config:
+            return NodeSets(self._config["node_sets_file"])
+        else:
+            return {}
 
     @cached_property
     def spikes(self):

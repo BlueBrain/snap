@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from mock import patch, PropertyMock
+
 
 from bluepysnap.nodes import NodePopulation
 from bluepysnap.edges import EdgePopulation
@@ -47,4 +47,3 @@ def test_no_node_set():
     # replace the _config dict with random one that does not contain "node_sets_file" key
     circuit._config = {"key": "value"}
     assert circuit.node_sets == {}
-
