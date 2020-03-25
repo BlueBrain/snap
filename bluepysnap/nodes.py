@@ -199,22 +199,30 @@ class NodePopulation(object):
             raise BluepySnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
 
     def _check_property(self, prop):
+        """Check a property exists in the dataset."""
         if prop not in self.property_names:
             raise BluepySnapError("No such property: '%s'" % prop)
 
-    def _resolve_node_set(self, group):
-        if group not in self._node_sets:
-            raise BluepySnapError("Undefined node set: '%s'" % group)
-        res = self._node_sets[group]
+    def _resolve_node_set(self, node_set_name):
+        """Resolve the node set name to the corresponding node set."""
+        if node_set_name not in self._node_sets:
+            raise BluepySnapError("Undefined node set: '%s'" % node_set_name)
+        res = self._node_sets[node_set_name]
         return None if res == {} else res
 
     def _positional_mask(self, node_ids):
-        """Positional mask inside the node_ids."""
+        """Positional mask for the node_ids.
+
+        Examples:
+            if the data set contains 5 nodes:
+            _positional_mask([0,2]) --> [True, False, True, False, False]
+        """
         mask = np.full(len(self._data), fill_value=False)
         mask[node_ids] = True
         return mask
 
     def _population_queries(self, queries):
+        """Handle the population and node id queries."""
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
             return queries, None
@@ -226,16 +234,7 @@ class NodePopulation(object):
         return queries, mask
 
     def _mask_by_filter(self, queries):
-        """Return mask of `nodes` rows matching `props` dict.
-
-        `props` values could be:
-            pairs (range match for floating dtype fields)
-            scalar or iterables (exact or "one of" match for other fields)
-
-        E.g.:
-            >>> _mask_by_filter({ Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
-            >>> _mask_by_filter({ Node.LAYER: [2, 3] })
-        """
+        """Return positional mask of `nodes_ids` with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
         unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY})
         if unknown_props:
@@ -261,6 +260,7 @@ class NodePopulation(object):
         return mask
 
     def _operator_mask(self, queries):
+        """Handle the operator queries ('$or', '$and')."""
         queries = queries.copy()
         first_key = list(queries)[0]
         if first_key == '$or':
@@ -278,6 +278,22 @@ class NodePopulation(object):
         return mask
 
     def _node_ids_by_filter(self, queries):
+        """Return ids of `nodes` if their properties match the `queries` dict.
+
+        `props` values could be:
+            pairs (range match for floating dtype fields)
+            scalar or iterables (exact or "one of" match for other fields)
+
+        You can use the special operators '$or' and '$and' also to combine different queries
+        together.
+
+        E.g.:
+            >>> _node_ids_by_filter({ Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
+            >>> _node_ids_by_filter({ Node.LAYER: [2, 3] })
+            >>> _node_ids_by_filter({'$or': [{ Node.LAYER: [2, 3]},
+            >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+
+        """
         return self._data.index[self._operator_mask(queries)].values
 
     def ids(self, group=None, limit=None, sample=None):
