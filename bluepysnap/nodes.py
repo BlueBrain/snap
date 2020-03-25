@@ -19,6 +19,7 @@
 
 import collections
 import inspect
+from copy import deepcopy
 
 import libsonata
 import numpy as np
@@ -199,19 +200,19 @@ class NodePopulation(object):
             raise BluepySnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
 
     def _check_property(self, prop):
-        """Check a property exists in the dataset."""
+        """Check if a property exists inside the dataset."""
         if prop not in self.property_names:
             raise BluepySnapError("No such property: '%s'" % prop)
 
-    def _resolve_node_set(self, node_set_name):
-        """Resolve the node set name to the corresponding node set."""
+    def _get_node_set(self, node_set_name):
+        """Returns the node set named 'node_set_name'."""
         if node_set_name not in self._node_sets:
             raise BluepySnapError("Undefined node set: '%s'" % node_set_name)
         res = self._node_sets[node_set_name]
         return None if res == {} else res
 
     def _positional_mask(self, node_ids):
-        """Positional mask for the node_ids.
+        """Positional mask for the node IDs.
 
         Examples:
             if the data set contains 5 nodes:
@@ -221,8 +222,8 @@ class NodePopulation(object):
         mask[node_ids] = True
         return mask
 
-    def _population_queries(self, queries):
-        """Handle the population and node id queries."""
+    def _node_population_queries(self, queries):
+        """Handle the population and node ID queries."""
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
             return queries, None
@@ -234,13 +235,13 @@ class NodePopulation(object):
         return queries, mask
 
     def _mask_by_filter(self, queries):
-        """Return positional mask of `nodes_ids` with rows matching `props` dict."""
+        """Return mask of node IDs with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
         unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY})
         if unknown_props:
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
-        queries, mask = self._population_queries(queries)
+        queries, mask = self._node_population_queries(queries)
         if mask is None:
             # Avoid fail and/or processing time if wrong population
             return np.full(len(self._data), False)
@@ -260,8 +261,9 @@ class NodePopulation(object):
         return mask
 
     def _operator_mask(self, queries):
-        """Handle the operator queries ('$or', '$and')."""
-        queries = queries.copy()
+        """Handle the query operators '$or', '$and'."""
+        # will pop the population and or/and operators so need to copy
+        queries = deepcopy(queries)
         first_key = list(queries)[0]
         if first_key == '$or':
             queries = queries.pop("$or")
@@ -278,7 +280,7 @@ class NodePopulation(object):
         return mask
 
     def _node_ids_by_filter(self, queries):
-        """Return ids of `nodes` if their properties match the `queries` dict.
+        """Return node IDs if their properties match the `queries` dict.
 
         `props` values could be:
             pairs (range match for floating dtype fields)
@@ -324,7 +326,7 @@ class NodePopulation(object):
         # pylint: disable=too-many-branches
         preserve_order = False
         if isinstance(group, six.string_types):
-            group = self._resolve_node_set(group)
+            group = self._get_node_set(group)
 
         if group is None:
             result = self._data.index.values
