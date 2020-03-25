@@ -130,6 +130,7 @@ class Simulation(object):
 
     @cached_property
     def node_sets(self):
+        """Returns the NodeSets object bound to the simulation."""
         if "node_sets_file" in self._config:
             return NodeSets(self._config["node_sets_file"])
         else:

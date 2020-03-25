@@ -29,11 +29,13 @@ from cached_property import cached_property
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import DYNAMICS_PREFIX, NODE_ID_KEY, POPULATION_KEY, Node, ConstContainer
+from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
+                                         POPULATION_KEY, Node, ConstContainer)
 
 
 class NodeStorage(object):
     """Node storage access."""
+
     def __init__(self, config, circuit):
         """Initializes a NodeStorage object from a node config and a Circuit.
 
@@ -218,7 +220,9 @@ class NodePopulation(object):
             return queries, None
 
         node_ids = queries.pop(NODE_ID_KEY, None)
-        mask = self._positional_mask(node_ids) if node_ids is not None else np.full(len(self._data), True)
+        # need to keep none because node_id can be equal to [] which means no ids
+        mask = np.full(len(self._data), True) if node_ids is None else self._positional_mask(
+            node_ids)
         return queries, mask
 
     def _mask_by_filter(self, queries):
