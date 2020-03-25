@@ -54,7 +54,7 @@ class NodeStorage(object):
         self._circuit = circuit
         self._populations = {}
 
-    @cached_property
+    @property
     def storage(self):
         """Access to the libsonata node storage."""
         return libsonata.NodeStorage(self._h5_filepath)
