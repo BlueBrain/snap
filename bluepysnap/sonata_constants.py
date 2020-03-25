@@ -26,16 +26,19 @@ class ConstContainer(object):
 
     Notes:
         Allows the creation of hierarchical subclasses such as:
-        >>> class Container(ConstContainer):
-        >>>     VAR1 = "var1"
-        >>> class SubContainer(Container):
-        >>>     VAR2 = "var2"
-        >>> class SubSubContainer(SubContainer):
-        >>>     VAR3 = "var3"
-        >>> print(SubSubContainer.key_set()) # To know the accessible variable names
-        >>> {"VAR1", "VAR2", "VAR3"}
-        >>> for v in SubSubContainer.key_set(): # To get the variable (names, values)
-        >>>     print(v, getattr(SubSubContainer, v))
+
+        .. code-block:: pycon
+
+            >>> class Container(ConstContainer):
+            >>>     VAR1 = "var1"
+            >>> class SubContainer(Container):
+            >>>     VAR2 = "var2"
+            >>> class SubSubContainer(SubContainer):
+            >>>     VAR3 = "var3"
+            >>> print(SubSubContainer.key_set()) # To know the accessible variable names
+            {"VAR1", "VAR2", "VAR3"}
+            >>> for v in SubSubContainer.key_set(): # To get the variable (names, values)
+            >>>     print(v, getattr(SubSubContainer, v))
     """
 
     @classmethod
@@ -69,57 +72,57 @@ class ConstContainer(object):
 class Node(ConstContainer):
     """Node property names."""
 
-    X = "x"
-    Y = "y"
-    Z = "z"
+    X = "x"  #:
+    Y = "y"  #:
+    Z = "z"  #:
 
-    ORIENTATION_W = "orientation_w"
-    ORIENTATION_X = "orientation_x"
-    ORIENTATION_Y = "orientation_y"
-    ORIENTATION_Z = "orientation_z"
+    ORIENTATION_W = "orientation_w"  #:
+    ORIENTATION_X = "orientation_x"  #:
+    ORIENTATION_Y = "orientation_y"  #:
+    ORIENTATION_Z = "orientation_z"  #:
 
-    ROTATION_ANGLE_X = "rotation_angle_xaxis"
-    ROTATION_ANGLE_Y = "rotation_angle_yaxis"
-    ROTATION_ANGLE_Z = "rotation_angle_zaxis"
+    ROTATION_ANGLE_X = "rotation_angle_xaxis"  #:
+    ROTATION_ANGLE_Y = "rotation_angle_yaxis"  #:
+    ROTATION_ANGLE_Z = "rotation_angle_zaxis"  #:
 
-    MORPHOLOGY = "morphology"
+    MORPHOLOGY = "morphology"  #:
 
-    RECENTER = "recenter"
+    RECENTER = "recenter"  #:
 
-    MODEL_TYPE = "model_type"
-    MODEL_TEMPLATE = "model_template"
+    MODEL_TYPE = "model_type"  #:
+    MODEL_TEMPLATE = "model_template"  #:
 
 
 class Edge(ConstContainer):
     """Edge property names."""
 
-    SOURCE_NODE_ID = "@source_node"
-    TARGET_NODE_ID = "@target_node"
+    SOURCE_NODE_ID = "@source_node"  #:
+    TARGET_NODE_ID = "@target_node"  #:
 
-    AXONAL_DELAY = "delay"
-    SYN_WEIGHT = "syn_weight"
+    AXONAL_DELAY = "delay"  #:
+    SYN_WEIGHT = "syn_weight"  #:
 
-    POST_SECTION_ID = "afferent_section_id"
-    POST_SECTION_POS = "afferent_section_pos"
-    PRE_SECTION_ID = "efferent_section_id"
-    PRE_SECTION_POS = "efferent_section_pos"
+    POST_SECTION_ID = "afferent_section_id"  #:
+    POST_SECTION_POS = "afferent_section_pos"  #:
+    PRE_SECTION_ID = "efferent_section_id"  #:
+    PRE_SECTION_POS = "efferent_section_pos"  #:
 
     # postsynaptic touch position (in the center of the segment)
-    POST_X_CENTER = "afferent_center_x"
-    POST_Y_CENTER = "afferent_center_y"
-    POST_Z_CENTER = "afferent_center_z"
+    POST_X_CENTER = "afferent_center_x"  #:
+    POST_Y_CENTER = "afferent_center_y"  #:
+    POST_Z_CENTER = "afferent_center_z"  #:
 
     # postsynaptic touch position (on the segment surface)
-    POST_X_SURFACE = "afferent_surface_x"
-    POST_Y_SURFACE = "afferent_surface_y"
-    POST_Z_SURFACE = "afferent_surface_z"
+    POST_X_SURFACE = "afferent_surface_x"  #:
+    POST_Y_SURFACE = "afferent_surface_y"  #:
+    POST_Z_SURFACE = "afferent_surface_z"  #:
 
     # presynaptic touch position (in the center of the segment)
-    PRE_X_CENTER = "efferent_center_x"
-    PRE_Y_CENTER = "efferent_center_y"
-    PRE_Z_CENTER = "efferent_center_z"
+    PRE_X_CENTER = "efferent_center_x"  #:
+    PRE_Y_CENTER = "efferent_center_y"  #:
+    PRE_Z_CENTER = "efferent_center_z"  #:
 
     # presynaptic touch position (on the segment surface)
-    PRE_X_SURFACE = "efferent_surface_x"
-    PRE_Y_SURFACE = "efferent_surface_y"
-    PRE_Z_SURFACE = "efferent_surface_z"
+    PRE_X_SURFACE = "efferent_surface_x"  #:
+    PRE_Y_SURFACE = "efferent_surface_y"  #:
+    PRE_Z_SURFACE = "efferent_surface_z"  #:

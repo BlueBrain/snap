@@ -23,35 +23,35 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
 class Cell(Node):
     """Cell property names."""
 
-    ME_COMBO = "me_combo"
-    MTYPE = "mtype"
-    ETYPE = "etype"
-    LAYER = "layer"
-    REGION = "region"
-    SYNAPSE_CLASS = "synapse_class"
-    HOLDING_CURRENT = DYNAMICS_PREFIX + 'holding_current'
-    THRESHOLD_CURRENT = DYNAMICS_PREFIX + 'threshold_current'
+    ME_COMBO = "me_combo"  #:
+    MTYPE = "mtype"  #:
+    ETYPE = "etype"  #:
+    LAYER = "layer"  #:
+    REGION = "region"  #:
+    SYNAPSE_CLASS = "synapse_class"  #:
+    HOLDING_CURRENT = DYNAMICS_PREFIX + 'holding_current'  #:
+    THRESHOLD_CURRENT = DYNAMICS_PREFIX + 'threshold_current'  #:
 
 
 class Synapse(Edge):
     """Synapse property names."""
 
-    PRE_GID = Edge.SOURCE_NODE_ID
-    POST_GID = Edge.TARGET_NODE_ID
+    PRE_GID = Edge.SOURCE_NODE_ID  #:
+    POST_GID = Edge.TARGET_NODE_ID  #:
 
-    D_SYN = "depression_time"
-    DTC = "decay_time"
-    F_SYN = "facilitation_time"
-    G_SYNX = "conductance"
-    NRRP = "NRRP"
-    TYPE = "syn_type_id"
-    U_SYN = "u_syn"
-    SPINE_LENGTH = "spine_length"
+    D_SYN = "depression_time"  #:
+    DTC = "decay_time"  #:
+    F_SYN = "facilitation_time"  #:
+    G_SYNX = "conductance"  #:
+    NRRP = "NRRP"  #:
+    TYPE = "syn_type_id"  #:
+    U_SYN = "u_syn"  #:
+    SPINE_LENGTH = "spine_length"  #:
 
-    PRE_SEGMENT_ID = "efferent_segment_id"
-    PRE_SEGMENT_OFFSET = "efferent_segment_offset"
-    PRE_MORPH_ID = "efferent_morphology_id"
+    PRE_SEGMENT_ID = "efferent_segment_id"  #:
+    PRE_SEGMENT_OFFSET = "efferent_segment_offset"  #:
+    PRE_MORPH_ID = "efferent_morphology_id"  #:
 
-    POST_SEGMENT_ID = "afferent_segment_id"
-    POST_SEGMENT_OFFSET = "afferent_segment_offset"
-    POST_BRANCH_TYPE = "afferent_section_type"
+    POST_SEGMENT_ID = "afferent_segment_id"  #:
+    POST_SEGMENT_OFFSET = "afferent_segment_offset"  #:
+    POST_BRANCH_TYPE = "afferent_section_type"  #:

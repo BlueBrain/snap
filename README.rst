@@ -20,11 +20,19 @@ Blue Brain SNAP can be installed using ``pip``::
 Usage
 -----
 
-The main interface class exposed is ``Circuit``, which corresponds to the *static* structure of a neural network, that is:
+There are two main interface classes provided by Blue Brain SNAP:
 
-- node positions and properties
-- edge positions and properties
-- detailed morphologies
+|circuit| corresponds to the *static* structure of a neural network, that is:
+
+- node positions and properties,
+- edge positions and properties, and,
+- detailed morphologies.
+
+|simulation| corresponds to the *dynamic* data for a neural network simulation, including:
+
+- spike reports,
+- soma reports, and,
+- compartment reports.
 
 Most of Blue Brain SNAP methods return `pandas <https://pandas.pydata.org>`__ Series or DataFrames,
 indexed in a way to facilitate combining data from different sources (that is, by node or edge IDs).
@@ -37,7 +45,7 @@ Among other dependencies, Blue Brain SNAP relies on Blue Brain Project provided 
 Tools
 -----
 
-Blue Brain SNAP also provides a sonata circuit validator that aims at verifying sonata circuits.
+Blue Brain SNAP also provides a SONATA circuit validator for verifying circuits.
 
 The validation includes:
 
@@ -47,12 +55,16 @@ The validation includes:
 - the correctness of the edge to node population/ids bindings.
 - existence of the morphology files for the nodes.
 
-This functionality is provided by either the cli function::
+This functionality is provided by either the cli function:
+
+.. code-block:: shell
 
     bluepysnap validate my/circuit/path/circuit_config.json
 
 
-Or a python free function::
+Or a python free function:
+
+.. code-block:: python3
 
     from bluepysnap.circuit_validation import validate
     errors = validate("my/circuit/path/circuit_config.json")
@@ -81,3 +93,5 @@ Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.
 
 .. substitutions
 .. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
+.. |circuit| replace:: **Circuit**
+.. |simulation| replace:: **Simulation**

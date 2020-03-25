@@ -19,4 +19,5 @@
 
 from bluepysnap.circuit import Circuit
 from bluepysnap.config import Config
+from bluepysnap.simulation import Simulation
 from bluepysnap.exceptions import BluepySnapError

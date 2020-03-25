@@ -1,13 +1,11 @@
-bluepysnap
-==========
+Simulations
+===========
 
 .. currentmodule:: bluepysnap
 
 .. autosummary::
    :toctree: submodules
 
-   nodes
-   edges
-   circuit
-   config
-   bbp
+   simulation
+   frame_report
+   spike_report

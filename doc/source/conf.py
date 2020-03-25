@@ -58,5 +58,9 @@ autodoc_default_options = {
     "members": True,
 }
 
+autoclass_content = "both"
+
+autodoc_mock_imports = ["libsonata"]
+
 # autosummary settings
 autosummary_generate = True

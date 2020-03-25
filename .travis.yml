@@ -1,17 +1,18 @@
-sudo: false
-dist: xenial   # required for Python >= 3.7
+dist: xenial
 language: python
 python:
   - 2.7
   - 3.6
+  - 3.7
 
 before_install:
-  - pip install tox
-  - pip install codecov
+  # as of tox v3.10.0, the installed virtualenv is used, make sure it is up to date
+  - pip install -U pip setuptools virtualenv tox codecov
+  - pip debug --verbose
 
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then tox -e py36,lint; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then tox -e py27; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then tox -e py36,lint; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then tox -e py37; fi
 
 after_success:
