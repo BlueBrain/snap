@@ -1,9 +1,10 @@
+import json
+
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-
 import libsonata
 from mock import Mock
 
@@ -15,65 +16,6 @@ from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.nodes as test_module
 
 from utils import TEST_DATA_DIR
-
-
-def test_node_ids_by_filter():
-    nodes = pd.DataFrame({
-        Cell.X: [0.0, 0.5, 1.0],
-        Cell.MTYPE: pd.Categorical.from_codes([0, 1, 1], ['A', 'B', 'C']),
-        Cell.LAYER: [1, 2, 3],
-    })
-    npt.assert_equal(
-        [],
-        test_module._node_ids_by_filter(nodes, {Cell.MTYPE: 'err'})
-    )
-    npt.assert_equal(
-        [1],
-        test_module._node_ids_by_filter(nodes, {
-            Cell.X: (0, 0.7),
-            Cell.MTYPE: ['B', 'C'],
-            Cell.LAYER: (1, 2)
-        })
-    )
-    with pytest.raises(BluepySnapError):
-        test_module._node_ids_by_filter(nodes, {'err': 23})
-
-
-def test_node_ids_by_filter_complex_query():
-    nodes = pd.DataFrame({
-        Cell.MTYPE: ['L23_MC', 'L4_BP', 'L6_BP', 'L6_BPC'],
-    })
-    # only full match is accepted
-    npt.assert_equal(
-        [1, 2],
-        test_module._node_ids_by_filter(nodes, {
-            Cell.MTYPE: {'$regex': '.*BP'},
-        })
-    )
-    # ...not 'startswith'
-    npt.assert_equal(
-        [],
-        test_module._node_ids_by_filter(nodes, {
-            Cell.MTYPE: {'$regex': 'L6'},
-        })
-    )
-    # ...or 'endswith'
-    npt.assert_equal(
-        [],
-        test_module._node_ids_by_filter(nodes, {
-            Cell.MTYPE: {'$regex': 'BP'},
-        })
-    )
-    # tentative support for 'regex:' prefix
-    npt.assert_equal(
-        [1, 2],
-        test_module._node_ids_by_filter(nodes, {
-            Cell.MTYPE: 'regex:.*BP',
-        })
-    )
-    # '$regex' is the only query modifier supported for the moment
-    with pytest.raises(BluepySnapError):
-        test_module._node_ids_by_filter(nodes, {Cell.MTYPE: {'err': '.*BP'}})
 
 
 class TestNodeStorage:
@@ -150,11 +92,8 @@ class TestNodePopulation:
                     Cell.Z,
                 ]
         )
-        assert (
-                sorted(self.test_obj._node_sets) ==
-                ['Empty', 'EmptyDict', 'Empty_L6_Y', 'Failing', 'Layer2', 'Layer23', 'Node012',
-                 'Node0_L6_Y', 'Node122', 'Node12_L6_Y', 'Node2_L6_Y']
-        )
+        assert (sorted(self.test_obj._node_sets) ==
+                sorted(json.load(open(str(TEST_DATA_DIR / 'node_sets.json')))))
 
     def test_property_values(self):
         assert (
@@ -182,6 +121,28 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             self.test_obj.container_property_names(int)
 
+    def test__positional_mask(self):
+        npt.assert_array_equal(self.test_obj._positional_mask([1, 2]), [False, True, True])
+        npt.assert_array_equal(self.test_obj._positional_mask([0, 2]), [True, False, True])
+
+    def test__population_queries(self):
+        queries, mask = self.test_obj._population_queries({"population": "default", "other": "val"})
+        assert queries == {"other": "val"}
+        npt.assert_array_equal(mask, [True, True, True])
+
+        queries, mask = self.test_obj._population_queries({"population": "unknown", "other": "val"})
+        assert queries == {"other": "val"}
+        assert mask is None
+
+        queries, mask = self.test_obj._population_queries({"population": "default",
+                                                           "node_id": [2], "other": "val"})
+        assert queries == {"other": "val"}
+        npt.assert_array_equal(mask, [False, False, True])
+
+        queries, mask = self.test_obj._population_queries({"other": "val"})
+        assert queries == {"other": "val"}
+        npt.assert_array_equal(mask, [True, True, True])
+
     def test_ids(self):
         _call = self.test_obj.ids
         npt.assert_equal(_call(), [0, 1, 2])
@@ -191,27 +152,83 @@ class TestNodePopulation:
         npt.assert_equal(_call([0, 1]), [0, 1])
         npt.assert_equal(_call([1, 0, 1]), [1, 0, 1])  # order and duplicates preserved
         npt.assert_equal(_call(np.array([1, 0, 1])), np.array([1, 0, 1]))
+
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
+        npt.assert_equal(_call({Cell.X: (100, 203)}), [0, 1])
+        npt.assert_equal(_call({Cell.MTYPE: 'L6_Y', Cell.MORPHOLOGY: "morph-B"}), [1])
+        # same query with a $and operator
+        npt.assert_equal(_call({"$and": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
+        npt.assert_equal(_call({Cell.MORPHOLOGY: ['morph-A', 'morph-B']}), [0, 1])
+        # same query with a $or operator
+        npt.assert_equal(_call({"$or": [{Cell.MORPHOLOGY: 'morph-A'},
+                                        {Cell.MORPHOLOGY: 'morph-B'}]}), [0, 1])
+        npt.assert_equal(_call({"$or": [{Cell.MTYPE: 'L6_Y'},
+                                        {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
+
+
+        npt.assert_equal(_call('Layer2'), [0])
         npt.assert_equal(_call('Layer23'), [0])
-        npt.assert_equal(_call('Node012'), [0, 1, 2])  # order preserved
-        npt.assert_equal(_call('Node122'), [1, 2, 2])  # order and duplicates preserved
+        npt.assert_equal(_call('Empty_nodes'), [])
+        npt.assert_equal(_call('Node2012'), [0, 1, 2])  # reordered + duplicates are removed
         npt.assert_equal(_call('Node12_L6_Y'), [1, 2])
         npt.assert_equal(_call('Node2_L6_Y'), [2])
+
         npt.assert_equal(_call('Node0_L6_Y'), [])  # return empty if disjoint samples
-        npt.assert_equal(_call('Empty'), [])  # return empty if empty node_id = []
         npt.assert_equal(_call('Empty_L6_Y'), [])  # return empty if empty node_id = []
-        npt.assert_equal(_call('EmptyDict'), _call())  # return all ids
+        npt.assert_equal(_call('Population_default'), [0, 1, 2])  # return all ids
+        npt.assert_equal(_call('Population_default2'), [])  # return empty if diff population
+        npt.assert_equal(_call('Population_default_L6_Y'), [1, 2])  # population + other query ok
+        # population + other query + node_id ok
+        npt.assert_equal(_call('Population_default_L6_Y_Node2'), [2])
+        npt.assert_equal(_call('combined_Node0_L6_Y__Node12_L6_Y'), [1, 2])  # 'or' function
+        npt.assert_equal(_call('combined_combined_Node0_L6_Y__Node12_L6_Y__'),
+                         [0, 1, 2])  # imbricated '$or' functions
 
         with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
-        with pytest.raises(BluepySnapError):
-            _call('Failing')
         with pytest.raises(BluepySnapError):
             _call(-1)  # node ID out of range (lower boundary)
         with pytest.raises(BluepySnapError):
             _call(999)  # node ID out of range (upper boundary)
         with pytest.raises(BluepySnapError):
             _call([1, 999])  # one of node IDs out of range
+        with pytest.raises(BluepySnapError):
+            _call({'no-such-node-property': 42})
+
+    def test_node_ids_by_filter_complex_query(self):
+        test_obj = TestNodePopulation.create_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
+        data = pd.DataFrame({
+            Cell.MTYPE: ['L23_MC', 'L4_BP', 'L6_BP', 'L6_BPC'],
+        })
+        # replace the data using the __dict__ directly
+        test_obj.__dict__["_data"] = data
+
+        # only full match is accepted
+        npt.assert_equal(
+            [1, 2],
+            test_obj.ids({Cell.MTYPE: {'$regex': '.*BP'},})
+        )
+        # ...not 'startswith'
+        npt.assert_equal(
+            [],
+            test_obj.ids({
+                Cell.MTYPE: {'$regex': 'L6'},})
+        )
+        # ...or 'endswith'
+        npt.assert_equal(
+            [],
+            test_obj.ids({
+                Cell.MTYPE: {'$regex': 'BP'},})
+        )
+        # tentative support for 'regex:' prefix
+        npt.assert_equal(
+            [1, 2],
+            test_obj.ids({
+                Cell.MTYPE: 'regex:.*BP',})
+        )
+        # '$regex' is the only query modifier supported for the moment
+        with pytest.raises(BluepySnapError):
+            test_obj.ids({Cell.MTYPE: {'err': '.*BP'}})
 
     def test_get(self):
         _call = self.test_obj.get
@@ -240,18 +257,7 @@ class TestNodePopulation:
                 index=[1, 2]
             )
         )
-        pdt.assert_frame_equal(
-            _call("EmptyDict", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]),
-            pd.DataFrame(
-                [
-                    [101., 'L2_X', 2],
-                    [201., 'L6_Y', 6],
-                    [301., 'L6_Y', 6],
-                ],
-                columns=[Cell.X, Cell.MTYPE, Cell.LAYER],
-                index=[0, 1, 2]
-            )
-        )
+
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
         with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
@@ -407,10 +413,3 @@ class TestNodePopulation:
             }
         }
         assert isinstance(self.test_obj.morph, MorphHelper)
-
-    # def test_NodePopulation_without_node_sets(self):
-    #     nodes = TestNodePopulation.create_population(
-    #         str(TEST_DATA_DIR / 'nodes.h5'),
-    #         "default")
-    #
-    #     assert nodes.node_sets == {}

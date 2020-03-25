@@ -217,8 +217,8 @@ class NodePopulation(object):
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
             return queries, None
 
-        node_ids = queries.pop(NODE_ID_KEY, [])
-        mask = self._positional_mask(node_ids) if node_ids else np.full(len(self._data), True)
+        node_ids = queries.pop(NODE_ID_KEY, None)
+        mask = self._positional_mask(node_ids) if node_ids is not None else np.full(len(self._data), True)
         return queries, mask
 
     def _mask_by_filter(self, queries):

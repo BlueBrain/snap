@@ -12,34 +12,39 @@ class TestNodeSets:
         self.test_obj = test_module.NodeSets(str(TEST_DATA_DIR / 'node_sets_file.json'))
 
     def test_init(self):
-        assert self.test_obj.content == {'double_combined': ['combined', 'other'],
-                                         'Node2_L6_Y': {'mtype': 'L6_Y', 'node_id': [2]},
-                                         'Layer23': {'layer': [2, 3]},
-                                         'other': {'something': [2, 3], 'something_2': ['a', 'b'],
-                                                   'mtype': 'L2_X'},
-                                         'combined': ['Node2_L6_Y', 'Layer23'],
-                                         'alone': {'alone': True},
-                                         'empty_dict': {}
-                                         }
+        assert self.test_obj.content == {
+            "double_combined": ["combined", "population_default_L6"],
+            "Node2_L6_Y": {
+                "mtype": ["L6_Y"],
+                "node_id": [30, 20, 20]
+            },
+            "Layer23": {
+                "layer": [3, 2, 2]
+            },
+            "population_default_L6": {
+                "population": "default",
+                "mtype": "L6_Y"
+            },
+            "combined": ["Node2_L6_Y", "Layer23"],
+        }
 
-        assert self.test_obj.resolved == {'Node2_L6_Y': {'mtype': 'L6_Y', 'node_id': 2},
-                                          'Layer23': {'layer': [2, 3]},
-                                          'combined': {'mtype': 'L6_Y', 'node_id': 2,
-                                                       'layer': [2, 3]},
-                                          'other': {'something': [2, 3], 'something_2': ['a', 'b'],
-                                                    'mtype': 'L2_X'},
-                                          'double_combined': {'mtype': ['L2_X', 'L6_Y'],
-                                                              'node_id': 2, 'layer': [2, 3],
-                                                              'something': [2, 3],
-                                                              'something_2': ['a', 'b']},
-                                          'alone': {'alone': True}, 'empty_dict': {}}
+        # node_id from Node2_L6_Y should be 2 and not [2], layer from Layer23 should be [2, 3]
+        assert self.test_obj.resolved == {'Node2_L6_Y': {'mtype': 'L6_Y', 'node_id': [20, 30]},
+                                          'Layer23': {'layer': [2, 3]}, 'combined': {
+                '$or': [{'mtype': 'L6_Y', 'node_id': [20, 30]}, {'layer': [2, 3]}]},
+                                          'population_default_L6': {'population': 'default',
+                                                                    'mtype': 'L6_Y'},
+                                          'double_combined': {'$or': [{'$or': [
+                                              {'mtype': 'L6_Y', 'node_id': [20, 30]}, {'layer': [2, 3]}]},
+                                                                      {'population': 'default',
+                                                                       'mtype': 'L6_Y'}]}}
 
     def test_get(self):
-        assert self.test_obj['Node2_L6_Y'] == {'mtype': 'L6_Y', 'node_id': 2}
-        assert self.test_obj['double_combined'] == {'mtype': ['L2_X', 'L6_Y'],
-                                                    'node_id': 2, 'layer': [2, 3],
-                                                    'something': [2, 3],
-                                                    'something_2': ['a', 'b']}
+        assert self.test_obj['Node2_L6_Y'] == {'mtype': 'L6_Y', 'node_id': [20, 30]}
+        assert self.test_obj['double_combined'] == {'$or': [{'$or': [
+                                              {'mtype': 'L6_Y', 'node_id': [20, 30]}, {'layer': [2, 3]}]},
+                                                                      {'population': 'default',
+                                                                       'mtype': 'L6_Y'}]}
 
     def test_iter(self):
         expected = sorted(list(json.load(open(str(TEST_DATA_DIR / 'node_sets_file.json')))))
@@ -48,6 +53,10 @@ class TestNodeSets:
 
 @patch('bluepysnap.utils.load_json')
 def test_fail_resolve(mock_load):
+    mock_load.return_value = {"empty_list": {}}
+    with pytest.raises(BluepySnapError):
+        test_module.NodeSets(str(TEST_DATA_DIR / 'node_sets_file.json'))
+
     mock_load.return_value = {"empty_list": []}
     with pytest.raises(BluepySnapError):
         test_module.NodeSets(str(TEST_DATA_DIR / 'node_sets_file.json'))
@@ -63,9 +72,3 @@ def test_fail_resolve(mock_load):
     mock_load.return_value = {"combined": ["known", "unknown"], "known": {"v": 1}}
     with pytest.raises(BluepySnapError):
         test_module.NodeSets(str(TEST_DATA_DIR / 'node_sets_file.json'))
-
-
-def test_compound():
-    test_obj = test_module.NodeSets(str(TEST_DATA_DIR / 'node_sets_file_compound_population.json'))
-    print(test_obj.resolved)
-    assert False

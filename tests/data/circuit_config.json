@@ -9,6 +9,7 @@
     "mechanisms_dir": "$COMPONENT_DIR/mechanisms_dir",
     "biophysical_neuron_models_dir": "$COMPONENT_DIR/biophysical_neuron_models"
   },
+  "node_sets_file": "$BASE_DIR/node_sets.json",
   "networks": {
     "nodes": [
       {

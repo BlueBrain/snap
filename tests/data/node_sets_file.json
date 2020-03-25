@@ -1,18 +1,15 @@
 {
-  "double_combined": ["combined", "other"],
+  "double_combined": ["combined", "population_default_L6"],
   "Node2_L6_Y": {
-    "mtype": "L6_Y",
-    "node_id": [2]
+    "mtype": ["L6_Y"],
+    "node_id": [30, 20, 20]
   },
-    "Layer23": {
-    "layer": [2,3]
+  "Layer23": {
+    "layer": [3, 2, 2]
   },
-  "other": {
-    "something": [2,3],
-    "something_2": ["a","b"],
-    "mtype": "L2_X"
+  "population_default_L6": {
+    "population": "default",
+    "mtype": "L6_Y"
   },
-  "combined": ["Node2_L6_Y", "Layer23"],
-  "alone": {"alone": true},
-  "empty_dict": {}
+  "combined": ["Node2_L6_Y", "Layer23"]
 }

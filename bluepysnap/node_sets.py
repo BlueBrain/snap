@@ -23,15 +23,19 @@ class NodeSets:
 
     def _resolve_set(self, resolved, set_name):
         if set_name in resolved:
-            # allows to return already resolved node_sets
+            # return already resolved node_sets
             return resolved[set_name]
 
-        try:
-            set_value = self.content[set_name]
-        except KeyError:
-            raise BluepySnapError("Unknown node_set: '{}'".format(set_name))
+        set_value = self.content.get(set_name)
+        if set_value is None:
+            raise BluepySnapError("Missing node_set: '{}'".format(set_name))
+        elif not isinstance(set_value, (collections.Mapping, list)) or not set_value:
+            raise BluepySnapError("Ambiguous node_set: '{}'".format({set_name: set_value}))
+        else:
+            # keep the self.content intact
+            set_value = set_value.copy()
 
-        if isinstance(set_value, collections.MutableMapping):
+        if isinstance(set_value, collections.Mapping):
             return _sanitize(set_value)
 
         res = []
