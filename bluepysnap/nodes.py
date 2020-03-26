@@ -224,7 +224,7 @@ class NodePopulation(object):
         mask[node_ids] = True
         return mask
 
-    def _node_population_queries(self, queries):
+    def _node_population_mask(self, queries):
         """Handle the population and node ID queries."""
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
@@ -233,14 +233,14 @@ class NodePopulation(object):
             node_ids = queries.pop(NODE_ID_KEY, None)
         return queries, self._positional_mask(node_ids)
 
-    def _mask_by_filter(self, queries):
+    def _properties_mask(self, queries):
         """Return mask of node IDs with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
         unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY})
         if unknown_props:
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
-        queries, mask = self._node_population_queries(queries)
+        queries, mask = self._node_population_mask(queries)
         if not mask.any():
             # Avoid fail and/or processing time if wrong population or no nodes
             return mask
@@ -271,7 +271,7 @@ class NodePopulation(object):
             queries = queries.pop("$and")
             operator = np.logical_and
         else:
-            return self._mask_by_filter(queries)
+            return self._properties_mask(queries)
 
         mask = np.full(len(self._data), first_key != "$or")
         for query in queries:

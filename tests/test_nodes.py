@@ -125,23 +125,23 @@ class TestNodePopulation:
         npt.assert_array_equal(self.test_obj._positional_mask([1, 2]), [False, True, True])
         npt.assert_array_equal(self.test_obj._positional_mask([0, 2]), [True, False, True])
 
-    def test__node_population_queries(self):
-        queries, mask = self.test_obj._node_population_queries({"population": "default",
-                                                                "other": "val"})
+    def test__node_population_mask(self):
+        queries, mask = self.test_obj._node_population_mask({"population": "default",
+                                                             "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
-        queries, mask = self.test_obj._node_population_queries({"population": "unknown",
-                                                                "other": "val"})
+        queries, mask = self.test_obj._node_population_mask({"population": "unknown",
+                                                             "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, False])
 
-        queries, mask = self.test_obj._node_population_queries({"population": "default",
-                                                                "node_id": [2], "other": "val"})
+        queries, mask = self.test_obj._node_population_mask({"population": "default",
+                                                             "node_id": [2], "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, True])
 
-        queries, mask = self.test_obj._node_population_queries({"other": "val"})
+        queries, mask = self.test_obj._node_population_mask({"other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
