@@ -218,6 +218,8 @@ class NodePopulation(object):
             if the data set contains 5 nodes:
             _positional_mask([0,2]) --> [True, False, True, False, False]
         """
+        if node_ids is None:
+            return np.full(len(self._data), fill_value=True)
         mask = np.full(len(self._data), fill_value=False)
         mask[node_ids] = True
         return mask
@@ -226,13 +228,10 @@ class NodePopulation(object):
         """Handle the population and node ID queries."""
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
-            return queries, None
-
-        node_ids = queries.pop(NODE_ID_KEY, None)
-        # need to keep none because node_id can be equal to [] which means no ids
-        mask = np.full(len(self._data), True) if node_ids is None else self._positional_mask(
-            node_ids)
-        return queries, mask
+            node_ids = []
+        else:
+            node_ids = queries.pop(NODE_ID_KEY, None)
+        return queries, self._positional_mask(node_ids)
 
     def _mask_by_filter(self, queries):
         """Return mask of node IDs with rows matching `props` dict."""
@@ -242,9 +241,9 @@ class NodePopulation(object):
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
         queries, mask = self._node_population_queries(queries)
-        if mask is None:
-            # Avoid fail and/or processing time if wrong population
-            return np.full(len(self._data), False)
+        if not mask.any():
+            # Avoid fail and/or processing time if wrong population or no nodes
+            return mask
 
         for prop, values in six.iteritems(queries):
             prop = self._data[prop]
@@ -289,7 +288,7 @@ class NodePopulation(object):
         You can use the special operators '$or' and '$and' also to combine different queries
         together.
 
-        E.g.:
+        Examples:
             >>> _node_ids_by_filter({ Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' })
             >>> _node_ids_by_filter({ Node.LAYER: [2, 3] })
             >>> _node_ids_by_filter({'$or': [{ Node.LAYER: [2, 3]},
@@ -322,6 +321,23 @@ class NodePopulation(object):
 
         Returns:
             numpy.array: A numpy array of IDs.
+
+        Examples:
+            The available group parameter values:
+
+            >>> nodes.ids(group=None)  #  returns all IDs
+            >>> nodes.ids(group=1)  #  returns the single ID if present in population
+            >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
+            >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
+            >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
+            >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
+            >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+            >>> # returns list of IDs matching one of the queries inside the 'or' list
+            >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
+            >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+            >>> # returns list of IDs matching all the queries inside the 'and' list
+            >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
+            >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
         """
         # pylint: disable=too-many-branches
         preserve_order = False

@@ -36,6 +36,45 @@ def _sanitize(node_set):
     return node_set
 
 
+def _resolve_set(content, resolved, set_name):
+    """Resolve a node set from content.
+
+    Notes:
+        if the node set is a combined node set then the function resolve all the node sets
+        included in the combined one.
+    """
+    if set_name in resolved:
+        # return already resolved node_sets
+        return resolved[set_name]
+
+    set_value = content.get(set_name)
+    if set_value is None:
+        raise BluepySnapError("Missing node_set: '{}'".format(set_name))
+    if not isinstance(set_value, (collections.Mapping, list)) or not set_value:
+        raise BluepySnapError("Ambiguous node_set: '{}'".format({set_name: set_value}))
+
+    # keep the content intact
+    set_value = deepcopy(set_value)
+
+    if isinstance(set_value, collections.Mapping):
+        return _sanitize(set_value)
+
+    res = []
+    for sub_set_name in set_value:
+        sub_res_dict = _resolve_set(content, resolved, sub_set_name)
+        resolved[sub_set_name] = sub_res_dict
+        res.append(sub_res_dict)
+    return {"$or": res}
+
+
+def _resolve(content):
+    """Resolve all node sets in content."""
+    resolved = {}
+    for set_name in content:
+        resolved[set_name] = _resolve_set(content, resolved, set_name)
+    return resolved
+
+
 class NodeSets:
     """Access to node sets data."""
 
@@ -49,44 +88,12 @@ class NodeSets:
             NodeSets: A NodeSets object.
         """
         self.content = utils.load_json(filepath)
-        self.resolved = self._resolve()
-
-    def _resolve_set(self, resolved, set_name):
-        """Resolve a single node set."""
-        if set_name in resolved:
-            # return already resolved node_sets
-            return resolved[set_name]
-
-        set_value = self.content.get(set_name)
-        if set_value is None:
-            raise BluepySnapError("Missing node_set: '{}'".format(set_name))
-        if not isinstance(set_value, (collections.Mapping, list)) or not set_value:
-            raise BluepySnapError("Ambiguous node_set: '{}'".format({set_name: set_value}))
-
-        # keep the self.content intact
-        set_value = deepcopy(set_value)
-
-        if isinstance(set_value, collections.Mapping):
-            return _sanitize(set_value)
-
-        res = []
-        for sub_set_name in set_value:
-            sub_res_dict = self._resolve_set(resolved, sub_set_name)
-            resolved[sub_set_name] = sub_res_dict
-            res.append(sub_res_dict)
-        return {"$or": res}
-
-    def _resolve(self):
-        """Resolve all node sets."""
-        resolved = {}
-        for set_name in self.content:
-            resolved[set_name] = self._resolve_set(resolved, set_name)
-        return resolved
+        self.resolved = _resolve(self.content)
 
     def __getitem__(self, node_set_name):
-        """Get the resolved node set from name."""
+        """Get the resolved node set using name as key."""
         return self.resolved[node_set_name]
 
     def __iter__(self):
-        """Iter through the different node sets."""
+        """Iter through the different node sets names."""
         return iter(self.resolved)
