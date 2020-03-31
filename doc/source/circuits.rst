@@ -1,11 +1,13 @@
 Circuits
 ========
 
+.. currentmodule:: bluepysnap
+
 .. autosummary::
    :toctree: submodules
 
-   bluepysnap.circuit
-   bluepysnap.config
-   bluepysnap.edges
-   bluepysnap.nodes
-   bluepysnap.morph
+   circuit
+   config
+   edges
+   nodes
+   morph
