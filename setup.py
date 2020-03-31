@@ -52,6 +52,9 @@ setup(
         'click>=7.0',
         'pathlib2>=2.3',
     ],
+    extras_require={
+        'docs': ['sphinx', 'sphinx_rtd_theme'],
+    },
     packages=find_packages(),
     use_scm_version=True,
     setup_requires=[
