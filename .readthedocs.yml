@@ -5,11 +5,12 @@
 # Required
 version: 2
 
+sphinx:
+  fail_on_warning: true
+
 # Optionally set the version of Python and requirements required to build your docs
 python:
   install:
-    - method: pip
-      path: .
     - method: pip
       path: .
       extra_requirements:
