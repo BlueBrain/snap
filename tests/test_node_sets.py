@@ -53,7 +53,7 @@ class TestNodeSets:
 
 @patch('bluepysnap.utils.load_json')
 def test_fail_resolve(mock_load):
-    mock_load.return_value = {"empty_list": {}}
+    mock_load.return_value = {"empty_dict": {}}
     with pytest.raises(BluepySnapError):
         test_module.NodeSets(str(TEST_DATA_DIR / 'node_sets_file.json'))
 

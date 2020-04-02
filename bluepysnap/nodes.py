@@ -208,11 +208,13 @@ class NodePopulation(object):
         """Returns the node set named 'node_set_name'."""
         if node_set_name not in self._node_sets:
             raise BluepySnapError("Undefined node set: '%s'" % node_set_name)
-        res = self._node_sets[node_set_name]
-        return None if res == {} else res
+        return self._node_sets[node_set_name]
 
     def _positional_mask(self, node_ids):
         """Positional mask for the node IDs.
+
+        Args:
+            node_ids (None/numpy.ndarray): the ids array. If None all ids are selected.
 
         Examples:
             if the data set contains 5 nodes:
@@ -236,7 +238,7 @@ class NodePopulation(object):
     def _properties_mask(self, queries):
         """Return mask of node IDs with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
-        unknown_props = set(queries) - set(set(self._data.columns) | {POPULATION_KEY, NODE_ID_KEY})
+        unknown_props = set(queries) - set(self._data.columns) - {POPULATION_KEY, NODE_ID_KEY}
         if unknown_props:
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
