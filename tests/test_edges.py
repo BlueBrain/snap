@@ -71,6 +71,26 @@ class TestEdgeStorage:
         assert pop is pop2
 
 
+class TestStandaloneEdgeStorage(TestEdgeStorage):
+    def setup(self):
+        self.test_obj = test_module.StandaloneEdgeStorage(str(TEST_DATA_DIR / 'edges.h5'))
+
+    def test_raise_init(self):
+        with pytest.raises(BluepySnapError):
+            test_module.StandaloneEdgeStorage({1:1})
+
+    def test_circuit(self):
+        with pytest.raises(BluepySnapError):
+            self.test_obj.circuit
+
+    def test_population(self):
+        pop = self.test_obj.population("default")
+        assert isinstance(pop, test_module.StandaloneEdgePopulation)
+        assert pop.name == "default"
+        pop2 = self.test_obj.population("default")
+        assert pop is pop2
+
+
 class TestEdgePopulation(object):
 
     @staticmethod
@@ -420,3 +440,61 @@ class TestEdgePopulation(object):
             self.test_obj.iter_connections(
                 [0, 2], [1], return_edge_ids=True, return_edge_count=True
             )
+
+
+class TestStandaloneEdgePopulation(TestEdgePopulation):
+
+    @staticmethod
+    def create_population(filepath, pop_name):
+        return test_module.StandaloneEdgePopulation(filepath, pop_name)
+
+    def setup(self):
+        self.test_obj = TestStandaloneEdgePopulation.create_population(
+            str(TEST_DATA_DIR / 'edges.h5'), "default")
+
+    def test_raise_init(self):
+        with pytest.raises(BluepySnapError):
+            self.create_population(1, "")
+
+    def test_basic(self):
+        assert self.test_obj._edge_storage._h5_filepath == str(TEST_DATA_DIR / 'edges.h5')
+        assert self.test_obj.name == 'default'
+        assert self.test_obj.source == 'default'
+        assert self.test_obj.target == 'default'
+        assert self.test_obj.size, 4
+        assert (
+                sorted(self.test_obj.property_names) ==
+                sorted([
+                    Synapse.AXONAL_DELAY,
+                    Synapse.G_SYNX,
+                    Synapse.POST_X_CENTER,
+                    Synapse.POST_Y_CENTER,
+                    Synapse.POST_Z_CENTER,
+                    Synapse.POST_X_SURFACE,
+                    Synapse.POST_Y_SURFACE,
+                    Synapse.POST_Z_SURFACE,
+                    Synapse.PRE_X_CENTER,
+                    Synapse.PRE_Y_CENTER,
+                    Synapse.PRE_Z_CENTER,
+                    Synapse.PRE_X_SURFACE,
+                    Synapse.PRE_Y_SURFACE,
+                    Synapse.PRE_Z_SURFACE,
+                    Synapse.POST_SECTION_ID,
+                    Synapse.POST_SECTION_POS,
+                    Synapse.PRE_SECTION_ID,
+                    Synapse.PRE_SECTION_POS,
+                    Synapse.SYN_WEIGHT,
+                    test_module.DYNAMICS_PREFIX + 'param1'
+                ])
+        )
+
+    def test_nodes_1(self):
+        assert self.test_obj._nodes('default') == 'default'
+
+    def test_nodes_2(self):
+        assert self.test_obj.source == 'default'
+        assert self.test_obj.target == 'default'
+
+    def test__resolve_node_ids(self):
+        with pytest.raises(BluepySnapError):
+            self.test_obj._resolve_node_ids("", {Synapse.PRE_Z_CENTER: (1,2)})

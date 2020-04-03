@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
+import pathlib2
 
 import bluepysnap.utils as test_module
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
@@ -31,6 +32,15 @@ def test_ensure_list():
 
 def test_add_dynamic_prefix():
     assert test_module.add_dynamic_prefix(["a", "b"]) == [DYNAMICS_PREFIX+"a", DYNAMICS_PREFIX+"b"]
+
+
+def test_is_path_like():
+    assert test_module.is_path_like(pathlib2.Path("."))
+    assert test_module.is_path_like(".")
+
+    assert not test_module.is_path_like(1)
+    assert not test_module.is_path_like((1, 2))
+    assert not test_module.is_path_like({1:1})
 
 
 def test_euler2mat():

@@ -22,6 +22,7 @@ import json
 
 import numpy as np
 import six
+from pathlib2 import Path
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
@@ -49,6 +50,18 @@ def ensure_list(v):
 def add_dynamic_prefix(properties):
     """Add the dynamic prefix to a list of properties."""
     return [DYNAMICS_PREFIX + name for name in list(properties)]
+
+
+def is_path_like(path):
+    """Returns True if type(path) could be a type used for a path.
+
+    This function does not check the validity of the path itself just the correct type.
+    """
+    try:
+        Path(path)
+        return True
+    except TypeError:
+        return False
 
 
 def euler2mat(az, ay, ax):
@@ -95,6 +108,7 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     See Also:
         https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     """
+
     def normalize_quaternions(qs):
         """Normalize a bunch of quaternions along axis==1.
 
