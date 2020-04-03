@@ -243,6 +243,7 @@ class PopulationSomaReport(PopulationCompartmentReport):
         return columns.levels[0]
 
     # plotting functions for the PopulationSomasReport
+    # pylint: disable=protected-access
     trace = bluepysnap._plotting.soma_trace
 
 
@@ -253,3 +254,6 @@ class SomaReport(FrameReport):
     def _population_report(self):
         """Collect the different PopulationSomasReport."""
         return _collect_population_reports(self, PopulationSomaReport)
+
+    # pylint: disable=protected-access
+    trace = bluepysnap._plotting.soma_trace

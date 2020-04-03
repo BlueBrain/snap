@@ -204,6 +204,15 @@ class NodePopulation(object):
             return set(res.cat.categories)
         return set(res.unique())
 
+    @cached_property
+    def property_dtypes(self):
+        """Returns the dtypes of all the properties.
+
+        Returns:
+            pandas.Series: series indexed by field name with the corresponding dtype as value.
+        """
+        return self._data.dtypes.sort_index()
+
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:

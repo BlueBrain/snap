@@ -120,8 +120,9 @@ class PopulationSpikeReport(object):
         return res
 
     # plotting functions for the PopulationSpikeReport
+    # pylint: disable=protected-access
     firing_rate_histogram = bluepysnap._plotting.spikes_firing_rate_histogram
-    raster = bluepysnap._plotting.spikes_raster
+    raster = bluepysnap._plotting.spike_raster
     isi = bluepysnap._plotting.spikes_isi
     firing_animation = bluepysnap._plotting.spikes_firing_animation
 
@@ -200,3 +201,9 @@ class SpikeReport(object):
     def __iter__(self):
         """Allows iteration over the different PopulationSpikeReports."""
         return iter(self._population)
+
+    # pylint: disable=protected-access
+    raster = bluepysnap._plotting.spike_raster
+    firing_rate_histogram = bluepysnap._plotting.spikes_firing_rate_histogram
+    isi = bluepysnap._plotting.spikes_isi
+    firing_animation = bluepysnap._plotting.spikes_firing_animation

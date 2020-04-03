@@ -19,7 +19,7 @@
 
 import collections
 import json
-import types
+import itertools
 
 import numpy as np
 import six
@@ -45,6 +45,25 @@ def ensure_list(v):
         return list(v)
     else:
         return [v]
+
+
+def roundrobin(*iterables):
+    """Roundrobin function.
+
+    roundrobin('ABC', 'D', 'EF') --> A D E B F C.
+
+    From: https://docs.python.org/3.6/library/itertools.html
+    """
+    num_active = len(iterables)
+    nexts = itertools.cycle(iter(it).__next__ for it in iterables)
+    while num_active:
+        try:
+            for next in nexts:
+                yield next()
+        except StopIteration:
+            # Remove the iterator we just exhausted from the cycle.
+            num_active -= 1
+            nexts = itertools.cycle(itertools.islice(nexts, num_active))
 
 
 def fix_libsonata_empty_list():
