@@ -12,7 +12,6 @@ from pkg_resources import get_distribution
 
 project = 'Blue Brain SNAP'
 author = 'Blue Brain Project, EPFL'
-copyright = "Blue Brain Project/EPFL 2005-2020. All rights reserved"
 
 release = get_distribution('bluepysnap').version
 version = release
