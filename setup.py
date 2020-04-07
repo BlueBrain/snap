@@ -53,7 +53,7 @@ setup(
         'pathlib2>=2.3',
     ],
     extras_require={
-        'docs': ['sphinx', 'sphinx-bluebrain-theme'],
+        'docs': ['sphinx<3.0.0', 'sphinx-bluebrain-theme'],
     },
     packages=find_packages(),
     use_scm_version=True,
