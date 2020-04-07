@@ -409,7 +409,7 @@ def _get_frame_report(frame_report):
 
 def soma_trace(frame_report, group=None, t_start=None, t_stop=None, plot_type='mean',
                ax=None):  # pragma: no cover
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-locals
     """Return PopulationSomaReport potential plot displaying the voltage as a function of time.
 
     Args:
@@ -462,4 +462,4 @@ def soma_trace(frame_report, group=None, t_start=None, t_stop=None, plot_type='m
         kept_ids = list(roundrobin(*population_ids))[:max_per_pop]
         for _, row in data.loc[kept_ids].iterrows():
             ax.plot(row)
-        return ax
+    return ax

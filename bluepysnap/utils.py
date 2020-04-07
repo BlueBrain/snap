@@ -55,11 +55,18 @@ def roundrobin(*iterables):
     From: https://docs.python.org/3.6/library/itertools.html
     """
     num_active = len(iterables)
-    nexts = itertools.cycle(iter(it).__next__ for it in iterables)
+
+    # cannot use six.next. Need the function and not the call and cannot use ternary operator
+    if six.PY3:
+        next_wrapper = lambda x: x.__next__
+    else:  # pragma: no cover
+        next_wrapper = lambda x: x.next
+
+    nexts = itertools.cycle(next_wrapper(iter(it)) for it in iterables)
     while num_active:
         try:
-            for next in nexts:
-                yield next()
+            for next_ in nexts:
+                yield next_.__call__()
         except StopIteration:
             # Remove the iterator we just exhausted from the cycle.
             num_active -= 1
