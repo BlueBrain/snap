@@ -57,7 +57,7 @@ def roundrobin(*iterables):
     num_active = len(iterables)
 
     # cannot use six.next. Need the function and not the call and cannot use ternary operator
-    if six.PY3:
+    if six.PY3:  # pragma: no cover
         next_wrapper = lambda x: x.__next__
     else:  # pragma: no cover
         next_wrapper = lambda x: x.next

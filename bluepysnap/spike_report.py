@@ -27,6 +27,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import fix_libsonata_empty_list
 import bluepysnap._plotting
 
+
 def _get_reader(spike_report):
     from libsonata import SpikeReader
     path = str(Path(spike_report.config["output_dir"]) / spike_report.config["spikes_file"])
