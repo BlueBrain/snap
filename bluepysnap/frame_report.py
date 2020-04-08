@@ -23,6 +23,7 @@ import pandas as pd
 from libsonata import ElementReportReader
 
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.utils import fix_libsonata_empty_list
 
 L = logging.getLogger(__name__)
 
@@ -211,6 +212,8 @@ class PopulationCompartmentReport(PopulationFrameReport):
 
     def _resolve(self, group):
         """Transform a group into a node_id array."""
+        if group == []:
+            return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 
 

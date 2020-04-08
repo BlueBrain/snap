@@ -46,6 +46,14 @@ def ensure_list(v):
         return [v]
 
 
+def fix_libsonata_empty_list():
+    """Temporary solution to return empty list from libsonata report readers `.get` functions.
+
+    see: https://github.com/BlueBrain/libsonata/issues/84
+    """
+    return np.array([-2])
+
+
 def add_dynamic_prefix(properties):
     """Add the dynamic prefix to a list of properties."""
     return [DYNAMICS_PREFIX + name for name in list(properties)]
