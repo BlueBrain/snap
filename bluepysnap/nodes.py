@@ -249,7 +249,7 @@ class NodePopulation(object):
 
         for prop, values in six.iteritems(queries):
             prop = self._data[prop]
-            if issubclass(prop.dtype.type, np.floating):
+            if np.issubdtype(prop.dtype.type, np.floating):
                 v1, v2 = values
                 prop_mask = np.logical_and(prop >= v1, prop <= v2)
             elif isinstance(values, six.string_types) and values.startswith('regex:'):
