@@ -167,6 +167,12 @@ class TestNodePopulation:
         npt.assert_equal(_call({"$or": [{Cell.MTYPE: 'L6_Y'},
                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
 
+        # non destructive operation for queries
+        query = {"$and": [{"$or": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]},
+                          {"node_id": [1]}]}
+        npt.assert_equal(_call(query), [1])
+        npt.assert_equal(_call(query), [1])
+
         npt.assert_equal(_call('Layer2'), [0])
         npt.assert_equal(_call('Layer23'), [0])
         npt.assert_equal(_call('Empty_nodes'), [])

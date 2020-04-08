@@ -341,7 +341,6 @@ class NodePopulation(object):
             >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
             >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
         """
-        # pylint: disable=too-many-branches
         preserve_order = False
         if isinstance(group, six.string_types):
             group = self._get_node_set(group)

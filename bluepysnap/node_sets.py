@@ -84,10 +84,7 @@ def _resolve_set(content, resolved, node_set_name):
         return resolved[node_set_name]
 
     # compounds only
-    res = []
-    for sub_set_name in set_value:
-        sub_res_dict = _resolve_set(content, resolved, sub_set_name)
-        res.append(sub_res_dict)
+    res = [_resolve_set(content, resolved, sub_set_name) for sub_set_name in set_value]
 
     resolved[node_set_name] = {"$or": res}
     return resolved[node_set_name]
@@ -108,7 +105,7 @@ class NodeSets:
         """Initializes a node set object from a node sets file.
 
         Args:
-            filepath (str): Path to a SONATA node sets file.
+            filepath (str/Path): Path to a SONATA node sets file.
 
         Returns:
             NodeSets: A NodeSets object.
