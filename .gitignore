@@ -9,3 +9,4 @@ doc/source/submodules
 dist/
 venv/
 .ipynb_checkpoints/
+.idea/

@@ -5,14 +5,11 @@
   "Layer23": {
     "layer": [2,3]
   },
-  "Empty": {
+  "Empty_nodes": {
     "node_id": []
   },
-  "Node012": {
-    "node_id": [0,1,2]
-  },
-  "Node122": {
-    "node_id": [1,2,2]
+  "Node2012": {
+    "node_id": [2,0,1,2]
   },
   "Node12_L6_Y": {
     "mtype": "L6_Y",
@@ -30,6 +27,22 @@
     "node_id": [],
     "mtype": "L6_Y"
   },
-  "Failing": [],
-  "EmptyDict": {}
+  "Population_default": {
+    "population": "default"
+  },
+   "Population_default2": {
+    "population": "default2"
+  },
+  "Population_default_L6_Y": {
+    "population": "default",
+    "mtype": "L6_Y"
+  },
+  "Population_default_L6_Y_Node2": {
+    "population": "default",
+    "mtype": "L6_Y",
+    "node_id": [2]
+  },
+
+  "combined_Node0_L6_Y__Node12_L6_Y": ["Node0_L6_Y", "Node12_L6_Y"],
+  "combined_combined_Node0_L6_Y__Node12_L6_Y__": ["combined_Node0_L6_Y__Node12_L6_Y", "Layer23"]
 }

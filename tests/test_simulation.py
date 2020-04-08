@@ -26,7 +26,7 @@ def test_all():
     assert simulation.simulator == "my_simulator"
     assert simulation.conditions == {"celsius": 34.0, "v_init": -80, "other": "something"}
 
-    assert simulation.node_sets == {"Layer23": {"layer": [2, 3]}}
+    assert simulation.node_sets.resolved == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
@@ -71,3 +71,12 @@ def test_no_network_config():
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'simulation_config_no_network.json'))
     with pytest.raises(BluepySnapError):
         simulation.circuit
+
+
+def test_no_node_set():
+    simulation = test_module.Simulation(
+        str(TEST_DATA_DIR / 'simulation_config.json')
+    )
+    # replace the _config dict with random one that does not contain "node_sets_file" key
+    simulation._config = {"key": "value"}
+    assert simulation.node_sets == {}
