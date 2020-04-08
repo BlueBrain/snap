@@ -24,6 +24,7 @@ import pandas as pd
 import numpy as np
 
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.utils import fix_libsonata_empty_list
 
 
 def _get_reader(spike_report):
@@ -85,9 +86,7 @@ class PopulationSpikeReport(object):
     def _resolve_nodes(self, group):
         """Transform a node group into a node_id array."""
         if group == []:
-            # Only solution to return an empty list from self._spike_population.get
-            # see: https://github.com/BlueBrain/libsonata/issues/84
-            return np.array([-2])
+            return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 
     def get(self, group=None, t_start=None, t_stop=None):

@@ -29,6 +29,10 @@ def test_ensure_list():
     assert test_module.ensure_list('abc') == ['abc']
 
 
+def test_fix_libsonata_empty_list():
+    npt.assert_array_equal(test_module.fix_libsonata_empty_list(), np.array([-2]))
+
+
 def test_add_dynamic_prefix():
     assert test_module.add_dynamic_prefix(["a", "b"]) == [DYNAMICS_PREFIX+"a", DYNAMICS_PREFIX+"b"]
 
