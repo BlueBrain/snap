@@ -105,7 +105,7 @@ class TestPopulationSpikeReport:
     def test_get(self):
         pdt.assert_series_equal(self.test_obj.get(),
                                 _create_series([2, 0, 1, 2, 0], [0.1, 0.2, 0.3, 0.7, 1.3]))
-
+        pdt.assert_series_equal(self.test_obj.get([]), _create_series([], []))
         npt.assert_allclose(self.test_obj.get(2), np.array([0.1, 0.7]))
         npt.assert_allclose(self.test_obj.get(0, t_start=1.), [1.3])
         npt.assert_allclose(self.test_obj.get(0, t_stop=1.), [0.2])
