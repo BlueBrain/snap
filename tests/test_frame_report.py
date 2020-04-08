@@ -143,6 +143,8 @@ class TestPopulationCompartmentReport:
         pdt.assert_frame_equal(self.test_obj.get(), self.df)
 
         pdt.assert_frame_equal(self.test_obj.get([]),  pd.DataFrame())
+        pdt.assert_frame_equal(self.test_obj.get(np.array([])),  pd.DataFrame())
+        pdt.assert_frame_equal(self.test_obj.get(()),  pd.DataFrame())
 
         pdt.assert_frame_equal(self.test_obj.get(2), self.df.loc[:, [2]])
 
