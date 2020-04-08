@@ -47,8 +47,8 @@ class TestNodeSets:
                                                                        'mtype': 'L6_Y'}]}
 
     def test_iter(self):
-        expected = sorted(list(json.load(open(str(TEST_DATA_DIR / 'node_sets_file.json')))))
-        assert sorted(list(self.test_obj)) == expected
+        expected = set(json.load(open(str(TEST_DATA_DIR / 'node_sets_file.json'))))
+        assert set(self.test_obj) == expected
 
 
 @patch('bluepysnap.utils.load_json')
