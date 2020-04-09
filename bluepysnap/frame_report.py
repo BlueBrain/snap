@@ -19,6 +19,7 @@ import logging
 
 from cached_property import cached_property
 from pathlib2 import Path
+import numpy as np
 import pandas as pd
 from libsonata import ElementReportReader
 
@@ -212,7 +213,7 @@ class PopulationCompartmentReport(PopulationFrameReport):
 
     def _resolve(self, group):
         """Transform a group into a node_id array."""
-        if group == []:
+        if isinstance(group, (np.ndarray, list, tuple)) and len(group) == 0:
             return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 

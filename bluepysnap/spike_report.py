@@ -85,7 +85,7 @@ class PopulationSpikeReport(object):
 
     def _resolve_nodes(self, group):
         """Transform a node group into a node_id array."""
-        if group == []:
+        if isinstance(group, (np.ndarray, list, tuple)) and len(group) == 0:
             return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 
