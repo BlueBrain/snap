@@ -148,6 +148,8 @@ class TestNodePopulation:
     def test_ids(self):
         _call = self.test_obj.ids
         npt.assert_equal(_call(), [0, 1, 2])
+        npt.assert_equal(_call(group={}), [0, 1, 2])
+        npt.assert_equal(_call(group=[]), [])
         npt.assert_equal(_call(limit=1), [0])
         npt.assert_equal(len(_call(sample=2)), 2)
         npt.assert_equal(_call(0), [0])

@@ -297,6 +297,8 @@ class NodePopulation(object):
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 
         """
+        if len(queries) == 0:
+            return self._data.index.values
         return self._data.index[self._operator_mask(queries)].values
 
     def ids(self, group=None, limit=None, sample=None):
@@ -328,6 +330,7 @@ class NodePopulation(object):
             The available group parameter values:
 
             >>> nodes.ids(group=None)  #  returns all IDs
+            >>> nodes.ids(group={})  #  returns all IDs
             >>> nodes.ids(group=1)  #  returns the single ID if present in population
             >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
             >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
