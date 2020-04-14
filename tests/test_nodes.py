@@ -148,6 +148,8 @@ class TestNodePopulation:
     def test_ids(self):
         _call = self.test_obj.ids
         npt.assert_equal(_call(), [0, 1, 2])
+        npt.assert_equal(_call(group={}), [0, 1, 2])
+        npt.assert_equal(_call(group=[]), [])
         npt.assert_equal(_call(limit=1), [0])
         npt.assert_equal(len(_call(sample=2)), 2)
         npt.assert_equal(_call(0), [0])
@@ -161,12 +163,15 @@ class TestNodePopulation:
         # same query with a $and operator
         npt.assert_equal(_call({"$and": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         npt.assert_equal(_call({Cell.MORPHOLOGY: ['morph-A', 'morph-B']}), [0, 1])
+        npt.assert_equal(_call({"$and": [{}, {}]}), [0, 1, 2])
+        npt.assert_equal(_call({"$and": [{}, {Cell.MORPHOLOGY: 'morph-B'}]}), [1])
         # same query with a $or operator
         npt.assert_equal(_call({"$or": [{Cell.MORPHOLOGY: 'morph-A'},
                                         {Cell.MORPHOLOGY: 'morph-B'}]}), [0, 1])
         npt.assert_equal(_call({"$or": [{Cell.MTYPE: 'L6_Y'},
                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
-
+        npt.assert_equal(_call({"$or": [{}, {}]}), [0, 1, 2])
+        npt.assert_equal(_call({"$or": [{}, {Cell.MORPHOLOGY: 'morph-B'}]}), [0, 1, 2])
         # non destructive operation for queries
         query = {"$and": [{"$or": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]},
                           {"node_id": [1]}]}

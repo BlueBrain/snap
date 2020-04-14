@@ -263,6 +263,9 @@ class NodePopulation(object):
 
     def _operator_mask(self, queries):
         """Handle the query operators '$or', '$and'."""
+        if len(queries) == 0:
+            return np.full(len(self._data), True)
+
         # will pop the population and or/and operators so need to copy
         queries = deepcopy(queries)
         first_key = list(queries)[0]
@@ -328,6 +331,7 @@ class NodePopulation(object):
             The available group parameter values:
 
             >>> nodes.ids(group=None)  #  returns all IDs
+            >>> nodes.ids(group={})  #  returns all IDs
             >>> nodes.ids(group=1)  #  returns the single ID if present in population
             >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
             >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
