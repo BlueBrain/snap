@@ -52,6 +52,12 @@ html_title = "Blue Brain SNAP"
 # hide source links
 html_show_sourcelink = False
 
+# set the theme settings
+html_theme_options = {
+    "repo_url": "https://github.com/BlueBrain/snap/",
+    "repo_name": "BlueBrain/snap"
+}
+
 # autodoc settings
 autodoc_default_options = {
     "members": True,
