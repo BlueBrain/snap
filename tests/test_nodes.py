@@ -4,6 +4,8 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
+from pandas.api.types import is_categorical
+
 import pytest
 import libsonata
 from mock import Mock
@@ -104,6 +106,11 @@ class TestNodePopulation:
                 self.test_obj.property_values(Cell.MORPHOLOGY) ==
                 {'morph-A', 'morph-B', 'morph-C'}
         )
+        test_obj_library = TestNodePopulation.create_population(
+            str(TEST_DATA_DIR / 'nodes_with_library.h5'),
+            "default")
+        assert test_obj_library.property_values("categorical") == {"A", "B", "C"}
+        assert test_obj_library.property_values("categorical", is_present=True) == {"A", "B"}
 
     def test_container_properties(self):
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'HOLDING_CURRENT', 'ROTATION_ANGLE_X',
@@ -277,6 +284,20 @@ class TestNodePopulation:
             _call(999)  # invalid node id
         with pytest.raises(BluepySnapError):
             _call([0, 999])  # one of node ids is invalid
+
+    def test_get_with_library(self):
+        test_obj = TestNodePopulation.create_population(
+            str(TEST_DATA_DIR / 'nodes_with_library.h5'),
+            "default")
+        assert test_obj.property_names == {"categorical", "string", "int", "float"}
+        res = test_obj.get(properties=["categorical", "string", "int", "float"])
+        assert is_categorical(res["categorical"])
+        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
+        assert res["categorical"].cat.categories.tolist() == ['A', 'B', 'C']
+        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0]
+        assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
+        assert res["int"].tolist() == [0, 0, 1, 0]
+        npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0.])
 
     def test_positions(self):
         _call = self.test_obj.positions
