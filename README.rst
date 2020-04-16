@@ -1,5 +1,7 @@
 |banner|
 
+|build_status| |license| |coverage| |docs|
+
 Blue Brain SNAP
 ===============
 
@@ -7,8 +9,6 @@ Blue Brain Simulation and Neural network Analysis Productivity layer (Blue Brain
 
 Blue Brain SNAP is a Python library for accessing BlueBrain circuit models represented in
 `SONATA <https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md>`__ format.
-
-|build_status| |coverage|
 
 Installation
 ------------
@@ -87,9 +87,16 @@ Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.
    :target: https://travis-ci.com/BlueBrain/snap
    :alt: Build Status
 
+.. |license| image:: https://img.shields.io/pypi/l/bluepysnap
+                :target: https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER
+
 .. |coverage| image:: https://codecov.io/github/BlueBrain/snap/coverage.svg?branch=master
    :target: https://codecov.io/github/BlueBrain/snap?branch=master
    :alt: codecov.io
+
+.. |docs| image:: https://readthedocs.org/projects/bluebrainsnap/badge/?version=latest
+             :target: https://bluebrainsnap.readthedocs.io/
+             :alt: documentation status
 
 .. substitutions
 .. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
