@@ -84,13 +84,18 @@ class NodeStorage(object):
             pandas.DataFrame with node properties (zero-based index).
         """
         nodes = self.storage.open_population(population)
+        categoricals = nodes.enumeration_names
 
         node_count = nodes.size
         result = pd.DataFrame(index=np.arange(node_count))
 
         _all = libsonata.Selection([(0, node_count)])
         for attr in sorted(nodes.attribute_names):
-            result[attr] = nodes.get_attribute(attr, _all)
+            if attr in categoricals:
+                result[attr] = pd.Categorical.from_codes(nodes.get_enumeration(attr, _all),
+                                                         categories=nodes.enumeration_values(attr))
+            else:
+                result[attr] = nodes.get_attribute(attr, _all)
         for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
             result[attr] = nodes.get_dynamics_attribute(attr.split(DYNAMICS_PREFIX)[1], _all)
         return result
@@ -177,16 +182,27 @@ class NodePopulation(object):
         in_file = self.property_names
         return [k for k in container.key_set() if container.get(k) in in_file]
 
-    def property_values(self, prop):
+    def property_values(self, prop, is_present=False):
         """Set of values for a given property.
 
         Args:
            prop (str): Name of the property to retrieve.
+           is_present (bool): if the field is categorical it forces the values to be actually
+           present inside the dataset. (see: Notes for more information).
 
         Returns:
             set: A set of the unique values of the property in the node population.
+
+        Notes:
+            For categorical fields returning 'unique' values can be confusing, see:
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html
+            in #working-with-categories.
+            The is_present argument forces the unique() even on the categorical fields.
         """
-        return set(self.get(properties=prop).unique())
+        res = self.get(properties=prop)
+        if pd.api.types.is_categorical(res) and not is_present:
+            return set(res.cat.categories)
+        return set(res.unique())
 
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
