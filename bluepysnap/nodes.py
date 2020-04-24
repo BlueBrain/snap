@@ -37,6 +37,107 @@ from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
 # this constant is not part of the sonata standard
 NODE_SET_KEY = "$node_set"
 
+class GlobalNodeIds(int):
+    pass
+
+
+class Nodes(object):
+
+    def __init__(self, circuit):
+        """Initialize the top level Nodes accessor."""
+        self._circuit = circuit
+        self._config = self._circuit.config['networks']['nodes']
+        self._populations = self._get_populations()
+
+    def _get_populations(self):
+        """Collect the different NodePopulation."""
+        res = {}
+        for file_config in self._config:
+            storage = NodeStorage(file_config, self._circuit)
+            for population in storage.population_names:
+                if population in res:
+                    raise BluepySnapError("Duplicated node population: '%s'" % population)
+                res[population] = storage.population(population)
+        return res
+
+    @cached_property
+    def population_names(self):
+        return sorted(self._populations)
+
+    def keys(self):
+        for name in self.population_names:
+            yield name
+
+    def values(self):
+        for name in self.population_names:
+            yield self[name]
+
+    def items(self):
+        for name in self.population_names:
+            yield name, self[name]
+
+    def __getitem__(self, population_name):
+        """Access the NodePopulation corresponding to the population 'population_name'."""
+        try:
+            return self._populations[population_name]
+        except KeyError:
+            raise BluepySnapError("{} not a node population.".format(population_name))
+
+    def __iter__(self):
+        """Allows iteration over the different NodePopulation."""
+        return iter(self.names())
+
+    names = keys
+    populations = values
+
+    @cached_property
+    def _population_offsets(self):
+        offsets = np.concatenate([[0], np.cumsum([population.size for population in self.populations()])])
+        return {name: offset for name, offset in zip(self.names(), offsets)}
+
+    @cached_property
+    def size(self):
+        """Nodes population size."""
+        return sum(pop.size for pop in self.populations())
+
+    @cached_property
+    def property_names(self):
+        res = set()
+        for pop in self.populations():
+            res.update(pop.property_names)
+        return res
+
+    def property_values(self, prop):
+        res = set()
+        for pop in self.populations():
+            res.update(pop.property_values(prop))
+        return res
+
+    def get(self, group=None, properties=None):
+        result = pd.DataFrame(columns=utils.ensure_list(properties))
+        for name, pop in self.items():
+            pop_properties = set(utils.ensure_list(properties)).intersection(pop.property_names | {"population"})
+            try:
+                pop_res = pop.get(group=group, properties=pop_properties)
+                pop_res.index = pop_res.index + self._population_offsets[name]
+                if len(pop_res):
+                    result = pd.concat([result, pop_res])
+            except BluepySnapError:
+                pass
+        return result
+
+    def ids(self, group=None, limit=None, sample=None):
+        res = np.empty()
+        for name, pop in self.items():
+            try:
+                pop_res = pop.ids(group=group)
+                pop_res.index = pop_res.index + self._population_offsets[name]
+                if len(pop_res):
+                    res = pd.concat([res, pop_res])
+            except BluepySnapError:
+                pass
+        return res
+
 
 class NodeStorage(object):
     """Node storage access."""
@@ -108,6 +209,8 @@ class NodeStorage(object):
                 result[attr] = nodes.get_attribute(attr, _all)
         for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
             result[attr] = nodes.get_dynamics_attribute(attr.split(DYNAMICS_PREFIX)[1], _all)
+        result["population"] = np.full(len(result), fill_value=population)
+        result["population"].astype("category")
         return result
 
 
@@ -187,12 +290,8 @@ class NodePopulation(object):
 
     @property
     def property_names(self):
-        """Set of available node properties.
-
-        Notes:
-            Properties are a combination of the group attributes and the dynamics_params.
-        """
-        return self._property_names | self._dynamics_params_names
+        """Set of available node properties."""
+        return self._property_names | self._dynamics_params_names | {"population"}
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.
@@ -436,6 +535,7 @@ class NodePopulation(object):
             result = utils.ensure_list(group)
             self._check_ids(result)
             preserve_order = isinstance(group, collections.Sequence)
+
         if sample is not None:
             if len(result) > 0:
                 result = np.random.choice(result, sample, replace=False)

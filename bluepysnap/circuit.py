@@ -21,7 +21,7 @@ from cached_property import cached_property
 
 from bluepysnap.config import Config
 from bluepysnap.node_sets import NodeSets
-from bluepysnap.nodes import NodeStorage
+from bluepysnap.nodes import Nodes
 from bluepysnap.edges import EdgeStorage
 from bluepysnap.exceptions import BluepySnapError
 
@@ -66,10 +66,7 @@ class Circuit(object):
     @cached_property
     def nodes(self):
         """Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
-        return _collect_populations(
-            self._config['networks']['nodes'],
-            lambda cfg: NodeStorage(cfg, self)
-        )
+        return Nodes(self)
 
     @cached_property
     def edges(self):

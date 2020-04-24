@@ -288,10 +288,7 @@ class PopulationCompartmentReport(PopulationFrameReport):
     @cached_property
     def nodes(self):
         """Returns the NodePopulation corresponding to this report."""
-        result = self.frame_report.simulation.circuit.nodes.get(self._population_name)
-        if result is None:
-            raise BluepySnapError("Undefined node population: '%s'" % self._population_name)
-        return result
+        return self.frame_report.simulation.circuit.nodes[self._population_name]
 
     def _resolve(self, group):
         """Transform a group into a node_id array."""

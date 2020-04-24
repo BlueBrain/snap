@@ -3,7 +3,7 @@ import json
 import pytest
 
 
-from bluepysnap.nodes import NodePopulation
+from bluepysnap.nodes import NodePopulation, Nodes
 from bluepysnap.edges import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 
@@ -21,7 +21,7 @@ def test_all():
                 'node_types_file': str(TEST_DATA_DIR / 'node_types.csv'),
             }
     )
-    assert isinstance(circuit.nodes, dict)
+    assert isinstance(circuit.nodes, Nodes)
     assert isinstance(circuit.edges, dict)
     assert list(circuit.edges) == ['default']
     assert isinstance(circuit.edges['default'], EdgePopulation)

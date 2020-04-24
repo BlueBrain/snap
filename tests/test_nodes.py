@@ -10,6 +10,7 @@ import pytest
 import libsonata
 from mock import Mock
 
+from bluepysnap.circuit import Circuit
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
@@ -19,6 +20,56 @@ from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.nodes as test_module
 
 from utils import TEST_DATA_DIR, create_node_population
+
+
+class TestNodes:
+    def setup(self):
+        circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
+        self.test_obj = test_module.Nodes(circuit)
+
+    def test_iter(self):
+        assert sorted(self.test_obj) == ['default', 'default2']
+
+    def test_population_names(self):
+        assert self.test_obj.population_names == ['default', 'default2']
+
+    def test_keys_names(self):
+        assert list(self.test_obj.keys()) == ['default', 'default2']
+        assert list(self.test_obj.names()) == list(self.test_obj.keys())
+
+    def test_values_population(self):
+        values = list(self.test_obj.values())
+        assert isinstance(values[0], test_module.NodePopulation)
+        assert values[0].name == 'default'
+
+        assert isinstance(values[1], test_module.NodePopulation)
+        assert values[1].name == 'default2'
+
+        assert list(self.test_obj.values()) == list(self.test_obj.populations())
+
+    def test_items(self):
+        items = list(self.test_obj.items())
+
+    def test__population_offsets(self):
+        self.test_obj._population_offsets == {'default': 0, 'default2': 3}
+
+    def test_size(self):
+        assert self.test_obj.size == 7
+
+    def test_property_names(self):
+        assert self.test_obj.property_names == {'rotation_angle_zaxis', 'y', 'layer', 'mtype',
+                                                'model_type', 'z', 'x', 'rotation_angle_yaxis',
+                                                'morphology', 'rotation_angle_xaxis',
+                                                'model_template', 'other1', 'other2',
+                                                '@dynamics:holding_current'}
+
+    def test_property_value(self):
+        assert self.test_obj.property_values('mtype') == {'L2_X', 'L7_X', 'L9_Z', 'L8_Y', 'L6_Y'}
+
+    def test_get(self):
+        print(self.test_obj.get(properties=["layer", "mtype", "population"]))
+        print(self.test_obj.get(properties=["layer", "mtype", "population", "other1"]))
+        print(self.test_obj.get(properties="other1"))
 
 
 class TestNodeStorage:
