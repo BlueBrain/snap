@@ -434,9 +434,9 @@ class EdgePopulation(object):
         Args:
             source: source node group
             target: target node group
-            unique_node_ids: if True, no node_id will be used more than once as source or
+            unique_node_ids: if True, no node ID will be used more than once as source or
             target for edges. Careful, this flag does not provide unique (source, target)
-            pairs but unique node_ids.
+            pairs but unique node IDs.
             shuffle: if True, result order would be (somewhat) randomized
             return_edge_count: if True, edge count is added to yield result
             return_edge_ids: if True, edge ID list is added to yield result
