@@ -420,3 +420,27 @@ class TestEdgePopulation(object):
             self.test_obj.iter_connections(
                 [0, 2], [1], return_edge_ids=True, return_edge_count=True
             )
+
+    def test_iter_connection_unique(self):
+        test_obj = TestEdgePopulation.create_population(
+            str(TEST_DATA_DIR / "edges_complete_graph.h5"), 'default')
+        it = test_obj.iter_connections([0, 1, 2], [0, 1, 2])
+        assert sorted(it) == [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
+
+        it = test_obj.iter_connections([0, 1, 2], [0, 1, 2], unique_node_ids=True)
+        assert sorted(it) == [(0, 1), (1, 0)]
+
+        it = test_obj.iter_connections([0, 1, 2], [0, 2], unique_node_ids=True)
+        assert sorted(it) == [(0, 2), (1, 0)]
+
+        it = test_obj.iter_connections([0, 2], [0, 2], unique_node_ids=True)
+        assert sorted(it) == [(0, 2), (2, 0)]
+
+        it = test_obj.iter_connections([0, 1, 2], [0, 2, 1], unique_node_ids=True)
+        assert sorted(it) == [(0, 1), (1, 0)]
+
+        it = test_obj.iter_connections([1, 2], [0, 1, 2], unique_node_ids=True)
+        assert sorted(it) == [(1, 0), (2, 1)]
+
+        it = test_obj.iter_connections([0, 1, 2], [1, 2], unique_node_ids=True)
+        assert sorted(it) == [(0, 1), (1, 2)]
