@@ -107,7 +107,7 @@ class PopulationSpikeReport(object):
 
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
-        series_name = "{}_node_ids".format(self._population_name)
+        series_name = "ids".format(self._population_name)
 
         res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         if not res:
@@ -120,10 +120,32 @@ class PopulationSpikeReport(object):
             return res.index.to_numpy()
         return res
 
-    # plotting functions for the PopulationSpikeReport
+
+class FilteredSpikeReport(object):
+    def __init__(self, spike_report, group=None, t_start=None, t_stop=None):
+        self.spike_report = spike_report
+        self.group = group
+        self.t_start = t_start
+        self.t_stop = t_stop
+
+    @cached_property
+    def report(self):
+        res = pd.DataFrame()
+        for population in self.spike_report.population_names:
+            spikes = self.spike_report[population]
+            try:
+                ids = spikes.nodes.ids(group=self.group)
+            except BluepySnapError:
+                continue
+            data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
+            data["population"] = np.full(len(data), population)
+            data["population"] = data["population"].astype("category")
+            res = pd.concat([res, data])
+        return res.sort_index()
+
     # pylint: disable=protected-access
-    firing_rate_histogram = bluepysnap._plotting.spikes_firing_rate_histogram
     raster = bluepysnap._plotting.spike_raster
+    firing_rate_histogram = bluepysnap._plotting.spikes_firing_rate_histogram
     isi = bluepysnap._plotting.spikes_isi
     firing_animation = bluepysnap._plotting.spikes_firing_animation
 
@@ -188,7 +210,7 @@ class SpikeReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return self._spike_reader.get_populations_names()
+        return sorted(self._spike_reader.get_populations_names())
 
     @cached_property
     def _population(self):
@@ -203,8 +225,5 @@ class SpikeReport(object):
         """Allows iteration over the different PopulationSpikeReports."""
         return iter(self._population)
 
-    # pylint: disable=protected-access
-    raster = bluepysnap._plotting.spike_raster
-    firing_rate_histogram = bluepysnap._plotting.spikes_firing_rate_histogram
-    isi = bluepysnap._plotting.spikes_isi
-    firing_animation = bluepysnap._plotting.spikes_firing_animation
+    def filter(self, group=None, t_start=None, t_stop=None):
+        return FilteredSpikeReport(self, group, t_start, t_stop)

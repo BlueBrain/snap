@@ -112,6 +112,28 @@ class PopulationFrameReport(object):
         return res
 
 
+class FilteredFrameReport(object):
+    def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
+        self.frame_report = frame_report
+        self.group = group
+        self.t_start = t_start
+        self.t_stop = t_stop
+
+    @cached_property
+    def report(self):
+        res = pd.DataFrame()
+        for population in self.frame_report.population_names:
+            frames = self.frame_report[population]
+            try:
+                ids = frames.nodes.ids(group=self.group)
+            except BluepySnapError:
+                continue
+            data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
+            data.columns = map(lambda x: (population, x), data.columns)
+            res = pd.concat([res, data])
+        return res.sort_index()
+
+
 class FrameReport(object):
     """Access to FrameReport data."""
 
@@ -185,7 +207,7 @@ class FrameReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return self._frame_reader.get_populations_names()
+        return sorted(self._frame_reader.get_populations_names())
 
     @cached_property
     def _population_report(self):
@@ -199,6 +221,9 @@ class FrameReport(object):
     def __iter__(self):
         """Allows iteration over the different PopulationFrameReports."""
         return iter(self._population_report)
+
+    def filter(self, group=None, t_start=None, t_stop=None):
+        return FilteredFrameReport(self, group, t_start, t_stop)
 
 
 class PopulationCompartmentReport(PopulationFrameReport):

@@ -40,37 +40,10 @@ def _get_pyplot():
     return plt
 
 
-def _get_spike_report(spike_report):
-    """Take a PopulationSpikeReport or a SpikeReport and return a SpikeReport with population names.
-
-    Args:
-        spike_report (PopulationSpikeReport/SpikeReport): the simulation spike object to transform.
-
-    Returns:
-        tuple: a SpikeReport and a sorted list of the populations
-
-    Notes:
-        Avoids circular imports (no import of PopulationSpikeReport/SpikeReport inside the
-        _plotting module), allows simple factorizations for plot functions and provides a
-        sorted list of population names.
-    """
-    try:
-        obj = spike_report.spike_report
-        population_names = [spike_report.name]
-    except AttributeError:
-        obj = spike_report
-        population_names = sorted(obj.population_names)
-    return obj, population_names
-
-
-def spikes_firing_rate_histogram(spike_obj, group=None, t_start=None, t_stop=None,
-                                 binsize=None, ax=None):  # pragma: no cover
+def spikes_firing_rate_histogram(filtered_report, binsize=None, ax=None):  # pragma: no cover
     """PopulationSpikeReport/SpikeReport firing rate histogram.
 
     Args:
-        group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
-        t_start (float): Include only spikes occurring after this time.
-        t_stop (float): Include only spikes occurring before this time.
         binsize(int): bin size (milliseconds)
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
@@ -83,27 +56,14 @@ def spikes_firing_rate_histogram(spike_obj, group=None, t_start=None, t_stop=Non
     """
     # pylint: disable=too-many-locals
     plt = _get_pyplot()
-    obj, population_names = _get_spike_report(spike_obj)
+    spike_report = filtered_report.spike_report
 
-    times = np.empty((0,))
-    node_count = 0
-    for population in population_names:
-        spikes = obj[population]
-        try:
-            ids = spikes.nodes.ids(group=group)
-        except BluepySnapError:
-            continue
-        data = spikes.get(group=ids, t_start=t_start, t_stop=t_stop)
-        if isinstance(data, np.ndarray):
-            node_count += 1
-        else:
-            node_count += data.nunique()
-            data = data.index.to_numpy()
-        times = np.concatenate([times, data])
+    times = filtered_report.report.index
+    node_count = filtered_report.report[['ids', 'population']].drop_duplicates().shape[0]
 
     if len(times) == 0:
         raise BluepySnapError("No data to display. You should check your "
-                              "'group' query: {}.".format(group))
+                              "'group' query: {}.".format(spike_report.group))
 
     time_start = np.min(times)
     time_stop = np.max(times)
@@ -125,16 +85,11 @@ def spikes_firing_rate_histogram(spike_obj, group=None, t_start=None, t_stop=Non
     return ax
 
 
-def spike_raster(spike_obj, group=None, t_start=None, t_stop=None, y_axis=None,
-                 ax=None):  # pragma: no cover
-    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    """PopulationSpikeReport/SpikeReport raster plot.
+def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
+    """Spike raster plot.
 
     Args:
-        group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
         y_axis (None/str): The property to display on the y axis. None is node_ids.
-        t_start (None/float): Include only spikes occurring after this time.
-        t_stop (None/float): Include only spikes occurring before this time.
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
@@ -144,9 +99,11 @@ def spike_raster(spike_obj, group=None, t_start=None, t_stop=None, y_axis=None,
         If no axis is provided through the ax=ax keyword argument,
         then a default layout is set using pyplot.gca().
     """
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     plt = _get_pyplot()
 
-    obj, population_names = _get_spike_report(spike_obj)
+    spike_report = filtered_report.spike_report
+    population_names = filtered_report.spike_report.population_names
 
     props = {"node_id_offset": 0,
              "pop_separators": [],
@@ -159,46 +116,40 @@ def spike_raster(spike_obj, group=None, t_start=None, t_stop=None, y_axis=None,
         if y_axis is None:
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
-        elif np.issubdtype(spikes.nodes.property_dtypes[y_axis], np.number):
+        elif spikes.nodes.property_dtypes[y_axis] == "category":
+            props["categorical_values"].update(spikes.nodes.property_values(y_axis))
+        else:
             props["ymin"] = min(props["ymin"], spikes.nodes.get(properties=y_axis).min())
             props["ymax"] = max(props["ymax"], spikes.nodes.get(properties=y_axis).max())
-        else:
-            props["categorical_values"].update(spikes.nodes.property_values(y_axis))
 
-    data = pd.Series()
+    report = filtered_report.report
+
+    dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis]
+    if dtype == "category":
+        dtype = str
+    data = pd.Series(index=report.index, dtype=dtype)
     for population in population_names:
-        spikes = obj[population]
-        if y_axis is not None and y_axis not in spikes.nodes.property_names:
-            raise BluepySnapError("Cannot plot raster with y_axis={}. Parameter not present in the "
-                                  "{} population".format(y_axis, population))
-        try:
-            # try to resolve the group (some field in group may be missing for population)
-            ids = spikes.nodes.ids(group=group)
-        except BluepySnapError:
-            # need to keep all the values from the population even if cannot resolve group
-            _update_raster_properties()
-            continue
-        population_data = spikes.get(group=ids, t_start=t_start, t_stop=t_stop)
-        ts = population_data.index
+        spikes = spike_report[population]
+        mask = report["population"] == population
         if y_axis is None:
-            ys = population_data.to_numpy() + props["node_id_offset"]
+            data.loc[mask] = report.loc[mask, "ids"] + props["node_id_offset"]
         else:
-            ys = spikes.nodes.get(properties=y_axis).loc[population_data.to_numpy()].to_numpy()
+            ids = report.loc[mask, "ids"].to_numpy()
+            try:
+                ys = spikes.nodes.get(properties=y_axis)
+            except BluepySnapError:
+                continue
+            # astype is used to avoid problems with the categorical
+            data[mask] = ys[ids].astype(dtype).to_numpy()
         _update_raster_properties()
-        population_data = pd.Series(data=ys, index=ts)
-        data = pd.concat([population_data, data])
 
-    data.sort_index(inplace=True)
-    if len(data) == 0:
-        raise BluepySnapError("No data to display. You should check your "
-                              "'group' query: {}.".format(group))
-
+    data = data[data.notna()]
     if ax is None:
         ax = plt.gca()
         ax.xaxis.grid()
         ax.set_xlabel("Time [ms]")
         ax.tick_params(axis='y', which='both', length=0)
-        ax.set_xlim(obj.time_start, obj.time_stop)
+        ax.set_xlim(spike_report.time_start, spike_report.time_stop)
         if y_axis is None:
             ax.set_ylim(0, props["node_id_offset"])
             ax.set_ylabel("nodes")
@@ -221,15 +172,11 @@ def spike_raster(spike_obj, group=None, t_start=None, t_stop=None, y_axis=None,
     return ax
 
 
-def spikes_isi(spike_obj, group=None, t_start=None, t_stop=None,
-               use_frequency=False, binsize=None, ax=None):  # pragma: no cover
+def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # pragma: no cover
     # pylint: disable=too-many-locals
     """PopulationSpikeReport/SpikeReport  Interspike interval histogram.
 
     Args:
-        group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
-        t_start (float): Include only spikes occurring after this time.
-        t_stop (float): Include only spikes occurring before this time.
         use_frequency(bool): use inverse interspike interval times (Hz)
         binsize(float): bin size (milliseconds or Hz)
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
@@ -242,25 +189,13 @@ def spikes_isi(spike_obj, group=None, t_start=None, t_stop=None,
         then a default layout is set using pyplot.gca().
     """
     plt = _get_pyplot()
-    obj, population_names = _get_spike_report(spike_obj)
-    values = np.empty((0,))
-    for population in population_names:
-        spikes = obj[population]
-        try:
-            ids = spikes.nodes.ids(group=group)
-        except BluepySnapError:
-            continue
 
-        data = spikes.get(group=ids, t_start=t_start, t_stop=t_stop)
-        if len(data) == 0:
-            continue
-        data = np.concatenate([np.diff(node_spikes.index.to_numpy())
-                               for _, node_spikes in data.groupby(data)])
-        values = np.concatenate([values, data])
+    gb = filtered_report.report.groupby(["ids", "population"])
+    values = np.concatenate([np.diff(node_spikes.index.to_numpy()) for _, node_spikes in gb])
 
     if len(values) == 0:
         raise BluepySnapError("No data to display. You should check your "
-                              "'group' query: {}.".format(group))
+                              "'group' query: {}.".format(filtered_report.spike_report.group))
     if use_frequency:
         values = values[values > 0]  # filter out zero intervals
         values = 1000.0 / values
@@ -282,16 +217,12 @@ def spikes_isi(spike_obj, group=None, t_start=None, t_stop=None,
     return ax
 
 
-def spikes_firing_animation(spike_obj, group=None, t_start=None,
-                            t_stop=None, x_axis=Node.X, y_axis=Node.Y,
+def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
                             dt=20, ax=None):  # pragma: no cover
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
     """PopulationSpikeReport/SpikeReport  simple animation of simulation spikes.
 
     Args:
-        group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
-        t_start (float): Include only spikes occurring after this time.
-        t_stop (float): Include only spikes occurring before this time.
         x_axis (str): Node enum that will determine the animation x_axis
         y_axis (str): Node enum that will determine the animation y_axis
         dt (int) : the time bin size of each frame in the video in ms
@@ -320,7 +251,6 @@ def spikes_firing_animation(spike_obj, group=None, t_start=None,
     """
     plt = _get_pyplot()
     from matplotlib.animation import FuncAnimation
-    obj, population_names = _get_spike_report(spike_obj)
 
     def _check_axis(axis):
         """Verifies axes values."""
@@ -331,34 +261,31 @@ def spikes_firing_animation(spike_obj, group=None, t_start=None,
     _check_axis(x_axis)
     _check_axis(y_axis)
 
-    offset = 0
-    positions = pd.DataFrame()
-    data = pd.Series()
+    spike_report = filtered_report.spike_report
+    population_names = filtered_report.spike_report.population_names
+    report = filtered_report.report
+
+    data = pd.DataFrame(index=report.index, columns=[x_axis, y_axis], dtype=np.float32)
+
     for population in population_names:
-        spikes = obj[population]
+        spikes = spike_report[population]
+        pop_mask = report["population"] == population
+
+        ids = report.loc[pop_mask, "ids"].to_numpy()
         try:
-            # time and population node_ids
-            population_data = spikes.get(group=group, t_start=t_start, t_stop=t_stop)
-            active_gids = population_data.unique()
-            # positions indexed by population node_ids
-            population_positions = spikes.nodes.get(group=active_gids, properties=[x_axis, y_axis])
-            # reindex the node_ids index with the offset
-            population_positions.index += offset
-            # non overlapping indices for positions
-            positions = pd.concat([positions, population_positions])
-            # non overlapping node_ids for the times
-            data = pd.concat([data, population_data + offset])
-            offset += spikes.nodes.size
+            values = spikes.nodes.get(properties=[x_axis, y_axis]).loc[ids].to_numpy()
+            data.loc[pop_mask, [x_axis, y_axis]] = values
         except BluepySnapError:
-            offset += spikes.nodes.size
             continue
+
+    data = data[data.notna()]
 
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
-        ax.set_title('time = {}ms'.format(t_start))
-        x_limits = [positions[x_axis].min(), positions[x_axis].max()]
-        y_limits = [positions[y_axis].min(), positions[y_axis].max()]
+        ax.set_title('time = {}ms'.format(np.min(data.index)))
+        x_limits = [data[x_axis].min(), data[x_axis].max()]
+        y_limits = [data[y_axis].min(), data[y_axis].max()]
         ax.set_xlim(*x_limits)
         ax.set_ylim(*y_limits)
         ax.set_xlabel('{} $\mu$m'.format(x_axis))  # noqa
@@ -373,9 +300,9 @@ def spikes_firing_animation(spike_obj, group=None, t_start=None,
         """Update the animation plots and axes."""
         ax.set_title('time = ' + str(frame * dt) + ' ms')
         mask = (data.index >= frame * dt) & (data.index <= (frame + 1) * dt)
-        frame_gids = data[mask].unique()
-        x = positions.loc[frame_gids, x_axis].values
-        y = positions.loc[frame_gids, y_axis].values
+        positions = data.loc[mask, [x_axis, y_axis]].values
+        x = positions[:, 0]
+        y = positions[:, 1]
         dots[0].set_data(x, y)
         return dots
 
@@ -407,9 +334,65 @@ def _get_frame_report(frame_report):
     return obj, population_names
 
 
-def soma_trace(frame_report, group=None, t_start=None, t_stop=None, plot_type='mean',
-               ax=None):  # pragma: no cover
-    # pylint: disable=too-many-locals
+# def soma_trace(frame_report, group=None, t_start=None, t_stop=None, plot_type='mean',
+#                ax=None):  # pragma: no cover
+#     # pylint: disable=too-many-locals
+#     """Return PopulationSomaReport potential plot displaying the voltage as a function of time.
+#
+#     Args:
+#         group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
+#         t_start (float): Include only spikes occurring after this time.
+#         t_stop (float): Include only spikes occurring before this time.
+#         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
+#         group. `mean` will plot the mean value of the node
+#         ax: A plot axis object that will be updated
+#
+#     Returns:
+#         matplotlib.Axis: axis containing the soma's traces.
+#     """
+#     plt = _get_pyplot()
+#     obj, population_names = _get_frame_report(frame_report)
+#
+#     max_per_pop = 15 if plot_type != "mean" else -1
+#     data = pd.DataFrame()
+#     offset = 0
+#     population_ids = []
+#     for population in population_names:
+#         frames = obj[population]
+#         try:
+#             ids = frames.nodes.ids(group)
+#         except BluepySnapError:
+#             offset += frames.nodes.size
+#             continue
+#
+#         population_data = frames.get(group=ids[:max_per_pop], t_start=t_start, t_stop=t_stop).T
+#         population_data.index += offset
+#         if plot_type != "mean":
+#             population_ids.append(population_data.index)
+#         offset += frames.nodes.size
+#         data = pd.concat([population_data, data])
+#
+#     if ax is None:
+#         ax = plt.gca()
+#         data_units = obj.data_units
+#         if plot_type == "mean":
+#             ax.set_ylabel('Avg volt. [{}]'.format(data_units))
+#         elif plot_type == "all":
+#             ax.set_ylabel('Voltage [{}]'.format(data_units))
+#         ax.set_xlabel("Time [{}]".format(obj.time_units))
+#         ax.set_xlim([t_start, t_stop])
+#
+#     if plot_type == "mean":
+#         ax.plot(data.mean())
+#     else:
+#         # try to keep the maximum of ids from each population
+#         kept_ids = list(roundrobin(*population_ids))[:max_per_pop]
+#         for _, row in data.loc[kept_ids].iterrows():
+#             ax.plot(row)
+#     return ax
+#
+
+def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no cover
     """Return PopulationSomaReport potential plot displaying the voltage as a function of time.
 
     Args:
@@ -423,43 +406,43 @@ def soma_trace(frame_report, group=None, t_start=None, t_stop=None, plot_type='m
     Returns:
         matplotlib.Axis: axis containing the soma's traces.
     """
+    # pylint: disable=too-many-locals
+
     plt = _get_pyplot()
-    obj, population_names = _get_frame_report(frame_report)
+    frame_report = filtered_soma_report.frame_report
+    report = filtered_soma_report.report
 
     max_per_pop = 15 if plot_type != "mean" else -1
-    data = pd.DataFrame()
-    offset = 0
+
     population_ids = []
-    for population in population_names:
-        frames = obj[population]
-        try:
-            ids = frames.nodes.ids(group)
-        except BluepySnapError:
-            offset += frames.nodes.size
-            continue
-
-        population_data = frames.get(group=ids[:max_per_pop], t_start=t_start, t_stop=t_stop).T
-        population_data.index += offset
-        if plot_type != "mean":
-            population_ids.append(population_data.index)
-        offset += frames.nodes.size
-        data = pd.concat([population_data, data])
-
-    if ax is None:
-        ax = plt.gca()
-        data_units = obj.data_units
-        if plot_type == "mean":
-            ax.set_ylabel('Avg volt. [{}]'.format(data_units))
-        elif plot_type == "all":
-            ax.set_ylabel('Voltage [{}]'.format(data_units))
-        ax.set_xlabel("Time [{}]".format(obj.time_units))
-        ax.set_xlim([t_start, t_stop])
-
-    if plot_type == "mean":
-        ax.plot(data.mean())
+    if plot_type != "mean":
+        data = report.T
     else:
-        # try to keep the maximum of ids from each population
-        kept_ids = list(roundrobin(*population_ids))[:max_per_pop]
-        for _, row in data.loc[kept_ids].iterrows():
-            ax.plot(row)
-    return ax
+        data = pd.DataFrame()
+        for population in frame_report.population_names:
+            frames = frame_report[population]
+
+    #         report.loc[]
+    #         population_data = frames.get(group=ids[:max_per_pop], t_start=t_start, t_stop=t_stop).T
+    #
+    #         offset += frames.nodes.size
+    #         data = pd.concat([population_data, data])
+    #
+    # if ax is None:
+    #     ax = plt.gca()
+    #     data_units = obj.data_units
+    #     if plot_type == "mean":
+    #         ax.set_ylabel('Avg volt. [{}]'.format(data_units))
+    #     elif plot_type == "all":
+    #         ax.set_ylabel('Voltage [{}]'.format(data_units))
+    #     ax.set_xlabel("Time [{}]".format(obj.time_units))
+    #     ax.set_xlim([t_start, t_stop])
+    #
+    # if plot_type == "mean":
+    #     ax.plot(data.mean())
+    # else:
+    #     # try to keep the maximum of ids from each population
+    #     kept_ids = list(roundrobin(*population_ids))[:max_per_pop]
+    #     for _, row in data.loc[kept_ids].iterrows():
+    #         ax.plot(row)
+    # return ax
