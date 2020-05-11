@@ -47,6 +47,11 @@ def ensure_list(v):
         return [v]
 
 
+def is_categorical_dtype(dtype):
+    """Check if a dtype is categorical or not."""
+    return dtype.name == 'category'
+
+
 def roundrobin(*iterables):
     """Roundrobin function.
 

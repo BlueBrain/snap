@@ -25,7 +25,7 @@ from libsonata import ElementReportReader
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import fix_libsonata_empty_list
+from bluepysnap.utils import fix_libsonata_empty_list, ensure_list
 
 L = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class FilteredFrameReport(object):
 
     @cached_property
     def report(self):
-        res = pd.DataFrame()
+        res = None
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
             try:
@@ -129,9 +129,14 @@ class FilteredFrameReport(object):
             except BluepySnapError:
                 continue
             data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
-            data.columns = map(lambda x: (population, x), data.columns)
-            res = pd.concat([res, data])
-        return res.sort_index()
+            pop = [population]
+            data.columns = pd.MultiIndex.from_tuples(map(lambda x: tuple(pop + ensure_list(x)),
+                                                         data.columns))
+            # need to do this in order to not break the MultiIndex for columns
+            res = data if res is None else data.join(res, how='outer')
+        return res.sort_index().sort_index(axis=1)
+
+    trace = bluepysnap._plotting.soma_trace
 
 
 class FrameReport(object):

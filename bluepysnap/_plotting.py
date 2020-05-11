@@ -21,7 +21,7 @@ import pandas as pd
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-from bluepysnap.utils import roundrobin
+from bluepysnap.utils import roundrobin, is_categorical_dtype
 
 
 L = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
         if y_axis is None:
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
-        elif spikes.nodes.property_dtypes[y_axis] == "category":
+        elif is_categorical_dtype(spikes.nodes.property_dtypes[y_axis]):
             props["categorical_values"].update(spikes.nodes.property_values(y_axis))
         else:
             props["ymin"] = min(props["ymin"], spikes.nodes.get(properties=y_axis).min())
@@ -124,8 +124,9 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
 
     report = filtered_report.report
 
-    dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis]
-    if dtype == "category":
+    dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis] if y_axis else None
+    if dtype and is_categorical_dtype(dtype):
+        # this is to prevent the problems when concatenating categoricals with missing categories
         dtype = str
     data = pd.Series(index=report.index, dtype=dtype)
     for population in population_names:
@@ -311,87 +312,6 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     return anim, ax
 
 
-def _get_frame_report(frame_report):
-    """Take a PopulationFrameReport or a FrameReport and return a FrameReport with population names.
-
-    Args:
-        frame_report (PopulationFrameReport/FrameReport): the simulation frame object to transform.
-
-    Returns:
-        tuple: a FrameReport and a sorted list of the populations
-
-    Notes:
-        Avoids circular imports (no import of PopulationFrameReport/FrameReport inside the
-        _plotting module), allows simple factorizations for plot functions and provides a
-        sorted list of population names.
-    """
-    try:
-        obj = frame_report.frame_report
-        population_names = [frame_report.name]
-    except AttributeError:
-        obj = frame_report
-        population_names = sorted(obj.population_names)
-    return obj, population_names
-
-
-# def soma_trace(frame_report, group=None, t_start=None, t_stop=None, plot_type='mean',
-#                ax=None):  # pragma: no cover
-#     # pylint: disable=too-many-locals
-#     """Return PopulationSomaReport potential plot displaying the voltage as a function of time.
-#
-#     Args:
-#         group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
-#         t_start (float): Include only spikes occurring after this time.
-#         t_stop (float): Include only spikes occurring before this time.
-#         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
-#         group. `mean` will plot the mean value of the node
-#         ax: A plot axis object that will be updated
-#
-#     Returns:
-#         matplotlib.Axis: axis containing the soma's traces.
-#     """
-#     plt = _get_pyplot()
-#     obj, population_names = _get_frame_report(frame_report)
-#
-#     max_per_pop = 15 if plot_type != "mean" else -1
-#     data = pd.DataFrame()
-#     offset = 0
-#     population_ids = []
-#     for population in population_names:
-#         frames = obj[population]
-#         try:
-#             ids = frames.nodes.ids(group)
-#         except BluepySnapError:
-#             offset += frames.nodes.size
-#             continue
-#
-#         population_data = frames.get(group=ids[:max_per_pop], t_start=t_start, t_stop=t_stop).T
-#         population_data.index += offset
-#         if plot_type != "mean":
-#             population_ids.append(population_data.index)
-#         offset += frames.nodes.size
-#         data = pd.concat([population_data, data])
-#
-#     if ax is None:
-#         ax = plt.gca()
-#         data_units = obj.data_units
-#         if plot_type == "mean":
-#             ax.set_ylabel('Avg volt. [{}]'.format(data_units))
-#         elif plot_type == "all":
-#             ax.set_ylabel('Voltage [{}]'.format(data_units))
-#         ax.set_xlabel("Time [{}]".format(obj.time_units))
-#         ax.set_xlim([t_start, t_stop])
-#
-#     if plot_type == "mean":
-#         ax.plot(data.mean())
-#     else:
-#         # try to keep the maximum of ids from each population
-#         kept_ids = list(roundrobin(*population_ids))[:max_per_pop]
-#         for _, row in data.loc[kept_ids].iterrows():
-#             ax.plot(row)
-#     return ax
-#
-
 def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no cover
     """Return PopulationSomaReport potential plot displaying the voltage as a function of time.
 
@@ -414,35 +334,28 @@ def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no c
 
     max_per_pop = 15 if plot_type != "mean" else -1
 
-    population_ids = []
-    if plot_type != "mean":
+    if plot_type == "mean":
         data = report.T
     else:
-        data = pd.DataFrame()
-        for population in frame_report.population_names:
-            frames = frame_report[population]
+        data = report.loc[:, pd.IndexSlice[:, :max_per_pop]]
+        data = data.T
 
-    #         report.loc[]
-    #         population_data = frames.get(group=ids[:max_per_pop], t_start=t_start, t_stop=t_stop).T
-    #
-    #         offset += frames.nodes.size
-    #         data = pd.concat([population_data, data])
-    #
-    # if ax is None:
-    #     ax = plt.gca()
-    #     data_units = obj.data_units
-    #     if plot_type == "mean":
-    #         ax.set_ylabel('Avg volt. [{}]'.format(data_units))
-    #     elif plot_type == "all":
-    #         ax.set_ylabel('Voltage [{}]'.format(data_units))
-    #     ax.set_xlabel("Time [{}]".format(obj.time_units))
-    #     ax.set_xlim([t_start, t_stop])
-    #
-    # if plot_type == "mean":
-    #     ax.plot(data.mean())
-    # else:
-    #     # try to keep the maximum of ids from each population
-    #     kept_ids = list(roundrobin(*population_ids))[:max_per_pop]
-    #     for _, row in data.loc[kept_ids].iterrows():
-    #         ax.plot(row)
-    # return ax
+    if ax is None:
+        ax = plt.gca()
+        data_units = frame_report.data_units
+        if plot_type == "mean":
+            ax.set_ylabel('Avg volt. [{}]'.format(data_units))
+        elif plot_type == "all":
+            ax.set_ylabel('Voltage [{}]'.format(data_units))
+        ax.set_xlabel("Time [{}]".format(frame_report.time_units))
+        ax.set_xlim([filtered_soma_report.t_start, filtered_soma_report.t_stop])
+
+    if plot_type == "mean":
+        ax.plot(data.mean())
+    else:
+        indexes = [[(pop, idx) for idx in data.loc[pop].index] for pop in data.index.levels[0]]
+        # try to keep the maximum of ids from each population
+        kept_ids = list(roundrobin(*indexes))[:max_per_pop]
+        for _, row in data.loc[kept_ids].iterrows():
+            ax.plot(row)
+    return ax
