@@ -91,7 +91,7 @@ class PopulationFrameReport(object):
         """Fetch data from the report.
 
         Args:
-            group (int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
             t_start (float): Include only frames occurring after this time.
             t_stop (float): Include only frames occurring before this time.
 
@@ -113,7 +113,22 @@ class PopulationFrameReport(object):
 
 
 class FilteredFrameReport(object):
+    """Access to filtered FrameReport data."""
     def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
+        """Initialize a FilteredFrameReport.
+
+        A FilteredFrameReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            frame_report (FrameReport): The FrameReport to filter.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring after this time.
+            t_stop (float): Include only frames occurring before this time.
+
+        Returns:
+            FilteredFrameReport: A FilteredFrameReport object.
+        """
         self.frame_report = frame_report
         self.group = group
         self.t_start = t_start
@@ -121,6 +136,14 @@ class FilteredFrameReport(object):
 
     @cached_property
     def report(self):
+        """Access to the report data.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the data from the report. Row's index is the
+            different timestamps and the column's MultiIndex is :
+            - (population_name, node_id, compartment id) for the CompartmentReport
+            - (population_name, node_id) for the SomaReport
+        """
         res = None
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
@@ -132,7 +155,7 @@ class FilteredFrameReport(object):
             pop = [population]
             data.columns = pd.MultiIndex.from_tuples(map(lambda x: tuple(pop + ensure_list(x)),
                                                          data.columns))
-            # need to do this in order to not break the MultiIndex for columns
+            # need to do this in order to preserve MultiIndex for columns
             res = data if res is None else data.join(res, how='outer')
         return res.sort_index().sort_index(axis=1)
 

@@ -125,8 +125,8 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
     report = filtered_report.report
 
     dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis] if y_axis else None
-    if dtype and is_categorical_dtype(dtype):
-        # this is to prevent the problems when concatenating categoricals with missing categories
+    if dtype and pd.api.types.is_categorical_dtype(dtype):
+        # this is to prevent the problems when concatenating categoricals with unknown categories
         dtype = str
     data = pd.Series(index=report.index, dtype=dtype)
     for population in population_names:
@@ -313,12 +313,9 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
 
 
 def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no cover
-    """Return PopulationSomaReport potential plot displaying the voltage as a function of time.
+    """Return potential plot displaying the voltage as a function of time from a soma report.
 
     Args:
-        group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.ids().
-        t_start (float): Include only spikes occurring after this time.
-        t_stop (float): Include only spikes occurring before this time.
         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
         group. `mean` will plot the mean value of the node
         ax: A plot axis object that will be updated
@@ -329,30 +326,23 @@ def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no c
     # pylint: disable=too-many-locals
 
     plt = _get_pyplot()
-    frame_report = filtered_soma_report.frame_report
-    report = filtered_soma_report.report
-
-    max_per_pop = 15 if plot_type != "mean" else -1
-
-    if plot_type == "mean":
-        data = report.T
-    else:
-        data = report.loc[:, pd.IndexSlice[:, :max_per_pop]]
-        data = data.T
+    max_per_pop = 15
 
     if ax is None:
         ax = plt.gca()
-        data_units = frame_report.data_units
+        data_units = filtered_soma_report.frame_report.data_units
         if plot_type == "mean":
             ax.set_ylabel('Avg volt. [{}]'.format(data_units))
         elif plot_type == "all":
             ax.set_ylabel('Voltage [{}]'.format(data_units))
-        ax.set_xlabel("Time [{}]".format(frame_report.time_units))
+        ax.set_xlabel("Time [{}]".format(filtered_soma_report.frame_report.time_units))
         ax.set_xlim([filtered_soma_report.t_start, filtered_soma_report.t_stop])
 
     if plot_type == "mean":
-        ax.plot(data.mean())
+        ax.plot(filtered_soma_report.report.T.mean())
     else:
+        data = filtered_soma_report.report.loc[:, pd.IndexSlice[:, :max_per_pop]].T
+        # create [[(pop1, id1), (pop1, id2),...], [(pop2, id1), (pop2, id2),...]]
         indexes = [[(pop, idx) for idx in data.loc[pop].index] for pop in data.index.levels[0]]
         # try to keep the maximum of ids from each population
         kept_ids = list(roundrobin(*indexes))[:max_per_pop]

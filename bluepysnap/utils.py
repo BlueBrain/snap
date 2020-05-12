@@ -47,16 +47,10 @@ def ensure_list(v):
         return [v]
 
 
-def is_categorical_dtype(dtype):
-    """Check if a dtype is categorical or not."""
-    return dtype.name == 'category'
-
-
 def roundrobin(*iterables):
     """Roundrobin function.
 
     roundrobin('ABC', 'D', 'EF') --> A D E B F C.
-
     From: https://docs.python.org/3.6/library/itertools.html
     """
     num_active = len(iterables)
