@@ -144,7 +144,7 @@ class FilteredFrameReport(object):
             - (population_name, node_id, compartment id) for the CompartmentReport
             - (population_name, node_id) for the SomaReport
         """
-        res = None
+        res = pd.DataFrame()
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
             try:
@@ -152,14 +152,16 @@ class FilteredFrameReport(object):
             except BluepySnapError:
                 continue
             data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
+            if data.empty:
+                continue
             pop = [population]
             data.columns = pd.MultiIndex.from_tuples(map(lambda x: tuple(pop + ensure_list(x)),
                                                          data.columns))
             # need to do this in order to preserve MultiIndex for columns
-            res = data if res is None else data.join(res, how='outer')
+            res = data if res.empty else data.join(res, how='outer')
         return res.sort_index().sort_index(axis=1)
 
-    trace = bluepysnap._plotting.soma_trace
+    trace = bluepysnap._plotting.trace
 
 
 class FrameReport(object):
@@ -297,7 +299,7 @@ class PopulationSomaReport(PopulationCompartmentReport):
 
     # plotting functions for the PopulationSomasReport
     # pylint: disable=protected-access
-    trace = bluepysnap._plotting.soma_trace
+    trace = bluepysnap._plotting.trace
 
 
 class SomaReport(FrameReport):
@@ -309,4 +311,4 @@ class SomaReport(FrameReport):
         return _collect_population_reports(self, PopulationSomaReport)
 
     # pylint: disable=protected-access
-    trace = bluepysnap._plotting.soma_trace
+    trace = bluepysnap._plotting.trace

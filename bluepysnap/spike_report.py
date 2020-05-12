@@ -99,16 +99,13 @@ class PopulationSpikeReport(object):
             t_stop (float): Include only spikes occurring before this time.
 
         Returns:
-            pandas.Series/np.array:
-                If single node ID is passed as ``group`` returns a np.array of spiking times.
-                Otherwise return spiking node_ids indexed by sorted spike time.
+            pandas.Series: return spiking node_ids indexed by sorted spike time.
         """
         node_ids = [] if group is None else self._resolve_nodes(group).tolist()
 
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
         series_name = "ids".format(self._population_name)
-
         res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
@@ -116,13 +113,26 @@ class PopulationSpikeReport(object):
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        if np.issubdtype(type(group), np.integer):
-            return res.index.to_numpy()
         return res
 
 
 class FilteredSpikeReport(object):
+    """Access to filtered SpikeReport data."""
     def __init__(self, spike_report, group=None, t_start=None, t_stop=None):
+        """Initialize a FilteredSpikeReport.
+
+        A FilteredSpikeReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            spike_report (SpikeReport): The SpikeReport to filter.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring after this time.
+            t_stop (float): Include only frames occurring before this time.
+
+        Returns:
+            FilteredSpikeReport: A FilteredFrameReport object.
+        """
         self.spike_report = spike_report
         self.group = group
         self.t_start = t_start
@@ -130,6 +140,12 @@ class FilteredSpikeReport(object):
 
     @cached_property
     def report(self):
+        """Access to the report data.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the data from the report. Row's index is the
+            different timestamps and the columns are ids and population names.
+        """
         res = pd.DataFrame()
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
@@ -139,8 +155,9 @@ class FilteredSpikeReport(object):
                 continue
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
-            data["population"] = data["population"].astype("category")
             res = pd.concat([res, data])
+        if not res.empty:
+            res["population"] = res["population"].astype("category")
         return res.sort_index()
 
     # pylint: disable=protected-access

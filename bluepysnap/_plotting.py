@@ -21,7 +21,7 @@ import pandas as pd
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-from bluepysnap.utils import roundrobin, is_categorical_dtype
+from bluepysnap.utils import roundrobin
 
 
 L = logging.getLogger(__name__)
@@ -40,11 +40,13 @@ def _get_pyplot():
     return plt
 
 
-def spikes_firing_rate_histogram(filtered_report, binsize=None, ax=None):  # pragma: no cover
-    """PopulationSpikeReport/SpikeReport firing rate histogram.
+def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  # pragma: no cover
+    """Spike firing rate histogram.
+
+    This plot shows the number of nodes firing during a big of time.
 
     Args:
-        binsize(int): bin size (milliseconds)
+        time_binsize(int): bin size (milliseconds)
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
@@ -68,13 +70,13 @@ def spikes_firing_rate_histogram(filtered_report, binsize=None, ax=None):  # pra
     time_start = np.min(times)
     time_stop = np.max(times)
 
-    if binsize is None:
+    if time_binsize is None:
         # heuristic for a nice bin size (~100 spikes per bin on average)
-        binsize = min(50.0, (time_stop - time_start) / ((len(times) / 100.) + 1.))
+        time_binsize = min(50.0, (time_stop - time_start) / ((len(times) / 100.) + 1.))
 
-    bins = np.append(np.arange(time_start, time_stop, binsize), time_stop)
+    bins = np.append(np.arange(time_start, time_stop, time_binsize), time_stop)
     hist, bin_edges = np.histogram(times, bins=bins)
-    freq = 1.0 * hist / node_count / (0.001 * binsize)
+    freq = 1.0 * hist / node_count / (0.001 * time_binsize)
 
     if ax is None:
         ax = plt.gca()
@@ -87,6 +89,9 @@ def spikes_firing_rate_histogram(filtered_report, binsize=None, ax=None):  # pra
 
 def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
     """Spike raster plot.
+
+    Shows a global overview of the circuit firing nodes. The y axis can project either the
+    node_ids or any properties present in the different node populations.
 
     Args:
         y_axis (None/str): The property to display on the y axis. None is node_ids.
@@ -116,7 +121,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
         if y_axis is None:
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
-        elif is_categorical_dtype(spikes.nodes.property_dtypes[y_axis]):
+        elif pd.api.types.is_categorical_dtype(spikes.nodes.property_dtypes[y_axis]):
             props["categorical_values"].update(spikes.nodes.property_values(y_axis))
         else:
             props["ymin"] = min(props["ymin"], spikes.nodes.get(properties=y_axis).min())
@@ -312,7 +317,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     return anim, ax
 
 
-def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no cover
+def trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
     """Return potential plot displaying the voltage as a function of time from a soma report.
 
     Args:
@@ -330,20 +335,23 @@ def soma_trace(filtered_soma_report, plot_type='mean', ax=None):  # pragma: no c
 
     if ax is None:
         ax = plt.gca()
-        data_units = filtered_soma_report.frame_report.data_units
+        data_units = filtered_report.frame_report.data_units
         if plot_type == "mean":
             ax.set_ylabel('Avg volt. [{}]'.format(data_units))
         elif plot_type == "all":
             ax.set_ylabel('Voltage [{}]'.format(data_units))
-        ax.set_xlabel("Time [{}]".format(filtered_soma_report.frame_report.time_units))
-        ax.set_xlim([filtered_soma_report.t_start, filtered_soma_report.t_stop])
+        ax.set_xlabel("Time [{}]".format(filtered_report.frame_report.time_units))
+        ax.set_xlim([filtered_report.t_start, filtered_report.t_stop])
 
     if plot_type == "mean":
-        ax.plot(filtered_soma_report.report.T.mean())
+        ax.plot(filtered_report.report.T.mean())
     else:
-        data = filtered_soma_report.report.loc[:, pd.IndexSlice[:, :max_per_pop]].T
+        levels = filtered_report.report.columns.levels
+        slicer = tuple(slice(None) if i != len(levels)-1 else slice(None, max_per_pop)
+                       for i in range(len(levels)))
+        data = filtered_report.report.loc[:, slicer].T
         # create [[(pop1, id1), (pop1, id2),...], [(pop2, id1), (pop2, id2),...]]
-        indexes = [[(pop, idx) for idx in data.loc[pop].index] for pop in data.index.levels[0]]
+        indexes = [[(pop, idx) for idx in data.loc[pop].index] for pop in levels[0]]
         # try to keep the maximum of ids from each population
         kept_ids = list(roundrobin(*indexes))[:max_per_pop]
         for _, row in data.loc[kept_ids].iterrows():

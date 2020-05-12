@@ -97,6 +97,16 @@ class TestCompartmentReport:
         assert filtered.report.columns.tolist() == [("default", 0, 0), ("default", 0, 1),
                                                     ("default2", 0, 0), ("default2", 0, 1)]
 
+        filtered = self.test_obj.filter(group={"other1": ["B"]}, t_start=0.3, t_stop=0.6)
+        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.4, 0.5, 0.6]))
+        assert filtered.report.columns.tolist() == [("default2", 1, 0), ("default2", 1, 1)]
+
+        filtered = self.test_obj.filter(group={"population": "default2"}, t_start=0.3, t_stop=0.6)
+        assert filtered.report.columns.tolist() == [("default2", 0, 0), ("default2", 0, 1), ("default2", 1, 0), ("default2", 1, 1), ("default2", 2, 0), ("default2", 2, 1)]
+
+        filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
+        pdt.assert_frame_equal(filtered.report, pd.DataFrame())
+
 
 class TestSomaReport:
     def setup(self):
@@ -122,6 +132,17 @@ class TestSomaReport:
         assert filtered.report.columns.tolist() == [("default", 0), ("default", 1), ("default", 2),
                                                     ("default2", 0), ("default2", 1),
                                                     ("default2", 2)]
+
+        filtered = self.test_obj.filter(group={"other1": ["B"]}, t_start=0.3, t_stop=0.6)
+        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.4, 0.5, 0.6]))
+        assert filtered.report.columns.tolist() == [("default2", 1)]
+
+        filtered = self.test_obj.filter(group={"population": "default2"}, t_start=0.3, t_stop=0.6)
+        assert filtered.report.columns.tolist() == [("default2", 0), ("default2", 1),
+                                                    ("default2", 2)]
+
+        filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
+        pdt.assert_frame_equal(filtered.report, pd.DataFrame())
 
 
 class TestPopulationFrameReport:
