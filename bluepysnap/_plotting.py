@@ -42,7 +42,7 @@ def _get_pyplot():
 def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  # pragma: no cover
     """Spike firing rate histogram.
 
-    This plot shows the number of nodes firing during a big of time.
+    This plot shows the number of nodes firing during a range of time.
 
     Args:
         time_binsize(int): bin size (milliseconds)
@@ -89,7 +89,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
 def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
     """Spike raster plot.
 
-    Shows a global overview of the circuit firing nodes. The y axis can project either the
+    Shows a global overview of the circuit's firing nodes. The y axis can project either the
     node_ids or any properties present in the different node populations.
 
     Args:
@@ -179,7 +179,9 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
 
 def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # pragma: no cover
     # pylint: disable=too-many-locals
-    """PopulationSpikeReport/SpikeReport  Interspike interval histogram.
+    """Interspike interval histogram.
+
+    This plots show the binned time/frequency interval between to spikes for neurons.
 
     Args:
         use_frequency(bool): use inverse interspike interval times (Hz)
@@ -225,7 +227,10 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
 def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
                             dt=20, ax=None):  # pragma: no cover
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
-    """PopulationSpikeReport/SpikeReport  simple animation of simulation spikes.
+    """Simple animation of simulation spikes.
+
+    This animations represents the spiking nodes during time in a frame corresponding to the
+    x, y or z axis of the circuit.
 
     Args:
         x_axis (str): Node enum that will determine the animation x_axis
@@ -317,7 +322,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
 
 
 def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
-    """Return potential plot displaying the voltage as a function of time from a soma report.
+    """Return potential plot displaying the voltage as a function of time from a frame report.
 
     Args:
         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
