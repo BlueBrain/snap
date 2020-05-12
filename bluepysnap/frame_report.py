@@ -154,14 +154,15 @@ class FilteredFrameReport(object):
             data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
             if data.empty:
                 continue
-            pop = [population]
-            data.columns = pd.MultiIndex.from_tuples(map(lambda x: tuple(pop + ensure_list(x)),
-                                                         data.columns))
+            population = [population]
+            new_index = tuple(tuple(population + ensure_list(x)) for x in data.columns)
+            data.columns = pd.MultiIndex.from_tuples(new_index)
             # need to do this in order to preserve MultiIndex for columns
             res = data if res.empty else data.join(res, how='outer')
         return res.sort_index().sort_index(axis=1)
 
-    trace = bluepysnap._plotting.trace
+    # pylint: disable=protected-access
+    trace = bluepysnap._plotting.frame_trace
 
 
 class FrameReport(object):
@@ -253,6 +254,19 @@ class FrameReport(object):
         return iter(self._population_report)
 
     def filter(self, group=None, t_start=None, t_stop=None):
+        """Returns a FilteredFrameReport.
+
+        A FilteredFrameReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring after this time.
+            t_stop (float): Include only frames occurring before this time.
+
+        Returns:
+            FilteredFrameReport: A FilteredFrameReport object.
+        """
         return FilteredFrameReport(self, group, t_start, t_stop)
 
 
@@ -297,10 +311,6 @@ class PopulationSomaReport(PopulationCompartmentReport):
         """
         return columns.levels[0]
 
-    # plotting functions for the PopulationSomasReport
-    # pylint: disable=protected-access
-    trace = bluepysnap._plotting.trace
-
 
 class SomaReport(FrameReport):
     """Access to a SomaReport data."""
@@ -309,6 +319,3 @@ class SomaReport(FrameReport):
     def _population_report(self):
         """Collect the different PopulationSomasReport."""
         return _collect_population_reports(self, PopulationSomaReport)
-
-    # pylint: disable=protected-access
-    trace = bluepysnap._plotting.trace

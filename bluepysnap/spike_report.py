@@ -94,7 +94,7 @@ class PopulationSpikeReport(object):
         """Fetch spikes from the report.
 
         Args:
-            group (int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
             t_start (float): Include only spikes occurring after this time.
             t_stop (float): Include only spikes occurring before this time.
 
@@ -105,7 +105,7 @@ class PopulationSpikeReport(object):
 
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
-        series_name = "ids".format(self._population_name)
+        series_name = "ids"
         res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
@@ -243,4 +243,17 @@ class SpikeReport(object):
         return iter(self._population)
 
     def filter(self, group=None, t_start=None, t_stop=None):
+        """Returns a FilteredSpikeReport.
+
+        A FilteredSpikeReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring after this time.
+            t_stop (float): Include only frames occurring before this time.
+
+        Returns:
+            FilteredSpikeReport: A FilteredFrameReport object.
+        """
         return FilteredSpikeReport(self, group, t_start, t_stop)

@@ -23,7 +23,6 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 from bluepysnap.utils import roundrobin
 
-
 L = logging.getLogger(__name__)
 
 
@@ -317,7 +316,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     return anim, ax
 
 
-def trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
+def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
     """Return potential plot displaying the voltage as a function of time from a soma report.
 
     Args:
@@ -347,7 +346,7 @@ def trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
         ax.plot(filtered_report.report.T.mean())
     else:
         levels = filtered_report.report.columns.levels
-        slicer = tuple(slice(None) if i != len(levels)-1 else slice(None, max_per_pop)
+        slicer = tuple(slice(None) if i != len(levels) - 1 else slice(None, max_per_pop)
                        for i in range(len(levels)))
         data = filtered_report.report.loc[:, slicer].T
         # create [[(pop1, id1), (pop1, id2),...], [(pop2, id1), (pop2, id2),...]]

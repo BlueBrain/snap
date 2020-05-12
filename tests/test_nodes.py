@@ -181,6 +181,12 @@ class TestNodePopulation:
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
         npt.assert_equal(_call({Cell.X: (100, 203)}), [0, 1])
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y', Cell.MORPHOLOGY: "morph-B"}), [1])
+
+        npt.assert_equal(_call({"node_id": 1}), [1])
+        npt.assert_equal(_call({"node_id": [1]}), [1])
+        npt.assert_equal(_call({"node_id": [1, 2]}), [1, 2])
+        npt.assert_equal(_call({"node_id": [1, 2, 42]}), [1, 2])
+
         # same query with a $and operator
         npt.assert_equal(_call({"$and": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         npt.assert_equal(_call({Cell.MORPHOLOGY: ['morph-A', 'morph-B']}), [0, 1])

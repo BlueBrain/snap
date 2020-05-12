@@ -248,7 +248,8 @@ class NodePopulation(object):
         if node_ids is None:
             return np.full(len(self._data), fill_value=True)
         mask = np.full(len(self._data), fill_value=False)
-        mask[node_ids] = True
+        valid_node_ids = pd.Index(utils.ensure_list(node_ids)).intersection(self._data.index)
+        mask[valid_node_ids] = True
         return mask
 
     def _node_population_mask(self, queries):
