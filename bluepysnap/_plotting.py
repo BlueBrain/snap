@@ -45,7 +45,8 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     This plot shows the number of nodes firing during a range of time.
 
     Args:
-        time_binsize(int): bin size (milliseconds)
+        time_binsize(None/int/float): bin size (milliseconds). If None, a binning heuristic is used
+            to create an histogram with ~100 spikes per bin in average.
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
@@ -57,6 +58,9 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     """
     # pylint: disable=too-many-locals
     plt = _get_pyplot()
+    if time_binsize <= 0:
+        raise BluepySnapError("Invalid time_binsize = {}. Should be > 0.".format(time_binsize))
+
     spike_report = filtered_report.spike_report
 
     times = filtered_report.report.index
@@ -86,7 +90,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     return ax
 
 
-def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
+def spike_raster(filtered_report, y_axis="node_id", ax=None):  # pragma: no cover
     """Spike raster plot.
 
     Shows a global overview of the circuit's firing nodes. The y axis can project either the
@@ -117,7 +121,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
              }
 
     def _update_raster_properties():
-        if y_axis is None:
+        if y_axis == "node_id":
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
         elif pd.api.types.is_categorical_dtype(spikes.nodes.property_dtypes[y_axis]):
@@ -136,7 +140,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
     for population in population_names:
         spikes = spike_report[population]
         mask = report["population"] == population
-        if y_axis is None:
+        if y_axis == "node_id":
             data.loc[mask] = report.loc[mask, "ids"] + props["node_id_offset"]
         else:
             ids = report.loc[mask, "ids"].to_numpy()
@@ -155,7 +159,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
         ax.set_xlabel("Time [ms]")
         ax.tick_params(axis='y', which='both', length=0)
         ax.set_xlim(spike_report.time_start, spike_report.time_stop)
-        if y_axis is None:
+        if y_axis == "node_id":
             ax.set_ylim(0, props["node_id_offset"])
             ax.set_ylabel("nodes")
         else:
@@ -185,7 +189,8 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
 
     Args:
         use_frequency(bool): use inverse interspike interval times (Hz)
-        binsize(float): bin size (milliseconds or Hz)
+        binsize(None/int/float): bin size in milliseconds or Hz. If None is used the binning is
+            delegated to matplolib and is done automatically.
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca() is used).
 
     Returns:
@@ -196,6 +201,8 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
         then a default layout is set using pyplot.gca().
     """
     plt = _get_pyplot()
+    if binsize <= 0:
+        raise BluepySnapError("Invalid binsize = {}. Should be > 0.".format(binsize))
 
     gb = filtered_report.report.groupby(["ids", "population"])
     values = np.concatenate([np.diff(node_spikes.index.to_numpy()) for _, node_spikes in gb])
@@ -237,11 +244,11 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
         y_axis (str): Node enum that will determine the animation y_axis
         dt (int) : the time bin size of each frame in the video in ms
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca()
-        and plt.figure() are used).
+            and plt.figure() are used).
 
     Returns :
         (matplotlib.animation.FuncAnimation, matplotlib.Axis): the matplotlib animation object and
-        the corresponding axis.
+            the corresponding axis.
 
     Notes:
         From scripts:
@@ -326,7 +333,7 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
 
     Args:
         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
-        group. `mean` will plot the mean value of the node
+            group. `mean` will plot the mean value of the node
         ax: A plot axis object that will be updated
 
     Returns:
@@ -349,7 +356,7 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
 
     if plot_type == "mean":
         ax.plot(filtered_report.report.T.mean())
-    else:
+    elif plot_type == "all":
         levels = filtered_report.report.columns.levels
         slicer = tuple(slice(None) if i != len(levels) - 1 else slice(None, max_per_pop)
                        for i in range(len(levels)))
@@ -360,4 +367,6 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
         kept_ids = list(roundrobin(*indexes))[:max_per_pop]
         for _, row in data.loc[kept_ids].iterrows():
             ax.plot(row)
+    else:
+        raise BluepySnapError("Unknown plot_type {}. Should be 'mean or 'all'.".format(plot_type))
     return ax
