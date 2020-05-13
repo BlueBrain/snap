@@ -95,8 +95,8 @@ class PopulationSpikeReport(object):
 
         Args:
             group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
-            t_start (float): Include only spikes occurring after this time.
-            t_stop (float): Include only spikes occurring before this time.
+            t_start (float): Include only spikes occurring at or after this time.
+            t_stop (float): Include only spikes occurring at or before this time.
 
         Returns:
             pandas.Series: return spiking node_ids indexed by sorted spike time.
@@ -127,8 +127,8 @@ class FilteredSpikeReport(object):
         Args:
             spike_report (SpikeReport): The SpikeReport to filter.
             group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
-            t_start (float): Include only frames occurring after this time.
-            t_stop (float): Include only frames occurring before this time.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
 
         Returns:
             FilteredSpikeReport: A FilteredFrameReport object.
@@ -143,8 +143,8 @@ class FilteredSpikeReport(object):
         """Access to the report data.
 
         Returns:
-            pandas.DataFrame: A DataFrame containing the data from the report. Row's index is the
-            different timestamps and the columns are ids and population names.
+            pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
+                different timestamps and the columns are ids and population names.
         """
         res = pd.DataFrame()
         for population in self.spike_report.population_names:
@@ -250,8 +250,8 @@ class SpikeReport(object):
 
         Args:
             group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
-            t_start (float): Include only frames occurring after this time.
-            t_stop (float): Include only frames occurring before this time.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
 
         Returns:
             FilteredSpikeReport: A FilteredFrameReport object.

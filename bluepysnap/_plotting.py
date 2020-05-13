@@ -236,8 +236,8 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
     """Simple animation of simulation spikes.
 
-    This animations represents the spiking nodes during time in a frame corresponding to the
-    x, y or z axis of the circuit.
+    Each frame of the animation represents the spiking nodes during a period of dt ms seconds
+    in a coordinate system corresponding to the x, y or z axis of the circuit.
 
     Args:
         x_axis (str): Node enum that will determine the animation x_axis
@@ -329,7 +329,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
 
 
 def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
-    """Return potential plot displaying the voltage as a function of time from a frame report.
+    """Returns a plot displaying the voltage of a node or a compartment as a function of time.
 
     Args:
         plot_type (str): string either `all` or `mean`. `all` will plot the first 15 traces from the
@@ -342,7 +342,6 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
     # pylint: disable=too-many-locals
 
     plt = _get_pyplot()
-    max_per_pop = 15
 
     if ax is None:
         ax = plt.gca()
@@ -357,6 +356,7 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
     if plot_type == "mean":
         ax.plot(filtered_report.report.T.mean())
     elif plot_type == "all":
+        max_per_pop = 15
         levels = filtered_report.report.columns.levels
         slicer = tuple(slice(None) if i != len(levels) - 1 else slice(None, max_per_pop)
                        for i in range(len(levels)))
