@@ -79,9 +79,18 @@ The Blue Brain Project would like to thank `Dr Eilif Muller <https://github.com/
 License
 -------
 
-Blue Brain SNAP is licensed under the terms of the GNU Lesser General Public License version 3.
+Blue Brain SNAP is licensed under the terms of the GNU Lesser General Public License version 3,
+unless noted otherwise, e.g. external dependencies.
 Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER>`__ and
 `COPYING <https://github.com/BlueBrain/snap/blob/master/COPYING>`__ for details.
+
+Copyright (C) 2019-2020, Blue Brain Project/EPFL and contributors.
+
+This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License version 3 as published by the Free Software Foundation.
+
+This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 .. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master
    :target: https://travis-ci.com/BlueBrain/snap
