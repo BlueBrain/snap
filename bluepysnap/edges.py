@@ -34,6 +34,7 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 class EdgeStorage(object):
     """Edge storage access."""
+
     def __init__(self, config, circuit):
         """Initializes a EdgeStorage object from a edge config and a Circuit.
 
@@ -369,6 +370,7 @@ class EdgePopulation(object):
             if target_node_ids is None:
                 return 'source'
             else:
+                # Checking the indexing 'direction'. One direction has contiguous indices.
                 range_size_source = _estimate_range_size(
                     self._population.efferent_edges, source_node_ids
                 )
@@ -399,6 +401,7 @@ class EdgePopulation(object):
 
         for key_node_id in primary_node_ids:
             connected_node_ids = get_connected_node_ids(key_node_id, unique=False)
+            # [[secondary_node_id, count], ...]
             connected_node_ids_with_count = np.stack(
                 np.unique(connected_node_ids, return_counts=True)
             ).transpose()
@@ -410,7 +413,10 @@ class EdgePopulation(object):
                 connected_node_ids_with_count = connected_node_ids_with_count[mask]
             if shuffle:
                 np.random.shuffle(connected_node_ids_with_count)
+
             for conn_node_id, edge_count in connected_node_ids_with_count:
+                if unique_node_ids and (conn_node_id in secondary_node_ids_used):
+                    continue
                 if direction == 'target':
                     yield conn_node_id, key_node_id, edge_count
                 else:
@@ -428,7 +434,9 @@ class EdgePopulation(object):
         Args:
             source: source node group
             target: target node group
-            unique_node_ids: if True, no node ID would be used more than once
+            unique_node_ids: if True, no node ID will be used more than once as source or
+            target for edges. Careful, this flag does not provide unique (source, target)
+            pairs but unique node IDs.
             shuffle: if True, result order would be (somewhat) randomized
             return_edge_count: if True, edge count is added to yield result
             return_edge_ids: if True, edge ID list is added to yield result
