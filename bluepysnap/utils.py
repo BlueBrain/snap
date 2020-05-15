@@ -19,6 +19,7 @@
 
 import collections
 import json
+import itertools
 
 import numpy as np
 import six
@@ -44,6 +45,31 @@ def ensure_list(v):
         return list(v)
     else:
         return [v]
+
+
+def roundrobin(*iterables):
+    """Roundrobin function.
+
+    roundrobin('ABC', 'D', 'EF') --> A D E B F C.
+    From: https://docs.python.org/3.6/library/itertools.html
+    """
+    num_active = len(iterables)
+
+    # cannot use six.next. Need the function and not the call and cannot use ternary operator
+    if six.PY3:  # pragma: no cover
+        next_wrapper = lambda x: x.__next__
+    else:  # pragma: no cover
+        next_wrapper = lambda x: x.next
+
+    nexts = itertools.cycle(next_wrapper(iter(it)) for it in iterables)
+    while num_active:
+        try:
+            for next_ in nexts:
+                yield next_.__call__()
+        except StopIteration:
+            # Remove the iterator we just exhausted from the cycle.
+            num_active -= 1
+            nexts = itertools.cycle(itertools.islice(nexts, num_active))
 
 
 def fix_libsonata_empty_list():
@@ -103,6 +129,7 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     See Also:
         https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     """
+
     def normalize_quaternions(qs):
         """Normalize a bunch of quaternions along axis==1.
 

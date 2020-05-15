@@ -25,6 +25,7 @@ import numpy as np
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import fix_libsonata_empty_list
+import bluepysnap._plotting
 
 
 def _get_reader(spike_report):
@@ -93,21 +94,18 @@ class PopulationSpikeReport(object):
         """Fetch spikes from the report.
 
         Args:
-            group (int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
-            t_start (float): Include only spikes occurring after this time.
-            t_stop (float): Include only spikes occurring before this time.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only spikes occurring at or after this time.
+            t_stop (float): Include only spikes occurring at or before this time.
 
         Returns:
-            pandas.Series/np.array:
-                If single node ID is passed as ``group`` returns a np.array of spiking times.
-                Otherwise return spiking node_ids indexed by sorted spike time.
+            pandas.Series: return spiking node_ids indexed by sorted spike time.
         """
         node_ids = [] if group is None else self._resolve_nodes(group).tolist()
 
         t_start = -1 if t_start is None else t_start
         t_stop = -1 if t_stop is None else t_stop
-        series_name = "{}_node_ids".format(self._population_name)
-
+        series_name = "ids"
         res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
@@ -115,9 +113,58 @@ class PopulationSpikeReport(object):
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        if np.issubdtype(type(group), np.integer):
-            return res.index.to_numpy()
         return res
+
+
+class FilteredSpikeReport(object):
+    """Access to filtered SpikeReport data."""
+    def __init__(self, spike_report, group=None, t_start=None, t_stop=None):
+        """Initialize a FilteredSpikeReport.
+
+        A FilteredSpikeReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            spike_report (SpikeReport): The SpikeReport to filter.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
+
+        Returns:
+            FilteredSpikeReport: A FilteredFrameReport object.
+        """
+        self.spike_report = spike_report
+        self.group = group
+        self.t_start = t_start
+        self.t_stop = t_stop
+
+    @cached_property
+    def report(self):
+        """Access to the report data.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
+                different timestamps and the columns are ids and population names.
+        """
+        res = pd.DataFrame()
+        for population in self.spike_report.population_names:
+            spikes = self.spike_report[population]
+            try:
+                ids = spikes.nodes.ids(group=self.group)
+            except BluepySnapError:
+                continue
+            data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
+            data["population"] = np.full(len(data), population)
+            res = pd.concat([res, data])
+        if not res.empty:
+            res["population"] = res["population"].astype("category")
+        return res.sort_index()
+
+    # pylint: disable=protected-access
+    raster = bluepysnap._plotting.spike_raster
+    firing_rate_histogram = bluepysnap._plotting.spikes_firing_rate_histogram
+    isi = bluepysnap._plotting.spikes_isi
+    firing_animation = bluepysnap._plotting.spikes_firing_animation
 
 
 class SpikeReport(object):
@@ -180,7 +227,7 @@ class SpikeReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return self._spike_reader.get_populations_names()
+        return sorted(self._spike_reader.get_populations_names())
 
     @cached_property
     def _population(self):
@@ -194,3 +241,19 @@ class SpikeReport(object):
     def __iter__(self):
         """Allows iteration over the different PopulationSpikeReports."""
         return iter(self._population)
+
+    def filter(self, group=None, t_start=None, t_stop=None):
+        """Returns a FilteredSpikeReport.
+
+        A FilteredSpikeReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
+
+        Returns:
+            FilteredSpikeReport: A FilteredFrameReport object.
+        """
+        return FilteredSpikeReport(self, group, t_start, t_stop)

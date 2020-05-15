@@ -157,6 +157,26 @@ class TestEdgePopulation(object):
         with pytest.raises(BluepySnapError):
             self.test_obj._nodes('no-such-population')
 
+    def test_property_dtypes(self):
+        from numpy import dtype
+        expected = pd.Series(
+            data=[dtype('float32'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
+                'float32'), dtype('float64'), dtype('float32'), dtype('float64'), dtype(
+                'int64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype(
+                'float64'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
+                'float32'), dtype('float32'), dtype('float64'), dtype('float64')]
+            , index=['syn_weight', '@dynamics:param1', 'afferent_surface_y',
+                     'afferent_surface_z', 'conductance', 'efferent_center_x',
+                     'delay', 'afferent_center_z', 'efferent_section_id',
+                     'afferent_section_id', 'efferent_center_y',
+                     'afferent_center_x', 'efferent_surface_z',
+                     'afferent_center_y', 'afferent_surface_x',
+                     'efferent_surface_x', 'afferent_section_pos',
+                     'efferent_section_pos', 'efferent_surface_y',
+                     'efferent_center_z']).sort_index()
+
+        pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
+
     def test_properties_1(self):
         properties = [
             Synapse.PRE_GID,

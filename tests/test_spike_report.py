@@ -14,7 +14,7 @@ from bluepysnap.bbp import Cell
 from utils import TEST_DATA_DIR
 
 
-def _create_series(node_ids, index, name="default_node_ids"):
+def _create_series(node_ids, index, name="ids"):
     def _get_index(ids):
         return pd.Index(ids, name="times")
     return pd.Series(node_ids, index=_get_index(index), name=name)
@@ -75,6 +75,27 @@ class TestSpikeReport:
         for spikes in self.test_obj:
             isinstance(spikes, test_module.PopulationSpikeReport)
 
+    def test_filter(self):
+        filtered = self.test_obj.filter(group=None, t_start=0.3, t_stop=0.7)
+        assert filtered.spike_report == self.test_obj
+        assert filtered.t_start == 0.3
+        assert filtered.t_stop == 0.7
+        assert filtered.group is None
+        assert isinstance(filtered, test_module.FilteredSpikeReport)
+        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.3, 0.7, 0.7]))
+        assert filtered.report.columns.tolist() == ["ids", "population"]
+
+        filtered = self.test_obj.filter(group={"other1": ["B"]}, t_start=0.3, t_stop=0.7)
+        npt.assert_allclose(filtered.report.index, np.array([0.3]))
+        assert filtered.report["population"].unique() == ["default2"]
+
+        filtered = self.test_obj.filter(group={"population": "default2"})
+        assert filtered.report["population"].unique() == ["default2"]
+        npt.assert_array_equal(sorted(filtered.report["ids"].unique()), [0, 1, 2])
+
+        filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
+        assert len(filtered.report) == 0
+
 
 class TestPopulationSpikeReport:
     def setup(self):
@@ -108,11 +129,11 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(self.test_obj.get([]), _create_series([], []))
         pdt.assert_series_equal(self.test_obj.get(np.array([])), _create_series([], []))
         pdt.assert_series_equal(self.test_obj.get(()), _create_series([], []))
-        npt.assert_allclose(self.test_obj.get(2), np.array([0.1, 0.7]))
-        npt.assert_allclose(self.test_obj.get(0, t_start=1.), [1.3])
-        npt.assert_allclose(self.test_obj.get(0, t_stop=1.), [0.2])
-        npt.assert_allclose(self.test_obj.get(0, t_start=1., t_stop=12), [1.3])
-        npt.assert_allclose(self.test_obj.get(0, t_start=0.1, t_stop=12), [0.2, 1.3])
+        pdt.assert_series_equal(self.test_obj.get(2), _create_series([2, 2], [0.1, 0.7]))
+        pdt.assert_series_equal(self.test_obj.get(0, t_start=1.), _create_series([0], [1.3]))
+        pdt.assert_series_equal(self.test_obj.get(0, t_stop=1.), _create_series([0], [0.2]))
+        pdt.assert_series_equal(self.test_obj.get(0, t_start=1., t_stop=12), _create_series([0], [1.3]))
+        pdt.assert_series_equal(self.test_obj.get(0, t_start=0.1, t_stop=12), _create_series([0, 0], [0.2, 1.3]))
 
         pdt.assert_series_equal(self.test_obj.get([2, 0]),
                                 _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]))
@@ -156,11 +177,11 @@ class TestPopulationSpikeReport:
         assert test_obj._sorted_by == "by_id"
         pdt.assert_series_equal(test_obj.get([2, 0]),
                                 _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3],
-                                               name="default2_node_ids"))
+                                               name="ids"))
 
         pdt.assert_series_equal(test_obj.get([0, 2]),
                                 _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3],
-                                               name="default2_node_ids"))
+                                               name="ids"))
 
     @patch(test_module.__name__ + '.PopulationSpikeReport._resolve_nodes',
            return_value=np.asarray([4]))

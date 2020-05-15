@@ -149,6 +149,15 @@ class EdgePopulation(object):
         """Set of available edge properties."""
         return self._property_names | self._dynamics_params_names
 
+    @cached_property
+    def property_dtypes(self):
+        """Returns the dtypes of all the properties.
+
+        Returns:
+            pandas.Series: series indexed by field name with the corresponding dtype as value.
+        """
+        return self.properties([0], list(self.property_names)).dtypes.sort_index()
+
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the EdgePopulation.
 

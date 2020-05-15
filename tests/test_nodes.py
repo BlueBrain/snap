@@ -112,6 +112,20 @@ class TestNodePopulation:
         assert test_obj_library.property_values("categorical") == {"A", "B", "C"}
         assert test_obj_library.property_values("categorical", is_present=True) == {"A", "B"}
 
+    def test_property_dtypes(self):
+        from numpy import dtype
+
+        expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
+                                   dtype('float64'), dtype('float64'), dtype('float64'),
+                                   dtype('float64'),
+                                   dtype('float64'), dtype('float64'), dtype('float64')],
+                             index=['layer', 'model_template', 'model_type', 'morphology', 'mtype',
+                                    'rotation_angle_xaxis', 'rotation_angle_yaxis',
+                                    'rotation_angle_zaxis',
+                                    'x', 'y', 'z', '@dynamics:holding_current']).sort_index()
+
+        pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
+
     def test_container_properties(self):
         expected = sorted(['X', 'Y', 'Z', 'MORPHOLOGY', 'HOLDING_CURRENT', 'ROTATION_ANGLE_X',
                            'ROTATION_ANGLE_Y', 'ROTATION_ANGLE_Z', 'MTYPE', 'LAYER',
@@ -167,6 +181,12 @@ class TestNodePopulation:
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
         npt.assert_equal(_call({Cell.X: (100, 203)}), [0, 1])
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y', Cell.MORPHOLOGY: "morph-B"}), [1])
+
+        npt.assert_equal(_call({"node_id": 1}), [1])
+        npt.assert_equal(_call({"node_id": [1]}), [1])
+        npt.assert_equal(_call({"node_id": [1, 2]}), [1, 2])
+        npt.assert_equal(_call({"node_id": [1, 2, 42]}), [1, 2])
+
         # same query with a $and operator
         npt.assert_equal(_call({"$and": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         npt.assert_equal(_call({Cell.MORPHOLOGY: ['morph-A', 'morph-B']}), [0, 1])

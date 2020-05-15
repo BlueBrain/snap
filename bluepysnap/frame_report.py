@@ -23,8 +23,9 @@ import numpy as np
 import pandas as pd
 from libsonata import ElementReportReader
 
+import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import fix_libsonata_empty_list
+from bluepysnap.utils import fix_libsonata_empty_list, ensure_list
 
 L = logging.getLogger(__name__)
 
@@ -90,9 +91,9 @@ class PopulationFrameReport(object):
         """Fetch data from the report.
 
         Args:
-            group (int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
-            t_start (float): Include only frames occurring after this time.
-            t_stop (float): Include only frames occurring before this time.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
 
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.
@@ -109,6 +110,58 @@ class PopulationFrameReport(object):
         res.columns = self._wrap_columns(res.columns)
         res.sort_index(inplace=True)
         return res
+
+
+class FilteredFrameReport(object):
+    """Access to filtered FrameReport data."""
+    def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
+        """Initialize a FilteredFrameReport.
+
+        A FilteredFrameReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            frame_report (FrameReport): The FrameReport to filter.
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
+
+        Returns:
+            FilteredFrameReport: A FilteredFrameReport object.
+        """
+        self.frame_report = frame_report
+        self.group = group
+        self.t_start = t_start
+        self.t_stop = t_stop
+
+    @cached_property
+    def report(self):
+        """Access to the report data.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
+                different timestamps and the column's MultiIndex are :
+                - (population_name, node_id, compartment id) for the CompartmentReport
+                - (population_name, node_id) for the SomaReport
+        """
+        res = pd.DataFrame()
+        for population in self.frame_report.population_names:
+            frames = self.frame_report[population]
+            try:
+                ids = frames.nodes.ids(group=self.group)
+            except BluepySnapError:
+                continue
+            data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
+            if data.empty:
+                continue
+            new_index = tuple(tuple([population] + ensure_list(x)) for x in data.columns)
+            data.columns = pd.MultiIndex.from_tuples(new_index)
+            # need to do this in order to preserve MultiIndex for columns
+            res = data if res.empty else data.join(res, how='outer')
+        return res.sort_index().sort_index(axis=1)
+
+    # pylint: disable=protected-access
+    trace = bluepysnap._plotting.frame_trace
 
 
 class FrameReport(object):
@@ -184,7 +237,7 @@ class FrameReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return self._frame_reader.get_populations_names()
+        return sorted(self._frame_reader.get_populations_names())
 
     @cached_property
     def _population_report(self):
@@ -198,6 +251,22 @@ class FrameReport(object):
     def __iter__(self):
         """Allows iteration over the different PopulationFrameReports."""
         return iter(self._population_report)
+
+    def filter(self, group=None, t_start=None, t_stop=None):
+        """Returns a FilteredFrameReport.
+
+        A FilteredFrameReport is a lazy and cached object which contains the filtered data
+        from all the populations of a report.
+
+        Args:
+            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            t_start (float): Include only frames occurring at or after this time.
+            t_stop (float): Include only frames occurring at or before this time.
+
+        Returns:
+            FilteredFrameReport: A FilteredFrameReport object.
+        """
+        return FilteredFrameReport(self, group, t_start, t_stop)
 
 
 class PopulationCompartmentReport(PopulationFrameReport):

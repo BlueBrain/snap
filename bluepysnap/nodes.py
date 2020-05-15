@@ -204,6 +204,15 @@ class NodePopulation(object):
             return set(res.cat.categories)
         return set(res.unique())
 
+    @cached_property
+    def property_dtypes(self):
+        """Returns the dtypes of all the properties.
+
+        Returns:
+            pandas.Series: series indexed by field name with the corresponding dtype as value.
+        """
+        return self._data.dtypes.sort_index()
+
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:
@@ -239,7 +248,8 @@ class NodePopulation(object):
         if node_ids is None:
             return np.full(len(self._data), fill_value=True)
         mask = np.full(len(self._data), fill_value=False)
-        mask[node_ids] = True
+        valid_node_ids = pd.Index(utils.ensure_list(node_ids)).intersection(self._data.index)
+        mask[valid_node_ids] = True
         return mask
 
     def _node_population_mask(self, queries):
