@@ -154,8 +154,7 @@ class FilteredFrameReport(object):
             data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
             if data.empty:
                 continue
-            population = [population]
-            new_index = tuple(tuple(population + ensure_list(x)) for x in data.columns)
+            new_index = tuple(tuple([population] + ensure_list(x)) for x in data.columns)
             data.columns = pd.MultiIndex.from_tuples(new_index)
             # need to do this in order to preserve MultiIndex for columns
             res = data if res.empty else data.join(res, how='outer')

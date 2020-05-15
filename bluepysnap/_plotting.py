@@ -58,7 +58,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     """
     # pylint: disable=too-many-locals
     plt = _get_pyplot()
-    if time_binsize <= 0:
+    if time_binsize is not None and time_binsize <= 0:
         raise BluepySnapError("Invalid time_binsize = {}. Should be > 0.".format(time_binsize))
 
     spike_report = filtered_report.spike_report
@@ -86,6 +86,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
         ax.set_xlabel('Time [ms]')
         ax.set_ylabel('PSTH [Hz]')
 
+    # use the middle of the bins instead of the start of the bin
     ax.plot(0.5 * (bin_edges[1:] + bin_edges[:-1]), freq, label="PSTH", drawstyle='steps-mid')
     return ax
 
@@ -201,7 +202,7 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
         then a default layout is set using pyplot.gca().
     """
     plt = _get_pyplot()
-    if binsize <= 0:
+    if binsize is not None and binsize <= 0:
         raise BluepySnapError("Invalid binsize = {}. Should be > 0.".format(binsize))
 
     gb = filtered_report.report.groupby(["ids", "population"])
