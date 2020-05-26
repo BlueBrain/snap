@@ -53,7 +53,7 @@ setup(
         'pathlib2>=2.3',
     ],
     extras_require={
-        'docs': ['sphinx<3.0.0', 'sphinx-bluebrain-theme'],
+        'docs': ['sphinx', 'sphinx-bluebrain-theme'],
         'plots': ["matplotlib>=2.2.5"],
     },
     packages=find_packages(),
