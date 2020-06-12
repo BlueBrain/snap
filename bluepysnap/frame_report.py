@@ -103,12 +103,13 @@ class PopulationFrameReport(object):
         t_stop = -1 if t_stop is None else t_stop
 
         view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
-        if not view.data:
+        if len(view.ids) == 0:
             return pd.DataFrame()
-        res = pd.DataFrame(data=view.data, index=view.index)
+        res = pd.DataFrame(data=view.data,
+                           columns=pd.MultiIndex.from_tuples(view.ids),
+                           index=view.times).sort_index(axis=1)
         # rename from multi index to index cannot be achieved easily through df.rename
         res.columns = self._wrap_columns(res.columns)
-        res.sort_index(inplace=True)
         return res
 
 

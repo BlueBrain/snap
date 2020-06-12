@@ -44,7 +44,7 @@ setup(
         'cached_property>=1.0',
         'functools32;python_version<"3.2"',
         'h5py>=2.2',
-        'libsonata>=0.1.3',
+        'libsonata>=0.1.4',
         'neurom>=1.3',
         'numpy>=1.8',
         'pandas>=0.17',
