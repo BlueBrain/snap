@@ -102,7 +102,10 @@ class TestCompartmentReport:
         assert filtered.report.columns.tolist() == [("default2", 1, 0), ("default2", 1, 1)]
 
         filtered = self.test_obj.filter(group={"population": "default2"}, t_start=0.3, t_stop=0.6)
-        assert filtered.report.columns.tolist() == [("default2", 0, 0), ("default2", 0, 1), ("default2", 1, 0), ("default2", 1, 1), ("default2", 2, 0), ("default2", 2, 1)]
+        assert filtered.report.columns.tolist() == [("default2", 0, 0), ("default2", 0, 1),
+                                                    ("default2", 1, 0), ("default2", 1, 1),
+                                                    ("default2", 2, 0), ("default2", 2, 1),
+                                                    ("default2", 2, 1)]
 
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
         pdt.assert_frame_equal(filtered.report, pd.DataFrame())
@@ -163,11 +166,9 @@ class TestPopulationCompartmentReport:
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
-        data = np.array([np.arange(6) + j * 0.1 for j in range(10)])
-
-        data = {(0, 0): data[:, 0], (0, 1): data[:, 1], (1, 0): data[:, 2], (1, 1): data[:, 3],
-                (2, 0): data[:, 4], (2, 1): data[:, 5]}
-        self.df = pd.DataFrame(data=data, index=timestamps)
+        data = np.array([np.arange(7) + j * 0.1 for j in range(10)])
+        ids = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (2, 1)]
+        self.df = pd.DataFrame(data=data, columns=pd.MultiIndex.from_tuples(ids), index=timestamps)
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
