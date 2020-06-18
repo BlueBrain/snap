@@ -169,9 +169,14 @@ def _find_nodes_population(node_population_name, nodes):
     return None
 
 
-def _get_group_name(group):
-    """Gets group name of h5 group."""
-    return Path(group.parent.name).name
+def _get_group_name(group, parents=1):
+    """Gets group name of h5 group.
+
+    Args:
+        group (h5py.Group): nodes group in nodes .h5 file
+        parents (int): number of extra parents needed
+    """
+    return Path(*Path(group.name).parts[-(parents+1):])
 
 
 def _get_h5_data(h5, path):
@@ -408,6 +413,52 @@ def _check_edges_indices(population):
     return errors
 
 
+def _get_edge_population_groups(population):
+    """Get groups from a edge population."""
+    return [name for name in population
+            if name != "indices" and isinstance(population[name], h5py.Group)]
+
+
+def _check_edge_group_id(population):
+    errors = []
+    groups = np.array(_get_edge_population_groups(population))
+    group_datasets = ["edge_group_id",  "edge_group_index"]
+    missing_datasets = set(group_datasets) - set(population)
+    population_name = _get_group_name(population, parents=0)
+    if len(groups) > 1:
+        errors.append(BbpError(Error.WARNING, 'Population {} of {} have multiple groups. '
+                                              'Cannot be read via bluepysnap or libsonata'.
+                               format(population_name, population.file.filename, missing_datasets)))
+    if len(missing_datasets) == 2 and len(groups) == 1:
+        # no "edge_group_id", "edge_group_index" but only one group
+        return errors
+    elif len(missing_datasets) == 1:
+        return errors + [fatal('Population {} of {} misses dataset {}'.
+                                   format(population_name, population.file.filename, missing_datasets))]
+
+    edge_group_ids = population["edge_group_id"][:]
+    edge_group_index = population["edge_group_index"][:]
+
+    if len(edge_group_ids) != len(edge_group_index):
+        return errors + [fatal('Population {} of {} "edge_group_ids" and "edge_'
+                               'group_index" of different sizes'.
+                               format(population_name, population.file.filename))]
+
+    group_ids = np.unique(edge_group_ids)
+    missing_groups = set(group_ids) - set(groups.astype(int))
+
+    if missing_groups:
+        return errors + [fatal('Population {} of {} misses group(s): {}'.
+                               format(population_name, population.file.filename, missing_groups))]
+    for group_id in group_ids:
+        group = population[str(group_id)]
+        max_edge_id = edge_group_index[edge_group_ids == int(group_id)].max()
+        if group[list(group)[0]].shape[0] < max_edge_id:
+            errors.append(fatal('Group {} in file {} should have ids up to {}'.
+                                format(_get_group_name(group, parents=1), population.file.filename, max_edge_id)))
+    return errors
+
+
 def _check_edges_population(edges_dict, nodes):
     """Validates edges population.
 
@@ -418,8 +469,7 @@ def _check_edges_population(edges_dict, nodes):
     Returns:
         list: List of errors, empty if no errors
     """
-    POPULATION_DATASET_NAMES = [
-        'edge_type_id', 'source_node_id', 'target_node_id', 'edge_group_id', 'edge_group_index']
+
     errors = []
     edges_file = edges_dict.get('edges_file')
     with h5py.File(edges_file, 'r') as h5f:
@@ -427,24 +477,36 @@ def _check_edges_population(edges_dict, nodes):
         if not edges or len(edges) == 0:
             errors.append(fatal('No "edges" in {}.'.format(edges_file)))
             return errors
+
         for population_name in edges:
+            required_datasets = ['edge_type_id', 'source_node_id', 'target_node_id']
+
             population_path = '/edges/' + population_name
             population = h5f[population_path]
+            groups = _get_edge_population_groups(population)
+
+            if len(groups) != 1:
+                required_datasets = required_datasets + ['edge_group_id', 'edge_group_index']
+
             children_names = set(population.keys())
-            missing_datasets = sorted(set(POPULATION_DATASET_NAMES) - children_names)
+            missing_datasets = sorted(set(required_datasets) - children_names)
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, edges_file, missing_datasets)))
                 return errors
-            for name in children_names - {'indices'}:
+
+            errors += _check_edge_group_id(population)
+            for name in groups:
                 if isinstance(population[name], h5py.Group):
                     errors += _check_edges_group_bbp(population[name])
+
             if 'source_node_id' in children_names:
                 errors += _check_edges_node_ids(population['source_node_id'], nodes)
             if 'target_node_id' in children_names:
                 errors += _check_edges_node_ids(population['target_node_id'], nodes)
             if 'indices' in children_names:
                 errors += _check_edges_indices(population)
+
     return errors
 
 
