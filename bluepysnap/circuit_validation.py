@@ -169,14 +169,14 @@ def _find_nodes_population(node_population_name, nodes):
     return None
 
 
-def _get_group_name(group, parents=1):
+def _get_group_name(group, parents=0):
     """Gets group name of h5 group.
 
     Args:
         group (h5py.Group): nodes group in nodes .h5 file
         parents (int): number of extra parents needed
     """
-    return Path(*Path(group.name).parts[-(parents+1):])
+    return Path(*Path(group.name).parts[-(parents + 1):])
 
 
 def _get_h5_data(h5, path):
@@ -224,7 +224,7 @@ def _check_bio_nodes_group(group, config):
                                        format(group_name, group.file.filename)))
 
     errors = []
-    group_name = _get_group_name(group)
+    group_name = _get_group_name(group, parents=1)
     missing_fields = sorted({'morphology', 'x', 'y', 'z'} - set(group))
     if missing_fields:
         errors.append(fatal('Group {} of {} misses biophysical fields: {}'.
@@ -262,7 +262,8 @@ def _check_nodes_group(group, config):
     missing_fields = sorted(set(REQUIRED_GROUP_NAMES) - set(group))
     if missing_fields:
         return [fatal('Group {} of {} misses required fields: {}'
-                      .format(_get_group_name(group), group.file.filename, missing_fields))]
+                      .format(_get_group_name(group, parents=1), group.file.filename,
+                              missing_fields))]
     elif 'biophysical' in group['model_type'][:]:
         return _check_bio_nodes_group(group, config)
     return []
@@ -320,7 +321,8 @@ def _check_edges_group_bbp(group):
     missing_fields = sorted(set(GROUP_NAMES) - set(group))
     if missing_fields:
         return [BbpError(Error.WARNING, 'Group {} of {} misses fields: {}'.
-                         format(_get_group_name(group), group.file.filename, missing_fields))]
+                         format(_get_group_name(group, parents=1), group.file.filename,
+                                missing_fields))]
     return []
 
 
@@ -422,19 +424,19 @@ def _get_edge_population_groups(population):
 def _check_edge_group_id(population):
     errors = []
     groups = np.array(_get_edge_population_groups(population))
-    group_datasets = ["edge_group_id",  "edge_group_index"]
+    group_datasets = ["edge_group_id", "edge_group_index"]
     missing_datasets = set(group_datasets) - set(population)
-    population_name = _get_group_name(population, parents=0)
+    population_name = _get_group_name(population)
     if len(groups) > 1:
         errors.append(BbpError(Error.WARNING, 'Population {} of {} have multiple groups. '
                                               'Cannot be read via bluepysnap or libsonata'.
-                               format(population_name, population.file.filename, missing_datasets)))
+                               format(population_name, population.file.filename)))
     if len(missing_datasets) == 2 and len(groups) == 1:
         # no "edge_group_id", "edge_group_index" but only one group
         return errors
     elif len(missing_datasets) == 1:
         return errors + [fatal('Population {} of {} misses dataset {}'.
-                                   format(population_name, population.file.filename, missing_datasets))]
+                               format(population_name, population.file.filename, missing_datasets))]
 
     edge_group_ids = population["edge_group_id"][:]
     edge_group_index = population["edge_group_index"][:]
@@ -455,7 +457,8 @@ def _check_edge_group_id(population):
         max_edge_id = edge_group_index[edge_group_ids == int(group_id)].max()
         if group[list(group)[0]].shape[0] < max_edge_id:
             errors.append(fatal('Group {} in file {} should have ids up to {}'.
-                                format(_get_group_name(group, parents=1), population.file.filename, max_edge_id)))
+                                format(_get_group_name(group, parents=1), population.file.filename,
+                                       max_edge_id)))
     return errors
 
 
@@ -469,7 +472,6 @@ def _check_edges_population(edges_dict, nodes):
     Returns:
         list: List of errors, empty if no errors
     """
-
     errors = []
     edges_file = edges_dict.get('edges_file')
     with h5py.File(edges_file, 'r') as h5f:
