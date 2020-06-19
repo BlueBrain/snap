@@ -230,7 +230,8 @@ def test_no_rotation_bbp_node_group_datasets():
         errors = test_module.validate(str(config_copy_path), bbp_check=True)
         assert errors == [
             Error(Error.WARNING, 'Group default/0 of {} has no rotation fields'.format(nodes_file)),
-            BbpError(Error.WARNING, 'Group default/0 of {} has no rotation fields'.format(nodes_file))
+            BbpError(Error.WARNING,
+                     'Group default/0 of {} has no rotation fields'.format(nodes_file))
         ]
 
 
@@ -255,7 +256,8 @@ def test_no_morph_files():
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(
             Error.WARNING,
-            'missing 1 files in group morphology: default/0[{}]:\n\tnoname.swc\n'.format(nodes_file))]
+            'missing 1 files in group morphology: default/0[{}]:\n\tnoname.swc\n'.format(
+                nodes_file))]
 
         with h5py.File(nodes_file, 'r+') as h5f:
             morph = h5f['nodes/default/0/morphology']
@@ -355,6 +357,7 @@ def test_edge_population_missing_edge_group_id_index_one_group():
         errors = test_module.validate(str(config_copy_path))
         assert errors == []
 
+
 def test_edge_population_edge_group_different_length():
     with _copy_circuit() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / 'edges.h5'
@@ -362,7 +365,8 @@ def test_edge_population_edge_group_different_length():
             del h5f['edges/default/edge_group_index']
             h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 3, 4])
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(Error.FATAL, 'Population default of {} "edge_group_ids" and "edge_group_index" of different sizes'.
+        assert errors == [Error(Error.FATAL,
+                                'Population default of {} "edge_group_ids" and "edge_group_index" of different sizes'.
                                 format(edges_file))]
 
 
@@ -374,9 +378,23 @@ def test_edge_population_wrong_group_id():
             h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 0])
         errors = test_module.validate(str(config_copy_path))
         print('Population default of {} misses group(s): {}'.
-                                format(edges_file, {1}))
+              format(edges_file, {1}))
         assert errors == [Error(Error.FATAL, 'Population default of {} misses group(s): {}'.
                                 format(edges_file, {1}))]
+
+
+def test_edge_population_ok_group_index():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+            del h5f['edges/default/edge_group_index']
+            h5f.create_group('edges/default/1')
+            h5f.create_dataset('edges/default/1/test', data=[1, 1])
+            h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 1])
+            h5f.create_dataset('edges/default/edge_group_index', data=[0, 0, 1, 1])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
 
 
 def test_edge_population_wrong_group_index():
@@ -385,6 +403,21 @@ def test_edge_population_wrong_group_index():
         with h5py.File(edges_file, 'r+') as h5f:
             del h5f['edges/default/edge_group_index']
             h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 12])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Group default/0 in file {} should have ids up to {}'.
+                                format(edges_file, 12))]
+
+
+def test_edge_population_wrong_group_index_multi_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+            del h5f['edges/default/edge_group_index']
+            h5f.create_group('edges/default/1')
+            h5f.create_dataset('edges/default/1/test', data=[1, 1])
+            h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 1])
+            h5f.create_dataset('edges/default/edge_group_index', data=[0, 0, 12, 1])
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL, 'Group default/0 in file {} should have ids up to {}'.
                                 format(edges_file, 12))]

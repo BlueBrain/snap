@@ -432,7 +432,7 @@ def _check_edge_group_id(population):
                                               'Cannot be read via bluepysnap or libsonata'.
                                format(population_name, population.file.filename)))
     if len(missing_datasets) == 2 and len(groups) == 1:
-        # no "edge_group_id", "edge_group_index" but only one group
+        # no "edge_group_id", "edge_group_index" and only one group --> can use implicit ids
         return errors
     elif len(missing_datasets) == 1:
         return errors + [fatal('Population {} of {} misses dataset {}'.
