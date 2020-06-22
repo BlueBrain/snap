@@ -427,6 +427,8 @@ def _check_edge_group_id(population):
     group_datasets = ["edge_group_id", "edge_group_index"]
     missing_datasets = set(group_datasets) - set(population)
     population_name = _get_group_name(population)
+    if len(groups) == 0:
+        return errors
     if len(groups) > 1:
         errors.append(BbpError(Error.WARNING, 'Population {} of {} have multiple groups. '
                                               'Cannot be read via bluepysnap or libsonata'.
@@ -442,7 +444,7 @@ def _check_edge_group_id(population):
     edge_group_index = population["edge_group_index"][:]
 
     if len(edge_group_ids) != len(edge_group_index):
-        return errors + [fatal('Population {} of {} "edge_group_ids" and "edge_'
+        return errors + [fatal('Population {} of {} "edge_group_id" and "edge_'
                                'group_index" of different sizes'.
                                format(population_name, population.file.filename))]
 
@@ -487,7 +489,7 @@ def _check_edges_population(edges_dict, nodes):
             population = h5f[population_path]
             groups = _get_edge_population_groups(population)
 
-            if len(groups) != 1:
+            if len(groups) > 1:
                 required_datasets = required_datasets + ['edge_group_id', 'edge_group_index']
 
             children_names = set(population.keys())

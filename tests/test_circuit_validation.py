@@ -290,6 +290,27 @@ def test_no_edges_h5():
         assert errors == [Error(Error.FATAL, 'No "edges" in {}.'.format(edges_file))]
 
 
+def test_no_edge_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
+def test_no_edge_group_no_optional_datasets():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        optional_datasets = sorted(['edge_group_id', 'edge_group_index'])
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0']
+            for ds in optional_datasets:
+                del h5f['edges/default/' + ds]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
 def test_no_required_edge_population_datasets_one_group():
     required_datasets = sorted([
         'edge_type_id', 'source_node_id', 'target_node_id'])
@@ -301,6 +322,17 @@ def test_no_required_edge_population_datasets_one_group():
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
                                 format(edges_file, required_datasets))]
+
+
+def test_missing_optional_edge_population_datasets_one_group():
+    optional_datasets = sorted(['edge_group_id', 'edge_group_index'])
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            for ds in optional_datasets:
+                del h5f['edges/default/' + ds]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
 
 
 def test_no_required_edge_population_datasets_multiple_groups():
@@ -366,7 +398,7 @@ def test_edge_population_edge_group_different_length():
             h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 3, 4])
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL,
-                                'Population default of {} "edge_group_ids" and "edge_group_index" of different sizes'.
+                                'Population default of {} "edge_group_id" and "edge_group_index" of different sizes'.
                                 format(edges_file))]
 
 
@@ -377,8 +409,6 @@ def test_edge_population_wrong_group_id():
             del h5f['edges/default/edge_group_id']
             h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 0])
         errors = test_module.validate(str(config_copy_path))
-        print('Population default of {} misses group(s): {}'.
-              format(edges_file, {1}))
         assert errors == [Error(Error.FATAL, 'Population default of {} misses group(s): {}'.
                                 format(edges_file, {1}))]
 
