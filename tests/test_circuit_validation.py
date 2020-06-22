@@ -181,7 +181,7 @@ def test_no_required_node_group_datasets():
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL,
-                                'Group default of {} misses required fields: {}'
+                                'Group default/0 of {} misses required fields: {}'
                                 .format(nodes_file, required_datasets))]
 
 
@@ -203,7 +203,7 @@ def test_no_required_bio_node_group_datasets():
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL,
-                                'Group default of {} misses biophysical fields: {}'
+                                'Group default/0 of {} misses biophysical fields: {}'
                                 .format(nodes_file, required_datasets))]
 
 
@@ -216,7 +216,7 @@ def test_no_rotation_bio_node_group_datasets():
                 del h5f['nodes/default/0/' + ds]
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.WARNING,
-                                'Group default of {} has no rotation fields'.format(nodes_file))]
+                                'Group default/0 of {} has no rotation fields'.format(nodes_file))]
 
 
 def test_no_rotation_bbp_node_group_datasets():
@@ -229,8 +229,9 @@ def test_no_rotation_bbp_node_group_datasets():
             h5f['nodes/default/0/orientation_w'] = 0
         errors = test_module.validate(str(config_copy_path), bbp_check=True)
         assert errors == [
-            Error(Error.WARNING, 'Group default of {} has no rotation fields'.format(nodes_file)),
-            BbpError(Error.WARNING, 'Group default of {} has no rotation fields'.format(nodes_file))
+            Error(Error.WARNING, 'Group default/0 of {} has no rotation fields'.format(nodes_file)),
+            BbpError(Error.WARNING,
+                     'Group default/0 of {} has no rotation fields'.format(nodes_file))
         ]
 
 
@@ -255,7 +256,8 @@ def test_no_morph_files():
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(
             Error.WARNING,
-            'missing 1 files in group morphology: default[{}]:\n\tnoname.swc\n'.format(nodes_file))]
+            'missing 1 files in group morphology: default/0[{}]:\n\tnoname.swc\n'.format(
+                nodes_file))]
 
         with h5py.File(nodes_file, 'r+') as h5f:
             morph = h5f['nodes/default/0/morphology']
@@ -263,7 +265,7 @@ def test_no_morph_files():
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(
             Error.WARNING,
-            'missing 3 files in group morphology: default[{}]:\n\tnoname0.swc\n\t...\n'.format(
+            'missing 3 files in group morphology: default/0[{}]:\n\tnoname0.swc\n\t...\n'.format(
                 nodes_file))]
 
 
@@ -275,7 +277,7 @@ def test_no_template_files():
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
             Error(Error.WARNING,
-                  'missing 1 files in group model_template: default[{}]:\n\tnoname.hoc\n'
+                  'missing 1 files in group model_template: default/0[{}]:\n\tnoname.hoc\n'
                   .format(nodes_file))]
 
 
@@ -288,9 +290,44 @@ def test_no_edges_h5():
         assert errors == [Error(Error.FATAL, 'No "edges" in {}.'.format(edges_file))]
 
 
-def test_no_required_edge_population_datasets():
+def test_no_edge_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
+def test_no_edge_group_missing_requiered_datasets():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        required_datasets = sorted([
+            'edge_type_id', 'source_node_id', 'target_node_id'])
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0']
+            for ds in required_datasets:
+                del h5f['edges/default/' + ds]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
+                                format(edges_file, required_datasets))]
+
+
+def test_no_edge_group_no_optional_datasets():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        optional_datasets = sorted(['edge_group_id', 'edge_group_index'])
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0']
+            for ds in optional_datasets:
+                del h5f['edges/default/' + ds]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
+def test_no_required_edge_population_datasets_one_group():
     required_datasets = sorted([
-        'edge_type_id', 'source_node_id', 'target_node_id', 'edge_group_id', 'edge_group_index'])
+        'edge_type_id', 'source_node_id', 'target_node_id'])
     with _copy_circuit() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / 'edges.h5'
         with h5py.File(edges_file, 'r+') as h5f:
@@ -301,13 +338,142 @@ def test_no_required_edge_population_datasets():
                                 format(edges_file, required_datasets))]
 
 
+def test_missing_optional_edge_population_datasets_one_group():
+    optional_datasets = sorted(['edge_group_id', 'edge_group_index'])
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            for ds in optional_datasets:
+                del h5f['edges/default/' + ds]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
+def test_no_required_edge_population_datasets_multiple_groups():
+    required_datasets = sorted([
+        'edge_type_id', 'source_node_id', 'target_node_id', 'edge_group_id', 'edge_group_index'])
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            for ds in required_datasets:
+                del h5f['edges/default/' + ds]
+            h5f.create_group('edges/default/1')
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
+                                format(edges_file, required_datasets))]
+
+
+def test_edge_population_multiple_groups():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            h5f.create_group('edges/default/1')
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert BbpError(Error.WARNING, 'Population default of {} have multiple groups. '
+                                       'Cannot be read via bluepysnap or libsonata'.
+                        format(edges_file)) in errors
+
+
+def test_edge_population_missing_edge_group_id_one_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses dataset {}'.
+                                format(edges_file, {"edge_group_id"}))]
+
+
+def test_edge_population_missing_edge_group_index_one_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_index']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses dataset {}'.
+                                format(edges_file, {"edge_group_index"}))]
+
+
+def test_edge_population_missing_edge_group_id_index_one_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_index']
+            del h5f['edges/default/edge_group_id']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
+def test_edge_population_edge_group_different_length():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_index']
+            h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 3, 4])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL,
+                                'Population default of {} "edge_group_id" and "edge_group_index" of different sizes'.
+                                format(edges_file))]
+
+
+def test_edge_population_wrong_group_id():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+            h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 0])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses group(s): {}'.
+                                format(edges_file, {1}))]
+
+
+def test_edge_population_ok_group_index():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+            del h5f['edges/default/edge_group_index']
+            h5f.create_group('edges/default/1')
+            h5f.create_dataset('edges/default/1/test', data=[1, 1])
+            h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 1])
+            h5f.create_dataset('edges/default/edge_group_index', data=[0, 0, 1, 1])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
+
+def test_edge_population_wrong_group_index():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_index']
+            h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 12])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Group default/0 in file {} should have ids up to {}'.
+                                format(edges_file, 12))]
+
+
+def test_edge_population_wrong_group_index_multi_group():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+            del h5f['edges/default/edge_group_index']
+            h5f.create_group('edges/default/1')
+            h5f.create_dataset('edges/default/1/test', data=[1, 1])
+            h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 1])
+            h5f.create_dataset('edges/default/edge_group_index', data=[0, 0, 12, 1])
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Group default/0 in file {} should have ids up to {}'.
+                                format(edges_file, 12))]
+
+
 def test_no_required_bbp_edge_group_datasets():
     with _copy_circuit() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / 'edges.h5'
         with h5py.File(edges_file, 'r+') as h5f:
             del h5f['edges/default/0/syn_weight']
         errors = test_module.validate(str(config_copy_path), True)
-        assert errors == [BbpError(Error.WARNING, 'Group default of {} misses fields: {}'.
+        assert errors == [BbpError(Error.WARNING, 'Group default/0 of {} misses fields: {}'.
                                    format(edges_file, ['syn_weight']))]
 
 
