@@ -299,6 +299,20 @@ def test_no_edge_group():
         assert errors == []
 
 
+def test_no_edge_group_missing_requiered_datasets():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        required_datasets = sorted([
+            'edge_type_id', 'source_node_id', 'target_node_id'])
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/0']
+            for ds in required_datasets:
+                del h5f['edges/default/' + ds]
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
+                                format(edges_file, required_datasets))]
+
+
 def test_no_edge_group_no_optional_datasets():
     with _copy_circuit() as (circuit_copy_path, config_copy_path):
         optional_datasets = sorted(['edge_group_id', 'edge_group_index'])

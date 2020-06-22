@@ -425,8 +425,6 @@ def _check_edge_population_data(population, groups, nodes):
     # pylint: disable=too-many-locals,too-many-return-statements,too-many-branches
     errors = []
     population_name = _get_group_name(population)
-    if len(groups) == 0:
-        return errors
     if len(groups) > 1:
         errors.append(BbpError(Error.WARNING, 'Population {} of {} have multiple groups. '
                                               'Cannot be read via bluepysnap or libsonata'.
@@ -442,12 +440,15 @@ def _check_edge_population_data(population, groups, nodes):
     if missing_datasets:
         return errors + [fatal('Population {} of {} misses datasets {}'.
                                format(population_name, population.file.filename, missing_datasets))]
+    if len(groups) == 0:
+        return errors
+
+    # pure group part
     missing_group_datasets = set(group_datasets) - set(population)
     if len(missing_group_datasets) == 1:
         return errors + [fatal('Population {} of {} misses dataset {}'.
                                format(population_name, population.file.filename,
                                       missing_group_datasets))]
-
     if len(missing_group_datasets) == 2 and len(groups) == 1:
         # no "edge_group_id", "edge_group_index" and only one group --> can use implicit ids
         return errors
