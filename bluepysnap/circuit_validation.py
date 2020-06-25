@@ -5,6 +5,7 @@ import numpy as np
 import click
 from pathlib2 import Path
 import h5py
+import six
 
 from bluepysnap.config import Config
 
@@ -248,6 +249,18 @@ def _check_bio_nodes_group(group, config):
     return errors
 
 
+def _is_biophysical(group):
+    """Check if a group contains biophysical nodes."""
+    if group['model_type'][0] == 'biophysical':
+        return True
+    if "@library/model_type" in group:
+        model_type_int = group['model_type'][0]
+        model_type = group["@library/model_type"][model_type_int]
+        if six.ensure_str(model_type) == 'biophysical':
+            return True
+    return False
+
+
 def _check_nodes_group(group, config):
     """Validates nodes group in nodes population.
 
@@ -264,7 +277,7 @@ def _check_nodes_group(group, config):
         return [fatal('Group {} of {} misses required fields: {}'
                       .format(_get_group_name(group, parents=1), group.file.filename,
                               missing_fields))]
-    elif 'biophysical' in group['model_type'][:]:
+    elif _is_biophysical(group):
         return _check_bio_nodes_group(group, config)
     return []
 
@@ -430,7 +443,7 @@ def _check_edge_population_data(population, groups, nodes):
                                               'Cannot be read via bluepysnap or libsonata'.
                                format(population_name, population.file.filename)))
 
-    children_object_names = set(population.keys())
+    children_object_names = set(population)
     group_datasets = ["edge_group_id", "edge_group_index"]
     required_datasets = ['edge_type_id', 'source_node_id', 'target_node_id']
     if len(groups) > 1:

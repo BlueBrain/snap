@@ -11,9 +11,11 @@ try:
 except ImportError:
     from pathlib2 import Path
 import h5py
-from six import u as unicode
+
+import six
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import Error, BbpError
+import numpy as np
 
 from utils import setup_tempdir, TEST_DATA_DIR
 
@@ -50,7 +52,7 @@ def _edit_config(config_path):
         yield config
     finally:
         with config_path.open('w') as f:
-            f.write(unicode(json.dumps(config)))
+            f.write(six.u(json.dumps(config)))
 
 
 def test_error_comparison():
@@ -205,6 +207,20 @@ def test_no_required_bio_node_group_datasets():
         assert errors == [Error(Error.FATAL,
                                 'Group default/0 of {} misses biophysical fields: {}'
                                 .format(nodes_file, required_datasets))]
+
+
+def test_ok_bio_model_type_in_library():
+    with _copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            data = h5f['nodes/default/0/model_type'][:]
+            del h5f['nodes/default/0/model_type']
+            h5f.create_dataset('nodes/default/0/model_type', data=np.zeros_like(data, dtype=int))
+            dt = h5py.special_dtype(vlen=six.text_type)
+            h5f.create_dataset('nodes/default/0/@library/model_type',
+                               data=np.array(["biophysical", ], dtype=object), dtype=dt)
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
 
 
 def test_no_rotation_bio_node_group_datasets():
