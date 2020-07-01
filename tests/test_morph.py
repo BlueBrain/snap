@@ -77,7 +77,7 @@ class TestMorphHelper(object):
         expected = str(self.morph_path / 'morph-A.swc')
         assert actual == expected
 
-    def test_get_1(self):
+    def test_get_morphology(self):
         actual = self.test_obj.get(0).points
         assert len(actual) == 32
         expected = [
@@ -86,10 +86,8 @@ class TestMorphHelper(object):
         ]
         npt.assert_almost_equal(expected, actual[:2])
 
-    def test_get_2(self):
+    def test_get_morphology_simple_rotation(self):
         node_id = 0
-        actual = self.test_obj.get(node_id, transform=True).points
-
         # check that the input node positions / orientation values are still the same
         pdt.assert_series_equal(self.nodes.positions(node_id),
                                 pd.Series([101., 102., 103.],
@@ -103,23 +101,23 @@ class TestMorphHelper(object):
             ],
             decimal=6
         )
+
+        actual = self.test_obj.get(node_id, transform=True).points
         assert len(actual) == 32
         # swc file
         # index       type         X            Y            Z       radius       parent
         # 1           1    -0.320000     1.000000     0.000000     0.725000          -1
         # 2           1    -0.320000     0.900000     0.000000     0.820000           1
 
-        # rotation around the x axis 90 degrees counter clockwise
+        # rotation around the x axis 90 degrees counter clockwise (swap Y and Z)
+        # x = X + 101, y = Z + 102, z = Y + 103, radius does not change
         expected = [
             [100.68, 102, 104.0, 0.725],
             [100.68, 102, 103.9, 0.820]
         ]
-        npt.assert_almost_equal(
-            expected, actual[:2]
-        )
         npt.assert_almost_equal(expected, actual[:2])
 
-    def test_get_3(self):
+    def test_get_morphology_standard_rotation(self):
         nodes = self.create_population(
             str(TEST_DATA_DIR / 'nodes.h5'),
             "default")
@@ -158,13 +156,13 @@ def test_MorphHelper_cache_1(nm_load):
     with patch.object(test_module.MorphHelper, '_is_biophysical', return_value=True):
         test_obj = test_module.MorphHelper('morph-dir', nodes)
         nm_load.side_effect = Mock
-        morph1 = test_obj.get(1)
+        morph0 = test_obj.get(0)
         # should get cached object for 'morph-A'
-        assert test_obj.get(2) is morph1
+        assert test_obj.get(1) is morph0
         # should get new object ('morph-B')
-        assert test_obj.get(3) is not morph1
+        assert test_obj.get(2) is not morph0
         # 'morph-A' was evicted from cache
-        assert test_obj.get(4) is not morph1
+        assert test_obj.get(3) is not morph0
 
 
 @patch(test_module.__name__ + '.MORPH_CACHE_SIZE', None)
@@ -175,6 +173,6 @@ def test_MorphHelper_cache_2(nm_load):
     with patch.object(test_module.MorphHelper, '_is_biophysical', return_value=True):
         test_obj = test_module.MorphHelper('morph-dir', nodes)
         nm_load.side_effect = Mock
-        morph1 = test_obj.get(1)
+        morph1 = test_obj.get(0)
         # same morphology, but no caching
-        assert test_obj.get(2) is not morph1
+        assert test_obj.get(1) is not morph1
