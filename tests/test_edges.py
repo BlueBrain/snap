@@ -168,7 +168,7 @@ class TestEdgePopulation(object):
                 'int64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype(
                 'float64'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
                 'float32'), dtype('float32'), dtype('float64'), dtype('float64'),
-                  dtype('uint64'), dtype('uint64')]
+                dtype('uint64'), dtype('uint64')]
             , index=['syn_weight', '@dynamics:param1', 'afferent_surface_y',
                      'afferent_surface_z', 'conductance', 'efferent_center_x',
                      'delay', 'afferent_center_z', 'efferent_section_id',
