@@ -137,7 +137,7 @@ class EdgePopulation(object):
         return self._nodes(self._population.target)
 
     @cached_property
-    def _property_names(self):
+    def _attribute_names(self):
         return set(self._population.attribute_names)
 
     @cached_property
@@ -145,9 +145,18 @@ class EdgePopulation(object):
         return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
 
     @property
+    def _topology_property_names(self):
+        return {Edge.SOURCE_NODE_ID, Edge.TARGET_NODE_ID}
+
+    @property
     def property_names(self):
-        """Set of available edge properties."""
-        return self._property_names | self._dynamics_params_names
+        """Set of available edge properties.
+
+        Notes:
+            Properties are a combination of the group attributes, the dynamics_params and the
+            topology properties.
+        """
+        return self._attribute_names | self._dynamics_params_names | self._topology_property_names
 
     @cached_property
     def property_dtypes(self):
@@ -185,7 +194,7 @@ class EdgePopulation(object):
             result = self._population.source_nodes(selection)
         elif prop == Edge.TARGET_NODE_ID:
             result = self._population.target_nodes(selection)
-        elif prop in self._property_names:
+        elif prop in self._attribute_names:
             result = self._population.get_attribute(prop, selection)
         elif prop in self._dynamics_params_names:
             result = self._population.get_dynamics_attribute(
@@ -231,6 +240,10 @@ class EdgePopulation(object):
             pandas.Series/pandas.DataFrame:
                 A pandas Series indexed by edge IDs if ``properties`` is scalar.
                 A pandas DataFrame indexed by edge IDs if ``properties`` is list.
+
+        Notes:
+            The EdgePopulation.property_names function will give you all the usable properties
+            for the `properties` argument.
         """
         selection = libsonata.Selection(edge_ids)
         return self._get(selection, properties)

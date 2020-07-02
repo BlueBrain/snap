@@ -106,6 +106,8 @@ class TestEdgePopulation(object):
         assert (
                 sorted(self.test_obj.property_names) ==
                 sorted([
+                    Synapse.SOURCE_NODE_ID,
+                    Synapse.TARGET_NODE_ID,
                     Synapse.AXONAL_DELAY,
                     Synapse.G_SYNX,
                     Synapse.POST_X_CENTER,
@@ -134,7 +136,8 @@ class TestEdgePopulation(object):
             ['PRE_Y_SURFACE', 'PRE_Z_SURFACE', 'PRE_X_CENTER', 'POST_Y_CENTER', 'AXONAL_DELAY',
              'POST_X_CENTER', 'POST_Y_SURFACE', 'POST_Z_SURFACE', 'PRE_Y_CENTER', 'POST_Z_CENTER',
              'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE', 'POST_SECTION_ID', 'PRE_SECTION_ID',
-             'POST_SECTION_POS', 'PRE_SECTION_POS', 'SYN_WEIGHT'])
+             'POST_SECTION_POS', 'PRE_SECTION_POS', 'SYN_WEIGHT',
+             'SOURCE_NODE_ID', 'TARGET_NODE_ID'])
         assert sorted(self.test_obj.container_property_names(Edge)) == expected
         with pytest.raises(BluepySnapError):
             mapping = {"X": "x"}
@@ -164,7 +167,8 @@ class TestEdgePopulation(object):
                 'float32'), dtype('float64'), dtype('float32'), dtype('float64'), dtype(
                 'int64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype(
                 'float64'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
-                'float32'), dtype('float32'), dtype('float64'), dtype('float64')]
+                'float32'), dtype('float32'), dtype('float64'), dtype('float64'),
+                  dtype('uint64'), dtype('uint64')]
             , index=['syn_weight', '@dynamics:param1', 'afferent_surface_y',
                      'afferent_surface_z', 'conductance', 'efferent_center_x',
                      'delay', 'afferent_center_z', 'efferent_section_id',
@@ -173,7 +177,8 @@ class TestEdgePopulation(object):
                      'afferent_center_y', 'afferent_surface_x',
                      'efferent_surface_x', 'afferent_section_pos',
                      'efferent_section_pos', 'efferent_surface_y',
-                     'efferent_center_z']).sort_index()
+                     'efferent_center_z',
+                     '@source_node', '@target_node']).sort_index()
 
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
