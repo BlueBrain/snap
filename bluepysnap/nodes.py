@@ -91,52 +91,38 @@ class Nodes(object):
     populations = values
 
     @cached_property
-    def _population_offsets(self):
-        offsets = np.concatenate([[0], np.cumsum([population.size for population in self.populations()])])
-        return {name: offset for name, offset in zip(self.names(), offsets)}
-
-    @cached_property
     def size(self):
         """Nodes population size."""
         return sum(pop.size for pop in self.populations())
 
     @cached_property
     def property_names(self):
-        res = set()
-        for pop in self.populations():
-            res.update(pop.property_names)
-        return res
+        return set(pop.property_names for pop in self.populations())
 
     def property_values(self, prop):
-        res = set()
-        for pop in self.populations():
-            res.update(pop.property_values(prop))
-        return res
+        return set(pop.property_values(prop) for pop in self.populations())
+
+    def ids(self, group=None):
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        ids = np.array([], dtype=np.int64)
+        populations = np.array([], dtype=str_type)
+        for name, pop in self.items():
+            try:
+                pop_ids = pop.ids(group=group)
+            except BluepySnapError:
+                continue
+            pops = np.array(np.full_like(pop_ids, fill_value=name, dtype=str_type))
+            ids = pop_ids if ids.size == 0 else np.concatenate([ids, pop_ids])
+            populations = pops if populations.size == 0 else np.concatenate([populations, pops])
+        return pd.MultiIndex.from_arrays([populations, ids])
 
     def get(self, group=None, properties=None):
-        result = pd.DataFrame(columns=utils.ensure_list(properties))
-        for name, pop in self.items():
-            pop_properties = set(utils.ensure_list(properties)).intersection(pop.property_names | {"population"})
-            try:
-                pop_res = pop.get(group=group, properties=pop_properties)
-                pop_res.index = pop_res.index + self._population_offsets[name]
-                if len(pop_res):
-                    result = pd.concat([result, pop_res])
-            except BluepySnapError:
-                pass
-        return result
+        ids = self.ids(group)
+        res = pd.DataFrame(index=ids, columns=utils.ensure_list(properties))
+        # print(ids)
+        # pops = ids.get_locs("default")
+        # print(pops)
 
-    def ids(self, group=None, limit=None, sample=None):
-        res = np.empty()
-        for name, pop in self.items():
-            try:
-                pop_res = pop.ids(group=group)
-                pop_res.index = pop_res.index + self._population_offsets[name]
-                if len(pop_res):
-                    res = pd.concat([res, pop_res])
-            except BluepySnapError:
-                pass
-        return res
 
 
 class NodeStorage(object):
@@ -291,7 +277,7 @@ class NodePopulation(object):
     @property
     def property_names(self):
         """Set of available node properties."""
-        return self._property_names | self._dynamics_params_names | {"population"}
+        return self._property_names | self._dynamics_params_names
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the NodePopulation.

@@ -66,11 +66,11 @@ class TestNodes:
     def test_property_value(self):
         assert self.test_obj.property_values('mtype') == {'L2_X', 'L7_X', 'L9_Z', 'L8_Y', 'L6_Y'}
 
-    def test_get(self):
-        print(self.test_obj.get(properties=["layer", "mtype", "population"]))
-        print(self.test_obj.get(properties=["layer", "mtype", "population", "other1"]))
-        print(self.test_obj.get(properties="other1"))
+    def test_ids(self):
+        print(self.test_obj.ids())
 
+    def test_get(self):
+        print(self.test_obj.get())
 
 class TestNodeStorage:
     def setup(self):
