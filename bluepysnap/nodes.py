@@ -157,7 +157,11 @@ class NodePopulation(object):
 
     @property
     def property_names(self):
-        """Set of available node properties."""
+        """Set of available node properties.
+
+        Notes:
+            Properties are a combination of the group attributes and the dynamics_params.
+        """
         return self._property_names | self._dynamics_params_names
 
     def container_property_names(self, container):
@@ -420,6 +424,10 @@ class NodePopulation(object):
             pandas.Series/pandas.DataFrame:
                 If single node ID is passed as ``group`` returns a pandas Series.
                 Otherwise return a pandas DataFrame indexed by node IDs.
+
+        Notes:
+            The NodePopulation.property_names function will give you all the usable properties
+            for the `properties` argument.
         """
         result = self._data
         if properties is not None:
