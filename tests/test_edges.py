@@ -9,9 +9,11 @@ import libsonata
 from mock import Mock
 
 from bluepysnap.bbp import Synapse
+from bluepysnap.nodes import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
 from bluepysnap.node_sets import NodeSets
+from bluepysnap.nodes import NodeStorage
 
 import bluepysnap.edges as test_module
 
@@ -80,6 +82,7 @@ class TestEdgePopulation(object):
             'edges_file': filepath,
             'edge_types_file': None,
         }
+        node_population = TestEdgePopulation.mocking_nodes("default")
         circuit = Mock()
         create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit,
                                node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
@@ -379,6 +382,10 @@ class TestEdgePopulation(object):
     def test_pathway_edges_5(self):
         with pytest.raises(BluepySnapError):
             self.test_obj.pathway_edges(None, None, None)
+
+    def test_pathway_edges_6(self):
+        ids = CircuitNodeIds.create_global_ids("default", [0, 1])
+        npt.assert_equal(self.test_obj.pathway_edges(ids, None, None), [1, 2])
 
     def test_iter_connections_1(self):
         it = self.test_obj.iter_connections(

@@ -15,6 +15,7 @@ from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
+from bluepysnap.nodes import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
@@ -70,7 +71,12 @@ class TestNodes:
         print(self.test_obj.ids())
 
     def test_get(self):
+        print("")
         print(self.test_obj.get())
+        print(self.test_obj.get(properties="other2"))
+        print(self.test_obj.get(properties=["other2", "other1", 'layer']))
+        assert False
+
 
 class TestNodeStorage:
     def setup(self):
@@ -414,6 +420,8 @@ class TestNodePopulation:
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
         assert not is_categorical(res["categorical"])
         assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
+        assert res["categorical"].cat.categories.tolist() == ['A', 'B', 'C']
+        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0]
         assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
         assert res["int"].tolist() == [0, 0, 1, 0]
         npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0.])

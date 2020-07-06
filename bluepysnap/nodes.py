@@ -37,8 +37,35 @@ from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
 # this constant is not part of the sonata standard
 NODE_SET_KEY = "$node_set"
 
-class GlobalNodeIds(int):
-    pass
+
+class CircuitNodeIds:
+    """Global Node ids."""
+    def __init__(self, index):
+        if not isinstance(index, pd.MultiIndex):
+            raise BluepySnapError("index must be a pandas.MultiIndex object")
+        self.index = index
+
+    @classmethod
+    def create_global_ids(cls, populations, population_ids):
+        if isinstance(populations, str):
+            populations = np.full(len(population_ids), fill_value=populations)
+        index = pd.MultiIndex.from_arrays([populations, population_ids])
+        return cls(index)
+
+    def _locate(self, population):
+        try:
+            return self.index.get_locs(utils.ensure_list(population))
+        except KeyError:
+            return []
+
+    def filter_population(self, population):
+        return CircuitNodeIds(self.index[self._locate(population)])
+
+    def get_populations(self):
+        return self.index.get_level_values(0).to_numpy()
+
+    def get_ids(self):
+        return self.index.get_level_values(1).to_numpy()
 
 
 class Nodes(object):
@@ -97,10 +124,10 @@ class Nodes(object):
 
     @cached_property
     def property_names(self):
-        return set(pop.property_names for pop in self.populations())
+        return set(prop for pop in self.populations() for prop in pop.property_names)
 
     def property_values(self, prop):
-        return set(pop.property_values(prop) for pop in self.populations())
+        return set(value for pop in self.populations() for value in pop.property_values(prop))
 
     def ids(self, group=None):
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
@@ -114,15 +141,20 @@ class Nodes(object):
             pops = np.array(np.full_like(pop_ids, fill_value=name, dtype=str_type))
             ids = pop_ids if ids.size == 0 else np.concatenate([ids, pop_ids])
             populations = pops if populations.size == 0 else np.concatenate([populations, pops])
-        return pd.MultiIndex.from_arrays([populations, ids])
+        return CircuitNodeIds.create_global_ids(populations, ids)
 
     def get(self, group=None, properties=None):
         ids = self.ids(group)
-        res = pd.DataFrame(index=ids, columns=utils.ensure_list(properties))
-        # print(ids)
-        # pops = ids.get_locs("default")
-        # print(pops)
-
+        if properties is None:
+            properties = self.property_names
+        properties = utils.ensure_list(properties)
+        res = pd.DataFrame(index=ids.index, columns=properties).sort_index(axis=1)
+        for name, pop in self.items():
+            global_pop_ids = ids.filter_population(name)
+            pop_ids = global_pop_ids.get_ids()
+            pop_properties = set(properties) & pop.property_names
+            res.loc[global_pop_ids.index, pop_properties] = pop.get(pop_ids, properties=pop_properties).to_numpy()
+        return res
 
 
 class NodeStorage(object):
@@ -508,6 +540,8 @@ class NodePopulation(object):
         preserve_order = False
         if isinstance(group, six.string_types):
             group = self._get_node_set(group)
+        elif isinstance(group, CircuitNodeIds):
+            group = group.filter_population(self.name).get_ids()
 
         if group is None:
             result = self._data.index.values
