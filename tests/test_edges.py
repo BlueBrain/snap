@@ -11,10 +11,11 @@ from mock import Mock
 from bluepysnap.bbp import Synapse
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
+from bluepysnap.node_sets import NodeSets
 
 import bluepysnap.edges as test_module
 
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, create_node_population
 
 
 def index_as_uint64(values):
@@ -74,27 +75,24 @@ class TestEdgeStorage:
 class TestEdgePopulation(object):
 
     @staticmethod
-    def mocking_nodes(pop_name):
-        node_population = Mock()
-        node_population.name = pop_name
-        node_population.ids = lambda x: x
-        return node_population
-
-    @staticmethod
-    def create_population(filepath, pop_name):
+    def create_edge_population(filepath, pop_name):
         config = {
             'edges_file': filepath,
             'edge_types_file': None,
         }
-        node_population = TestEdgePopulation.mocking_nodes("default")
         circuit = Mock()
-        circuit.nodes = {node_population.name: node_population}
-
+        create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit,
+                               node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
         storage = test_module.EdgeStorage(config, circuit)
-        return storage.population(pop_name)
+        pop = storage.population(pop_name)
+
+        # check if the source and target populations are in the circuit nodes
+        assert pop.source.name in pop._edge_storage.circuit.nodes
+        assert pop.target.name in pop._edge_storage.circuit.nodes
+        return pop
 
     def setup(self):
-        self.test_obj = TestEdgePopulation.create_population(
+        self.test_obj = TestEdgePopulation.create_edge_population(
             str(TEST_DATA_DIR / "edges.h5"), 'default')
 
     def test_basic(self):
@@ -447,7 +445,7 @@ class TestEdgePopulation(object):
             )
 
     def test_iter_connection_unique(self):
-        test_obj = TestEdgePopulation.create_population(
+        test_obj = TestEdgePopulation.create_edge_population(
             str(TEST_DATA_DIR / "edges_complete_graph.h5"), 'default')
         it = test_obj.iter_connections([0, 1, 2], [0, 1, 2])
         assert sorted(it) == [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]

@@ -14,22 +14,13 @@ from bluepysnap.nodes import NodeStorage
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
 
-from utils import TEST_DATA_DIR, copy_circuit, edit_config
+from utils import TEST_DATA_DIR, copy_circuit, edit_config, create_node_population
 
 
 class TestMorphHelper(object):
 
-    @staticmethod
-    def create_population(filepath, pop_name):
-        config = {
-            'nodes_file': filepath,
-            'node_types_file': None,
-        }
-        circuit = Mock()
-        return NodeStorage(config, circuit).population(pop_name)
-
     def setup(self):
-        self.nodes = self.create_population(
+        self.nodes = create_node_population(
             str(TEST_DATA_DIR / 'nodes_quaternions.h5'),
             "default")
         self.morph_path = TEST_DATA_DIR / 'morphologies'
@@ -118,7 +109,7 @@ class TestMorphHelper(object):
         npt.assert_almost_equal(expected, actual[:2])
 
     def test_get_morphology_standard_rotation(self):
-        nodes = self.create_population(
+        nodes = create_node_population(
             str(TEST_DATA_DIR / 'nodes.h5'),
             "default")
         test_obj = test_module.MorphHelper(str(self.morph_path), nodes)
