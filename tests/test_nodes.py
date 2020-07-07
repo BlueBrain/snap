@@ -17,7 +17,7 @@ from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, create_node_population
 
 
 class TestNodeStorage:
@@ -57,21 +57,10 @@ class TestNodeStorage:
 
 class TestNodePopulation:
 
-    @staticmethod
-    def create_population(filepath, pop_name):
-        config = {
-            'nodes_file': filepath,
-            'node_types_file': None,
-        }
-        circuit = Mock()
-        circuit.node_sets = NodeSets(str(TEST_DATA_DIR / 'node_sets.json'))
-        storage = test_module.NodeStorage(config, circuit)
-        return storage.population(pop_name)
-
     def setup(self):
-        self.test_obj = TestNodePopulation.create_population(
-            str(TEST_DATA_DIR / 'nodes.h5'),
-            "default")
+        self.test_obj = create_node_population(
+            str(TEST_DATA_DIR / 'nodes.h5'), "default",
+            node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
 
     def test_basic(self):
         assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
@@ -106,7 +95,7 @@ class TestNodePopulation:
                 self.test_obj.property_values(Cell.MORPHOLOGY) ==
                 {'morph-A', 'morph-B', 'morph-C'}
         )
-        test_obj_library = TestNodePopulation.create_population(
+        test_obj_library = create_node_population(
             str(TEST_DATA_DIR / 'nodes_with_library.h5'),
             "default")
         assert test_obj_library.property_values("categorical") == {"A", "B", "C"}
@@ -235,7 +224,7 @@ class TestNodePopulation:
             _call({'no-such-node-property': 42})
 
     def test_node_ids_by_filter_complex_query(self):
-        test_obj = TestNodePopulation.create_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
+        test_obj = create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
         data = pd.DataFrame({
             Cell.MTYPE: ['L23_MC', 'L4_BP', 'L6_BP', 'L6_BPC'],
         })
@@ -306,7 +295,7 @@ class TestNodePopulation:
             _call([0, 999])  # one of node ids is invalid
 
     def test_get_with_library(self):
-        test_obj = TestNodePopulation.create_population(
+        test_obj = create_node_population(
             str(TEST_DATA_DIR / 'nodes_with_library.h5'),
             "default")
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
@@ -370,7 +359,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle[x|z]
-        _call_no_xz = TestNodePopulation.create_population(
+        _call_no_xz = create_node_population(
             str(TEST_DATA_DIR / 'nodes_no_xz_rotation.h5'),
             "default").orientations
         # 0 and 2 node_ids have x|z rotation angles equal to zero
@@ -387,7 +376,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle
-        _call_no_rot = TestNodePopulation.create_population(
+        _call_no_rot = create_node_population(
             str(TEST_DATA_DIR / 'nodes_no_rotation.h5'),
             "default").orientations
 
@@ -401,7 +390,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation with quaternions
-        _call_quat = TestNodePopulation.create_population(
+        _call_quat = create_node_population(
             str(TEST_DATA_DIR / 'nodes_quaternions.h5'),
             "default").orientations
 
@@ -444,7 +433,7 @@ class TestNodePopulation:
             )
         )
 
-        _call_missing_quat = TestNodePopulation.create_population(
+        _call_missing_quat = create_node_population(
             str(TEST_DATA_DIR / 'nodes_quaternions_w_missing.h5'),
             "default").orientations
 
