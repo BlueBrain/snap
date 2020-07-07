@@ -213,15 +213,15 @@ def test_no_rotation_bbp_node_group_datasets():
 
 
 def test_no_bio_component_dirs():
-    dirs = ['morphologies_dir', 'mechanisms_dir', 'biophysical_neuron_models_dir']
+    dirs = ['morphologies_dir', 'biophysical_neuron_models_dir']
     for dir_ in dirs:
         with copy_circuit() as (_, config_copy_path):
             with edit_config(config_copy_path) as config:
                 del config['components'][dir_]
-            errors = test_module.validate(str(config_copy_path))
+            errors = test_module.validate(str(config_copy_path), True)
             # multiplication by 2 because we have 2 populations, each produces the same error.
-            assert errors == 2 * [Error(Error.FATAL,
-                                        'Invalid components "{}": {}'.format(dir_, None))]
+            assert errors == 2 * [BbpError(Error.FATAL,
+                                           'Invalid components "{}": {}'.format(dir_, None))]
 
 
 @patch('bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY', 1)
