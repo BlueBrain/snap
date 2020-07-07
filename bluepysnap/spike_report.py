@@ -115,11 +115,21 @@ class PopulationSpikeReport(object):
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        return res
+        return res.astype(np.int64)
+
+    @cached_property
+    def node_ids(self):
+        """Returns the node ids present in the report.
+
+        Returns:
+            np.Array: Numpy array containing the node_ids included in the report
+        """
+        return np.unique(self.get())
 
 
 class FilteredSpikeReport(object):
     """Access to filtered SpikeReport data."""
+
     def __init__(self, spike_report, group=None, t_start=None, t_stop=None):
         """Initialize a FilteredSpikeReport.
 

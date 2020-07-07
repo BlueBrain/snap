@@ -240,6 +240,9 @@ class TestPopulationCompartmentReport:
         with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
             pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
 
+    def test_node_ids(self):
+        npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=np.int64))
+
 
 class TestPopulationSomaReport(TestPopulationCompartmentReport):
     def setup(self):

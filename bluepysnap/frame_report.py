@@ -29,7 +29,6 @@ from bluepysnap.utils import fix_libsonata_empty_list, ensure_list
 
 L = logging.getLogger(__name__)
 
-
 FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
 
@@ -107,16 +106,28 @@ class PopulationFrameReport(object):
 
         if len(view.ids) == 0:
             return pd.DataFrame()
-        res = pd.DataFrame(data=view.data,
-                           columns=pd.MultiIndex.from_tuples(view.ids),
-                           index=view.times).sort_index(axis=1)
+
+        ids = np.asarray(view.ids).T
+        res = pd.DataFrame(data=np.asarray(view.data),
+                           columns=pd.MultiIndex.from_arrays(ids),
+                           index=np.asarray(view.times)).sort_index(axis=1)
         # rename from multi index to index cannot be achieved easily through df.rename
         res.columns = self._wrap_columns(res.columns)
         return res
 
+    @cached_property
+    def node_ids(self):
+        """Returns the node ids present in the report.
+
+        Returns:
+            np.Array: Numpy array containing the node_ids included in the report
+        """
+        return np.sort(np.asarray(self._frame_population.get_node_ids(), dtype=np.int64))
+
 
 class FilteredFrameReport(object):
     """Access to filtered FrameReport data."""
+
     def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
         """Initialize a FilteredFrameReport.
 

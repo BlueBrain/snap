@@ -17,6 +17,7 @@ from utils import TEST_DATA_DIR
 def _create_series(node_ids, index, name="ids"):
     def _get_index(ids):
         return pd.Index(ids, name="times")
+
     return pd.Series(node_ids, index=_get_index(index), name=name)
 
 
@@ -132,8 +133,10 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(self.test_obj.get(2), _create_series([2, 2], [0.1, 0.7]))
         pdt.assert_series_equal(self.test_obj.get(0, t_start=1.), _create_series([0], [1.3]))
         pdt.assert_series_equal(self.test_obj.get(0, t_stop=1.), _create_series([0], [0.2]))
-        pdt.assert_series_equal(self.test_obj.get(0, t_start=1., t_stop=12), _create_series([0], [1.3]))
-        pdt.assert_series_equal(self.test_obj.get(0, t_start=0.1, t_stop=12), _create_series([0, 0], [0.2, 1.3]))
+        pdt.assert_series_equal(self.test_obj.get(0, t_start=1., t_stop=12),
+                                _create_series([0], [1.3]))
+        pdt.assert_series_equal(self.test_obj.get(0, t_start=0.1, t_stop=12),
+                                _create_series([0, 0], [0.2, 1.3]))
 
         pdt.assert_series_equal(self.test_obj.get([2, 0]),
                                 _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]))
@@ -195,3 +198,6 @@ class TestPopulationSpikeReport:
     def test_get_not_in_report(self, mock):
         pdt.assert_series_equal(self.test_obj.get(4),
                                 _create_series([], []))
+
+    def test_node_ids(self):
+        npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=np.int64))
