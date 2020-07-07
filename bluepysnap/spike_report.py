@@ -22,6 +22,7 @@ from pathlib2 import Path
 from cached_property import cached_property
 import pandas as pd
 import numpy as np
+from libsonata import SpikeReader, SonataError
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import fix_libsonata_empty_list
@@ -29,7 +30,6 @@ import bluepysnap._plotting
 
 
 def _get_reader(spike_report):
-    from libsonata import SpikeReader
     path = str(Path(spike_report.config["output_dir"]) / spike_report.config["spikes_file"])
     return SpikeReader(path)
 
@@ -101,12 +101,14 @@ class PopulationSpikeReport(object):
         Returns:
             pandas.Series: return spiking node_ids indexed by sorted spike time.
         """
-        node_ids = [] if group is None else self._resolve_nodes(group).tolist()
+        node_ids = self._resolve_nodes(group).tolist()
 
-        t_start = -1 if t_start is None else t_start
-        t_stop = -1 if t_stop is None else t_stop
         series_name = "ids"
-        res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
+        try:
+            res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
+        except SonataError as e:
+            raise BluepySnapError(e)
+
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
 

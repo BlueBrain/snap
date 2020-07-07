@@ -21,7 +21,7 @@ from cached_property import cached_property
 from pathlib2 import Path
 import numpy as np
 import pandas as pd
-from libsonata import ElementReportReader
+from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
@@ -98,11 +98,13 @@ class PopulationFrameReport(object):
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.
         """
-        ids = [] if group is None else self._resolve(group).tolist()
-        t_start = -1 if t_start is None else t_start
-        t_stop = -1 if t_stop is None else t_stop
+        ids = self._resolve(group).tolist()
 
-        view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
+        try:
+            view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
+        except SonataError as e:
+            raise BluepySnapError(e)
+
         if len(view.ids) == 0:
             return pd.DataFrame()
         res = pd.DataFrame(data=view.data,

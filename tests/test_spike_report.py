@@ -157,8 +157,6 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8),
                                 _create_series([1, 2], [0.3, 0.7]))
 
-        pdt.assert_series_equal(self.test_obj.get([0, 2], t_start=12), _create_series([], []))
-
         pdt.assert_series_equal(
             self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8),
             _create_series([1, 2], [0.3, 0.7]))
@@ -168,6 +166,15 @@ class TestPopulationSpikeReport:
 
         pdt.assert_series_equal(
             self.test_obj.get(group="Layer23"), _create_series([0, 0], [0.2, 1.3]))
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get([-1], t_start=0.2)
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get([0, 2], t_start=-1)
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get([0, 2], t_start=12)
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
