@@ -12,6 +12,7 @@ from mock import Mock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
+from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.exceptions import BluepySnapError
 
@@ -130,6 +131,28 @@ class TestNodePopulation:
 
         with pytest.raises(BluepySnapError):
             self.test_obj.container_property_names(int)
+
+    def test_as_edge_source_target(self):
+        circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
+        assert circuit.nodes['default'].as_edges_source() == {"default"}
+        assert circuit.nodes['default'].as_edges_target() == {"default"}
+
+    def test_as_edge_source_target_mock(self):
+        def _mock_edge(name, source, target):
+            edges = Mock()
+            edges.source.name = source
+            edges.target.name = target
+            edges.name = name
+            return edges
+
+        circuit = Mock()
+        circuit.edges = {"edge1": _mock_edge('edge1', "default", "nodeother"),
+                         "edge2": _mock_edge('edge2', "nodeother", "default"),
+                         "edge3": _mock_edge('edge3', "default", "nodeother")}
+        create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit)
+
+        assert circuit.nodes['default'].as_edges_source() == {"edge1", "edge3"}
+        assert circuit.nodes['default'].as_edges_target() == {"edge2"}
 
     def test__positional_mask(self):
         npt.assert_array_equal(self.test_obj._positional_mask([1, 2]), [False, True, True])
