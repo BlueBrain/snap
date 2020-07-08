@@ -67,7 +67,7 @@ def _check_components_dir(name, components):
     """
     dirpath = components.get(name)
     if not dirpath or not Path(dirpath).is_dir():
-        return [fatal('Invalid components "{}": {}'.format(name, dirpath))]
+        return [BbpError(Error.FATAL, 'Invalid components "{}": {}'.format(name, dirpath))]
     return []
 
 
@@ -233,18 +233,21 @@ def _check_bio_nodes_group(group, config):
     _check_rotations()
     components = config['components']
     errors += _check_components_dir('morphologies_dir', components)
-    errors += _check_components_dir('mechanisms_dir', components)
     errors += _check_components_dir('biophysical_neuron_models_dir', components)
     if errors:
         return errors
+    morph_files = group['morphology'] if _get_h5_data(group, '@library/morphology') is None \
+        else group['@library/morphology']
     errors += _check_files(
         'morphology: {}[{}]'.format(group_name, group.file.filename),
-        (Path(components['morphologies_dir'], m + '.swc') for m in group['morphology']),
+        (Path(components['morphologies_dir'], m + '.swc') for m in morph_files),
         Error.WARNING)
+    bio_files = group['model_template'] if _get_h5_data(group, '@library/model_template') is None \
+        else group['@library/model_template']
     bio_path = Path(components['biophysical_neuron_models_dir'])
     errors += _check_files(
         'model_template: {}[{}]'.format(group_name, group.file.filename),
-        (bio_path / _get_model_template_file(m) for m in group['model_template']),
+        (bio_path / _get_model_template_file(m) for m in bio_files),
         Error.WARNING)
     return errors
 
