@@ -97,7 +97,7 @@ class TestNodePopulation:
                 {'morph-A', 'morph-B', 'morph-C'}
         )
         test_obj_library = create_node_population(
-            str(TEST_DATA_DIR / 'nodes_with_library.h5'),
+            str(TEST_DATA_DIR / 'nodes_with_library_small.h5'),
             "default")
         assert test_obj_library.property_values("categorical") == {"A", "B", "C"}
         assert test_obj_library.property_values("categorical", is_present=True) == {"A", "B"}
@@ -317,16 +317,28 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             _call([0, 999])  # one of node ids is invalid
 
-    def test_get_with_library(self):
+    def test_get_with_library_small_number_of_values(self):
         test_obj = create_node_population(
-            str(TEST_DATA_DIR / 'nodes_with_library.h5'),
+            str(TEST_DATA_DIR / 'nodes_with_library_small.h5'),
             "default")
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
         assert is_categorical(res["categorical"])
-        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
+        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A', 'A', 'A', 'A']
         assert res["categorical"].cat.categories.tolist() == ['A', 'B', 'C']
-        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0]
+        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0, 0, 0, 0]
+        assert res["string"].tolist() == ["AA", "BB", "CC", "DD", "EE", "FF", "GG"]
+        assert res["int"].tolist() == [0, 0, 1, 0, 0, 0, 0]
+        npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0., 0., 0., 0.])
+
+    def test_get_with_library_large_number_of_values(self):
+        test_obj = create_node_population(
+            str(TEST_DATA_DIR / 'nodes_with_library_large.h5'),
+            "default")
+        assert test_obj.property_names == {"categorical", "string", "int", "float"}
+        res = test_obj.get(properties=["categorical", "string", "int", "float"])
+        assert not is_categorical(res["categorical"])
+        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
         assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
         assert res["int"].tolist() == [0, 0, 1, 0]
         npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0.])
