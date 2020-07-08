@@ -134,8 +134,8 @@ class TestNodePopulation:
 
     def test_as_edge_source_target(self):
         circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
-        assert circuit.nodes['default'].as_edges_source() == {"default"}
-        assert circuit.nodes['default'].as_edges_target() == {"default"}
+        assert circuit.nodes['default'].source_in_edges() == {"default"}
+        assert circuit.nodes['default'].target_in_edges() == {"default"}
 
     def test_as_edge_source_target_mock(self):
         def _mock_edge(name, source, target):
@@ -151,8 +151,8 @@ class TestNodePopulation:
                          "edge3": _mock_edge('edge3', "default", "nodeother")}
         create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit)
 
-        assert circuit.nodes['default'].as_edges_source() == {"edge1", "edge3"}
-        assert circuit.nodes['default'].as_edges_target() == {"edge2"}
+        assert circuit.nodes['default'].source_in_edges() == {"edge1", "edge3"}
+        assert circuit.nodes['default'].target_in_edges() == {"edge2"}
 
     def test__positional_mask(self):
         npt.assert_array_equal(self.test_obj._positional_mask([1, 2]), [False, True, True])
