@@ -236,18 +236,15 @@ def _check_bio_nodes_group(group, config):
     errors += _check_components_dir('biophysical_neuron_models_dir', components)
     if errors:
         return errors
-    library = group['@library']
-    morph_files = library['morphology'] if 'morphology' in library else group['morphology']
+    holder = group['@library'] if '@library' in group else group
     errors += _check_files(
         'morphology: {}[{}]'.format(group_name, group.file.filename),
-        (Path(components['morphologies_dir'], m + '.swc') for m in morph_files),
+        (Path(components['morphologies_dir'], m + '.swc') for m in holder['morphology']),
         Error.WARNING)
-    bio_files = library['model_template'] \
-        if 'model_template' in library else group['model_template']
     bio_path = Path(components['biophysical_neuron_models_dir'])
     errors += _check_files(
         'model_template: {}[{}]'.format(group_name, group.file.filename),
-        (bio_path / _get_model_template_file(m) for m in bio_files),
+        (bio_path / _get_model_template_file(mt) for mt in holder['model_template']),
         Error.WARNING)
     return errors
 
