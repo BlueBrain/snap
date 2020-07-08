@@ -92,8 +92,14 @@ class NodeStorage(object):
         _all = libsonata.Selection([(0, node_count)])
         for attr in sorted(nodes.attribute_names):
             if attr in categoricals:
-                result[attr] = pd.Categorical.from_codes(nodes.get_enumeration(attr, _all),
-                                                         categories=nodes.enumeration_values(attr))
+                enumeration = np.asarray(nodes.get_enumeration(attr, _all))
+                values = np.asarray(nodes.enumeration_values(attr))
+                # if the size of `values` is large enough compared to `enumeration`, not using
+                # categorical reduces the memory usage.
+                if values.shape[0] < 0.5 * enumeration.shape[0]:
+                    result[attr] = pd.Categorical.from_codes(enumeration, categories=values)
+                else:
+                    result[attr] = values[enumeration]
             else:
                 result[attr] = nodes.get_attribute(attr, _all)
         for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
