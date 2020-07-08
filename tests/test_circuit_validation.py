@@ -277,6 +277,25 @@ def test_no_template_files():
                   .format(nodes_file))]
 
 
+@patch('bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY', 1)
+def test_no_template_library_files():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            grp = h5f['nodes/default/0']
+            str_dtype = h5py.special_dtype(vlen=str)
+            grp.create_dataset('@library/model_template', shape=(1,), dtype=str_dtype)
+            grp['@library/model_template'][:] = u'hoc:noname'
+            shape = grp['model_template'].shape
+            del grp['model_template']
+            grp.create_dataset('model_template', shape=shape, fillvalue=0)
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(
+            Error.WARNING,
+            'missing 1 files in group model_template: default/0[{}]:\n\tnoname.hoc\n'.format(
+                nodes_file))]
+
+
 def test_no_edges_h5():
     with copy_circuit() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / 'edges.h5'
