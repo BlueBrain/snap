@@ -156,12 +156,12 @@ class NodePopulation(object):
         return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
 
     def as_edges_source(self):
-        """Set of edges population that use this node population as source."""
+        """Set of edge populations that use this node population as source."""
         return set(edge.name for edge in self._node_storage.circuit.edges.values() if
                    self.name == edge.source.name)
 
     def as_edges_target(self):
-        """Set of edges population that use this node population as target."""
+        """Set of edge populations that use this node population as target."""
         return set(edge.name for edge in self._node_storage.circuit.edges.values() if
                    self.name == edge.target.name)
 
