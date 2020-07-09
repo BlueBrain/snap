@@ -98,7 +98,6 @@ class PopulationFrameReport(object):
             pandas.DataFrame: frame as columns indexed by timestamps.
         """
         ids = self._resolve(group).tolist()
-
         try:
             view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
         except SonataError as e:
@@ -296,8 +295,6 @@ class PopulationCompartmentReport(PopulationFrameReport):
 
     def _resolve(self, group):
         """Transform a group into a node_id array."""
-        if isinstance(group, (np.ndarray, list, tuple)) and len(group) == 0:
-            return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 
 
