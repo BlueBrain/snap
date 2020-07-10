@@ -106,10 +106,10 @@ class PopulationFrameReport(object):
         if len(view.ids) == 0:
             return pd.DataFrame()
 
-        ids = np.asarray(view.ids).T
-        res = pd.DataFrame(data=np.asarray(view.data),
-                           columns=pd.MultiIndex.from_arrays(ids),
-                           index=np.asarray(view.times)).sort_index(axis=1)
+        res = pd.DataFrame(data=view.data,
+                           columns=pd.MultiIndex.from_arrays(np.asarray(view.ids).T),
+                           index=view.times).sort_index(axis=1)
+
         # rename from multi index to index cannot be achieved easily through df.rename
         res.columns = self._wrap_columns(res.columns)
         return res

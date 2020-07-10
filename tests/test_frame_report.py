@@ -166,7 +166,7 @@ class TestPopulationCompartmentReport:
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
-        data = np.array([np.arange(7) + j * 0.1 for j in range(10)])
+        data = np.array([np.arange(7) + j * 0.1 for j in range(10)], dtype=np.float32)
         ids = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (2, 1)]
         self.df = pd.DataFrame(data=data, columns=pd.MultiIndex.from_tuples(ids), index=timestamps)
 
@@ -236,9 +236,13 @@ class TestPopulationCompartmentReport:
         with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
 
+    def test_get_partially_not_in_report(self):
+        with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([0, 4])):
+            pdt.assert_frame_equal(self.test_obj.get([0, 4]),  self.df.loc[:, [0]])
+
     def test_get_not_in_report(self):
         with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
-            pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
+            pdt.assert_frame_equal(self.test_obj.get([4]), pd.DataFrame())
 
     def test_node_ids(self):
         npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=np.int64))
@@ -250,4 +254,4 @@ class TestPopulationSomaReport(TestPopulationCompartmentReport):
         self.test_obj = test_module.SomaReport(self.simulation, "soma_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
         data = {0: timestamps, 1: timestamps + 1, 2: timestamps + 2}
-        self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2])
+        self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2]).astype(np.float32)
