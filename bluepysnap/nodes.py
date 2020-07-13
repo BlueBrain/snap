@@ -34,6 +34,10 @@ from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
 
 
+# this constant is not part of the sonata standard
+NODE_SET_KEY = "$node_set"
+
+
 class NodeStorage(object):
     """Node storage access."""
 
@@ -282,23 +286,30 @@ class NodePopulation(object):
         mask[valid_node_ids] = True
         return mask
 
-    def _node_population_mask(self, queries):
-        """Handle the population and node ID queries."""
+    def _circuit_mask(self, queries):
+        """Handle the population, node ID and node set queries."""
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
             node_ids = []
         else:
             node_ids = queries.pop(NODE_ID_KEY, None)
+        node_set = queries.pop(NODE_SET_KEY, None)
+        if node_set is not None:
+            if not isinstance(node_set, six.string_types):
+                raise BluepySnapError("{} is not a valid node set name.".format(node_set))
+            node_ids = node_ids if node_ids else self._data.index.values
+            node_ids = np.intersect1d(node_ids, self.ids(node_set))
         return queries, self._positional_mask(node_ids)
 
     def _properties_mask(self, queries):
         """Return mask of node IDs with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
-        unknown_props = set(queries) - set(self._data.columns) - {POPULATION_KEY, NODE_ID_KEY}
+        circuit_keys = {POPULATION_KEY, NODE_ID_KEY, NODE_SET_KEY}
+        unknown_props = set(queries) - set(self._data.columns) - circuit_keys
         if unknown_props:
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
-        queries, mask = self._node_population_mask(queries)
+        queries, mask = self._circuit_mask(queries)
         if not mask.any():
             # Avoid fail and/or processing time if wrong population or no nodes
             return mask
