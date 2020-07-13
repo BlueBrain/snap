@@ -159,22 +159,22 @@ class TestNodePopulation:
         npt.assert_array_equal(self.test_obj._positional_mask([0, 2]), [True, False, True])
 
     def test__node_population_mask(self):
-        queries, mask = self.test_obj._node_population_mask({"population": "default",
+        queries, mask = self.test_obj._circuit_mask({"population": "default",
                                                              "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
-        queries, mask = self.test_obj._node_population_mask({"population": "unknown",
+        queries, mask = self.test_obj._circuit_mask({"population": "unknown",
                                                              "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, False])
 
-        queries, mask = self.test_obj._node_population_mask({"population": "default",
+        queries, mask = self.test_obj._circuit_mask({"population": "default",
                                                              "node_id": [2], "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, True])
 
-        queries, mask = self.test_obj._node_population_mask({"other": "val"})
+        queries, mask = self.test_obj._circuit_mask({"other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
@@ -198,6 +198,8 @@ class TestNodePopulation:
         npt.assert_equal(_call({"node_id": [1]}), [1])
         npt.assert_equal(_call({"node_id": [1, 2]}), [1, 2])
         npt.assert_equal(_call({"node_id": [1, 2, 42]}), [1, 2])
+        npt.assert_equal(_call({"node_id": [1], "population": ["default"],
+                                Cell.MORPHOLOGY: "morph-B"}), [1])
 
         # same query with a $and operator
         npt.assert_equal(_call({"$and": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
@@ -235,6 +237,18 @@ class TestNodePopulation:
         npt.assert_equal(_call('combined_combined_Node0_L6_Y__Node12_L6_Y__'),
                          [0, 1, 2])  # imbricated '$or' functions
 
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "node_id": 1}), [1])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "node_id": [1, 2, 3]}), [1, 2])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "population": "default"}), [1, 2])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "population": "default", "node_id": 1}),
+                         [1])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', Cell.MORPHOLOGY: "morph-B"}),
+                         [1])
+        npt.assert_equal(_call({"$and": [{"$node_set": 'Node12_L6_Y', "population": "default"},
+                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1])
+        npt.assert_equal(_call({"$or": [{"$node_set": 'Node12_L6_Y', "population": "default"},
+                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
+
         with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
         with pytest.raises(BluepySnapError):
@@ -245,6 +259,10 @@ class TestNodePopulation:
             _call([1, 999])  # one of node IDs out of range
         with pytest.raises(BluepySnapError):
             _call({'no-such-node-property': 42})
+        with pytest.raises(BluepySnapError):
+            _call({"$node_set": [1, 2]})
+        with pytest.raises(BluepySnapError):
+            _call({"$node_set": 'no-such-node-set'})
 
     def test_node_ids_by_filter_complex_query(self):
         test_obj = create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
