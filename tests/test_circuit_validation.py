@@ -123,7 +123,23 @@ def test_ok_node_ids_dataset():
         assert errors == []
 
 
-def test_no_required_node_population_datasets():
+def test_no_required_node_single_population_datasets():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            del h5f['nodes/default2/']
+            del h5f['nodes/default/node_group_id']
+            del h5f['nodes/default/node_group_index']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+        with h5py.File(nodes_file, 'r+') as h5f:
+            del h5f['nodes/default/node_type_id']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
+                                format(nodes_file, ['node_type_id']))]
+
+
+def test_no_required_node_multi_population_datasets():
     required_datasets = ['node_type_id', 'node_group_id', 'node_group_index']
     for ds in required_datasets:
         with copy_circuit() as (circuit_copy_path, config_copy_path):
@@ -504,16 +520,12 @@ def test_no_edge_source_to_target():
 
 
 def test_no_edge_all_node_ids():
-    node_ids_ds = ['node_group_id', 'node_type_id']
     with copy_circuit() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / 'nodes.h5'
         with h5py.File(nodes_file, 'r+') as h5f:
-            for ds in node_ids_ds:
-                del h5f['nodes/default/' + ds]
+            del h5f['nodes/default/0']
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(Error.FATAL,
-                  'Population default of {} misses datasets {}'.format(nodes_file, node_ids_ds)),
             Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
             Error(Error.FATAL,
