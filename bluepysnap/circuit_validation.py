@@ -295,7 +295,7 @@ def _check_nodes_population(nodes_dict, config):
     Returns:
         list: List of errors, empty if no errors
     """
-    POPULATION_DATASET_NAMES = ['node_type_id', 'node_group_id', 'node_group_index']
+    required_datasets = ['node_type_id']
     errors = []
     nodes_file = nodes_dict.get('nodes_file')
     with h5py.File(nodes_file, 'r') as h5f:
@@ -303,9 +303,11 @@ def _check_nodes_population(nodes_dict, config):
         if not nodes or len(nodes) == 0:
             errors.append(fatal('No "nodes" in {}.'.format(nodes_file)))
             return errors
+        if len(nodes.keys()) > 1:
+            required_datasets += ['node_group_id', 'node_group_index']
         for population_name in nodes:
             population = nodes[population_name]
-            missing_datasets = sorted(set(POPULATION_DATASET_NAMES) - set(population))
+            missing_datasets = sorted(set(required_datasets) - set(population))
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, nodes_file, missing_datasets)))
@@ -355,10 +357,12 @@ def _get_node_ids(node_population):
     if 'node_id' in node_population:
         node_ids = node_population['node_id'][:]
     else:
-        node_size_ds = _get_h5_data(node_population, 'node_type_id') \
-            or _get_h5_data(node_population, 'node_group_id')
-        if node_size_ds:
-            node_ids = np.arange(len(node_size_ds))
+        grp = _get_h5_data(node_population, '0')
+        if grp:
+            for attr in grp:
+                if isinstance(grp[attr], h5py.Dataset):
+                    node_ids = np.arange(len(grp[attr]))
+                    break
     return node_ids
 
 
