@@ -303,17 +303,18 @@ def _check_nodes_population(nodes_dict, config):
         if not nodes or len(nodes) == 0:
             errors.append(fatal('No "nodes" in {}.'.format(nodes_file)))
             return errors
-        if len(nodes.keys()) > 1:
-            required_datasets += ['node_group_id', 'node_group_index']
         for population_name in nodes:
             population = nodes[population_name]
+            groups = [population[name] for name in population
+                      if isinstance(population[name], h5py.Group)]
+            if len(groups) > 1:
+                required_datasets += ['node_group_id', 'node_group_index']
             missing_datasets = sorted(set(required_datasets) - set(population))
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, nodes_file, missing_datasets)))
-            for name in population:
-                if isinstance(population[name], h5py.Group):
-                    errors += _check_nodes_group(population[name], config)
+            for group in groups:
+                errors += _check_nodes_group(group, config)
     return errors
 
 

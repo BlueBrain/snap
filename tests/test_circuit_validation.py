@@ -139,13 +139,14 @@ def test_no_required_node_single_population_datasets():
                                 format(nodes_file, ['node_type_id']))]
 
 
-def test_no_required_node_multi_population_datasets():
-    required_datasets = ['node_type_id', 'node_group_id', 'node_group_index']
+def test_no_required_node_multi_group_datasets():
+    required_datasets = ['node_group_id', 'node_group_index']
     for ds in required_datasets:
         with copy_circuit() as (circuit_copy_path, config_copy_path):
             nodes_file = circuit_copy_path / 'nodes.h5'
             with h5py.File(nodes_file, 'r+') as h5f:
                 del h5f['nodes/default/' + ds]
+                h5f.copy('nodes/default/0', 'nodes/default/1')
             errors = test_module.validate(str(config_copy_path))
             assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
                                     format(nodes_file, [ds]))]
