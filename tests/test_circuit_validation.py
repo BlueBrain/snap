@@ -444,8 +444,8 @@ def test_edge_population_edge_group_different_length():
             h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 3, 4])
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL,
-                                'Population default of {} "edge_group_id" and "edge_group_index" of different sizes'.
-                                format(edges_file))]
+                                'Population {} of {} has different sizes of "group_id" and "group_index"'.
+                                format('/edges/default', edges_file))]
 
 
 def test_edge_population_wrong_group_id():
@@ -455,7 +455,7 @@ def test_edge_population_wrong_group_id():
             del h5f['edges/default/edge_group_id']
             h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 0])
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(Error.FATAL, 'Population default of {} misses group(s): {}'.
+        assert errors == [Error(Error.FATAL, 'Population /edges/default of {} misses group(s): {}'.
                                 format(edges_file, {1}))]
 
 
@@ -527,6 +527,8 @@ def test_no_edge_all_node_ids():
             del h5f['nodes/default/0']
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
+            Error(Error.FATAL, 'Population /nodes/default of {} misses group(s): {}'.
+                  format(nodes_file, {0})),
             Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
             Error(Error.FATAL,

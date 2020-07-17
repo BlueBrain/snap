@@ -7,6 +7,7 @@ from pathlib2 import Path
 import h5py
 import six
 
+from bluepysnap import BluepySnapError
 from bluepysnap.config import Config
 
 MAX_MISSING_FILES_DISPLAY = 10
@@ -199,6 +200,42 @@ def _get_model_template_file(model_template):
     return parts[1] + '.' + parts[0]
 
 
+def _get_population_groups(population_h5):
+    """Get groups from an edge or node population."""
+    return [population_h5[name] for name in population_h5
+            if isinstance(population_h5[name], h5py.Group) and name.isdigit()]
+
+
+def _get_group_size(group_h5):
+    """Gets size of an edges or nodes group"""
+    for name in group_h5:
+        if isinstance(group_h5[name], h5py.Dataset):
+            return group_h5[name].shape[0]
+    raise BluepySnapError('Empty group {}'.format(group_h5))
+
+
+def _check_multi_groups(group_id_h5, group_index_h5, population):
+    """Checks multiple groups of nodes or edges population"""
+    group_id_h5 = group_id_h5[:]
+    group_index_h5 = group_index_h5[:]
+    if len(group_id_h5) != len(group_index_h5):
+        return [fatal('Population {} of {} has different sizes of "group_id" and "group_index"'.
+                      format(population.name, population.file.filename))]
+    group_ids = np.unique(group_id_h5)
+    group_names = [_get_group_name(group).name for group in _get_population_groups(population)]
+    missing_groups = set(group_ids) - set(np.array(group_names, dtype=int))
+    if missing_groups:
+        return [fatal('Population {} of {} misses group(s): {}'.
+                      format(population.name, population.file.filename, missing_groups))]
+    for group_id in group_ids:
+        group = population[str(group_id)]
+        max_id = group_index_h5[group_id_h5 == int(group_id)].max()
+        if _get_group_size(group) < max_id:
+            return [fatal('Group {} in file {} should have ids up to {}'.format(
+                _get_group_name(group, parents=1), population.file.filename, max_id))]
+    return []
+
+
 def _check_bio_nodes_group(group, config):
     """Checks biophysical nodes group for errors.
 
@@ -305,14 +342,16 @@ def _check_nodes_population(nodes_dict, config):
             return errors
         for population_name in nodes:
             population = nodes[population_name]
-            groups = [population[name] for name in population
-                      if isinstance(population[name], h5py.Group)]
+            groups = _get_population_groups(population)
             if len(groups) > 1:
                 required_datasets += ['node_group_id', 'node_group_index']
             missing_datasets = sorted(set(required_datasets) - set(population))
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, nodes_file, missing_datasets)))
+            elif 'node_group_id' in population:
+                errors += _check_multi_groups(
+                    population['node_group_id'], population['node_group_index'], population)
             for group in groups:
                 errors += _check_nodes_group(group, config)
     return errors
@@ -436,16 +475,10 @@ def _check_edges_indices(population):
     return errors
 
 
-def _get_edge_population_groups(population):
-    """Get groups from a edge population."""
-    return [name for name in population
-            if name != "indices" and isinstance(population[name], h5py.Group)]
-
-
-def _check_edge_population_data(population, groups, nodes):
-    # pylint: disable=too-many-locals,too-many-return-statements,too-many-branches
+def _check_edge_population_data(population, nodes):
     errors = []
     population_name = _get_group_name(population)
+    groups = _get_population_groups(population)
     if len(groups) > 1:
         errors.append(BbpError(Error.WARNING, 'Population {} of {} have multiple groups. '
                                               'Cannot be read via bluepysnap or libsonata'.
@@ -474,28 +507,8 @@ def _check_edge_population_data(population, groups, nodes):
         # no "edge_group_id", "edge_group_index" and only one group --> can use implicit ids
         return errors
 
-    edge_group_ids = population["edge_group_id"][:]
-    edge_group_index = population["edge_group_index"][:]
-
-    if len(edge_group_ids) != len(edge_group_index):
-        return errors + [fatal('Population {} of {} "edge_group_id" and "edge_'
-                               'group_index" of different sizes'.
-                               format(population_name, population.file.filename))]
-
-    group_ids = np.unique(edge_group_ids)
-    missing_groups = set(group_ids) - set(np.array(groups, dtype=int))
-
-    if missing_groups:
-        return errors + [fatal('Population {} of {} misses group(s): {}'.
-                               format(population_name, population.file.filename, missing_groups))]
-    for group_id in group_ids:
-        group = population[str(group_id)]
-        max_edge_id = edge_group_index[edge_group_ids == int(group_id)].max()
-        if group[list(group)[0]].shape[0] < max_edge_id:
-            errors.append(fatal('Group {} in file {} should have ids up to {}'.
-                                format(_get_group_name(group, parents=1), population.file.filename,
-                                       max_edge_id)))
-
+    errors += _check_multi_groups(
+        population["edge_group_id"], population["edge_group_index"], population)
     if 'source_node_id' in children_object_names:
         errors += _check_edges_node_ids(population['source_node_id'], nodes)
     if 'target_node_id' in children_object_names:
@@ -503,9 +516,8 @@ def _check_edge_population_data(population, groups, nodes):
     if 'indices' in children_object_names:
         errors += _check_edges_indices(population)
 
-    for name in groups:
-        if isinstance(population[name], h5py.Group):
-            errors += _check_edges_group_bbp(population[name])
+    for group in groups:
+        errors += _check_edges_group_bbp(group)
 
     return errors
 
@@ -529,11 +541,9 @@ def _check_edges_population(edges_dict, nodes):
             return errors
 
         for population_name in edges:
-
             population_path = '/edges/' + population_name
             population = h5f[population_path]
-            groups = _get_edge_population_groups(population)
-            errors += _check_edge_population_data(population, groups, nodes)
+            errors += _check_edge_population_data(population, nodes)
 
     return errors
 
