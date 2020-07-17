@@ -9,9 +9,11 @@ except ImportError:
 import h5py
 
 import six
+from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import Error, BbpError
 import numpy as np
+import pytest
 
 from utils import TEST_DATA_DIR, copy_circuit, edit_config
 
@@ -20,6 +22,15 @@ def test_error_comparison():
     err = Error(Error.WARNING, 'hello')
     # we don't use `err == 'hello'` because of py27 compatibility
     assert (err == 'hello') is False
+
+
+def test_empty_group_size():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            grp = h5f['nodes/default/'].create_group('3')
+            with pytest.raises(BluepySnapError):
+                test_module._get_group_size(grp)
 
 
 def test_ok_circuit():
