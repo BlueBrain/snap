@@ -9,9 +9,11 @@ except ImportError:
 import h5py
 
 import six
+from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import Error, BbpError
 import numpy as np
+import pytest
 
 from utils import TEST_DATA_DIR, copy_circuit, edit_config
 
@@ -20,6 +22,15 @@ def test_error_comparison():
     err = Error(Error.WARNING, 'hello')
     # we don't use `err == 'hello'` because of py27 compatibility
     assert (err == 'hello') is False
+
+
+def test_empty_group_size():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            grp = h5f['nodes/default/'].create_group('3')
+            with pytest.raises(BluepySnapError):
+                test_module._get_group_size(grp)
 
 
 def test_ok_circuit():
@@ -139,13 +150,14 @@ def test_no_required_node_single_population_datasets():
                                 format(nodes_file, ['node_type_id']))]
 
 
-def test_no_required_node_multi_population_datasets():
-    required_datasets = ['node_type_id', 'node_group_id', 'node_group_index']
+def test_no_required_node_multi_group_datasets():
+    required_datasets = ['node_group_id', 'node_group_index']
     for ds in required_datasets:
         with copy_circuit() as (circuit_copy_path, config_copy_path):
             nodes_file = circuit_copy_path / 'nodes.h5'
             with h5py.File(nodes_file, 'r+') as h5f:
                 del h5f['nodes/default/' + ds]
+                h5f.copy('nodes/default/0', 'nodes/default/1')
             errors = test_module.validate(str(config_copy_path))
             assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
                                     format(nodes_file, [ds]))]
@@ -443,8 +455,8 @@ def test_edge_population_edge_group_different_length():
             h5f.create_dataset('edges/default/edge_group_index', data=[0, 1, 2, 3, 4])
         errors = test_module.validate(str(config_copy_path))
         assert errors == [Error(Error.FATAL,
-                                'Population default of {} "edge_group_id" and "edge_group_index" of different sizes'.
-                                format(edges_file))]
+                                'Population {} of {} has different sizes of "group_id" and "group_index"'.
+                                format('/edges/default', edges_file))]
 
 
 def test_edge_population_wrong_group_id():
@@ -454,7 +466,7 @@ def test_edge_population_wrong_group_id():
             del h5f['edges/default/edge_group_id']
             h5f.create_dataset('edges/default/edge_group_id', data=[0, 1, 0, 0])
         errors = test_module.validate(str(config_copy_path))
-        assert errors == [Error(Error.FATAL, 'Population default of {} misses group(s): {}'.
+        assert errors == [Error(Error.FATAL, 'Population /edges/default of {} misses group(s): {}'.
                                 format(edges_file, {1}))]
 
 
@@ -526,6 +538,8 @@ def test_no_edge_all_node_ids():
             del h5f['nodes/default/0']
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
+            Error(Error.FATAL, 'Population /nodes/default of {} misses group(s): {}'.
+                  format(nodes_file, {0})),
             Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
             Error(Error.FATAL,
