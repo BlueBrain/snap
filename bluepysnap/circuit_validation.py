@@ -207,7 +207,7 @@ def _get_population_groups(population_h5):
 
 
 def _get_group_size(group_h5):
-    """Gets size of an edges or nodes group"""
+    """Gets size of an edges or nodes group."""
     for name in group_h5:
         if isinstance(group_h5[name], h5py.Dataset):
             return group_h5[name].shape[0]
@@ -215,7 +215,7 @@ def _get_group_size(group_h5):
 
 
 def _check_multi_groups(group_id_h5, group_index_h5, population):
-    """Checks multiple groups of nodes or edges population"""
+    """Checks multiple groups of nodes or edges population."""
     group_id_h5 = group_id_h5[:]
     group_index_h5 = group_index_h5[:]
     if len(group_id_h5) != len(group_index_h5):
