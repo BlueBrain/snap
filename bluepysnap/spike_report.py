@@ -237,7 +237,7 @@ class SpikeReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return sorted(self._spike_reader.get_populations_names())
+        return sorted(self._spike_reader.get_population_names())
 
     @cached_property
     def _population(self):

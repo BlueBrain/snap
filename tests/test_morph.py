@@ -10,7 +10,6 @@ import pytest
 
 import bluepysnap.morph as test_module
 from bluepysnap.circuit import Circuit
-from bluepysnap.nodes import NodeStorage
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
 

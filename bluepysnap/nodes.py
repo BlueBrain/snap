@@ -505,7 +505,7 @@ class NodePopulation(object):
         return result.astype(float)
 
     def orientations(self, group=None):
-        """Node orientation(s) as a pandas Series or DataFrame.
+        """Node orientation(s) as a pandas numpy array or pandas Series.
 
         Args:
             group (int/sequence/str/mapping/None): Which nodes will have their positions
