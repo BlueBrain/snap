@@ -230,8 +230,9 @@ def test_no_rotation_bbp_node_group_datasets():
         nodes_file = circuit_copy_path / 'nodes.h5'
         with h5py.File(nodes_file, 'r+') as h5f:
             for ds in angle_datasets:
+                shape = h5f['nodes/default/0/' + ds].shape
                 del h5f['nodes/default/0/' + ds]
-            h5f['nodes/default/0/orientation_w'] = 0
+            h5f['nodes/default/0/'].create_dataset('orientation_w', shape, fillvalue=0)
         errors = test_module.validate(str(config_copy_path), bbp_check=True)
         assert errors == [
             Error(Error.WARNING, 'Group default/0 of {} has no rotation fields'.format(nodes_file)),
@@ -538,8 +539,6 @@ def test_no_edge_all_node_ids():
             del h5f['nodes/default/0']
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(Error.FATAL, 'Population /nodes/default of {} misses group(s): {}'.
-                  format(nodes_file, {0})),
             Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
             Error(Error.FATAL,
