@@ -349,7 +349,7 @@ def _check_nodes_population(nodes_dict, config):
             if missing_datasets:
                 errors.append(fatal('Population {} of {} misses datasets {}'.
                                     format(population_name, nodes_file, missing_datasets)))
-            elif 'node_group_id' in population:
+            elif len(groups) > 1:
                 errors += _check_multi_groups(
                     population['node_group_id'], population['node_group_index'], population)
             for group in groups:
