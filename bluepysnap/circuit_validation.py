@@ -207,25 +207,23 @@ def _get_population_groups(population_h5):
             if isinstance(population_h5[name], h5py.Group) and name.isdigit()]
 
 
-def _sonata_group_to_dataframe(group, types_file, type_id, id_, group_id, group_index):
+def _nodes_group_to_dataframe(group, types_file, population):
     """Transforms hdf5 population group to pandas DataFrame.
 
     Args:
-        group: HDF5 group of edges or nodes population
-        types_file: path to either 'node_types_file' or 'edge_types_file'
-        type_id: 'node_type_id' or 'edge_type_id' HDF5 dataset
-        id_: 'node_id' or 'edge_id' HDF5 dataset
-        group_id: 'node_group_id' or 'edge_group_id' HDF5 dataset
-        group_index: 'node_group_index' or 'edge_group_index' HDF5 dataset
+        group: HDF5 nodes group
+        types_file: path to 'node_types_file' of Sonata config
+        population: HDF5 nodes population
 
     Returns:
         pd.DataFrame: dataframe with all group attributes
     """
-    df = pd.DataFrame(type_id, columns=['type_id'])
+    df = pd.DataFrame(population['node_type_id'], columns=['type_id'])
     size = df.size
-    df['node_id'] = np.arange(size) if id_ is None else id_
-    df['group_id'] = 0 if group_id is None else group_id
-    df['group_index'] = np.arange(size) if group_index is None else group_index
+    df['id'] = population['node_id'] if 'node_id' in population else np.arange(size)
+    df['group_id'] = population['node_group_id'] if 'node_group_id' in population else 0
+    df['group_index'] = population['node_group_index'] \
+        if 'node_group_index' in population else np.arange(size)
     df = df[df['group_id'] == int(str(_get_group_name(group)))]
     for k, v in group.items():
         if isinstance(v, h5py.Dataset):
@@ -377,12 +375,7 @@ def _check_nodes_population(nodes_dict, config):
                 if len(m_errors) > 0:
                     return m_errors
             for group in groups:
-                group_df = _sonata_group_to_dataframe(group,
-                                                      node_types_file,
-                                                      population['node_type_id'],
-                                                      population.get('node_id'),
-                                                      population.get('node_group_id'),
-                                                      population.get('node_group_index'))
+                group_df = _nodes_group_to_dataframe(group, node_types_file, population)
                 errors += _check_nodes_group(group_df, group, config)
     return errors
 
