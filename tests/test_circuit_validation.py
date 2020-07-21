@@ -37,6 +37,12 @@ def test_ok_circuit():
     errors = test_module.validate(str(TEST_DATA_DIR / 'circuit_config.json'))
     assert errors == []
 
+    with copy_circuit() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['node_types_file'] = None
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == []
+
 
 def test_no_config_components():
     with copy_circuit() as (_, config_copy_path):
@@ -163,6 +169,17 @@ def test_no_required_node_multi_group_datasets():
                                     format(nodes_file, [ds]))]
 
 
+def test_nodes_multi_group_wrong_group_id():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            h5f.copy('nodes/default/0', 'nodes/default/1')
+            h5f['nodes/default/node_group_id'][-1] = 2
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population /nodes/default of {} misses group(s): {}'.
+                                format(nodes_file, {2}))]
+
+
 def test_no_required_node_group_datasets():
     required_datasets = ['model_template', 'model_type']
     with copy_circuit() as (circuit_copy_path, config_copy_path):
@@ -230,8 +247,9 @@ def test_no_rotation_bbp_node_group_datasets():
         nodes_file = circuit_copy_path / 'nodes.h5'
         with h5py.File(nodes_file, 'r+') as h5f:
             for ds in angle_datasets:
+                shape = h5f['nodes/default/0/' + ds].shape
                 del h5f['nodes/default/0/' + ds]
-            h5f['nodes/default/0/orientation_w'] = 0
+            h5f['nodes/default/0/'].create_dataset('orientation_w', shape, fillvalue=0)
         errors = test_module.validate(str(config_copy_path), bbp_check=True)
         assert errors == [
             Error(Error.WARNING, 'Group default/0 of {} has no rotation fields'.format(nodes_file)),
@@ -538,8 +556,6 @@ def test_no_edge_all_node_ids():
             del h5f['nodes/default/0']
         errors = test_module.validate(str(config_copy_path))
         assert errors == [
-            Error(Error.FATAL, 'Population /nodes/default of {} misses group(s): {}'.
-                  format(nodes_file, {0})),
             Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
             Error(Error.FATAL,
