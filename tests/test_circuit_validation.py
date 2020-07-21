@@ -37,6 +37,12 @@ def test_ok_circuit():
     errors = test_module.validate(str(TEST_DATA_DIR / 'circuit_config.json'))
     assert errors == []
 
+    with copy_circuit() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['node_types_file'] = None
+        errors = test_module.validate(config_copy_path)
+        assert errors == []
+
 
 def test_no_config_components():
     with copy_circuit() as (_, config_copy_path):
@@ -161,6 +167,17 @@ def test_no_required_node_multi_group_datasets():
             errors = test_module.validate(str(config_copy_path))
             assert errors == [Error(Error.FATAL, 'Population default of {} misses datasets {}'.
                                     format(nodes_file, [ds]))]
+
+
+def test_nodes_multi_group_wrong_group_id():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            h5f.copy('nodes/default/0', 'nodes/default/1')
+            h5f['nodes/default/node_group_id'][-1] = 2
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [Error(Error.FATAL, 'Population /nodes/default of {} misses group(s): {}'.
+                                format(nodes_file, {2}))]
 
 
 def test_no_required_node_group_datasets():

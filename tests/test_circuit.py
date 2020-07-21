@@ -18,7 +18,7 @@ def test_all():
             circuit.config['networks']['nodes'][0] ==
             {
                 'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
-                'node_types_file': None,
+                'node_types_file': str(TEST_DATA_DIR / 'node_types.csv'),
             }
     )
     assert isinstance(circuit.nodes, dict)
