@@ -40,7 +40,7 @@ def test_ok_circuit():
     with copy_circuit() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config['networks']['nodes'][0]['node_types_file'] = None
-        errors = test_module.validate(config_copy_path)
+        errors = test_module.validate(str(config_copy_path))
         assert errors == []
 
 

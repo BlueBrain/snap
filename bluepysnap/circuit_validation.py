@@ -357,7 +357,7 @@ def _check_nodes_population(nodes_dict, config):
     required_datasets = ['node_type_id']
     errors = []
     nodes_file = nodes_dict.get('nodes_file')
-    node_types_file = nodes_dict.get('node_types_file')
+    node_types_file = nodes_dict.get('node_types_file', None)
     with h5py.File(nodes_file, 'r') as h5f:
         nodes = _get_h5_data(h5f, 'nodes')
         if not nodes or len(nodes) == 0:
