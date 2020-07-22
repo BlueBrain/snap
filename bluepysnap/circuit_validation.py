@@ -439,12 +439,13 @@ def _check_edges_node_ids(nodes_ds, nodes):
     Returns:
         list: List of errors, empty if no errors
     """
-    errors = []
+    if 'node_population' not in nodes_ds.attrs:
+        return [fatal('Missing "node_population" attribute for "{}"'.format(nodes_ds.name))]
     node_population_name = six.ensure_str(nodes_ds.attrs['node_population'])
     nodes_dict = _find_nodes_population(node_population_name, nodes)
     if not nodes_dict:
-        errors.append(fatal('No node population for "{}"'.format(nodes_ds.name)))
-        return errors
+        return [fatal('No node population for "{}"'.format(nodes_ds.name))]
+    errors = []
     with h5py.File(nodes_dict['nodes_file'], 'r') as h5f:
         node_ids = _get_node_ids(h5f['/nodes/' + node_population_name])
         if node_ids.size > 0:
