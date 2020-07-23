@@ -64,7 +64,8 @@ def write_element_report(filepath):
     population_names = ['default', 'default2']
     node_ids = np.arange(0, 3)
     index_pointers = np.arange(0, 8, 2)
-    element_ids = np.array([0, 1] * 3)
+    index_pointers[-1] = index_pointers[-1] + 1
+    element_ids = np.array([0, 1] * 3 + [1])
 
     times = (0.0, 1, 0.1)
 
@@ -72,7 +73,7 @@ def write_element_report(filepath):
     with h5py.File(filepath, 'w') as h5f:
         h5f.create_group('report')
         gpop_element = h5f.create_group('/report/' + population_names[0])
-        d1 = np.array([np.arange(6) + j*0.1 for j in range(10)])
+        d1 = np.array([np.arange(7) + j*0.1 for j in range(10)])
         ddata = gpop_element.create_dataset('data', data=d1, dtype=np.float32)
         ddata.attrs.create('units', data="mV", dtype=string_dtype)
         gmapping = h5f.create_group('/report/' + population_names[0] + '/mapping')
@@ -85,7 +86,7 @@ def write_element_report(filepath):
         dtimes.attrs.create('units', data="ms", dtype=string_dtype)
 
         gpop_element2 = h5f.create_group('/report/' + population_names[1])
-        d1 = np.array([np.arange(6) + j * 0.1 for j in range(10)])
+        d1 = np.array([np.arange(7) + j * 0.1 for j in range(10)])
         ddata = gpop_element2.create_dataset('data', data=d1, dtype=np.float32)
         ddata.attrs.create('units', data="mR", dtype=string_dtype)
         gmapping = h5f.create_group('/report/' + population_names[1] + '/mapping')

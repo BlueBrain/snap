@@ -102,7 +102,10 @@ class TestCompartmentReport:
         assert filtered.report.columns.tolist() == [("default2", 1, 0), ("default2", 1, 1)]
 
         filtered = self.test_obj.filter(group={"population": "default2"}, t_start=0.3, t_stop=0.6)
-        assert filtered.report.columns.tolist() == [("default2", 0, 0), ("default2", 0, 1), ("default2", 1, 0), ("default2", 1, 1), ("default2", 2, 0), ("default2", 2, 1)]
+        assert filtered.report.columns.tolist() == [("default2", 0, 0), ("default2", 0, 1),
+                                                    ("default2", 1, 0), ("default2", 1, 1),
+                                                    ("default2", 2, 0), ("default2", 2, 1),
+                                                    ("default2", 2, 1)]
 
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
         pdt.assert_frame_equal(filtered.report, pd.DataFrame())
@@ -163,11 +166,9 @@ class TestPopulationCompartmentReport:
         self.simulation = Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
         self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
-        data = np.array([np.arange(6) + j * 0.1 for j in range(10)])
-
-        data = {(0, 0): data[:, 0], (0, 1): data[:, 1], (1, 0): data[:, 2], (1, 1): data[:, 3],
-                (2, 0): data[:, 4], (2, 1): data[:, 5]}
-        self.df = pd.DataFrame(data=data, index=timestamps)
+        data = np.array([np.arange(7) + j * 0.1 for j in range(10)], dtype=np.float32)
+        ids = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (2, 1)]
+        self.df = pd.DataFrame(data=data, columns=pd.MultiIndex.from_tuples(ids), index=timestamps)
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
@@ -213,8 +214,6 @@ class TestPopulationCompartmentReport:
         pdt.assert_frame_equal(
             self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8), self.df.iloc[2:9].loc[:, [1, 2]])
 
-        pdt.assert_frame_equal(self.test_obj.get([0, 2], t_start=15), pd.DataFrame())
-
         pdt.assert_frame_equal(
             self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8),
             self.df.iloc[2:9].loc[:, [1, 2]])
@@ -226,11 +225,27 @@ class TestPopulationCompartmentReport:
             self.test_obj.get(group="Layer23"), self.df.loc[:, [0]])
 
         with pytest.raises(BluepySnapError):
+            self.test_obj.get(-1, t_start=0.2)
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(0, t_start=-1)
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get([0, 2], t_start=15)
+
+        with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
+
+    def test_get_partially_not_in_report(self):
+        with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([0, 4])):
+            pdt.assert_frame_equal(self.test_obj.get([0, 4]),  self.df.loc[:, [0]])
 
     def test_get_not_in_report(self):
         with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
-            pdt.assert_frame_equal(self.test_obj.get(4), pd.DataFrame())
+            pdt.assert_frame_equal(self.test_obj.get([4]), pd.DataFrame())
+
+    def test_node_ids(self):
+        npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=np.int64))
 
 
 class TestPopulationSomaReport(TestPopulationCompartmentReport):
@@ -239,4 +254,4 @@ class TestPopulationSomaReport(TestPopulationCompartmentReport):
         self.test_obj = test_module.SomaReport(self.simulation, "soma_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
         data = {0: timestamps, 1: timestamps + 1, 2: timestamps + 2}
-        self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2])
+        self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2]).astype(np.float32)

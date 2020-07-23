@@ -34,10 +34,6 @@ def test_roundrobin():
     assert list(test_module.roundrobin(*a)) == [1, 4, 5, 2, 6, 3]
 
 
-def test_fix_libsonata_empty_list():
-    npt.assert_array_equal(test_module.fix_libsonata_empty_list(), np.array([-2]))
-
-
 def test_add_dynamic_prefix():
     assert test_module.add_dynamic_prefix(["a", "b"]) == [DYNAMICS_PREFIX + "a",
                                                           DYNAMICS_PREFIX + "b"]

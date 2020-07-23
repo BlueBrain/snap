@@ -23,6 +23,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 from bluepysnap.utils import roundrobin
 
+
 L = logging.getLogger(__name__)
 
 
@@ -359,9 +360,13 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
     elif plot_type == "all":
         max_per_pop = 15
         levels = filtered_report.report.columns.levels
-        slicer = tuple(slice(None) if i != len(levels) - 1 else slice(None, max_per_pop)
-                       for i in range(len(levels)))
-        data = filtered_report.report.loc[:, slicer].T
+        slicer = []
+        # create a slicer that will slice only on the last level of the columns
+        # that is, node_id for the soma report, element_id for the compartment report
+        for i, _ in enumerate(levels):
+            max_ = levels[i][:max_per_pop][-1]
+            slicer.append(slice(None) if i != len(levels) - 1 else slice(None, max_))
+        data = filtered_report.report.loc[:, tuple(slicer)].T
         # create [[(pop1, id1), (pop1, id2),...], [(pop2, id1), (pop2, id2),...]]
         indexes = [[(pop, idx) for idx in data.loc[pop].index] for pop in levels[0]]
         # try to keep the maximum of ids from each population

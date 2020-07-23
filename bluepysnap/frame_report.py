@@ -21,14 +21,13 @@ from cached_property import cached_property
 from pathlib2 import Path
 import numpy as np
 import pandas as pd
-from libsonata import ElementReportReader
+from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import fix_libsonata_empty_list, ensure_list
+from bluepysnap.utils import ensure_list
 
 L = logging.getLogger(__name__)
-
 
 FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
@@ -98,22 +97,36 @@ class PopulationFrameReport(object):
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.
         """
-        ids = [] if group is None else self._resolve(group).tolist()
-        t_start = -1 if t_start is None else t_start
-        t_stop = -1 if t_stop is None else t_stop
+        ids = self._resolve(group).tolist()
+        try:
+            view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
+        except SonataError as e:
+            raise BluepySnapError(e)
 
-        view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
-        if not view.data:
+        if len(view.ids) == 0:
             return pd.DataFrame()
-        res = pd.DataFrame(data=view.data, index=view.index)
+
+        res = pd.DataFrame(data=view.data,
+                           columns=pd.MultiIndex.from_arrays(np.asarray(view.ids).T),
+                           index=view.times).sort_index(axis=1)
+
         # rename from multi index to index cannot be achieved easily through df.rename
         res.columns = self._wrap_columns(res.columns)
-        res.sort_index(inplace=True)
         return res
+
+    @cached_property
+    def node_ids(self):
+        """Returns the node ids present in the report.
+
+        Returns:
+            np.Array: Numpy array containing the node_ids included in the report
+        """
+        return np.sort(np.asarray(self._frame_population.get_node_ids(), dtype=np.int64))
 
 
 class FilteredFrameReport(object):
     """Access to filtered FrameReport data."""
+
     def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
         """Initialize a FilteredFrameReport.
 
@@ -237,7 +250,7 @@ class FrameReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return sorted(self._frame_reader.get_populations_names())
+        return sorted(self._frame_reader.get_population_names())
 
     @cached_property
     def _population_report(self):
@@ -282,8 +295,6 @@ class PopulationCompartmentReport(PopulationFrameReport):
 
     def _resolve(self, group):
         """Transform a group into a node_id array."""
-        if isinstance(group, (np.ndarray, list, tuple)) and len(group) == 0:
-            return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 
 

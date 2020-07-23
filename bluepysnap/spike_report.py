@@ -22,14 +22,13 @@ from pathlib2 import Path
 from cached_property import cached_property
 import pandas as pd
 import numpy as np
+from libsonata import SpikeReader, SonataError
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import fix_libsonata_empty_list
 import bluepysnap._plotting
 
 
 def _get_reader(spike_report):
-    from libsonata import SpikeReader
     path = str(Path(spike_report.config["output_dir"]) / spike_report.config["spikes_file"])
     return SpikeReader(path)
 
@@ -86,8 +85,6 @@ class PopulationSpikeReport(object):
 
     def _resolve_nodes(self, group):
         """Transform a node group into a node_id array."""
-        if isinstance(group, (np.ndarray, list, tuple)) and len(group) == 0:
-            return fix_libsonata_empty_list()
         return self.nodes.ids(group=group)
 
     def get(self, group=None, t_start=None, t_stop=None):
@@ -101,23 +98,35 @@ class PopulationSpikeReport(object):
         Returns:
             pandas.Series: return spiking node_ids indexed by sorted spike time.
         """
-        node_ids = [] if group is None else self._resolve_nodes(group).tolist()
+        node_ids = self._resolve_nodes(group).tolist()
 
-        t_start = -1 if t_start is None else t_start
-        t_stop = -1 if t_stop is None else t_stop
         series_name = "ids"
-        res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
+        try:
+            res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
+        except SonataError as e:
+            raise BluepySnapError(e)
+
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
 
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        return res
+        return res.astype(np.int64)
+
+    @cached_property
+    def node_ids(self):
+        """Returns the node ids present in the report.
+
+        Returns:
+            np.Array: Numpy array containing the node_ids included in the report
+        """
+        return np.unique(self.get())
 
 
 class FilteredSpikeReport(object):
     """Access to filtered SpikeReport data."""
+
     def __init__(self, spike_report, group=None, t_start=None, t_stop=None):
         """Initialize a FilteredSpikeReport.
 
@@ -227,7 +236,7 @@ class SpikeReport(object):
     @cached_property
     def population_names(self):
         """Returns the population names included in this report."""
-        return sorted(self._spike_reader.get_populations_names())
+        return sorted(self._spike_reader.get_population_names())
 
     @cached_property
     def _population(self):
