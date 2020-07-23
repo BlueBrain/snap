@@ -25,7 +25,6 @@ import numpy as np
 from libsonata import SpikeReader, SonataError
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import fix_libsonata_empty_list
 import bluepysnap._plotting
 
 

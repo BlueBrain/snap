@@ -25,7 +25,7 @@ from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import fix_libsonata_empty_list, ensure_list
+from bluepysnap.utils import ensure_list
 
 L = logging.getLogger(__name__)
 

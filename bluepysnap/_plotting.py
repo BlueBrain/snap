@@ -362,7 +362,7 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
         slicer = []
         # create a slicer that will slice only on the last level of the columns
         # that is, node_id for the soma report, element_id for the compartment report
-        for i in range(len(levels)):
+        for i, _ in enumerate(levels):
             max_ = levels[i][:max_per_pop][-1]
             slicer.append(slice(None) if i != len(levels) - 1 else slice(None, max_))
         data = filtered_report.report.loc[:, tuple(slicer)].T
