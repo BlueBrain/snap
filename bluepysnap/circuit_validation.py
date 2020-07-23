@@ -439,12 +439,13 @@ def _check_edges_node_ids(nodes_ds, nodes):
     Returns:
         list: List of errors, empty if no errors
     """
-    errors = []
+    if 'node_population' not in nodes_ds.attrs:
+        return [fatal('Missing "node_population" attribute for "{}"'.format(nodes_ds.name))]
     node_population_name = six.ensure_str(nodes_ds.attrs['node_population'])
     nodes_dict = _find_nodes_population(node_population_name, nodes)
     if not nodes_dict:
-        errors.append(fatal('No node population for "{}"'.format(nodes_ds.name)))
-        return errors
+        return [fatal('No node population for "{}"'.format(nodes_ds.name))]
+    errors = []
     with h5py.File(nodes_dict['nodes_file'], 'r') as h5f:
         node_ids = _get_node_ids(h5f['/nodes/' + node_population_name])
         if node_ids.size > 0:
@@ -526,12 +527,9 @@ def _check_edge_population_data(population, nodes):
         return errors + [fatal('Population {} of {} misses dataset {}'.
                                format(population_name, population.file.filename,
                                       missing_group_datasets))]
-    if len(missing_group_datasets) == 2 and len(groups) == 1:
-        # no "edge_group_id", "edge_group_index" and only one group --> can use implicit ids
-        return errors
-
-    errors += _check_multi_groups(
-        population["edge_group_id"], population["edge_group_index"], population)
+    if len(missing_group_datasets) == 0:
+        errors += _check_multi_groups(
+            population["edge_group_id"], population["edge_group_index"], population)
     if 'source_node_id' in children_object_names:
         errors += _check_edges_node_ids(population['source_node_id'], nodes)
     if 'target_node_id' in children_object_names:

@@ -579,3 +579,27 @@ def test_invalid_edge_node_ids():
             Error(Error.FATAL, 'Population {} edges [99999] have node ids [0 1] instead of '
                                'single id 0'.format(edges_file)),
         ]
+
+
+def test_explicit_edges_no_node_population_attr():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/source_node_id'].attrs['node_population']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [
+            Error(Error.FATAL,
+                  'Missing "node_population" attribute for "/edges/default/source_node_id"')]
+
+
+def test_implicit_edges_no_node_population_attr():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with h5py.File(edges_file, 'r+') as h5f:
+            del h5f['edges/default/edge_group_id']
+            del h5f['edges/default/edge_group_index']
+            del h5f['edges/default/source_node_id'].attrs['node_population']
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == [
+            Error(Error.FATAL,
+                  'Missing "node_population" attribute for "/edges/default/source_node_id"')]
