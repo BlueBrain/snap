@@ -527,12 +527,9 @@ def _check_edge_population_data(population, nodes):
         return errors + [fatal('Population {} of {} misses dataset {}'.
                                format(population_name, population.file.filename,
                                       missing_group_datasets))]
-    if len(missing_group_datasets) == 2 and len(groups) == 1:
-        # no "edge_group_id", "edge_group_index" and only one group --> can use implicit ids
-        return errors
-
-    errors += _check_multi_groups(
-        population["edge_group_id"], population["edge_group_index"], population)
+    if len(missing_group_datasets) == 0:
+        errors += _check_multi_groups(
+            population["edge_group_id"], population["edge_group_index"], population)
     if 'source_node_id' in children_object_names:
         errors += _check_edges_node_ids(population['source_node_id'], nodes)
     if 'target_node_id' in children_object_names:
