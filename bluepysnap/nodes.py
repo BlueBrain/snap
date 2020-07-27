@@ -428,9 +428,9 @@ class NodePopulation(object):
             result = utils.ensure_list(group)
             self._check_ids(result)
             preserve_order = isinstance(group, collections.Sequence)
-
         if sample is not None:
-            result = np.random.choice(result, sample, replace=False)
+            if len(result) > 0:
+                result = np.random.choice(result, sample, replace=False)
             preserve_order = False
         if limit is not None:
             result = result[:limit]

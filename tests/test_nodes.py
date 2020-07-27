@@ -185,6 +185,8 @@ class TestNodePopulation:
         npt.assert_equal(_call(group=[]), [])
         npt.assert_equal(_call(limit=1), [0])
         npt.assert_equal(len(_call(sample=2)), 2)
+        npt.assert_equal(_call(group=[], sample=2), [])
+        npt.assert_equal(_call(group={Cell.MTYPE: "unknown"}, sample=2), [])
         npt.assert_equal(_call(0), [0])
         npt.assert_equal(_call([0, 1]), [0, 1])
         npt.assert_equal(_call([1, 0, 1]), [1, 0, 1])  # order and duplicates preserved
