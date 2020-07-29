@@ -1,5 +1,5 @@
 import bluepysnap.config as test_module
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, edit_config
 
 
 def test_parse():

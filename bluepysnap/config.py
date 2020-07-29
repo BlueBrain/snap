@@ -20,11 +20,12 @@
 # TODO: move to `libsonata` library
 
 import collections
-import os.path
+from pathlib2 import Path
 
 import six
 
 from bluepysnap import utils
+from bluepysnap.exceptions import BluepySnapError
 
 
 class Config(object):
@@ -43,7 +44,7 @@ class Config(object):
         Returns:
              Config: A Config object.
         """
-        configdir = os.path.abspath(os.path.dirname(filepath))
+        configdir = str(Path(filepath).parent.resolve())
         content = utils.load_json(filepath)
         self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)
         self.content = content
@@ -56,22 +57,27 @@ class Config(object):
         result['${configdir}'] = configdir
 
         for k, v in six.iteritems(result):
-            if v == '.':
-                result[k] = configdir
-            elif v.startswith('./'):
-                result[k] = os.path.join(configdir, v[2:])
+            if v.startswith('.'):
+                result[k] = str(Path(configdir, v).resolve())
 
         while True:
             update = False
             for k, v in six.iteritems(result):
+                if v.count('$') > 1:
+                    raise BluepySnapError(
+                        '{} is not a valid anchor : contains more than one sub anchor.')
                 if v.startswith('$'):
                     tokens = v.split('/', 1)
                     resolved = result[tokens[0]]
                     if '$' not in resolved:
-                        result[k] = os.path.join(resolved, *tokens[1:])
+                        result[k] = str(Path(resolved, *tokens[1:]))
                         update = True
             if not update:
                 break
+
+        for k, v in result.items():
+            if not v.startswith('/'):
+                raise BluepySnapError("{} cannot be resolved as an abs path".format(k))
 
         return result
 
@@ -81,9 +87,17 @@ class Config(object):
                 self.manifest[v] if v.startswith('$') else v
                 for v in value.split('/')
             ]
-            return os.path.join(*vs)
+            if not vs[0].startswith('/'):
+                raise BluepySnapError('{} cannot be resolved as an absolute path'.format(value))
+            abs_paths = [v for v in vs[1:] if v.startswith('/')]
+            if len(abs_paths) != 0:
+                raise BluepySnapError("Multiple absolute paths will be concatenated for {} : {}. "
+                                      "Please verify you anchor ('$') usage.".format(value, vs))
+            return str(Path(*vs))
         else:
-            return value
+            if value.startswith('/'):
+                return value
+            raise BluepySnapError("{} is not an abs path. Please use an anchor or an abs path")
 
     def _resolve(self, value):
         if isinstance(value, collections.Mapping):
