@@ -114,9 +114,6 @@ def test_bad_manifest():
             test_module.Config.parse(config_path)
 
 
-
-
-
 def test_simulation_config():
     actual = test_module.Config.parse(
         str(TEST_DATA_DIR / 'simulation_config.json')
