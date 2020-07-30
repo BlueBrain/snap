@@ -91,7 +91,7 @@ class Config(object):
             abs_paths = [v for v in vs[1:] if v.startswith('/')]
             if len(abs_paths) != 0:
                 raise BluepySnapError("Misplaced anchors in : {}."
-                                      "Please verify your '$' usage.".format(value, vs))
+                                      "Please verify your '$' usage.".format(value))
             return str(Path(*vs))
         elif value.startswith('.'):
             return str(Path(self.manifest['${configdir}'], value).resolve())
