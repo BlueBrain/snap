@@ -45,7 +45,7 @@ class Config(object):
              Config: A Config object.
         """
         configdir = str(Path(filepath).parent.resolve())
-        content = utils.load_json(filepath)
+        content = utils.load_json(str(filepath))
         self.manifest = Config._resolve_manifest(content.pop('manifest', {}), configdir)
         self.content = content
 

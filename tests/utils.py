@@ -54,7 +54,7 @@ def copy_config(config='circuit_config.json'):
     """
     with setup_tempdir() as tmp_dir:
         output = Path(tmp_dir, config)
-        shutil.copy(str(TEST_DATA_DIR / config), output)
+        shutil.copy(str(TEST_DATA_DIR / config), str(output))
         yield output
 
 
