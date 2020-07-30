@@ -46,7 +46,7 @@ class Config(object):
         """
         configdir = str(Path(filepath).parent.resolve())
         content = utils.load_json(filepath)
-        self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)
+        self.manifest = Config._resolve_manifest(content.pop('manifest', {}), configdir)
         self.content = content
 
     @staticmethod
@@ -77,27 +77,26 @@ class Config(object):
 
         for k, v in result.items():
             if not v.startswith('/'):
-                raise BluepySnapError("{} cannot be resolved as an abs path".format(k))
+                raise BluepySnapError("{} cannot be resolved as an abs path.".format(k))
 
         return result
 
-    def _resolve_path(self, value):
+    def _resolve_string(self, value):
         if '$' in value:
             vs = [
                 self.manifest[v] if v.startswith('$') else v
                 for v in value.split('/')
             ]
-            if not vs[0].startswith('/'):
-                raise BluepySnapError('{} cannot be resolved as an absolute path'.format(value))
             abs_paths = [v for v in vs[1:] if v.startswith('/')]
             if len(abs_paths) != 0:
                 raise BluepySnapError("Multiple absolute paths will be concatenated for {} : {}. "
                                       "Please verify you anchor ('$') usage.".format(value, vs))
             return str(Path(*vs))
+        elif value.startswith('.'):
+            return str(Path(self.manifest['${configdir}'], value).resolve())
         else:
-            if value.startswith('/'):
-                return value
-            raise BluepySnapError("{} is not an abs path. Please use an anchor or an abs path")
+            # we cannot know if a string is a path or not if it does not contain anchor or .
+            return value
 
     def _resolve(self, value):
         if isinstance(value, collections.Mapping):
@@ -105,7 +104,7 @@ class Config(object):
                 k: self._resolve(v) for k, v in six.iteritems(value)
             }
         elif isinstance(value, six.string_types):
-            return self._resolve_path(value)
+            return self._resolve_string(value)
         elif isinstance(value, collections.Iterable):
             return [self._resolve(v) for v in value]
         else:

@@ -42,7 +42,20 @@ def copy_circuit(config='circuit_config.json'):
     with setup_tempdir() as tmp_dir:
         copy_tree(str(TEST_DATA_DIR), tmp_dir)
         circuit_copy_path = Path(tmp_dir)
-        yield (circuit_copy_path, circuit_copy_path / config)
+        yield circuit_copy_path, circuit_copy_path / config
+
+
+@contextmanager
+def copy_config(config='circuit_config.json'):
+    """Copies config to a temp directory.
+
+    Returns:
+        yields a path to the copy of the config file
+    """
+    with setup_tempdir() as tmp_dir:
+        output = Path(tmp_dir, config)
+        shutil.copy(str(TEST_DATA_DIR / config), output)
+        yield output
 
 
 @contextmanager
