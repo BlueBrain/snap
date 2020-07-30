@@ -40,6 +40,10 @@ class Error(object):
             return False
         return self.level == other.level and self.message == other.message
 
+    def __hash__(self):
+        """Hash. Errors with the same level and message give the same hash."""
+        return hash(self.level) ^ hash(self.message)
+
 
 class BbpError(Error):
     """Special class of errors for BBP specification of Sonata."""
@@ -303,6 +307,9 @@ def _check_bio_nodes_group(group_df, group, config):
         errors.append(fatal('Group {} of {} misses biophysical fields: {}'.
                             format(group_name, group.file.filename, missing_fields)))
     _check_rotations()
+    if 'components' not in config:
+        errors.append(fatal('No "components" in config'))
+        return errors
     components = config['components']
     errors += _check_components_dir('morphologies_dir', components)
     errors += _check_components_dir('biophysical_neuron_models_dir', components)
@@ -602,11 +609,9 @@ def validate(config_file, bbp_check=False):
     """
     config = Config(config_file).resolve()
     errors = _check_required_datasets(config)
-    if 'components' not in config:
-        errors.append(fatal('No "components" in config'))
     if not errors:
         errors = _check_populations(config)
     if not bbp_check:
         errors = [e for e in errors if not isinstance(e, BbpError)]
     _print_errors(errors)
-    return errors
+    return set(errors)
