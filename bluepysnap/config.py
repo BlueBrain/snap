@@ -65,7 +65,7 @@ class Config(object):
             for k, v in six.iteritems(result):
                 if v.count('$') > 1:
                     raise BluepySnapError(
-                        '{} is not a valid anchor : contains more than one sub anchor.')
+                        '{} is not a valid anchor : contains more than one sub anchor.'.format(k))
                 if v.startswith('$'):
                     tokens = v.split('/', 1)
                     resolved = result[tokens[0]]
