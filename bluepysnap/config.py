@@ -82,6 +82,7 @@ class Config(object):
         return result
 
     def _resolve_string(self, value):
+        # not a startswith to detect the badly placed anchors
         if '$' in value:
             vs = [
                 self.manifest[v] if v.startswith('$') else v
@@ -89,8 +90,8 @@ class Config(object):
             ]
             abs_paths = [v for v in vs[1:] if v.startswith('/')]
             if len(abs_paths) != 0:
-                raise BluepySnapError("Multiple absolute paths will be concatenated for {} : {}. "
-                                      "Please verify you anchor ('$') usage.".format(value, vs))
+                raise BluepySnapError("Misplaced anchors in : {}."
+                                      "Please verify your '$' usage.".format(value, vs))
             return str(Path(*vs))
         elif value.startswith('.'):
             return str(Path(self.manifest['${configdir}'], value).resolve())

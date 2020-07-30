@@ -50,6 +50,13 @@ def test_parse():
         actual = test_module.Config.parse(config_path)
         assert actual["something"] == str(Path(config_path.parent / "../other").resolve())
 
+    # check resolution with multiple slashes
+    with copy_config() as config_path:
+        with edit_config(config_path) as config:
+            config["something"] = "$COMPONENT_DIR/something////else"
+        actual = test_module.Config.parse(config_path)
+        assert actual["something"] == str(Path(config_path.parent) / 'something' / 'else')
+
     # check resolution for non path objects
     with copy_config() as config_path:
         with edit_config(config_path) as config:
@@ -93,6 +100,21 @@ def test_bad_manifest():
             config["components"]["other"] = "$COMPONENT_DIR/$BASE_DIR"
         with pytest.raises(BluepySnapError):
             test_module.Config.parse(config_path)
+
+    with copy_config() as config_path:
+        with edit_config(config_path) as config:
+            config["components"]["other"] = "something/$COMPONENT_DIR/"
+        with pytest.raises(BluepySnapError):
+            test_module.Config.parse(config_path)
+
+    with copy_config() as config_path:
+        with edit_config(config_path) as config:
+            config["components"]["other"] = "/something/$COMPONENT_DIR/"
+        with pytest.raises(BluepySnapError):
+            test_module.Config.parse(config_path)
+
+
+
 
 
 def test_simulation_config():
