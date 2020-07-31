@@ -20,11 +20,12 @@
 # TODO: move to `libsonata` library
 
 import collections
-import os.path
+from pathlib2 import Path
 
 import six
 
 from bluepysnap import utils
+from bluepysnap.exceptions import BluepySnapError
 
 
 class Config(object):
@@ -43,9 +44,9 @@ class Config(object):
         Returns:
              Config: A Config object.
         """
-        configdir = os.path.abspath(os.path.dirname(filepath))
-        content = utils.load_json(filepath)
-        self.manifest = Config._resolve_manifest(content.pop('manifest'), configdir)
+        configdir = str(Path(filepath).parent.resolve())
+        content = utils.load_json(str(filepath))
+        self.manifest = Config._resolve_manifest(content.pop('manifest', {}), configdir)
         self.content = content
 
     @staticmethod
@@ -56,33 +57,46 @@ class Config(object):
         result['${configdir}'] = configdir
 
         for k, v in six.iteritems(result):
-            if v == '.':
-                result[k] = configdir
-            elif v.startswith('./'):
-                result[k] = os.path.join(configdir, v[2:])
+            if v.startswith('.'):
+                result[k] = str(Path(configdir, v).resolve())
 
         while True:
             update = False
             for k, v in six.iteritems(result):
+                if v.count('$') > 1:
+                    raise BluepySnapError(
+                        '{} is not a valid anchor : contains more than one sub anchor.'.format(k))
                 if v.startswith('$'):
                     tokens = v.split('/', 1)
                     resolved = result[tokens[0]]
                     if '$' not in resolved:
-                        result[k] = os.path.join(resolved, *tokens[1:])
+                        result[k] = str(Path(resolved, *tokens[1:]))
                         update = True
             if not update:
                 break
 
+        for k, v in result.items():
+            if not v.startswith('/'):
+                raise BluepySnapError("{} cannot be resolved as an abs path.".format(k))
+
         return result
 
-    def _resolve_path(self, value):
+    def _resolve_string(self, value):
+        # not a startswith to detect the badly placed anchors
         if '$' in value:
             vs = [
                 self.manifest[v] if v.startswith('$') else v
                 for v in value.split('/')
             ]
-            return os.path.join(*vs)
+            abs_paths = [v for v in vs[1:] if v.startswith('/')]
+            if len(abs_paths) != 0:
+                raise BluepySnapError("Misplaced anchors in : {}."
+                                      "Please verify your '$' usage.".format(value))
+            return str(Path(*vs))
+        elif value.startswith('.'):
+            return str(Path(self.manifest['${configdir}'], value).resolve())
         else:
+            # we cannot know if a string is a path or not if it does not contain anchor or .
             return value
 
     def _resolve(self, value):
@@ -91,7 +105,7 @@ class Config(object):
                 k: self._resolve(v) for k, v in six.iteritems(value)
             }
         elif isinstance(value, six.string_types):
-            return self._resolve_path(value)
+            return self._resolve_string(value)
         elif isinstance(value, collections.Iterable):
             return [self._resolve(v) for v in value]
         else:
