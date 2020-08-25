@@ -17,12 +17,16 @@
 
 """Miscellaneous utilities."""
 
-import collections
 import json
 import itertools
 
 import numpy as np
 import six
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
@@ -36,7 +40,7 @@ def load_json(filepath):
 
 def is_iterable(v):
     """Check if `v` is any iterable (strings are considered scalar)."""
-    return isinstance(v, collections.Iterable) and not isinstance(v, six.string_types)
+    return isinstance(v, Iterable) and not isinstance(v, six.string_types)
 
 
 def ensure_list(v):

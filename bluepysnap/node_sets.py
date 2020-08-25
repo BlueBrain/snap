@@ -21,8 +21,12 @@ For more information see:
 https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#node-sets-file
 """
 
-import collections
 from copy import deepcopy
+
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 import numpy as np
 from bluepysnap.exceptions import BluepySnapError
@@ -77,9 +81,9 @@ def _resolve_set(content, resolved, node_set_name):
     set_value = deepcopy(content.get(node_set_name))
     if set_value is None:
         raise BluepySnapError("Missing node_set: '{}'".format(node_set_name))
-    if not isinstance(set_value, (collections.Mapping, list)) or not set_value:
+    if not isinstance(set_value, (Mapping, list)) or not set_value:
         raise BluepySnapError("Ambiguous node_set: '{}'".format({node_set_name: set_value}))
-    if isinstance(set_value, collections.Mapping):
+    if isinstance(set_value, Mapping):
         resolved[node_set_name] = _sanitize(set_value)
         return resolved[node_set_name]
 

@@ -17,7 +17,6 @@
 
 """Node population access."""
 
-import collections
 import inspect
 from copy import deepcopy
 
@@ -27,6 +26,10 @@ import pandas as pd
 import six
 
 from cached_property import cached_property
+try:
+    from collections.abc import Mapping, Sequence
+except ImportError:
+    from collections import Mapping, Sequence
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
@@ -321,7 +324,7 @@ class NodePopulation(object):
                 prop_mask = np.logical_and(prop >= v1, prop <= v2)
             elif isinstance(values, six.string_types) and values.startswith('regex:'):
                 prop_mask = _complex_query(prop, {'$regex': values[6:]})
-            elif isinstance(values, collections.Mapping):
+            elif isinstance(values, Mapping):
                 prop_mask = _complex_query(prop, values)
             else:
                 prop_mask = np.in1d(prop, values)
@@ -418,7 +421,7 @@ class NodePopulation(object):
 
         if group is None:
             result = self._data.index.values
-        elif isinstance(group, collections.Mapping):
+        elif isinstance(group, Mapping):
             result = self._node_ids_by_filter(queries=group)
         elif isinstance(group, np.ndarray):
             result = group
@@ -427,7 +430,7 @@ class NodePopulation(object):
         else:
             result = utils.ensure_list(group)
             self._check_ids(result)
-            preserve_order = isinstance(group, collections.Sequence)
+            preserve_order = isinstance(group, Sequence)
         if sample is not None:
             if len(result) > 0:
                 result = np.random.choice(result, sample, replace=False)
