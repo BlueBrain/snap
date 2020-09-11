@@ -82,7 +82,6 @@ class TestEdgePopulation(object):
             'edges_file': filepath,
             'edge_types_file': None,
         }
-        node_population = TestEdgePopulation.mocking_nodes("default")
         circuit = Mock()
         create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit,
                                node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
