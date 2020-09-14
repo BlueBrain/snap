@@ -41,7 +41,7 @@ def copy_circuit(config='circuit_config.json'):
     """
     with setup_tempdir() as tmp_dir:
         copy_tree(str(TEST_DATA_DIR), tmp_dir)
-        circuit_copy_path = Path(tmp_dir)
+        circuit_copy_path = Path(tmp_dir).resolve()
         yield circuit_copy_path, circuit_copy_path / config
 
 
@@ -53,7 +53,7 @@ def copy_config(config='circuit_config.json'):
         yields a path to the copy of the config file
     """
     with setup_tempdir() as tmp_dir:
-        output = Path(tmp_dir, config)
+        output = Path(tmp_dir, config).resolve()
         shutil.copy(str(TEST_DATA_DIR / config), str(output))
         yield output
 
