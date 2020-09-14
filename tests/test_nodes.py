@@ -256,6 +256,10 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             _call(-1)  # node ID out of range (lower boundary)
         with pytest.raises(BluepySnapError):
+            _call([-1, 1])  # one of node IDs out of range (lower boundary)
+        with pytest.raises(BluepySnapError):
+            _call([1, -1])  # one of node IDs out of range, reversed order (lower boundary)
+        with pytest.raises(BluepySnapError):
             _call(999)  # node ID out of range (upper boundary)
         with pytest.raises(BluepySnapError):
             _call([1, 999])  # one of node IDs out of range

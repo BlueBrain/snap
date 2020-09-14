@@ -254,9 +254,17 @@ class NodePopulation(object):
 
     def _check_ids(self, node_ids):
         """Check that node IDs belong to the circuit."""
-        missing = pd.Index(node_ids).difference(self._data.index)
-        if not missing.empty:
-            raise BluepySnapError("node ID not found: [%s]" % ",".join(map(str, missing)))
+        if not len(node_ids):
+            return
+        # use the function with better performance for arrays or lists
+        if isinstance(node_ids, np.ndarray):
+            max_id = node_ids.max()
+            min_id = node_ids.min()
+        else:
+            max_id = max(node_ids)
+            min_id = min(node_ids)
+        if min_id < 0 or max_id >= self._data.index.shape[0]:
+            raise BluepySnapError("All node IDs must be >= 0 and < %s" % self._data.index.shape[0])
 
     def _check_property(self, prop):
         """Check if a property exists inside the dataset."""
