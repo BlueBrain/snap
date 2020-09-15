@@ -65,15 +65,28 @@ class TestNodes:
         assert self.test_obj.property_values('mtype') == {'L2_X', 'L7_X', 'L9_Z', 'L8_Y', 'L6_Y'}
 
     def test_ids(self):
-        print(self.test_obj.ids())
+        circuit_ids = self.test_obj.ids()
+        print(circuit_ids)
+        assert False
 
     def test_get(self):
-        # print("")
+        print("")
         # print(self.test_obj.get())
         # print(self.test_obj.get(properties="other2"))
         # print(self.test_obj.get(properties=["other2", "other1", 'layer']))
-        # assert False
-        pass
+        a = self.test_obj.get(properties=["other2", "other1", 'layer'])
+        # print(a)
+        # print(a.index)
+        node_ids = CircuitNodeIds.create_global_ids(["default2", "default"], [0, 2])
+        # print(a)
+        # print(node_ids.index)
+        # print(a.loc[node_ids.index])
+        node_ids.to_csv("/tmp/nodes.csv")
+        other = CircuitNodeIds.from_csv("/tmp/nodes.csv")
+        print(other)
+        print(a.loc[other.index])
+        print(a.loc[node_ids.index])
+        assert False
 
 
 class TestNodeStorage:

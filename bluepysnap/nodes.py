@@ -32,40 +32,10 @@ from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
-
+from bluepysnap.circuit_ids import CircuitNodeIds
 
 # this constant is not part of the sonata standard
 NODE_SET_KEY = "$node_set"
-
-
-class CircuitNodeIds:
-    """Global Node ids."""
-    def __init__(self, index):
-        if not isinstance(index, pd.MultiIndex):
-            raise BluepySnapError("index must be a pandas.MultiIndex object")
-        self.index = index
-
-    @classmethod
-    def create_global_ids(cls, populations, population_ids):
-        if isinstance(populations, str):
-            populations = np.full(len(population_ids), fill_value=populations)
-        index = pd.MultiIndex.from_arrays([populations, population_ids])
-        return cls(index)
-
-    def _locate(self, population):
-        try:
-            return self.index.get_locs(utils.ensure_list(population))
-        except KeyError:
-            return []
-
-    def filter_population(self, population):
-        return CircuitNodeIds(self.index[self._locate(population)])
-
-    def get_populations(self):
-        return self.index.get_level_values(0).to_numpy()
-
-    def get_ids(self):
-        return self.index.get_level_values(1).to_numpy()
 
 
 class Nodes(object):
@@ -154,7 +124,7 @@ class Nodes(object):
             pop_ids = global_pop_ids.get_ids()
             pop_properties = set(properties) & pop.property_names
             res.loc[global_pop_ids.index, pop_properties] = pop.get(pop_ids, properties=pop_properties).to_numpy()
-        return res
+        return res.sort_index()
 
 
 class NodeStorage(object):
