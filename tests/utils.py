@@ -22,7 +22,7 @@ TEST_DATA_DIR = TEST_DIR / 'data'
 
 @contextmanager
 def setup_tempdir(cleanup=True):
-    temp_dir = tempfile.mkdtemp()
+    temp_dir = str(Path(tempfile.mkdtemp()).resolve())
     try:
         yield temp_dir
     finally:
