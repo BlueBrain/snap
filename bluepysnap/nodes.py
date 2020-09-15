@@ -254,7 +254,7 @@ class NodePopulation(object):
 
     def _check_ids(self, node_ids):
         """Check that node IDs belong to the circuit."""
-        if not len(node_ids):
+        if len(node_ids) == 0:
             return
         # use the function with better performance for arrays or lists
         if isinstance(node_ids, np.ndarray):
