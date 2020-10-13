@@ -11,11 +11,10 @@ from mock import Mock
 from bluepysnap.bbp import Synapse
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
-from bluepysnap.node_sets import NodeSets
 
 import bluepysnap.edges as test_module
 
-from utils import TEST_DATA_DIR, create_node_population
+from utils import TEST_DATA_DIR
 
 
 def index_as_uint64(values):
@@ -75,24 +74,27 @@ class TestEdgeStorage:
 class TestEdgePopulation(object):
 
     @staticmethod
-    def create_edge_population(filepath, pop_name):
+    def mocking_nodes(pop_name):
+        node_population = Mock()
+        node_population.name = pop_name
+        node_population.ids = lambda x: x
+        return node_population
+
+    @staticmethod
+    def create_population(filepath, pop_name):
         config = {
             'edges_file': filepath,
             'edge_types_file': None,
         }
+        node_population = TestEdgePopulation.mocking_nodes("default")
         circuit = Mock()
-        create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit,
-                               node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
-        storage = test_module.EdgeStorage(config, circuit)
-        pop = storage.population(pop_name)
+        circuit.nodes = {node_population.name: node_population}
 
-        # check if the source and target populations are in the circuit nodes
-        assert pop.source.name in pop._edge_storage.circuit.nodes
-        assert pop.target.name in pop._edge_storage.circuit.nodes
-        return pop
+        storage = test_module.EdgeStorage(config, circuit)
+        return storage.population(pop_name)
 
     def setup(self):
-        self.test_obj = TestEdgePopulation.create_edge_population(
+        self.test_obj = TestEdgePopulation.create_population(
             str(TEST_DATA_DIR / "edges.h5"), 'default')
 
     def test_basic(self):
@@ -104,8 +106,6 @@ class TestEdgePopulation(object):
         assert (
                 sorted(self.test_obj.property_names) ==
                 sorted([
-                    Synapse.SOURCE_NODE_ID,
-                    Synapse.TARGET_NODE_ID,
                     Synapse.AXONAL_DELAY,
                     Synapse.G_SYNX,
                     Synapse.POST_X_CENTER,
@@ -134,8 +134,7 @@ class TestEdgePopulation(object):
             ['PRE_Y_SURFACE', 'PRE_Z_SURFACE', 'PRE_X_CENTER', 'POST_Y_CENTER', 'AXONAL_DELAY',
              'POST_X_CENTER', 'POST_Y_SURFACE', 'POST_Z_SURFACE', 'PRE_Y_CENTER', 'POST_Z_CENTER',
              'PRE_Z_CENTER', 'PRE_X_SURFACE', 'POST_X_SURFACE', 'POST_SECTION_ID', 'PRE_SECTION_ID',
-             'POST_SECTION_POS', 'PRE_SECTION_POS', 'SYN_WEIGHT',
-             'SOURCE_NODE_ID', 'TARGET_NODE_ID'])
+             'POST_SECTION_POS', 'PRE_SECTION_POS', 'SYN_WEIGHT'])
         assert sorted(self.test_obj.container_property_names(Edge)) == expected
         with pytest.raises(BluepySnapError):
             mapping = {"X": "x"}
@@ -165,8 +164,7 @@ class TestEdgePopulation(object):
                 'float32'), dtype('float64'), dtype('float32'), dtype('float64'), dtype(
                 'int64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype(
                 'float64'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
-                'float32'), dtype('float32'), dtype('float64'), dtype('float64'),
-                dtype('uint64'), dtype('uint64')]
+                'float32'), dtype('float32'), dtype('float64'), dtype('float64')]
             , index=['syn_weight', '@dynamics:param1', 'afferent_surface_y',
                      'afferent_surface_z', 'conductance', 'efferent_center_x',
                      'delay', 'afferent_center_z', 'efferent_section_id',
@@ -175,8 +173,7 @@ class TestEdgePopulation(object):
                      'afferent_center_y', 'afferent_surface_x',
                      'efferent_surface_x', 'afferent_section_pos',
                      'efferent_section_pos', 'efferent_surface_y',
-                     'efferent_center_z',
-                     '@source_node', '@target_node']).sort_index()
+                     'efferent_center_z']).sort_index()
 
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
@@ -445,7 +442,7 @@ class TestEdgePopulation(object):
             )
 
     def test_iter_connection_unique(self):
-        test_obj = TestEdgePopulation.create_edge_population(
+        test_obj = TestEdgePopulation.create_population(
             str(TEST_DATA_DIR / "edges_complete_graph.h5"), 'default')
         it = test_obj.iter_connections([0, 1, 2], [0, 1, 2])
         assert sorted(it) == [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]

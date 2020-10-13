@@ -5,7 +5,6 @@ import numpy as np
 import click
 from pathlib2 import Path
 import h5py
-import six
 
 from bluepysnap.config import Config
 
@@ -67,7 +66,7 @@ def _check_components_dir(name, components):
     """
     dirpath = components.get(name)
     if not dirpath or not Path(dirpath).is_dir():
-        return [BbpError(Error.FATAL, 'Invalid components "{}": {}'.format(name, dirpath))]
+        return [fatal('Invalid components "{}": {}'.format(name, dirpath))]
     return []
 
 
@@ -233,35 +232,20 @@ def _check_bio_nodes_group(group, config):
     _check_rotations()
     components = config['components']
     errors += _check_components_dir('morphologies_dir', components)
+    errors += _check_components_dir('mechanisms_dir', components)
     errors += _check_components_dir('biophysical_neuron_models_dir', components)
     if errors:
         return errors
-    morph_files = group['morphology'] if _get_h5_data(group, '@library/morphology') is None \
-        else group['@library/morphology']
     errors += _check_files(
         'morphology: {}[{}]'.format(group_name, group.file.filename),
-        (Path(components['morphologies_dir'], m + '.swc') for m in morph_files),
+        (Path(components['morphologies_dir'], m + '.swc') for m in group['morphology']),
         Error.WARNING)
-    bio_files = group['model_template'] if _get_h5_data(group, '@library/model_template') is None \
-        else group['@library/model_template']
     bio_path = Path(components['biophysical_neuron_models_dir'])
     errors += _check_files(
         'model_template: {}[{}]'.format(group_name, group.file.filename),
-        (bio_path / _get_model_template_file(m) for m in bio_files),
+        (bio_path / _get_model_template_file(m) for m in group['model_template']),
         Error.WARNING)
     return errors
-
-
-def _is_biophysical(group):
-    """Check if a group contains biophysical nodes."""
-    if group['model_type'][0] == 'biophysical':
-        return True
-    if "@library/model_type" in group:
-        model_type_int = group['model_type'][0]
-        model_type = group["@library/model_type"][model_type_int]
-        if six.ensure_str(model_type) == 'biophysical':
-            return True
-    return False
 
 
 def _check_nodes_group(group, config):
@@ -280,7 +264,7 @@ def _check_nodes_group(group, config):
         return [fatal('Group {} of {} misses required fields: {}'
                       .format(_get_group_name(group, parents=1), group.file.filename,
                               missing_fields))]
-    elif _is_biophysical(group):
+    elif 'biophysical' in group['model_type'][:]:
         return _check_bio_nodes_group(group, config)
     return []
 
@@ -446,7 +430,7 @@ def _check_edge_population_data(population, groups, nodes):
                                               'Cannot be read via bluepysnap or libsonata'.
                                format(population_name, population.file.filename)))
 
-    children_object_names = set(population)
+    children_object_names = set(population.keys())
     group_datasets = ["edge_group_id", "edge_group_index"]
     required_datasets = ['edge_type_id', 'source_node_id', 'target_node_id']
     if len(groups) > 1:
