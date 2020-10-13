@@ -12,12 +12,13 @@ from mock import Mock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
+from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, create_node_population
 
 
 class TestNodeStorage:
@@ -57,21 +58,10 @@ class TestNodeStorage:
 
 class TestNodePopulation:
 
-    @staticmethod
-    def create_population(filepath, pop_name):
-        config = {
-            'nodes_file': filepath,
-            'node_types_file': None,
-        }
-        circuit = Mock()
-        circuit.node_sets = NodeSets(str(TEST_DATA_DIR / 'node_sets.json'))
-        storage = test_module.NodeStorage(config, circuit)
-        return storage.population(pop_name)
-
     def setup(self):
-        self.test_obj = TestNodePopulation.create_population(
-            str(TEST_DATA_DIR / 'nodes.h5'),
-            "default")
+        self.test_obj = create_node_population(
+            str(TEST_DATA_DIR / 'nodes.h5'), "default",
+            node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
 
     def test_basic(self):
         assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
@@ -106,8 +96,8 @@ class TestNodePopulation:
                 self.test_obj.property_values(Cell.MORPHOLOGY) ==
                 {'morph-A', 'morph-B', 'morph-C'}
         )
-        test_obj_library = TestNodePopulation.create_population(
-            str(TEST_DATA_DIR / 'nodes_with_library.h5'),
+        test_obj_library = create_node_population(
+            str(TEST_DATA_DIR / 'nodes_with_library_small.h5'),
             "default")
         assert test_obj_library.property_values("categorical") == {"A", "B", "C"}
         assert test_obj_library.property_values("categorical", is_present=True) == {"A", "B"}
@@ -142,27 +132,49 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             self.test_obj.container_property_names(int)
 
+    def test_as_edge_source_target(self):
+        circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
+        assert circuit.nodes['default'].source_in_edges() == {"default"}
+        assert circuit.nodes['default'].target_in_edges() == {"default"}
+
+    def test_as_edge_source_target_mock(self):
+        def _mock_edge(name, source, target):
+            edges = Mock()
+            edges.source.name = source
+            edges.target.name = target
+            edges.name = name
+            return edges
+
+        circuit = Mock()
+        circuit.edges = {"edge1": _mock_edge('edge1', "default", "nodeother"),
+                         "edge2": _mock_edge('edge2', "nodeother", "default"),
+                         "edge3": _mock_edge('edge3', "default", "nodeother")}
+        create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit)
+
+        assert circuit.nodes['default'].source_in_edges() == {"edge1", "edge3"}
+        assert circuit.nodes['default'].target_in_edges() == {"edge2"}
+
     def test__positional_mask(self):
         npt.assert_array_equal(self.test_obj._positional_mask([1, 2]), [False, True, True])
         npt.assert_array_equal(self.test_obj._positional_mask([0, 2]), [True, False, True])
 
     def test__node_population_mask(self):
-        queries, mask = self.test_obj._node_population_mask({"population": "default",
+        queries, mask = self.test_obj._circuit_mask({"population": "default",
                                                              "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
-        queries, mask = self.test_obj._node_population_mask({"population": "unknown",
+        queries, mask = self.test_obj._circuit_mask({"population": "unknown",
                                                              "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, False])
 
-        queries, mask = self.test_obj._node_population_mask({"population": "default",
+        queries, mask = self.test_obj._circuit_mask({"population": "default",
                                                              "node_id": [2], "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, True])
 
-        queries, mask = self.test_obj._node_population_mask({"other": "val"})
+        queries, mask = self.test_obj._circuit_mask({"other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
@@ -186,6 +198,8 @@ class TestNodePopulation:
         npt.assert_equal(_call({"node_id": [1]}), [1])
         npt.assert_equal(_call({"node_id": [1, 2]}), [1, 2])
         npt.assert_equal(_call({"node_id": [1, 2, 42]}), [1, 2])
+        npt.assert_equal(_call({"node_id": [1], "population": ["default"],
+                                Cell.MORPHOLOGY: "morph-B"}), [1])
 
         # same query with a $and operator
         npt.assert_equal(_call({"$and": [{Cell.MTYPE: 'L6_Y'}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
@@ -223,6 +237,18 @@ class TestNodePopulation:
         npt.assert_equal(_call('combined_combined_Node0_L6_Y__Node12_L6_Y__'),
                          [0, 1, 2])  # imbricated '$or' functions
 
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "node_id": 1}), [1])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "node_id": [1, 2, 3]}), [1, 2])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "population": "default"}), [1, 2])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', "population": "default", "node_id": 1}),
+                         [1])
+        npt.assert_equal(_call({"$node_set": 'Node12_L6_Y', Cell.MORPHOLOGY: "morph-B"}),
+                         [1])
+        npt.assert_equal(_call({"$and": [{"$node_set": 'Node12_L6_Y', "population": "default"},
+                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1])
+        npt.assert_equal(_call({"$or": [{"$node_set": 'Node12_L6_Y', "population": "default"},
+                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
+
         with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
         with pytest.raises(BluepySnapError):
@@ -233,9 +259,13 @@ class TestNodePopulation:
             _call([1, 999])  # one of node IDs out of range
         with pytest.raises(BluepySnapError):
             _call({'no-such-node-property': 42})
+        with pytest.raises(BluepySnapError):
+            _call({"$node_set": [1, 2]})
+        with pytest.raises(BluepySnapError):
+            _call({"$node_set": 'no-such-node-set'})
 
     def test_node_ids_by_filter_complex_query(self):
-        test_obj = TestNodePopulation.create_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
+        test_obj = create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
         data = pd.DataFrame({
             Cell.MTYPE: ['L23_MC', 'L4_BP', 'L6_BP', 'L6_BPC'],
         })
@@ -305,16 +335,28 @@ class TestNodePopulation:
         with pytest.raises(BluepySnapError):
             _call([0, 999])  # one of node ids is invalid
 
-    def test_get_with_library(self):
-        test_obj = TestNodePopulation.create_population(
-            str(TEST_DATA_DIR / 'nodes_with_library.h5'),
+    def test_get_with_library_small_number_of_values(self):
+        test_obj = create_node_population(
+            str(TEST_DATA_DIR / 'nodes_with_library_small.h5'),
             "default")
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
         assert is_categorical(res["categorical"])
-        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
+        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A', 'A', 'A', 'A']
         assert res["categorical"].cat.categories.tolist() == ['A', 'B', 'C']
-        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0]
+        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0, 0, 0, 0]
+        assert res["string"].tolist() == ["AA", "BB", "CC", "DD", "EE", "FF", "GG"]
+        assert res["int"].tolist() == [0, 0, 1, 0, 0, 0, 0]
+        npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0., 0., 0., 0.])
+
+    def test_get_with_library_large_number_of_values(self):
+        test_obj = create_node_population(
+            str(TEST_DATA_DIR / 'nodes_with_library_large.h5'),
+            "default")
+        assert test_obj.property_names == {"categorical", "string", "int", "float"}
+        res = test_obj.get(properties=["categorical", "string", "int", "float"])
+        assert not is_categorical(res["categorical"])
+        assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
         assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
         assert res["int"].tolist() == [0, 0, 1, 0]
         npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0.])
@@ -370,7 +412,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle[x|z]
-        _call_no_xz = TestNodePopulation.create_population(
+        _call_no_xz = create_node_population(
             str(TEST_DATA_DIR / 'nodes_no_xz_rotation.h5'),
             "default").orientations
         # 0 and 2 node_ids have x|z rotation angles equal to zero
@@ -387,7 +429,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation without rotation_angle
-        _call_no_rot = TestNodePopulation.create_population(
+        _call_no_rot = create_node_population(
             str(TEST_DATA_DIR / 'nodes_no_rotation.h5'),
             "default").orientations
 
@@ -401,7 +443,7 @@ class TestNodePopulation:
         )
 
         # NodePopulation with quaternions
-        _call_quat = TestNodePopulation.create_population(
+        _call_quat = create_node_population(
             str(TEST_DATA_DIR / 'nodes_quaternions.h5'),
             "default").orientations
 
@@ -444,7 +486,7 @@ class TestNodePopulation:
             )
         )
 
-        _call_missing_quat = TestNodePopulation.create_population(
+        _call_missing_quat = create_node_population(
             str(TEST_DATA_DIR / 'nodes_quaternions_w_missing.h5'),
             "default").orientations
 

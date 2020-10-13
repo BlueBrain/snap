@@ -24,6 +24,7 @@ import neurom as nm
 
 from bluepysnap.settings import MORPH_CACHE_SIZE
 from bluepysnap.sonata_constants import Node
+from bluepysnap.exceptions import BluepySnapError
 
 
 class MorphHelper(object):
@@ -41,6 +42,10 @@ class MorphHelper(object):
         """
         self._morph_dir = morph_dir
         self._nodes = nodes
+
+        # all nodes from a population must have the same model type
+        if not self._is_biophysical(0):
+            raise BluepySnapError("Node population does not contain biophysical nodes.")
         self._load = nm.load_neuron
         if MORPH_CACHE_SIZE is not None:
             try:
@@ -48,6 +53,9 @@ class MorphHelper(object):
             except ImportError:  # pragma: nocover
                 from functools32 import lru_cache
             self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
+
+    def _is_biophysical(self, node_id):
+        return self._nodes.get(node_id, Node.MODEL_TYPE) == "biophysical"
 
     def get_filepath(self, node_id):
         """Return path to SWC morphology file corresponding to `node_id`."""

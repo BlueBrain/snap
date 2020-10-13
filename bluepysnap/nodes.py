@@ -34,6 +34,10 @@ from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
 
 
+# this constant is not part of the sonata standard
+NODE_SET_KEY = "$node_set"
+
+
 class NodeStorage(object):
     """Node storage access."""
 
@@ -92,8 +96,14 @@ class NodeStorage(object):
         _all = libsonata.Selection([(0, node_count)])
         for attr in sorted(nodes.attribute_names):
             if attr in categoricals:
-                result[attr] = pd.Categorical.from_codes(nodes.get_enumeration(attr, _all),
-                                                         categories=nodes.enumeration_values(attr))
+                enumeration = np.asarray(nodes.get_enumeration(attr, _all))
+                values = np.asarray(nodes.enumeration_values(attr))
+                # if the size of `values` is large enough compared to `enumeration`, not using
+                # categorical reduces the memory usage.
+                if values.shape[0] < 0.5 * enumeration.shape[0]:
+                    result[attr] = pd.Categorical.from_codes(enumeration, categories=values)
+                else:
+                    result[attr] = values[enumeration]
             else:
                 result[attr] = nodes.get_attribute(attr, _all)
         for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
@@ -155,9 +165,33 @@ class NodePopulation(object):
     def _dynamics_params_names(self):
         return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
 
+    def source_in_edges(self):
+        """Set of edge population names that use this node population as source.
+
+        Returns:
+            set: a set containing the names of edge populations using this NodePopulation as
+            source.
+        """
+        return set(edge.name for edge in self._node_storage.circuit.edges.values() if
+                   self.name == edge.source.name)
+
+    def target_in_edges(self):
+        """Set of edge population names that use this node population as target.
+
+        Returns:
+            set: a set containing the names of edge populations using this NodePopulation as
+            target.
+        """
+        return set(edge.name for edge in self._node_storage.circuit.edges.values() if
+                   self.name == edge.target.name)
+
     @property
     def property_names(self):
-        """Set of available node properties."""
+        """Set of available node properties.
+
+        Notes:
+            Properties are a combination of the group attributes and the dynamics_params.
+        """
         return self._property_names | self._dynamics_params_names
 
     def container_property_names(self, container):
@@ -252,23 +286,30 @@ class NodePopulation(object):
         mask[valid_node_ids] = True
         return mask
 
-    def _node_population_mask(self, queries):
-        """Handle the population and node ID queries."""
+    def _circuit_mask(self, queries):
+        """Handle the population, node ID and node set queries."""
         populations = queries.pop(POPULATION_KEY, None)
         if populations is not None and self.name not in set(utils.ensure_list(populations)):
             node_ids = []
         else:
             node_ids = queries.pop(NODE_ID_KEY, None)
+        node_set = queries.pop(NODE_SET_KEY, None)
+        if node_set is not None:
+            if not isinstance(node_set, six.string_types):
+                raise BluepySnapError("{} is not a valid node set name.".format(node_set))
+            node_ids = node_ids if node_ids else self._data.index.values
+            node_ids = np.intersect1d(node_ids, self.ids(node_set))
         return queries, self._positional_mask(node_ids)
 
     def _properties_mask(self, queries):
         """Return mask of node IDs with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
-        unknown_props = set(queries) - set(self._data.columns) - {POPULATION_KEY, NODE_ID_KEY}
+        circuit_keys = {POPULATION_KEY, NODE_ID_KEY, NODE_SET_KEY}
+        unknown_props = set(queries) - set(self._data.columns) - circuit_keys
         if unknown_props:
             raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
 
-        queries, mask = self._node_population_mask(queries)
+        queries, mask = self._circuit_mask(queries)
         if not mask.any():
             # Avoid fail and/or processing time if wrong population or no nodes
             return mask
@@ -420,6 +461,10 @@ class NodePopulation(object):
             pandas.Series/pandas.DataFrame:
                 If single node ID is passed as ``group`` returns a pandas Series.
                 Otherwise return a pandas DataFrame indexed by node IDs.
+
+        Notes:
+            The NodePopulation.property_names function will give you all the usable properties
+            for the `properties` argument.
         """
         result = self._data
         if properties is not None:
