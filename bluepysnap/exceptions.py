@@ -20,3 +20,7 @@
 
 class BluepySnapError(Exception):
     """Base SNAP exception."""
+
+
+class BluepySnapMissingIdError(Exception):
+    """Missing id exception."""

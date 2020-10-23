@@ -15,8 +15,8 @@ from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
-from bluepysnap.nodes import CircuitNodeIds
-from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.circuit_ids import CircuitNodeIds
+from bluepysnap.exceptions import BluepySnapError, BluepySnapMissingIdError
 
 import bluepysnap.nodes as test_module
 
@@ -63,11 +63,30 @@ class TestNodes:
 
     def test_property_value(self):
         assert self.test_obj.property_values('mtype') == {'L2_X', 'L7_X', 'L9_Z', 'L8_Y', 'L6_Y'}
+        assert self.test_obj.property_values('other2') == {10, 11, 12, 13}
 
     def test_ids(self):
-        circuit_ids = self.test_obj.ids()
-        print(circuit_ids)
-        assert False
+        tested = self.test_obj.ids()
+        expected = CircuitNodeIds.create_global_ids("default", [0, 1, 2]).append(
+            CircuitNodeIds.create_global_ids("default2", [0, 1, 2, 3]), inplace=False)
+        assert tested == expected
+
+        ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
+        tested = self.test_obj.ids(ids)
+        assert tested == ids
+
+        tested = self.test_obj.ids({'layer': 2})
+        expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
+        assert tested == expected
+
+        ids = CircuitNodeIds.create_global_ids(["default", "default3"], [0, 1])
+        print(self.test_obj.ids(ids))
+
+        # (default2, 5) does not exist
+        with pytest.raises(BluepySnapMissingIdError):
+            ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 5])
+            self.test_obj.ids(ids)
+
 
     def test_get(self):
         print("")

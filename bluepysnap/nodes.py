@@ -29,7 +29,7 @@ import six
 from cached_property import cached_property
 
 from bluepysnap import utils
-from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.exceptions import BluepySnapError, BluepySnapMissingIdError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
 from bluepysnap.circuit_ids import CircuitNodeIds
@@ -59,19 +59,36 @@ class Nodes(object):
 
     @cached_property
     def population_names(self):
+        """Returns all the population names from the Circuit."""
         return sorted(self._populations)
 
     def keys(self):
+        """Returns iterator on the population names.
+
+        Made to simulate the behavior of a dict.keys().
+        """
         for name in self.population_names:
             yield name
 
     def values(self):
+        """Returns iterator on the NodePopulations.
+
+        Made to simulate the behavior of a dict.values().
+        """
         for name in self.population_names:
             yield self[name]
 
     def items(self):
+        """Returns iterator on the tuples (population name, NodePopulations).
+
+        Made to simulate the behavior of a dict.items().
+        """
         for name in self.population_names:
             yield name, self[name]
+
+    # helper renaming
+    names = keys
+    populations = values
 
     def __getitem__(self, population_name):
         """Access the NodePopulation corresponding to the population 'population_name'."""
@@ -84,22 +101,59 @@ class Nodes(object):
         """Allows iteration over the different NodePopulation."""
         return iter(self.names())
 
-    names = keys
-    populations = values
-
     @cached_property
     def size(self):
-        """Nodes population size."""
+        """Total number of nodes inside the circuit."""
         return sum(pop.size for pop in self.populations())
 
     @cached_property
     def property_names(self):
+        """Returns all the properties present inside the circuit."""
         return set(prop for pop in self.populations() for prop in pop.property_names)
 
     def property_values(self, prop):
-        return set(value for pop in self.populations() for value in pop.property_values(prop))
+        """Returns all the values for a given property."""
+        return set(value for pop in self.populations() if prop in pop.property_names for value in
+                   pop.property_values(prop))
 
     def ids(self, group=None):
+        """Node IDs corresponding to node ``group``.
+
+                Args:
+                    group (CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
+                        depends on the type of the ``group`` argument:
+
+                        - ``str``: return IDs of nodes in a node set.
+                        - ``mapping``: return IDs of nodes matching a properties filter.
+                        - ``None``: return all node IDs.
+
+                    sample (int): If specified, randomly choose ``sample`` number of
+                        IDs from the match result.
+
+                    limit (int): If specified, return the first ``limit`` number of
+                        IDs from the match result.
+
+                Returns:
+                    numpy.array: A numpy array of IDs.
+
+                Examples:
+                    The available group parameter values:
+
+                    >>> nodes.ids(group=None)  #  returns all IDs
+                    >>> nodes.ids(group={})  #  returns all IDs
+                    >>> node_ids = CircuitNodeIds.create_global_ids(["pop1", "pop2"], [1, 3])
+                    >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
+                    >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
+                    >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
+                    >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
+                    >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+                    >>> # returns list of IDs matching one of the queries inside the 'or' list
+                    >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
+                    >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+                    >>> # returns list of IDs matching all the queries inside the 'and' list
+                    >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
+                    >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+                """
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
         ids = np.array([], dtype=np.int64)
         populations = np.array([], dtype=str_type)
@@ -125,6 +179,9 @@ class Nodes(object):
             pop_properties = set(properties) & pop.property_names
             res.loc[global_pop_ids.index, pop_properties] = pop.get(pop_ids, properties=pop_properties).to_numpy()
         return res.sort_index()
+
+    def positions(self, group=None):
+        return self.get(group=group, properties=[Node.X, Node.Y, Node.Z]).astype(float)
 
 
 class NodeStorage(object):
@@ -337,7 +394,8 @@ class NodePopulation(object):
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:
-            raise BluepySnapError("node ID not found: %d" % node_id)
+            raise BluepySnapMissingIdError("node ID not found: {} in population"
+                                           " '{}'".format(node_id, self.name))
 
     def _check_ids(self, node_ids):
         """Check that node IDs belong to the circuit."""
@@ -351,7 +409,8 @@ class NodePopulation(object):
             max_id = max(node_ids)
             min_id = min(node_ids)
         if min_id < 0 or max_id >= self._data.index.shape[0]:
-            raise BluepySnapError("All node IDs must be >= 0 and < %s" % self._data.index.shape[0])
+            raise BluepySnapMissingIdError("All node IDs must be >= 0 and < {} for population "
+                                           "'{}'".format(self._data.index.shape[0], self.name))
 
     def _check_property(self, prop):
         """Check if a property exists inside the dataset."""
@@ -465,13 +524,16 @@ class NodePopulation(object):
         return self._data.index[self._operator_mask(queries)].values
 
     def ids(self, group=None, limit=None, sample=None):
-        """Node IDs corresponding to node ``group``.
+        """Node IDs corresponding to node ``gtested = self.test_obj.ids({'layer': 2})
+        expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
+        assert tested == expectedroup``.
 
         Args:
-            group (int/sequence/str/mapping/None): Which IDs will be returned
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
                 depends on the type of the ``group`` argument:
 
                 - ``int``: return a single node ID if it belongs to the circuit.
+                - ``CircuitNodeIds`` return
                 - ``sequence``: return IDs of nodes in an array.
                 - ``str``: return IDs of nodes in a node set.
                 - ``mapping``: return IDs of nodes matching a properties filter.
