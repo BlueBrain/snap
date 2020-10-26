@@ -87,16 +87,19 @@ class CircuitNodeIds:
         except KeyError:
             return []
 
-    def filter_population(self, population):
+    def filter_population(self, population, inplace=False):
         """Filter the IDs corresponding to a population.
 
         Args:
             population (str): the population you want to extract.
+            inplace (bool): if set to True. Do the transformation inplace.
 
         Returns:
             CircuitNodeIds : a filtered CircuitNodeIds containing only IDs for the given population.
         """
-        return CircuitNodeIds(self.index[self._locate(population)])
+        if not inplace:
+            return CircuitNodeIds(self.index[self._locate(population)])
+        self.index = self.index[self._locate(population)]
 
     def get_populations(self, unique=False):
         """Returns all population values from the circuit node IDs."""
@@ -107,6 +110,58 @@ class CircuitNodeIds:
         """Returns all the ID values from the circuit node IDs."""
         res = self.index.get_level_values(1).to_numpy()
         return np.unique(res) if unique else res
+
+    def copy(self):
+        """Copy a CircuitNodeIds."""
+        return CircuitNodeIds(self.index.copy())
+
+    def append(self, other, inplace=False):
+        """Append a NodeCircuitIds to the current one.
+
+        Args:
+            other (CircuitNodeIds): the other CircuitNodeIds to append to the current one.
+            inplace (bool): if set to True. Do the transformation inplace.
+        """
+        if not inplace:
+            return CircuitNodeIds(self.index.append(other.index))
+        self.index = self.index.append(other.index)
+
+    def sample(self, sample_size, inplace=False):
+        """Sample a CircuitNodeIds.
+
+        Args:
+            sample_size (int): the size of the sample. If the size of the sample is greater than
+                the size of the CircuitNodeIds then all ids are taken and shuffled.
+            inplace (bool): if set to True. Do the transformation inplace.
+        """
+        res = self if inplace else self.copy()
+        if len(res) != 0:
+            sample_size = sample_size if sample_size < len(res) else len(res)
+            res.index = res.index[np.random.choice(len(res), size=sample_size, replace=False)]
+        if not inplace:
+            return res
+
+    def limit(self, limit_size, inplace=False):
+        """Sample a CircuitNodeIds.
+
+        Args:
+            limit_size (int): the size of the sample. If the size of the sample is greater than
+                the size of the CircuitNodeIds then all ids are taken and shuffled.
+            inplace (bool): if set to True. Do the transformation inplace.
+        """
+        res = self if inplace else self.copy()
+        res.index = res.index[0: limit_size]
+        if not inplace:
+            return res
+
+    def to_csv(self, filepath):
+        """Save NodeCircuitIds to csv format."""
+        self.index.to_frame(index=False).to_csv(filepath, index=False)
+
+    @classmethod
+    def from_csv(cls, filepath):
+        """Load NodeCircuitIds from csv."""
+        return cls(pd.MultiIndex.from_frame(pd.read_csv(filepath)))
 
     def __repr__(self):
         """Correct repr of the IDs."""
@@ -122,19 +177,7 @@ class CircuitNodeIds:
             return False
         return self.index.equals(other.index)
 
-    def append(self, other, inplace=True):
-        """Append a NodeCircuitIds to the current one."""
-        res = self.index.append(other.index)
-        if not inplace:
-            return CircuitNodeIds(res)
-        self.index = res
+    def __len__(self):
+        return len(self.index)
 
-    def to_csv(self, filepath):
-        """Save NodeCircuitIds to csv format."""
-        self.index.to_frame(index=False).to_csv(filepath, index=False)
-
-    @classmethod
-    def from_csv(cls, filepath):
-        """Load NodeCircuitIds from csv."""
-        return cls(pd.MultiIndex.from_frame(pd.read_csv(filepath)))
 

@@ -122,19 +122,19 @@ class Nodes(object):
                 Args:
                     group (CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
                         depends on the type of the ``group`` argument:
-
+                        - ``CircuitNodeIds``: return the IDs in an array if they belong to the
+                            circuit.
+                        - ``int``: return a single node ID if it belongs to the circuit.
+                        - ``sequence``: return the IDs in an array if they belong to the
+                            circuit.
                         - ``str``: return IDs of nodes in a node set.
                         - ``mapping``: return IDs of nodes matching a properties filter.
                         - ``None``: return all node IDs.
 
-                    sample (int): If specified, randomly choose ``sample`` number of
-                        IDs from the match result.
-
-                    limit (int): If specified, return the first ``limit`` number of
-                        IDs from the match result.
-
                 Returns:
-                    numpy.array: A numpy array of IDs.
+                    CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
+                        corresponding populations. All the requested IDs must be present inside the
+                        circuit.
 
                 Examples:
                     The available group parameter values:
@@ -543,10 +543,12 @@ class NodePopulation(object):
                 Otherwise the result is sorted and contains no duplicates.
 
             sample (int): If specified, randomly choose ``sample`` number of
-                IDs from the match result.
+                IDs from the match result. If the size of the sample is greater than
+                the size of the NodePopulation then all ids are taken and shuffled.
 
             limit (int): If specified, return the first ``limit`` number of
-                IDs from the match result.
+                IDs from the match result. If limit is greater than the size of the population
+                all node IDs are returned.
 
         Returns:
             numpy.array: A numpy array of IDs.
@@ -573,7 +575,7 @@ class NodePopulation(object):
         if isinstance(group, six.string_types):
             group = self._get_node_set(group)
         elif isinstance(group, CircuitNodeIds):
-            group = group.filter_population(self.name).get_ids()
+            group = group.filter_population(self.name, inplace=False).get_ids()
 
         if group is None:
             result = self._data.index.values
@@ -590,6 +592,7 @@ class NodePopulation(object):
 
         if sample is not None:
             if len(result) > 0:
+                sample = sample if sample <= len(result) else len(result)
                 result = np.random.choice(result, sample, replace=False)
             preserve_order = False
         if limit is not None:
