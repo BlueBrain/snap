@@ -77,6 +77,38 @@ class TestNodes:
         tested = self.test_obj.ids(ids)
         assert tested == ids
 
+        # default3 population does not exist and is asked explicitly
+        with pytest.raises(BluepySnapError):
+            ids = CircuitNodeIds.create_global_ids(["default", "default3"], [0, 3])
+            self.test_obj.ids(ids)
+
+        # (default2, 5) does not exist and is asked explicitly
+        with pytest.raises(BluepySnapMissingIdError):
+            ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 5])
+            self.test_obj.ids(ids)
+
+        # single node ID --> CircuitNodeIds return populations with the 0 id
+        expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 0])
+        tested = self.test_obj.ids(0)
+        assert tested == expected
+
+        # single node ID --> CircuitNodeIds raise if the ID is not in all population
+        with pytest.raises(BluepySnapMissingIdError):
+            self.test_obj.ids(3)
+
+        # seq of node ID --> CircuitNodeIds return populations with the array of ids
+        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"], [0, 1, 0, 1])
+        tested = self.test_obj.ids([0, 1])
+        assert tested == expected
+        tested = self.test_obj.ids((0, 1))
+        assert tested == expected
+        tested = self.test_obj.ids(np.array([0, 1]))
+        assert tested == expected
+
+        # seq node ID --> CircuitNodeIds raise if on ID is not in all populations
+        with pytest.raises(BluepySnapMissingIdError):
+            self.test_obj.ids([0, 1, 2, 3])
+
         # Mapping --> CircuitNodeIds query on the populations
         tested = self.test_obj.ids({'layer': 2})
         expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
@@ -102,15 +134,42 @@ class TestNodes:
         expected = CircuitNodeIds.create_global_ids(["default2"], [3])
         assert tested == expected
 
-        # default3 population does not exist
-        with pytest.raises(BluepySnapError):
-            ids = CircuitNodeIds.create_global_ids(["default", "default3"], [0, 3])
-            self.test_obj.ids(ids)
+        # Mapping --> CircuitNodeIds query on the population node ids with mapping
+        # single pop
+        tested = self.test_obj.ids({"population": "default"})
+        expected = self.test_obj.ids().filter_population("default")
+        assert tested == expected
+        # multiple pop
+        tested = self.test_obj.ids({"population": ["default", "default2"]})
+        expected = self.test_obj.ids()
+        assert tested == expected
+        # not existing pop (should not raise)
+        tested = self.test_obj.ids({"population": "default4"})
+        expected = CircuitNodeIds.create_global_ids([], [])
+        assert tested == expected
 
-        # (default2, 5) does not exist
-        with pytest.raises(BluepySnapMissingIdError):
-            ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 5])
-            self.test_obj.ids(ids)
+        # single pop and node ids
+        tested = self.test_obj.ids({"population": ["default"], "node_id": [1, 2]})
+        expected = CircuitNodeIds.create_global_ids(["default", "default"], [1, 2])
+        assert tested == expected
+        # single pop and node ids with not present node id (should not raise)
+        tested = self.test_obj.ids({"population": ["default"], "node_id": [1, 5]})
+        expected = CircuitNodeIds.create_global_ids(["default"], [1])
+        assert tested == expected
+        # not existing node ids (should not raise)
+        tested = self.test_obj.ids({"population": ["default"], "node_id": [5, 6, 7]})
+        expected = CircuitNodeIds.create_global_ids([], [])
+        assert tested == expected
+
+        # multiple pop and node ids
+        tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0]})
+        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"], [1, 0, 1, 0])
+        assert tested == expected
+        # multiple pop and node ids with not present node id (should not raise)
+        tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0, 3]})
+        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2", "default2"],
+                                                    [1, 0, 1, 0, 3])
+        assert tested == expected
 
         # Check operations on global ids
         ids = self.test_obj.ids()
