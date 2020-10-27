@@ -171,7 +171,7 @@ class TestNodeStorage:
         assert sorted(list(data)) == sorted(['layer', 'morphology', 'mtype', 'rotation_angle_xaxis',
                                              'rotation_angle_yaxis', 'rotation_angle_zaxis', 'x',
                                              'y', 'z', 'model_template', 'model_type',
-                                             '@dynamics:holding_current', 'population'])
+                                             '@dynamics:holding_current'])
         assert len(data) == 3
 
 
@@ -227,11 +227,11 @@ class TestNodePopulation:
         expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
                                    dtype('float64'), dtype('float64'), dtype('float64'),
                                    dtype('float64'),
-                                   dtype('float64'), dtype('float64'), dtype('float64'), dtype('O')],
+                                   dtype('float64'), dtype('float64'), dtype('float64')],
                              index=['layer', 'model_template', 'model_type', 'morphology', 'mtype',
                                     'rotation_angle_xaxis', 'rotation_angle_yaxis',
                                     'rotation_angle_zaxis',
-                                    'x', 'y', 'z', '@dynamics:holding_current','population']).sort_index()
+                                    'x', 'y', 'z', '@dynamics:holding_current']).sort_index()
 
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
@@ -430,7 +430,7 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 13)
+        assert _call().shape == (3, 12)
         assert _call(0, Cell.MTYPE) == 'L2_X'
         assert _call(np.int32(0), Cell.MTYPE) == 'L2_X'
         pdt.assert_frame_equal(
@@ -486,8 +486,6 @@ class TestNodePopulation:
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
         assert not is_categorical(res["categorical"])
         assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
-        assert res["categorical"].cat.categories.tolist() == ['A', 'B', 'C']
-        assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0]
         assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
         assert res["int"].tolist() == [0, 0, 1, 0]
         npt.assert_allclose(res["float"].tolist(), [0., 0., 1.1, 0.])

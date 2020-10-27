@@ -256,8 +256,6 @@ class NodeStorage(object):
                 result[attr] = nodes.get_attribute(attr, _all)
         for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
             result[attr] = nodes.get_dynamics_attribute(attr.split(DYNAMICS_PREFIX)[1], _all)
-        result["population"] = np.full(len(result), fill_value=population)
-        result["population"].astype("category")
         return result
 
 
