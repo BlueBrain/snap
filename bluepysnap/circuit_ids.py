@@ -32,10 +32,20 @@ class CircuitNodeIds:
     A global circuit node id is the combination of a population and a node ID inside this
     population.
     """
-    def __init__(self, index):
+    def __init__(self, index, sort_index=True):
+        """Return an instance of CircuitNodeIds.
+
+        Args:
+            index (pandas.MultiIndex): a multi index from pandas with the population names as
+                first level and node IDs as the second level.
+            sort_index
+        """
         if not isinstance(index, pd.MultiIndex):
             raise BluepySnapError("index must be a pandas.MultiIndex object.")
         index.names = ["population", "node_ids"]
+        if sort_index:
+            # best perf compared to sort_values. Sorted by population and ids.
+            index = index.sortlevel()[0]
         self.index = index
 
     @classmethod
@@ -103,17 +113,33 @@ class CircuitNodeIds:
 
     def get_populations(self, unique=False):
         """Returns all population values from the circuit node IDs."""
-        res = self.index.get_level_values(0).to_numpy()
-        return np.unique(res) if unique else res
+        if unique:
+            return self.index.levels[0].to_numpy()
+        return self.index.get_level_values(0).to_numpy()
 
     def get_ids(self, unique=False):
         """Returns all the ID values from the circuit node IDs."""
-        res = self.index.get_level_values(1).to_numpy()
-        return np.unique(res) if unique else res
+        if unique:
+            return self.index.levels[1].to_numpy()
+        return self.index.get_level_values(1).to_numpy()
 
     def copy(self):
         """Copy a CircuitNodeIds."""
         return CircuitNodeIds(self.index.copy())
+
+    def sort(self, inplace=False):
+        """Sort the CircuitNodeIds by population and then by ids.
+
+        Args:
+            inplace (bool): if set to True. Do the transformation inplace.
+
+        Notes:
+            sorting a CircuitNodeIds will gives better perf for the population extraction and the
+            data extraction from a sorted dataframe.
+        """
+        if not inplace:
+            return CircuitNodeIds(self.index, sort_index=True)
+        self.index = self.index.sortlevel()
 
     def append(self, other, inplace=False):
         """Append a NodeCircuitIds to the current one.
@@ -179,5 +205,3 @@ class CircuitNodeIds:
 
     def __len__(self):
         return len(self.index)
-
-

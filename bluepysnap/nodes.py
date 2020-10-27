@@ -119,42 +119,44 @@ class Nodes(object):
     def ids(self, group=None):
         """Node IDs corresponding to node ``group``.
 
-                Args:
-                    group (CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
-                        depends on the type of the ``group`` argument:
-                        - ``CircuitNodeIds``: return the IDs in an array if they belong to the
-                            circuit.
-                        - ``int``: return a single node ID if it belongs to the circuit.
-                        - ``sequence``: return the IDs in an array if they belong to the
-                            circuit.
-                        - ``str``: return IDs of nodes in a node set.
-                        - ``mapping``: return IDs of nodes matching a properties filter.
-                        - ``None``: return all node IDs.
+        Args:
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
+                depends on the type of the ``group`` argument:
+                - ``CircuitNodeIds``: return the IDs in an array if they belong to the circuit.
+                - ``int``: return a single node ID if it belongs to the circuit.
+                - ``sequence``: return the IDs in an array if they belong to the circuit.
+                - ``str``: return IDs of nodes in a node set.
+                - ``mapping``: return IDs of nodes matching a properties filter.
+                - ``None``: return all node IDs.
 
-                Returns:
-                    CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
-                        corresponding populations. All the requested IDs must be present inside the
-                        circuit.
+        Returns:
+            CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
+                corresponding populations. All the requested IDs must be present inside the
+                circuit.
 
-                Examples:
-                    The available group parameter values:
+        Examples:
+            The available group parameter values:
 
-                    >>> nodes.ids(group=None)  #  returns all IDs
-                    >>> nodes.ids(group={})  #  returns all IDs
-                    >>> node_ids = CircuitNodeIds.create_global_ids(["pop1", "pop2"], [1, 3])
-                    >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
-                    >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
-                    >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
-                    >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
-                    >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
-                    >>> # returns list of IDs matching one of the queries inside the 'or' list
-                    >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
-                    >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
-                    >>> # returns list of IDs matching all the queries inside the 'and' list
-                    >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
-                    >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
-                """
+            >>> nodes.ids(group=None)  #  returns all IDs
+            >>> nodes.ids(group={})  #  returns all IDs
+            >>> node_ids = CircuitNodeIds.create_global_ids(["pop1", "pop2"], [1, 3])
+            >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
+            >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
+            >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
+            >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
+            >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+            >>> # returns list of IDs matching one of the queries inside the 'or' list
+            >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
+            >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+            >>> # returns list of IDs matching all the queries inside the 'and' list
+            >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
+            >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+        """
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        if isinstance(group, CircuitNodeIds):
+            diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
+            if diff.size != 0:
+                raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
         ids = np.array([], dtype=np.int64)
         populations = np.array([], dtype=str_type)
         for name, pop in self.items():
@@ -524,9 +526,7 @@ class NodePopulation(object):
         return self._data.index[self._operator_mask(queries)].values
 
     def ids(self, group=None, limit=None, sample=None):
-        """Node IDs corresponding to node ``gtested = self.test_obj.ids({'layer': 2})
-        expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
-        assert tested == expectedroup``.
+        """Node IDs corresponding to node ``group``.
 
         Args:
             group (int/CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
@@ -575,7 +575,7 @@ class NodePopulation(object):
         if isinstance(group, six.string_types):
             group = self._get_node_set(group)
         elif isinstance(group, CircuitNodeIds):
-            group = group.filter_population(self.name, inplace=False).get_ids()
+            group = group.filter_population(self.name).get_ids()
 
         if group is None:
             result = self._data.index.values

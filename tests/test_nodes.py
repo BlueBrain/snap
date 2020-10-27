@@ -66,31 +66,55 @@ class TestNodes:
         assert self.test_obj.property_values('other2') == {10, 11, 12, 13}
 
     def test_ids(self):
+        # None --> CircuitNodeIds with all ids
         tested = self.test_obj.ids()
         expected = CircuitNodeIds.create_global_ids("default", [0, 1, 2]).append(
             CircuitNodeIds.create_global_ids("default2", [0, 1, 2, 3]), inplace=False)
         assert tested == expected
 
+        # CircuitNodeIds --> CircuitNodeIds and check if the population and node ids exist
         ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
         tested = self.test_obj.ids(ids)
         assert tested == ids
 
+        # Mapping --> CircuitNodeIds query on the populations
         tested = self.test_obj.ids({'layer': 2})
         expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
         assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'other1': ['A', 'D']})
+        expected = CircuitNodeIds.create_global_ids(["default2", "default2"], [0, 3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'other1': ['A', 'D'], 'layer': 2})
+        expected = CircuitNodeIds.create_global_ids(["default2"], [3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        # PB HERE : with the or we need to not raise exceptions for the missing property
+        tested = self.test_obj.ids({'$or': [{'other1': ['A', 'D']}, {'layer': 2}]})
+        expected = CircuitNodeIds.create_global_ids(["default2"], [3])
+        assert tested == expected
+
+
+        # default3 population does not exist
+        with pytest.raises(BluepySnapError):
+            ids = CircuitNodeIds.create_global_ids(["default", "default3"], [0, 3])
+            self.test_obj.ids(ids)
 
         # (default2, 5) does not exist
         with pytest.raises(BluepySnapMissingIdError):
             ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 5])
             self.test_obj.ids(ids)
 
-        # Check operation on global ids
+        # Check operations on global ids
         ids = self.test_obj.ids()
         assert ids.filter_population("default").append(ids.filter_population("default2")) == ids
 
         expected = CircuitNodeIds.create_global_ids(["default2", "default2"], [0, 1])
         assert ids.filter_population("default2").limit(2) == expected
-
 
     def test_get(self):
         print("")
@@ -98,7 +122,7 @@ class TestNodes:
         # print(self.test_obj.get(properties="other2"))
         # print(self.test_obj.get(properties=["other2", "other1", 'layer']))
         a = self.test_obj.get(properties=["other2", "other1", 'layer'])
-        # print(a)
+        print(a)
         # print(a.index)
         node_ids = CircuitNodeIds.create_global_ids(["default2", "default"], [0, 2])
         # print(a)
