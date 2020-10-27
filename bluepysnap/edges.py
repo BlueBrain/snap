@@ -121,9 +121,7 @@ class EdgePopulation(object):
 
     def _nodes(self, population_name):
         """Returns the NodePopulation corresponding to population."""
-        result = self._edge_storage.circuit.nodes.get(population_name)
-        if result is None:
-            raise BluepySnapError("Undefined node population: '%s'" % population_name)
+        result = self._edge_storage.circuit.nodes[population_name]
         return result
 
     @cached_property

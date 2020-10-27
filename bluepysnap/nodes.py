@@ -161,7 +161,7 @@ class Nodes(object):
         populations = np.array([], dtype=str_type)
         for name, pop in self.items():
             try:
-                pop_ids = pop.ids(group=group)
+                pop_ids = pop.ids(group=group, raise_missing_property=False)
             except BluepySnapError:
                 continue
             pops = np.array(np.full_like(pop_ids, fill_value=name, dtype=str_type))
@@ -457,13 +457,17 @@ class NodePopulation(object):
             node_ids = np.intersect1d(node_ids, self.ids(node_set))
         return queries, self._positional_mask(node_ids)
 
-    def _properties_mask(self, queries):
+    def _properties_mask(self, queries, raise_missing_prop):
         """Return mask of node IDs with rows matching `props` dict."""
         # pylint: disable=assignment-from-no-return
         circuit_keys = {POPULATION_KEY, NODE_ID_KEY, NODE_SET_KEY}
         unknown_props = set(queries) - set(self._data.columns) - circuit_keys
         if unknown_props:
-            raise BluepySnapError("Unknown node properties: [{0}]".format(", ".join(unknown_props)))
+            if raise_missing_prop:
+                raise BluepySnapError(
+                    "Unknown node properties: [{0}]".format(", ".join(unknown_props)))
+            else:
+                return np.full(len(self._data), fill_value=False)
 
         queries, mask = self._circuit_mask(queries)
         if not mask.any():
@@ -484,7 +488,7 @@ class NodePopulation(object):
             mask = np.logical_and(mask, prop_mask)
         return mask
 
-    def _operator_mask(self, queries):
+    def _operator_mask(self, queries, raise_missing_prop):
         """Handle the query operators '$or', '$and'."""
         if len(queries) == 0:
             return np.full(len(self._data), True)
@@ -499,14 +503,14 @@ class NodePopulation(object):
             queries = queries.pop("$and")
             operator = np.logical_and
         else:
-            return self._properties_mask(queries)
+            return self._properties_mask(queries, raise_missing_prop)
 
         mask = np.full(len(self._data), first_key != "$or")
         for query in queries:
-            mask = operator(mask, self._operator_mask(query))
+            mask = operator(mask, self._operator_mask(query, raise_missing_prop))
         return mask
 
-    def _node_ids_by_filter(self, queries):
+    def _node_ids_by_filter(self, queries, raise_missing_prop):
         """Return node IDs if their properties match the `queries` dict.
 
         `props` values could be:
@@ -523,9 +527,9 @@ class NodePopulation(object):
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 
         """
-        return self._data.index[self._operator_mask(queries)].values
+        return self._data.index[self._operator_mask(queries, raise_missing_prop)].values
 
-    def ids(self, group=None, limit=None, sample=None):
+    def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Node IDs corresponding to node ``group``.
 
         Args:
@@ -549,6 +553,9 @@ class NodePopulation(object):
             limit (int): If specified, return the first ``limit`` number of
                 IDs from the match result. If limit is greater than the size of the population
                 all node IDs are returned.
+
+            raise_missing_property (bool): if True, raises if a property is not listed in this
+                population. Otherwise the ids are just not selected if a property is missing.
 
         Returns:
             numpy.array: A numpy array of IDs.
@@ -580,7 +587,7 @@ class NodePopulation(object):
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
-            result = self._node_ids_by_filter(queries=group)
+            result = self._node_ids_by_filter(queries=group, raise_missing_prop=raise_missing_property)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)

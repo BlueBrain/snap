@@ -10,7 +10,7 @@ import pytest
 import libsonata
 from mock import Mock
 
-from bluepysnap.circuit import Circuit
+
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
@@ -93,11 +93,14 @@ class TestNodes:
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
-        # PB HERE : with the or we need to not raise exceptions for the missing property
         tested = self.test_obj.ids({'$or': [{'other1': ['A', 'D']}, {'layer': 2}]})
-        expected = CircuitNodeIds.create_global_ids(["default2"], [3])
+        expected = CircuitNodeIds.create_global_ids(["default", "default2", "default2"], [0, 0, 3])
         assert tested == expected
 
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'$and': [{'other1': ['A', 'D']}, {'layer': 2}]})
+        expected = CircuitNodeIds.create_global_ids(["default2"], [3])
+        assert tested == expected
 
         # default3 population does not exist
         with pytest.raises(BluepySnapError):
@@ -168,7 +171,7 @@ class TestNodeStorage:
         assert sorted(list(data)) == sorted(['layer', 'morphology', 'mtype', 'rotation_angle_xaxis',
                                              'rotation_angle_yaxis', 'rotation_angle_zaxis', 'x',
                                              'y', 'z', 'model_template', 'model_type',
-                                             '@dynamics:holding_current'])
+                                             '@dynamics:holding_current', 'population'])
         assert len(data) == 3
 
 
@@ -224,11 +227,11 @@ class TestNodePopulation:
         expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
                                    dtype('float64'), dtype('float64'), dtype('float64'),
                                    dtype('float64'),
-                                   dtype('float64'), dtype('float64'), dtype('float64')],
+                                   dtype('float64'), dtype('float64'), dtype('float64'), dtype('O')],
                              index=['layer', 'model_template', 'model_type', 'morphology', 'mtype',
                                     'rotation_angle_xaxis', 'rotation_angle_yaxis',
                                     'rotation_angle_zaxis',
-                                    'x', 'y', 'z', '@dynamics:holding_current']).sort_index()
+                                    'x', 'y', 'z', '@dynamics:holding_current','population']).sort_index()
 
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
@@ -427,7 +430,7 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 12)
+        assert _call().shape == (3, 13)
         assert _call(0, Cell.MTYPE) == 'L2_X'
         assert _call(np.int32(0), Cell.MTYPE) == 'L2_X'
         pdt.assert_frame_equal(
@@ -456,9 +459,9 @@ class TestNodePopulation:
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
         with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapMissingIdError):
             _call(999)  # invalid node id
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapMissingIdError):
             _call([0, 999])  # one of node ids is invalid
 
     def test_get_with_library_small_number_of_values(self):
