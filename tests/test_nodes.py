@@ -28,6 +28,11 @@ class TestNodes:
         circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
         self.test_obj = test_module.Nodes(circuit)
 
+    def test_get_population(self):
+        assert isinstance(self.test_obj["default"], test_module.NodePopulation)
+        with pytest.raises(BluepySnapError):
+            self.test_obj["unknown"]
+
     def test_iter(self):
         assert sorted(self.test_obj) == ['default', 'default2']
 

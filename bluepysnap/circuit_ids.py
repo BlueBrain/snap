@@ -49,13 +49,15 @@ class CircuitNodeIds:
         self.index = index
 
     @classmethod
-    def create_global_ids(cls, populations, population_ids):
+    def create_global_ids(cls, populations, population_ids, sort_index=True):
         """Create a set of ids using population(s) and ids.
 
         Args:
             populations (str/list/numpy.array): a sequence of populations. If the population is a
                 string then all the ids will be connected to this population.
             population_ids (int/list/numpy.array): a sequence of node IDs or a single node ID.
+            sort_index (bool): will sort the index if set to True. Otherwise the ordering from the
+                user inputs is kept. Sorting the index can result in better performances.
 
         Returns:
             CircuitNodeIds: a set of global node IDs created via the populations and the node IDs
@@ -81,7 +83,7 @@ class CircuitNodeIds:
                                                                            len(population_ids)))
 
         index = pd.MultiIndex.from_arrays([populations, population_ids])
-        return cls(index)
+        return cls(index, sort_index=sort_index)
 
     def _locate(self, population):
         """Returns the index indices corresponding to a given population.

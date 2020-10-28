@@ -9,11 +9,12 @@ import libsonata
 from mock import Mock
 
 from bluepysnap.bbp import Synapse
-from bluepysnap.nodes import CircuitNodeIds
+from bluepysnap.nodes import Nodes
+from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
 from bluepysnap.node_sets import NodeSets
-from bluepysnap.nodes import NodeStorage
+
 
 import bluepysnap.edges as test_module
 
@@ -146,17 +147,8 @@ class TestEdgePopulation(object):
         with pytest.raises(BluepySnapError):
             self.test_obj.container_property_names(int)
 
-    def test_nodes_1(self):
+    def test_nodes(self):
         assert self.test_obj._nodes('default').name == 'default'
-        with pytest.raises(BluepySnapError):
-            self.test_obj._nodes('no-such-population')
-
-    def test_nodes_2(self):
-        self.test_obj._edge_storage.circuit.nodes = {
-            'A': 'aa',
-            'B': 'bb',
-        }
-        assert self.test_obj._nodes('B') == 'bb'
         with pytest.raises(BluepySnapError):
             self.test_obj._nodes('no-such-population')
 
