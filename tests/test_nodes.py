@@ -10,7 +10,6 @@ import pytest
 import libsonata
 from mock import Mock
 
-
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
@@ -102,7 +101,8 @@ class TestNodes:
             self.test_obj.ids(3)
 
         # seq of node ID --> CircuitNodeIds return populations with the array of ids
-        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"], [0, 1, 0, 1])
+        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"],
+                                                    [0, 1, 0, 1])
         tested = self.test_obj.ids([0, 1])
         assert tested == expected
         tested = self.test_obj.ids((0, 1))
@@ -113,6 +113,20 @@ class TestNodes:
         # seq node ID --> CircuitNodeIds raise if on ID is not in all populations
         with pytest.raises(BluepySnapMissingIdError):
             self.test_obj.ids([0, 1, 2, 3])
+
+        # node sets
+        assert self.test_obj.ids('Layer2') == CircuitNodeIds.create_global_ids(
+            ["default", 'default2'], [0, 3])
+        assert self.test_obj.ids('Layer23') == CircuitNodeIds.create_global_ids(
+            ["default", 'default2'], [0, 3])
+        assert self.test_obj.ids(
+            'Population_default_L6_Y_Node2') == CircuitNodeIds.create_global_ids(["default"], [2])
+        assert self.test_obj.ids(
+            'combined_combined_Node0_L6_Y__Node12_L6_Y__') == CircuitNodeIds.create_global_ids(
+            ["default", "default", "default", "default2"], [0, 1, 2, 3])
+
+        # Mapping --> CircuitNodeIds query on the populations empty dict return all
+        assert self.test_obj.ids({}) == self.test_obj.ids()
 
         # Mapping --> CircuitNodeIds query on the populations
         tested = self.test_obj.ids({'layer': 2})
@@ -139,7 +153,7 @@ class TestNodes:
         expected = CircuitNodeIds.create_global_ids(["default2"], [3])
         assert tested == expected
 
-        # Mapping --> CircuitNodeIds query on the population node ids with mapping
+        # Mapping --> CircuitNodeIds query on the population node ids with mapping.
         # single pop
         tested = self.test_obj.ids({"population": "default"})
         expected = self.test_obj.ids().filter_population("default")
@@ -168,12 +182,14 @@ class TestNodes:
 
         # multiple pop and node ids
         tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0]})
-        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"], [1, 0, 1, 0])
+        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"],
+                                                    [1, 0, 1, 0])
         assert tested == expected
         # multiple pop and node ids with not present node id (should not raise)
         tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0, 3]})
-        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2", "default2"],
-                                                    [1, 0, 1, 0, 3])
+        expected = CircuitNodeIds.create_global_ids(
+            ["default", "default", "default2", "default2", "default2"],
+            [1, 0, 1, 0, 3])
         assert tested == expected
 
         # Check operations on global ids
@@ -343,17 +359,17 @@ class TestNodePopulation:
 
     def test__node_population_mask(self):
         queries, mask = self.test_obj._circuit_mask({"population": "default",
-                                                             "other": "val"})
+                                                     "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
         queries, mask = self.test_obj._circuit_mask({"population": "unknown",
-                                                             "other": "val"})
+                                                     "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, False])
 
         queries, mask = self.test_obj._circuit_mask({"population": "default",
-                                                             "node_id": [2], "other": "val"})
+                                                     "node_id": [2], "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, True])
 
@@ -436,7 +452,7 @@ class TestNodePopulation:
         npt.assert_equal(_call({"$and": [{"$node_set": 'Node12_L6_Y', "population": "default"},
                                          {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         npt.assert_equal(_call({"$or": [{"$node_set": 'Node12_L6_Y', "population": "default"},
-                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
+                                        {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
 
         with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
