@@ -62,6 +62,24 @@ class Nodes(object):
         """Returns all the population names from the Circuit."""
         return sorted(self._populations)
 
+    @cached_property
+    def property_dtypes(self):
+        """Returns all the property dtypes for the Circuit."""
+        def _update(d, index, value):
+            if index not in d:
+                d[index] = value
+            elif d[index] != value:
+                raise BluepySnapError("Same property with different "
+                                      "dtype. {}: {}!= {}".format(index, value, d[index]))
+
+        res = dict()
+        for pop in self.populations():
+            print("couicou")
+            for varname, dtype in pop.property_dtypes.iteritems():
+                print(pop.name,  varname, dtype)
+                _update(res, varname, dtype)
+        return pd.Series(res)
+
     def keys(self):
         """Returns iterator on the population names.
 
@@ -150,10 +168,10 @@ class Nodes(object):
             >>> nodes.ids(group={Node.LAYER: 2})  # returns CircuitNodeIds matching layer==2
             >>> nodes.ids(group={Node.LAYER: [2, 3]})  # returns CircuitNodeIds with layer in [2,3]
             >>> nodes.ids(group={Node.X: (0, 1)})  # returns CircuitNodeIds with 0 < x < 1
-            >>> # returns list of IDs matching one of the queries inside the 'or' list
+            >>> # returns CircuitNodeIds matching one of the queries inside the 'or' list
             >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
             >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
-            >>> # returns list of IDs matching all the queries inside the 'and' list
+            >>> # returns CircuitNodeIds matching all the queries inside the 'and' list
             >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
             >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
         """
@@ -175,16 +193,41 @@ class Nodes(object):
         return CircuitNodeIds.create_global_ids(populations, ids)
 
     def get(self, group=None, properties=None):
+        """Node properties as a pandas DataFrame.
+
+        Args:
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their properties
+                returned depends on the type of the ``group`` argument:
+
+                - ``int``: return the properties of a single node.
+                - ``CircuitNodeIds`` return the properties from a NodeCircuitNodeIds.
+                - ``sequence``: return the properties from a list of node.
+                - ``str``: return the properties of nodes in a node set.
+                - ``mapping``: return the properties of nodes matching a properties filter.
+                - ``None``: return the properties of all nodes.
+
+            properties (list): If specified, return only the properties in the set.
+                Otherwise return all properties.
+
+        Returns:
+            pandas.DataFrame: Return a pandas DataFrame indexed by NodeCircuitIds containing the
+                properties from ``properties``.
+
+        Notes:
+            The NodePopulation.property_names function will give you all the usable properties
+            for the `properties` argument.
+        """
         ids = self.ids(group)
         if properties is None:
             properties = self.property_names
         properties = utils.ensure_list(properties)
-        res = pd.DataFrame(index=ids.index, columns=properties).sort_index(axis=1)
+        res = pd.DataFrame(index=ids.index, columns=properties)
         for name, pop in self.items():
             global_pop_ids = ids.filter_population(name)
             pop_ids = global_pop_ids.get_ids()
             pop_properties = set(properties) & pop.property_names
-            res.loc[global_pop_ids.index, pop_properties] = pop.get(pop_ids, properties=pop_properties).to_numpy()
+            for prop in pop_properties:
+                res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, properties=prop).to_numpy()
         return res.sort_index()
 
 

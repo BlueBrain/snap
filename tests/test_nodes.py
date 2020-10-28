@@ -2,13 +2,15 @@ import json
 
 import numpy as np
 import numpy.testing as npt
+from numpy import dtype
+
 import pandas as pd
 import pandas.testing as pdt
 from pandas.api.types import is_categorical
 
 import pytest
 import libsonata
-from mock import Mock
+from mock import Mock, patch, PropertyMock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
@@ -68,6 +70,31 @@ class TestNodes:
     def test_property_value(self):
         assert self.test_obj.property_values('mtype') == {'L2_X', 'L7_X', 'L9_Z', 'L8_Y', 'L6_Y'}
         assert self.test_obj.property_values('other2') == {10, 11, 12, 13}
+
+    def test_property_dtypes(self):
+        expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
+                                   dtype('float64'), dtype('float64'), dtype('float64'),
+                                   dtype('float64'),
+                                   dtype('float64'), dtype('float64'), dtype('float64'),
+                                   dtype('O'), dtype('int64')],
+                             index=['layer', 'model_template', 'model_type', 'morphology', 'mtype',
+                                    'rotation_angle_xaxis', 'rotation_angle_yaxis',
+                                    'rotation_angle_zaxis',
+                                    'x', 'y', 'z', '@dynamics:holding_current', 'other1', 'other2']).sort_index()
+        pdt.assert_series_equal(self.test_obj.property_dtypes.sort_index(), expected)
+
+    def test_property_dtypes_fail(self):
+        a = pd.Series(data=[dtype('int64'), dtype('O')],
+                      index=['layer', 'model_template']).sort_index()
+        b = pd.Series(data=[dtype('int32'), dtype('O')],
+                      index=['layer', 'model_template']).sort_index()
+
+        with patch("bluepysnap.nodes.NodePopulation.property_dtypes", new_callable=PropertyMock) as mock:
+            mock.side_effect = [a, b]
+            circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
+            test_obj = test_module.Nodes(circuit)
+            with pytest.raises(BluepySnapError):
+                test_obj.property_dtypes.sort_index()
 
     def test_ids(self):
         # None --> CircuitNodeIds with all ids
@@ -205,23 +232,34 @@ class TestNodes:
         tested = self.test_obj.get()
         assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
 
+        # put NaN for the undefined values : only values for default2 in dropna
+        assert len(tested.dropna()) == 4
 
+        # the index of the dataframe is the index from all the NodeCircuitIds
+        pdt.assert_index_equal(tested.index, self.test_obj.ids().index)
 
+        # tested accessing data via circuit ids
+        tested_ids = self.test_obj.ids({"population": "default"})
+        assert len(tested.loc[tested_ids.index]) == 3
 
-        a = self.test_obj.get(properties=["other2", "other1", 'layer'])
-        print(a)
-        # print(a.index)
-        node_ids = CircuitNodeIds.create_global_ids(["default2", "default"], [0, 2])
-        # print(a)
-        # print(node_ids.index)
-        # print(a.loc[node_ids.index])
-        node_ids.to_csv("/tmp/nodes.csv")
-        other = CircuitNodeIds.from_csv("/tmp/nodes.csv")
-        print(other)
-        print(a.loc[other.index])
-        print(a.loc[node_ids.index])
+        # tested columns
+        tested = self.test_obj.get(properties=["other2", "other1", 'layer'])
+        assert tested.shape == (self.test_obj.size, 3)
+        assert list(tested) == ["other2", "other1", 'layer']
 
-        assert False
+        tested = self.test_obj.get(group={"population": "default2"},
+                                   properties=["other2", "other1", 'layer'])
+        assert tested.shape == (4, 3)
+        # correct ordering when setting the dataframe with the population dataframe
+        assert tested.loc[("default2", 0)].tolist() == [10, 'A', 7]
+        with pytest.raises(KeyError):
+            tested.loc[("default", 0)]
+
+        tested = self.test_obj.get(group={"population": "default"},
+                                   properties=["other2", "other1", 'layer'])
+        assert tested.shape == (3, 3)
+        assert tested.loc[("default", 0)].tolist() == [np.NaN, np.NaN, 2]
+        assert tested.loc[("default", 1)].tolist() == [np.NaN, np.NaN, 6]
 
 
 class TestNodeStorage:
@@ -306,8 +344,6 @@ class TestNodePopulation:
         assert test_obj_library.property_values("categorical", is_present=True) == {"A", "B"}
 
     def test_property_dtypes(self):
-        from numpy import dtype
-
         expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
                                    dtype('float64'), dtype('float64'), dtype('float64'),
                                    dtype('float64'),
