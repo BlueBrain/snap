@@ -759,6 +759,7 @@ class TestNodePopulation:
         _call = self.test_obj.count
         assert _call(0) == 1
         assert _call([0, 1]) == 2
+        assert _call(CircuitNodeIds.create_global_ids("default", [0, 1])) == 2
         assert _call({Cell.MTYPE: 'L6_Y'}) == 2
         assert _call('Layer23') == 1
 

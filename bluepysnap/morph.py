@@ -19,6 +19,7 @@
 
 import os
 
+import six
 import numpy as np
 import neurom as nm
 
@@ -30,18 +31,18 @@ from bluepysnap.exceptions import BluepySnapError
 class MorphHelper(object):
     """Collection of morphology-related methods."""
 
-    def __init__(self, morph_dir, nodes):
+    def __init__(self, morph_dir, population):
         """Initializes a MorphHelper object from a directory path and a NodePopulation object.
 
         Args:
             morph_dir (str): Path to the directory containing the node morphologies.
-            nodes (NodePopulation): NodePopulation object used to query the nodes.
+            population (NodePopulation): NodePopulation object used to query the nodes.
 
         Returns:
             MorphHelper: A MorphHelper object.
         """
         self._morph_dir = morph_dir
-        self._nodes = nodes
+        self._population = population
 
         # all nodes from a population must have the same model type
         if not self._is_biophysical(0):
@@ -55,11 +56,14 @@ class MorphHelper(object):
             self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
 
     def _is_biophysical(self, node_id):
-        return self._nodes.get(node_id, Node.MODEL_TYPE) == "biophysical"
+        return self._population.get(node_id, Node.MODEL_TYPE) == "biophysical"
 
     def get_filepath(self, node_id):
         """Return path to SWC morphology file corresponding to `node_id`."""
-        name = self._nodes.get(node_id, Node.MORPHOLOGY)
+        name = self._population.get(node_id, Node.MORPHOLOGY)
+        # to allow the NodeCircuitIds as node_id
+        if not isinstance(name, six.string_types):
+            name = name.squeeze()
         return os.path.join(self._morph_dir, "%s.swc" % name)
 
     def get(self, node_id, transform=False):
@@ -71,7 +75,7 @@ class MorphHelper(object):
         filepath = self.get_filepath(node_id)
         result = self._load(filepath)
         if transform:
-            A_t = self._nodes.orientations(node_id).transpose()
-            B = self._nodes.positions(node_id).values
+            A_t = self._population.orientations(node_id).transpose()
+            B = self._population.positions(node_id).values
             result = result.transform(lambda p: np.dot(p, A_t) + B)
         return result
