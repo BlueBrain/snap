@@ -187,9 +187,6 @@ class Nodes(object):
             res.loc[global_pop_ids.index, pop_properties] = pop.get(pop_ids, properties=pop_properties).to_numpy()
         return res.sort_index()
 
-    def positions(self, group=None):
-        return self.get(group=group, properties=[Node.X, Node.Y, Node.Z]).astype(float)
-
 
 class NodeStorage(object):
     """Node storage access."""
@@ -540,7 +537,7 @@ class NodePopulation(object):
                 depends on the type of the ``group`` argument:
 
                 - ``int``: return a single node ID if it belongs to the circuit.
-                - ``CircuitNodeIds`` return
+                - ``CircuitNodeIds`` return IDs of nodes in an array.
                 - ``sequence``: return IDs of nodes in an array.
                 - ``str``: return IDs of nodes in a node set.
                 - ``mapping``: return IDs of nodes matching a properties filter.
@@ -618,22 +615,24 @@ class NodePopulation(object):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
-            group (int/sequence/str/mapping/None): Which nodes will have their properties
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their properties
                 returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the properties of a single node.
+                - ``CircuitNodeIds`` return the properties from a NodeCircuitNodeIds.
                 - ``sequence``: return the properties from a list of node.
                 - ``str``: return the properties of nodes in a node set.
                 - ``mapping``: return the properties of nodes matching a properties filter.
                 - ``None``: return the properties of all nodes.
 
-            properties (set): If specified, return only the properties in the set.
+            properties (list): If specified, return only the properties in the set.
                 Otherwise return all properties.
 
         Returns:
-            pandas.Series/pandas.DataFrame:
-                If single node ID is passed as ``group`` returns a pandas Series.
-                Otherwise return a pandas DataFrame indexed by node IDs.
+            value/pandas.Series/pandas.DataFrame:
+                If single node ID is passed as ``group`` and single property as properties returns
+                a single value. If single node ID is passed as ``group`` and list as property
+                returns a pandas Series. Otherwise return a pandas DataFrame indexed by node IDs.
 
         Notes:
             The NodePopulation.property_names function will give you all the usable properties
@@ -658,10 +657,11 @@ class NodePopulation(object):
         """Node position(s) as pandas Series or DataFrame.
 
         Args:
-            group (int/sequence/str/mapping/None): Which nodes will have their positions
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their positions
                 returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the position of a single node.
+                - ``CircuitNodeIds`` return the position from a NodeCircuitNodeIds.
                 - ``sequence``: return the positions from a list of node IDs.
                 - ``str``: return the positions of nodes in a node set.
                 - ``mapping``: return the positions of nodes matching a properties filter.
@@ -681,10 +681,11 @@ class NodePopulation(object):
         """Node orientation(s) as a pandas numpy array or pandas Series.
 
         Args:
-            group (int/sequence/str/mapping/None): Which nodes will have their positions
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their positions
                 returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the orientation of a single node.
+                - ``CircuitNodeIds`` return the orientation from a NodeCircuitNodeIds.
                 - ``sequence``: return the orientations from a list of node IDs.
                 - ``str``: return the orientations of nodes in a node set.
                 - ``mapping``: return the orientations of nodes matching a properties filter.
@@ -736,10 +737,11 @@ class NodePopulation(object):
         """Total number of nodes for a given node group.
 
         Args:
-            group (int/sequence/str/mapping/None): Which nodes will have their positions
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their positions
                 returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the count of a single node.
+                - ``CircuitNodeIds`` return the count of nodes from a NodeCircuitNodeIds.
                 - ``sequence``: return the count of nodes from a list of node IDs.
                 - ``str``: return the count of nodes in a node set.
                 - ``mapping``: return count of nodes matching a properties filter.

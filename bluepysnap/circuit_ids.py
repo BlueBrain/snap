@@ -110,7 +110,7 @@ class CircuitNodeIds:
             CircuitNodeIds : a filtered CircuitNodeIds containing only IDs for the given population.
         """
         if not inplace:
-            return CircuitNodeIds(self.index[self._locate(population)])
+            return CircuitNodeIds(self.index[self._locate(population)], sort_index=False)
         self.index = self.index[self._locate(population)]
 
     def get_populations(self, unique=False):

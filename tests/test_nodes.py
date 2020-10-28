@@ -200,10 +200,14 @@ class TestNodes:
         assert ids.filter_population("default2").limit(2) == expected
 
     def test_get(self):
-        print("")
-        # print(self.test_obj.get())
-        # print(self.test_obj.get(properties="other2"))
-        # print(self.test_obj.get(properties=["other2", "other1", 'layer']))
+
+        # return all properties for all the ids
+        tested = self.test_obj.get()
+        assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
+
+
+
+
         a = self.test_obj.get(properties=["other2", "other1", 'layer'])
         print(a)
         # print(a.index)
@@ -395,6 +399,16 @@ class TestNodePopulation:
         npt.assert_equal(_call([1, 0, 1]), [1, 0, 1])  # order and duplicates preserved
         npt.assert_equal(_call(np.array([1, 0, 1])), np.array([1, 0, 1]))
 
+        # NodeCircuitIds
+        ids = CircuitNodeIds.create_global_ids(["default", "default"], [0, 1])
+        npt.assert_equal(_call(ids), [0, 1])
+        # returns only the ids for the default population
+        ids = CircuitNodeIds.create_global_ids(["default", "default", "default2"], [0, 1, 0])
+        npt.assert_equal(_call(ids), [0, 1])
+        # returns only the ids for the default population so should be []
+        ids = CircuitNodeIds.create_global_ids(["default2", "default2", "default2"], [0, 1, 2])
+        npt.assert_equal(_call(ids), [])
+
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
         npt.assert_equal(_call({Cell.X: (100, 203)}), [0, 1])
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y', Cell.MORPHOLOGY: "morph-B"}), [1])
@@ -524,6 +538,35 @@ class TestNodePopulation:
                 index=[1, 2]
             )
         )
+
+        # NodeCircuitId same as [1, 2] for the default
+        pdt.assert_frame_equal(
+            _call(CircuitNodeIds.create_global_ids("default", [1, 2]), properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
+            pd.DataFrame(
+                [
+                    [201., 'L6_Y', 0.2],
+                    [301., 'L6_Y', 0.3],
+                ],
+                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
+                index=[1, 2]
+            )
+        )
+
+        # NodeCircuitId only consider the default population
+        pdt.assert_frame_equal(
+            _call(CircuitNodeIds.create_global_ids(["default", "default", "default2"], [1, 2, 0]),
+                  properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
+            pd.DataFrame(
+                [
+                    [201., 'L6_Y', 0.2],
+                    [301., 'L6_Y', 0.3],
+                ],
+                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
+                index=[1, 2]
+            )
+        )
+
+
         pdt.assert_frame_equal(
             _call("Node12_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]),
             pd.DataFrame(
@@ -584,6 +627,11 @@ class TestNodePopulation:
             ], index=[2, 0], columns=[Cell.X, Cell.Y, Cell.Z])
         )
 
+        # NodeCircuitIds
+        pdt.assert_frame_equal(
+            _call(CircuitNodeIds.create_global_ids("default", [2, 0], sort_index=False)),
+            _call([2, 0]))
+
     def test_orientations(self):
         _call = self.test_obj.orientations
         npt.assert_almost_equal(
@@ -619,6 +667,11 @@ class TestNodePopulation:
                 name='orientation'
             )
         )
+
+        # NodeCircuitIds
+        pdt.assert_series_equal(
+            _call(CircuitNodeIds.create_global_ids("default", [2, 0, 1], sort_index=False)),
+            _call([2, 0, 1]))
 
         # NodePopulation without rotation_angle[x|z]
         _call_no_xz = create_node_population(
