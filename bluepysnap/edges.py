@@ -268,37 +268,45 @@ class EdgePopulation(object):
         result.sort_index(axis=1, inplace=True)
         return result
 
-    def afferent_nodes(self, node_id, unique=True):
+    def afferent_nodes(self, target, unique=True):
         """Get afferent node IDs for given target ``node_id``.
 
         Args:
-            node_id (int): target node ID
+            target (CircuitNodeIds/int/sequence/str/mapping/None): the target you want to resolve
+            and use as target nodes.
             unique (bool): If ``True``, return only unique afferent node IDs.
 
         Returns:
-            numpy.ndarray: Afferent node IDs.
+            numpy.ndarray: Afferent node IDs for all the targets.
         """
-        selection = self._population.afferent_edges(
-            _resolve_node_ids(self.target, node_id)
-        )
+        if target is not None:
+            selection = self._population.afferent_edges(
+                _resolve_node_ids(self.target, target)
+            )
+        else:
+            selection = self._population.select_all()
         result = self._population.source_nodes(selection)
         if unique:
             result = np.unique(result)
         return result
 
-    def efferent_nodes(self, node_id, unique=True):
+    def efferent_nodes(self, source, unique=True):
         """Get efferent node IDs for given source ``node_id``.
 
         Args:
-            node_id (int): Source node ID.
-            unique (bool): If ``True``, return only unique efferent node IDs.
+            source (CircuitNodeIds/int/sequence/str/mapping/None): the source you want to resolve
+                and use as source nodes.
+            unique (bool): If ``True``, return only unique afferent node IDs.
 
         Returns:
-            numpy.ndarray: Efferent node IDs.
+            numpy.ndarray: Efferent node IDs for all the sources.
         """
-        selection = self._population.efferent_edges(
-            _resolve_node_ids(self.source, node_id)
-        )
+        if source is not None:
+            selection = self._population.efferent_edges(
+                _resolve_node_ids(self.source, source)
+            )
+        else:
+            selection = self._population.select_all()
         result = self._population.target_nodes(selection)
         if unique:
             result = np.unique(result)

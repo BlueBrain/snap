@@ -74,9 +74,7 @@ class Nodes(object):
 
         res = dict()
         for pop in self.populations():
-            print("couicou")
             for varname, dtype in pop.property_dtypes.iteritems():
-                print(pop.name,  varname, dtype)
                 _update(res, varname, dtype)
         return pd.Series(res)
 

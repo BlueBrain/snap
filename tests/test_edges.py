@@ -9,7 +9,6 @@ import libsonata
 from mock import Mock
 
 from bluepysnap.bbp import Synapse
-from bluepysnap.nodes import Nodes
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
@@ -266,13 +265,42 @@ class TestEdgePopulation(object):
 
     def test_afferent_nodes(self):
         npt.assert_equal(self.test_obj.afferent_nodes(0), [2])
+        npt.assert_equal(self.test_obj.afferent_nodes(0, unique=False), [2])
+
         npt.assert_equal(self.test_obj.afferent_nodes(1), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes(1, unique=False), [0, 0, 2])
+
         npt.assert_equal(self.test_obj.afferent_nodes(2), [])
+
+        npt.assert_equal(self.test_obj.afferent_nodes([0, 1]), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes([0, 1], unique=False), [2, 0, 0, 2])
+
+        npt.assert_equal(self.test_obj.afferent_nodes({}), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}), [2])  # eq node id 0 as target
+        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}), [2])  # eq node id 0 as target
+
+        npt.assert_equal(self.test_obj.afferent_nodes(None), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes(None, unique=False), [2, 0, 0, 2])
 
     def test_efferent_nodes(self):
         npt.assert_equal(self.test_obj.efferent_nodes(0), [1])
+        npt.assert_equal(self.test_obj.efferent_nodes(0, unique=False), [1, 1])
+
         npt.assert_equal(self.test_obj.efferent_nodes(1), [])
+        npt.assert_equal(self.test_obj.efferent_nodes(1, unique=False), [])
+
         npt.assert_equal(self.test_obj.efferent_nodes(2), [0, 1])
+        npt.assert_equal(self.test_obj.efferent_nodes(2, unique=False), [0, 1])
+
+        npt.assert_equal(self.test_obj.efferent_nodes([0, 1]), [1])
+        npt.assert_equal(self.test_obj.efferent_nodes([0, 1], unique=False), [1, 1])
+
+        npt.assert_equal(self.test_obj.efferent_nodes({}), [0, 1])
+        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}), [1])  # eq node id 0 as source
+        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}), [1])  # eq node id 0 as source
+
+        npt.assert_equal(self.test_obj.efferent_nodes(None), [0, 1])
+        npt.assert_equal(self.test_obj.efferent_nodes(None, unique=False), [0, 1, 1, 1])
 
     def test_afferent_edges_1(self):
         npt.assert_equal(
