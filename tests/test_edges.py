@@ -302,6 +302,12 @@ class TestEdgePopulation(object):
         npt.assert_equal(self.test_obj.efferent_nodes(None), [0, 1])
         npt.assert_equal(self.test_obj.efferent_nodes(None, unique=False), [0, 1, 1, 1])
 
+    def test_afferent_edges(self):
+        npt.assert_equal(
+            self.test_obj.afferent_edges([0, 1], None),
+            [0, 1, 2, 3]
+        )
+
     def test_afferent_edges_1(self):
         npt.assert_equal(
             self.test_obj.afferent_edges(1, None),
