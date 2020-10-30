@@ -203,6 +203,15 @@ def test_ok_virtual_node_group_datasets():
         assert errors == set()
 
 
+def test_ok_nonbio_node_group_datasets():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with h5py.File(nodes_file, 'r+') as h5f:
+            h5f['nodes/default/0/model_type'][:] = ''
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == set()
+
+
 def test_no_required_bio_node_group_datasets():
     required_datasets = sorted(['morphology', 'x', 'y', 'z'])
     with copy_circuit() as (circuit_copy_path, config_copy_path):
