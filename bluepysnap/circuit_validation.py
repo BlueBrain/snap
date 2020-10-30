@@ -338,12 +338,14 @@ def _check_nodes_group(group_df, group, config):
     Returns:
         list: List of errors, empty if no errors
     """
-    REQUIRED_GROUP_NAMES = ['model_type', 'model_template']
-    missing_fields = sorted(set(REQUIRED_GROUP_NAMES) - set(group_df.columns.tolist()))
-    if missing_fields:
-        return [fatal('Group {} of {} misses required fields: {}'
-                      .format(_get_group_name(group, parents=1), group.file.filename,
-                              missing_fields))]
+    if 'model_type' not in group_df.columns:
+        return [fatal('Group {} of {} misses "model_type" field'
+                      .format(_get_group_name(group, parents=1), group.file.filename))]
+    if group_df['model_type'][0] == 'virtual':
+        return []
+    if 'model_template' not in group_df.columns:
+        return [fatal('Group {} of {} misses "model_template" field'
+                      .format(_get_group_name(group, parents=1), group.file.filename))]
     elif group_df['model_type'][0] == 'biophysical':
         return _check_bio_nodes_group(group_df, group, config)
     return []
