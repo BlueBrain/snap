@@ -26,6 +26,7 @@ import neurom as nm
 from bluepysnap.settings import MORPH_CACHE_SIZE
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.circuit_ids import CircuitNodeIds
 
 
 class MorphHelper(object):
@@ -59,7 +60,18 @@ class MorphHelper(object):
         return self._population.get(node_id, Node.MODEL_TYPE) == "biophysical"
 
     def get_filepath(self, node_id):
-        """Return path to SWC morphology file corresponding to `node_id`."""
+        """Return path to SWC morphology file corresponding to `node_id`.
+
+        Args:
+            node_id (int/NodeCircuitIds)
+        """
+        if not isinstance(node_id, (CircuitNodeIds, np.integer, int)):
+            raise BluepySnapError("node_id must be either a single node id or a NodeCircuitIds "
+                                  "with a single value. You provided : {}".format(node_id))
+        elif isinstance(node_id, CircuitNodeIds) and len(node_id) > 1:
+            raise BluepySnapError("node_id must be either a single node id or a NodeCircuitIds "
+                                  "with a single value. Length is ".format(len(node_id)))
+
         name = self._population.get(node_id, Node.MORPHOLOGY)
         # to allow the NodeCircuitIds as node_id
         if not isinstance(name, six.string_types):
