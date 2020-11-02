@@ -17,7 +17,7 @@ from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.circuit_ids import CircuitNodeIds
-from bluepysnap.exceptions import BluepySnapError, BluepySnapMissingIdError
+from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
@@ -114,7 +114,7 @@ class TestNodes:
             self.test_obj.ids(ids)
 
         # (default2, 5) does not exist and is asked explicitly
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             ids = CircuitNodeIds.create_ids(["default", "default2"], [0, 5])
             self.test_obj.ids(ids)
 
@@ -124,7 +124,7 @@ class TestNodes:
         assert tested == expected
 
         # single node ID --> CircuitNodeIds raise if the ID is not in all population
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.ids(3)
 
         # seq of node ID --> CircuitNodeIds return populations with the array of ids
@@ -138,7 +138,7 @@ class TestNodes:
         assert tested == expected
 
         # seq node ID --> CircuitNodeIds raise if on ID is not in all populations
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.ids([0, 1, 2, 3])
 
         # node sets
@@ -506,15 +506,15 @@ class TestNodePopulation:
 
         with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call(-1)  # node ID out of range (lower boundary)
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call([-1, 1])  # one of node IDs out of range (lower boundary)
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call([1, -1])  # one of node IDs out of range, reversed order (lower boundary)
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call(999)  # node ID out of range (upper boundary)
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call([1, 999])  # one of node IDs out of range
         with pytest.raises(BluepySnapError):
             _call({'no-such-node-property': 42})
@@ -618,9 +618,9 @@ class TestNodePopulation:
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
         with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call(999)  # invalid node id
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             _call([0, 999])  # one of node ids is invalid
 
     def test_get_with_library_small_number_of_values(self):

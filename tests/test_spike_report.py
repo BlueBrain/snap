@@ -8,7 +8,7 @@ from mock import patch
 
 from bluepysnap.simulation import Simulation
 import bluepysnap.spike_report as test_module
-from bluepysnap.exceptions import BluepySnapError, BluepySnapMissingIdError
+from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.bbp import Cell
 
 from utils import TEST_DATA_DIR
@@ -170,7 +170,7 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(
             self.test_obj.get(group="Layer23"), _create_series([0, 0], [0.2, 1.3]))
 
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.get([-1], t_start=0.2)
 
         with pytest.raises(BluepySnapError):
@@ -179,7 +179,7 @@ class TestPopulationSpikeReport:
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0, 2], t_start=12)
 
-        with pytest.raises(BluepySnapMissingIdError):
+        with pytest.raises(BluepySnapError):
             self.test_obj.get(4)
 
     def test_get2(self):

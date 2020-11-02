@@ -29,7 +29,7 @@ import six
 from cached_property import cached_property
 
 from bluepysnap import utils
-from bluepysnap.exceptions import BluepySnapError, BluepySnapMissingIdError
+from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
 from bluepysnap.circuit_ids import CircuitNodeIds
@@ -159,8 +159,8 @@ class Nodes(object):
 
         Raises:
             BluepySnapError: if a population is explicitly required by the user (via CircuitNodeIds)
-            BluepySnapMissingIdError: if one or more ids are explicilty asked by the user
-                using int, sequence, or CircuitNodeIds.
+            BluepySnapError: if one or more ids are explicilty asked by the user using int,
+                sequence, or CircuitNodeIds.
 
         Examples:
             The available group parameter values (example with 2 nodes populations pop1 and pop2):
@@ -435,8 +435,8 @@ class NodePopulation(object):
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:
-            raise BluepySnapMissingIdError("node ID not found: {} in population"
-                                           " '{}'".format(node_id, self.name))
+            raise BluepySnapError("node ID not found: {} in population"
+                                  " '{}'".format(node_id, self.name))
 
     def _check_ids(self, node_ids):
         """Check that node IDs belong to the circuit."""
@@ -450,8 +450,8 @@ class NodePopulation(object):
             max_id = max(node_ids)
             min_id = min(node_ids)
         if min_id < 0 or max_id >= self._data.index.shape[0]:
-            raise BluepySnapMissingIdError("All node IDs must be >= 0 and < {} for population "
-                                           "'{}'".format(self._data.index.shape[0], self.name))
+            raise BluepySnapError("All node IDs must be >= 0 and < {} for population "
+                                  "'{}'".format(self._data.index.shape[0], self.name))
 
     def _check_property(self, prop):
         """Check if a property exists inside the dataset."""
