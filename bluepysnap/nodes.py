@@ -52,7 +52,7 @@ class Nodes(object):
         res = {}
         for file_config in self._config:
             storage = NodeStorage(file_config, self._circuit)
-            for population in storage.population_names:
+            for population in storage.population_names:  # pylint: disable=not-an-iterable
                 if population in res:
                     raise BluepySnapError("Duplicated node population: '%s'" % population)
                 res[population] = storage.population(population)
@@ -505,8 +505,7 @@ class NodePopulation(object):
             if raise_missing_prop:
                 raise BluepySnapError(
                     "Unknown node properties: [{0}]".format(", ".join(unknown_props)))
-            else:
-                return np.full(len(self._data), fill_value=False)
+            return np.full(len(self._data), fill_value=False)
 
         queries, mask = self._circuit_mask(queries)
         if not mask.any():
