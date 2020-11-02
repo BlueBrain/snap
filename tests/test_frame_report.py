@@ -7,7 +7,7 @@ from mock import patch
 
 from bluepysnap.simulation import Simulation
 import bluepysnap.frame_report as test_module
-from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.exceptions import BluepySnapError, BluepySnapMissingIdError
 from bluepysnap.bbp import Cell
 
 from utils import TEST_DATA_DIR
@@ -224,7 +224,7 @@ class TestPopulationCompartmentReport:
         pdt.assert_frame_equal(
             self.test_obj.get(group="Layer23"), self.df.loc[:, [0]])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapMissingIdError):
             self.test_obj.get(-1, t_start=0.2)
 
         with pytest.raises(BluepySnapError):
@@ -233,7 +233,7 @@ class TestPopulationCompartmentReport:
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0, 2], t_start=15)
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapMissingIdError):
             self.test_obj.get(4)
 
     def test_get_partially_not_in_report(self):
