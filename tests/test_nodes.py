@@ -99,27 +99,27 @@ class TestNodes:
     def test_ids(self):
         # None --> CircuitNodeIds with all ids
         tested = self.test_obj.ids()
-        expected = CircuitNodeIds.create_global_ids("default", [0, 1, 2]).append(
-            CircuitNodeIds.create_global_ids("default2", [0, 1, 2, 3]), inplace=False)
+        expected = CircuitNodeIds.create_ids("default", [0, 1, 2]).append(
+            CircuitNodeIds.create_ids("default2", [0, 1, 2, 3]), inplace=False)
         assert tested == expected
 
         # CircuitNodeIds --> CircuitNodeIds and check if the population and node ids exist
-        ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
+        ids = CircuitNodeIds.create_ids(["default", "default2"], [0, 3])
         tested = self.test_obj.ids(ids)
         assert tested == ids
 
         # default3 population does not exist and is asked explicitly
         with pytest.raises(BluepySnapError):
-            ids = CircuitNodeIds.create_global_ids(["default", "default3"], [0, 3])
+            ids = CircuitNodeIds.create_ids(["default", "default3"], [0, 3])
             self.test_obj.ids(ids)
 
         # (default2, 5) does not exist and is asked explicitly
         with pytest.raises(BluepySnapMissingIdError):
-            ids = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 5])
+            ids = CircuitNodeIds.create_ids(["default", "default2"], [0, 5])
             self.test_obj.ids(ids)
 
         # single node ID --> CircuitNodeIds return populations with the 0 id
-        expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 0])
+        expected = CircuitNodeIds.create_ids(["default", "default2"], [0, 0])
         tested = self.test_obj.ids(0)
         assert tested == expected
 
@@ -128,8 +128,8 @@ class TestNodes:
             self.test_obj.ids(3)
 
         # seq of node ID --> CircuitNodeIds return populations with the array of ids
-        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"],
-                                                    [0, 1, 0, 1])
+        expected = CircuitNodeIds.create_ids(["default", "default", "default2", "default2"],
+                                             [0, 1, 0, 1])
         tested = self.test_obj.ids([0, 1])
         assert tested == expected
         tested = self.test_obj.ids((0, 1))
@@ -142,14 +142,14 @@ class TestNodes:
             self.test_obj.ids([0, 1, 2, 3])
 
         # node sets
-        assert self.test_obj.ids('Layer2') == CircuitNodeIds.create_global_ids(
+        assert self.test_obj.ids('Layer2') == CircuitNodeIds.create_ids(
             ["default", 'default2'], [0, 3])
-        assert self.test_obj.ids('Layer23') == CircuitNodeIds.create_global_ids(
+        assert self.test_obj.ids('Layer23') == CircuitNodeIds.create_ids(
             ["default", 'default2'], [0, 3])
         assert self.test_obj.ids(
-            'Population_default_L6_Y_Node2') == CircuitNodeIds.create_global_ids(["default"], [2])
+            'Population_default_L6_Y_Node2') == CircuitNodeIds.create_ids(["default"], [2])
         assert self.test_obj.ids(
-            'combined_combined_Node0_L6_Y__Node12_L6_Y__') == CircuitNodeIds.create_global_ids(
+            'combined_combined_Node0_L6_Y__Node12_L6_Y__') == CircuitNodeIds.create_ids(
             ["default", "default", "default", "default2"], [0, 1, 2, 3])
 
         # Mapping --> CircuitNodeIds query on the populations empty dict return all
@@ -157,27 +157,27 @@ class TestNodes:
 
         # Mapping --> CircuitNodeIds query on the populations
         tested = self.test_obj.ids({'layer': 2})
-        expected = CircuitNodeIds.create_global_ids(["default", "default2"], [0, 3])
+        expected = CircuitNodeIds.create_ids(["default", "default2"], [0, 3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
         tested = self.test_obj.ids({'other1': ['A', 'D']})
-        expected = CircuitNodeIds.create_global_ids(["default2", "default2"], [0, 3])
+        expected = CircuitNodeIds.create_ids(["default2", "default2"], [0, 3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
         tested = self.test_obj.ids({'other1': ['A', 'D'], 'layer': 2})
-        expected = CircuitNodeIds.create_global_ids(["default2"], [3])
+        expected = CircuitNodeIds.create_ids(["default2"], [3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
         tested = self.test_obj.ids({'$or': [{'other1': ['A', 'D']}, {'layer': 2}]})
-        expected = CircuitNodeIds.create_global_ids(["default", "default2", "default2"], [0, 0, 3])
+        expected = CircuitNodeIds.create_ids(["default", "default2", "default2"], [0, 0, 3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
         tested = self.test_obj.ids({'$and': [{'other1': ['A', 'D']}, {'layer': 2}]})
-        expected = CircuitNodeIds.create_global_ids(["default2"], [3])
+        expected = CircuitNodeIds.create_ids(["default2"], [3])
         assert tested == expected
 
         # Mapping --> CircuitNodeIds query on the population node ids with mapping.
@@ -191,30 +191,30 @@ class TestNodes:
         assert tested == expected
         # not existing pop (should not raise)
         tested = self.test_obj.ids({"population": "default4"})
-        expected = CircuitNodeIds.create_global_ids([], [])
+        expected = CircuitNodeIds.create_ids([], [])
         assert tested == expected
 
         # single pop and node ids
         tested = self.test_obj.ids({"population": ["default"], "node_id": [1, 2]})
-        expected = CircuitNodeIds.create_global_ids(["default", "default"], [1, 2])
+        expected = CircuitNodeIds.create_ids(["default", "default"], [1, 2])
         assert tested == expected
         # single pop and node ids with not present node id (should not raise)
         tested = self.test_obj.ids({"population": ["default"], "node_id": [1, 5]})
-        expected = CircuitNodeIds.create_global_ids(["default"], [1])
+        expected = CircuitNodeIds.create_ids(["default"], [1])
         assert tested == expected
         # not existing node ids (should not raise)
         tested = self.test_obj.ids({"population": ["default"], "node_id": [5, 6, 7]})
-        expected = CircuitNodeIds.create_global_ids([], [])
+        expected = CircuitNodeIds.create_ids([], [])
         assert tested == expected
 
         # multiple pop and node ids
         tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0]})
-        expected = CircuitNodeIds.create_global_ids(["default", "default", "default2", "default2"],
-                                                    [1, 0, 1, 0])
+        expected = CircuitNodeIds.create_ids(["default", "default", "default2", "default2"],
+                                             [1, 0, 1, 0])
         assert tested == expected
         # multiple pop and node ids with not present node id (should not raise)
         tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0, 3]})
-        expected = CircuitNodeIds.create_global_ids(
+        expected = CircuitNodeIds.create_ids(
             ["default", "default", "default2", "default2", "default2"],
             [1, 0, 1, 0, 3])
         assert tested == expected
@@ -223,7 +223,7 @@ class TestNodes:
         ids = self.test_obj.ids()
         assert ids.filter_population("default").append(ids.filter_population("default2")) == ids
 
-        expected = CircuitNodeIds.create_global_ids(["default2", "default2"], [0, 1])
+        expected = CircuitNodeIds.create_ids(["default2", "default2"], [0, 1])
         assert ids.filter_population("default2").limit(2) == expected
 
     def test_get(self):
@@ -436,13 +436,13 @@ class TestNodePopulation:
         npt.assert_equal(_call(np.array([1, 0, 1])), np.array([1, 0, 1]))
 
         # NodeCircuitIds
-        ids = CircuitNodeIds.create_global_ids(["default", "default"], [0, 1])
+        ids = CircuitNodeIds.create_ids(["default", "default"], [0, 1])
         npt.assert_equal(_call(ids), [0, 1])
         # returns only the ids for the default population
-        ids = CircuitNodeIds.create_global_ids(["default", "default", "default2"], [0, 1, 0])
+        ids = CircuitNodeIds.create_ids(["default", "default", "default2"], [0, 1, 0])
         npt.assert_equal(_call(ids), [0, 1])
         # returns only the ids for the default population so should be []
-        ids = CircuitNodeIds.create_global_ids(["default2", "default2", "default2"], [0, 1, 2])
+        ids = CircuitNodeIds.create_ids(["default2", "default2", "default2"], [0, 1, 2])
         npt.assert_equal(_call(ids), [])
 
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
@@ -577,7 +577,7 @@ class TestNodePopulation:
 
         # NodeCircuitId same as [1, 2] for the default
         pdt.assert_frame_equal(
-            _call(CircuitNodeIds.create_global_ids("default", [1, 2]), properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
+            _call(CircuitNodeIds.create_ids("default", [1, 2]), properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
             pd.DataFrame(
                 [
                     [201., 'L6_Y', 0.2],
@@ -590,7 +590,7 @@ class TestNodePopulation:
 
         # NodeCircuitId only consider the default population
         pdt.assert_frame_equal(
-            _call(CircuitNodeIds.create_global_ids(["default", "default", "default2"], [1, 2, 0]),
+            _call(CircuitNodeIds.create_ids(["default", "default", "default2"], [1, 2, 0]),
                   properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
             pd.DataFrame(
                 [
@@ -665,7 +665,7 @@ class TestNodePopulation:
 
         # NodeCircuitIds
         pdt.assert_frame_equal(
-            _call(CircuitNodeIds.create_global_ids("default", [2, 0], sort_index=False)),
+            _call(CircuitNodeIds.create_ids("default", [2, 0], sort_index=False)),
             _call([2, 0]))
 
     def test_orientations(self):
@@ -706,7 +706,7 @@ class TestNodePopulation:
 
         # NodeCircuitIds
         pdt.assert_series_equal(
-            _call(CircuitNodeIds.create_global_ids("default", [2, 0, 1], sort_index=False)),
+            _call(CircuitNodeIds.create_ids("default", [2, 0, 1], sort_index=False)),
             _call([2, 0, 1]))
 
         # NodePopulation without rotation_angle[x|z]
@@ -795,7 +795,7 @@ class TestNodePopulation:
         _call = self.test_obj.count
         assert _call(0) == 1
         assert _call([0, 1]) == 2
-        assert _call(CircuitNodeIds.create_global_ids("default", [0, 1])) == 2
+        assert _call(CircuitNodeIds.create_ids("default", [0, 1])) == 2
         assert _call({Cell.MTYPE: 'L6_Y'}) == 2
         assert _call('Layer23') == 1
 

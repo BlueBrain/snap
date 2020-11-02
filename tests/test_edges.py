@@ -409,7 +409,7 @@ class TestEdgePopulation(object):
             self.test_obj.pathway_edges(None, None, None)
 
     def test_pathway_edges_6(self):
-        ids = CircuitNodeIds.create_global_ids("default", [0, 1])
+        ids = CircuitNodeIds.create_ids("default", [0, 1])
         npt.assert_equal(self.test_obj.pathway_edges(ids, None, None), [1, 2])
 
     def test_iter_connections_1(self):

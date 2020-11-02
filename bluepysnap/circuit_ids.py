@@ -49,7 +49,7 @@ class CircuitNodeIds:
         self.index = index
 
     @classmethod
-    def create_global_ids(cls, populations, population_ids, sort_index=True):
+    def create_ids(cls, populations, population_ids, sort_index=True):
         """Create a set of ids using population(s) and ids.
 
         Args:

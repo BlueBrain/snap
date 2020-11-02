@@ -29,29 +29,29 @@ class TestCircuitNodeIds:
         self.test_obj_sorted = test_module.CircuitNodeIds(circuit_node_ids())
 
     def test_create_global_ids(self):
-        tested = test_module.CircuitNodeIds.create_global_ids('a', 0)
+        tested = test_module.CircuitNodeIds.create_ids('a', 0)
         pdt.assert_index_equal(tested.index, _create_index(['a'], [0]))
 
-        tested = test_module.CircuitNodeIds.create_global_ids('a', [0, 1])
+        tested = test_module.CircuitNodeIds.create_ids('a', [0, 1])
         pdt.assert_index_equal(tested.index, _create_index(['a', 'a'], [0, 1]))
 
         # duplicate ids if id is single int
-        tested = test_module.CircuitNodeIds.create_global_ids(['a', 'b'], 0)
+        tested = test_module.CircuitNodeIds.create_ids(['a', 'b'], 0)
         pdt.assert_index_equal(tested.index, _create_index(['a', 'b'], [0, 0]))
 
-        tested = test_module.CircuitNodeIds.create_global_ids(['a', 'b'], [0, 1])
+        tested = test_module.CircuitNodeIds.create_ids(['a', 'b'], [0, 1])
         pdt.assert_index_equal(tested.index, _create_index(['a', 'b'], [0, 1]))
 
         # keep ids ordering
-        tested = test_module.CircuitNodeIds.create_global_ids(['a', 'b'], [1, 0], sort_index=False)
+        tested = test_module.CircuitNodeIds.create_ids(['a', 'b'], [1, 0], sort_index=False)
         pdt.assert_index_equal(tested.index, _create_index(['a', 'b'], [1, 0]))
 
         # keep population ordering
-        tested = test_module.CircuitNodeIds.create_global_ids(['b', 'a'], [0, 1], sort_index=False)
+        tested = test_module.CircuitNodeIds.create_ids(['b', 'a'], [0, 1], sort_index=False)
         pdt.assert_index_equal(tested.index, _create_index(['b', 'a'], [0, 1]))
 
         # keep duplicates
-        tested = test_module.CircuitNodeIds.create_global_ids(['a', 'a'], [0, 0])
+        tested = test_module.CircuitNodeIds.create_ids(['a', 'a'], [0, 0])
         pdt.assert_index_equal(tested.index, _create_index(['a', 'a'], [0, 0]))
         assert tested.index.size == 2
 

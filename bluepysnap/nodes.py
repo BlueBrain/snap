@@ -138,13 +138,18 @@ class Nodes(object):
         Args:
             group (CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be returned
                 depends on the type of the ``group`` argument:
-                - ``CircuitNodeIds``: return the IDs in a CircuitNodeIds if they belong to the
-                    circuit.
-                - ``int``: return a single node ID if it belongs to the circuit.
-                - ``sequence``: return the IDs in an array if they belong to the circuit.
-                - ``str``: return IDs of nodes in a node set.
-                - ``mapping``: return IDs of nodes matching a properties filter.
-                - ``None``: return all node IDs.
+                - ``CircuitNodeIds``: return the IDs in a CircuitNodeIds object if they belong to
+                    the circuit.
+                - ``int``: if the node ID is present in all populations, returns a CircuitNodeIds
+                    object containing the corresponding node ID for all populations.
+                - ``sequence``: if all the values contained in the sequence are present in all
+                    populations, returns a CircuitNodeIds object containing the corresponding node
+                    IDs for all populations.
+                - ``str``: use a node set name as input. Returns a CircuitNodeIds object containing
+                    nodes selectected by the node set.
+                - ``mapping``: Returns a CircuitNodeIds object containing nodes matching a
+                    properties filter.
+                - ``None``: return all node IDs of the circuit in a CircuitNodeIds object.
 
         Returns:
             CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
@@ -157,11 +162,12 @@ class Nodes(object):
                 using int, sequence, or CircuitNodeIds.
 
         Examples:
-            The available group parameter values:
-            >>> node_ids = CircuitNodeIds.create_global_ids(["pop1", "pop2"], [1, 3])
-            >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
+            The available group parameter values (example with 2 nodes populations pop1 and pop2):
             >>> nodes.ids(group=None)  #  returns all CircuitNodeIds from the circuit
-            >>> nodes.ids(group={})  #  returns all CircuitNodeIds from the circuit
+            >>> node_ids = CircuitNodeIds.create_ids(["pop1", "pop2"], [1, 3])
+            >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
+            >>> nodes.ids(group=0)  #  returns CircuitNodeIds 0 from pop1 and pop2
+            >>> nodes.ids(group=[0, 1])  #  returns CircuitNodeIds 0 and 1 from pop1 and pop2
             >>> nodes.ids(group="node_set_name")  # returns CircuitNodeIds matching node set
             >>> nodes.ids(group={Node.LAYER: 2})  # returns CircuitNodeIds matching layer==2
             >>> nodes.ids(group={Node.LAYER: [2, 3]})  # returns CircuitNodeIds with layer in [2,3]
@@ -188,23 +194,17 @@ class Nodes(object):
             pops = np.array(np.full_like(pop_ids, fill_value=name, dtype=str_type))
             ids = pop_ids if ids.size == 0 else np.concatenate([ids, pop_ids])
             populations = pops if populations.size == 0 else np.concatenate([populations, pops])
-        return CircuitNodeIds.create_global_ids(populations, ids)
+        return CircuitNodeIds.create_ids(populations, ids)
 
     def get(self, group=None, properties=None):
         """Node properties as a pandas DataFrame.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their properties
-                returned depends on the type of the ``group`` argument:
+            group (CircuitNodeIds/int/sequence/str/mapping/None): Which nodes will have their
+                properties returned depends on the type of the ``group`` argument:
+                See :py:class:`~bluepysnap.nodes.Nodes.ids`.
 
-                - ``int``: return the properties of a single node.
-                - ``CircuitNodeIds`` return the properties from a NodeCircuitNodeIds.
-                - ``sequence``: return the properties from a list of node.
-                - ``str``: return the properties of nodes in a node set.
-                - ``mapping``: return the properties of nodes matching a properties filter.
-                - ``None``: return the properties of all nodes.
-
-            properties (list): If specified, return only the properties in the set.
+            properties (list): If specified, return only the properties in the list.
                 Otherwise return all properties.
 
         Returns:
@@ -628,7 +628,8 @@ class NodePopulation(object):
         if group is None:
             result = self._data.index.values
         elif isinstance(group, collections.Mapping):
-            result = self._node_ids_by_filter(queries=group, raise_missing_prop=raise_missing_property)
+            result = self._node_ids_by_filter(queries=group,
+                                              raise_missing_prop=raise_missing_property)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)
@@ -656,8 +657,8 @@ class NodePopulation(object):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their properties
-                returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
+            properties returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the properties of a single node.
                 - ``CircuitNodeIds`` return the properties from a NodeCircuitNodeIds.
@@ -666,7 +667,7 @@ class NodePopulation(object):
                 - ``mapping``: return the properties of nodes matching a properties filter.
                 - ``None``: return the properties of all nodes.
 
-            properties (list): If specified, return only the properties in the set.
+            properties (list): If specified, return only the properties in the list.
                 Otherwise return all properties.
 
         Returns:
@@ -698,8 +699,8 @@ class NodePopulation(object):
         """Node position(s) as pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their positions
-                returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
+            positions returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the position of a single node.
                 - ``CircuitNodeIds`` return the position from a NodeCircuitNodeIds.
@@ -722,8 +723,8 @@ class NodePopulation(object):
         """Node orientation(s) as a pandas numpy array or pandas Series.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their positions
-                returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
+            positions returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the orientation of a single node.
                 - ``CircuitNodeIds`` return the orientation from a NodeCircuitNodeIds.
@@ -778,8 +779,8 @@ class NodePopulation(object):
         """Total number of nodes for a given node group.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their positions
-                returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
+            positions returned depends on the type of the ``group`` argument:
 
                 - ``int``: return the count of a single node.
                 - ``CircuitNodeIds`` return the count of nodes from a NodeCircuitNodeIds.

@@ -67,12 +67,12 @@ class TestMorphHelper(object):
         actual = self.test_obj.get_filepath(node_id)
         expected = str(self.morph_path / 'morph-A.swc')
         assert actual == expected
-        node_id = CircuitNodeIds.make_ids("default", 0)
+        node_id = CircuitNodeIds.create_ids("default", 0)
         actual = self.test_obj.get_filepath(node_id)
         assert actual == expected
 
         with pytest.raises(BluepySnapError):
-            self.test_obj.get_filepath(CircuitNodeIds.make_ids("default", [0, 1]))
+            self.test_obj.get_filepath(CircuitNodeIds.create_ids("default", [0, 1]))
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get_filepath([0, 1])
@@ -87,7 +87,7 @@ class TestMorphHelper(object):
         npt.assert_almost_equal(expected, actual[:2])
 
         with pytest.raises(BluepySnapError):
-            self.test_obj.get(CircuitNodeIds.make_ids("default", [0, 1]))
+            self.test_obj.get(CircuitNodeIds.create_ids("default", [0, 1]))
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0, 1])
