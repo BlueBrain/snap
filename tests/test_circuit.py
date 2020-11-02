@@ -32,12 +32,20 @@ def test_all():
             sorted(json.load(open(str(TEST_DATA_DIR / 'node_sets.json')))))
 
 
-def test_duplicate_population():
+def test_duplicate_node_populations():
     circuit = test_module.Circuit(
         str(TEST_DATA_DIR / 'circuit_config_duplicate.json')
     )
     with pytest.raises(BluepySnapError):
         circuit.nodes
+
+
+def test_duplicate_edge_populations():
+    circuit = test_module.Circuit(
+        str(TEST_DATA_DIR / 'circuit_config_duplicate.json')
+    )
+    with pytest.raises(BluepySnapError):
+        circuit.edges
 
 
 def test_no_node_set():
