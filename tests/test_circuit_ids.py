@@ -1,14 +1,17 @@
+import pytest
 from mock import patch
 import pandas as pd
 import pandas.testing as pdt
 import numpy.testing as npt
 import numpy as np
 
-import bluepysnap.circuit_ids as test_module
 try:
     from pathlib import Path
 except ImportError:
     from pathlib2 import Path
+
+from bluepysnap.exceptions import BluepySnapError
+import bluepysnap.circuit_ids as test_module
 
 from utils import setup_tempdir
 
@@ -28,7 +31,20 @@ class TestCircuitNodeIds:
         self.test_obj_unsorted = test_module.CircuitNodeIds(circuit_node_ids(), sort_index=False)
         self.test_obj_sorted = test_module.CircuitNodeIds(circuit_node_ids())
 
-    def test_create_global_ids(self):
+    def test_init(self):
+        values = pd.MultiIndex.from_arrays([['a', 'a', 'b', 'a'], [0, 1, 0, 2]])
+        tested = test_module.CircuitNodeIds(values, sort_index=False)
+        assert tested.index.names == ["population", "node_ids"]
+        npt.assert_equal(tested.index.values, values.values)
+
+        tested = test_module.CircuitNodeIds(values, sort_index=True)
+        assert tested.index.names == ["population", "node_ids"]
+        npt.assert_equal(tested.index.values, np.sort(values.values))
+
+        with pytest.raises(BluepySnapError):
+            test_module.CircuitNodeIds(1)
+
+    def test_create_ids(self):
         tested = test_module.CircuitNodeIds.create_ids('a', 0)
         pdt.assert_index_equal(tested.index, _create_index(['a'], [0]))
 
@@ -54,6 +70,12 @@ class TestCircuitNodeIds:
         tested = test_module.CircuitNodeIds.create_ids(['a', 'a'], [0, 0])
         pdt.assert_index_equal(tested.index, _create_index(['a', 'a'], [0, 0]))
         assert tested.index.size == 2
+
+        with pytest.raises(BluepySnapError):
+            test_module.CircuitNodeIds.create_ids(['a', 'a', 'a'], [0, 0])
+
+        with pytest.raises(BluepySnapError):
+            test_module.CircuitNodeIds.create_ids(['a', 'a'], [0, 0, 0])
 
     def test_copy(self):
         tested = self.test_obj_sorted.copy()
