@@ -39,6 +39,7 @@ NODE_SET_KEY = "$node_set"
 
 
 class Nodes(object):
+    """The top level Nodes accessor."""
 
     def __init__(self, circuit):
         """Initialize the top level Nodes accessor."""

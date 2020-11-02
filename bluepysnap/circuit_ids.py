@@ -38,7 +38,7 @@ class CircuitNodeIds:
         Args:
             index (pandas.MultiIndex): a multi index from pandas with the population names as
                 first level and node IDs as the second level.
-            sort_index
+            sort_index (bool): if true sort the index per population and then node IDs.
         """
         if not isinstance(index, pd.MultiIndex):
             raise BluepySnapError("index must be a pandas.MultiIndex object.")
@@ -112,6 +112,7 @@ class CircuitNodeIds:
         if not inplace:
             return CircuitNodeIds(self.index[self._locate(population)], sort_index=False)
         self.index = self.index[self._locate(population)]
+        return None
 
     def get_populations(self, unique=False):
         """Returns all population values from the circuit node IDs."""
@@ -142,6 +143,7 @@ class CircuitNodeIds:
         if not inplace:
             return CircuitNodeIds(self.index, sort_index=True)
         self.index = self.index.sortlevel()[0]
+        return None
 
     def append(self, other, inplace=False):
         """Append a NodeCircuitIds to the current one.
@@ -153,6 +155,7 @@ class CircuitNodeIds:
         if not inplace:
             return CircuitNodeIds(self.index.append(other.index))
         self.index = self.index.append(other.index)
+        return None
 
     def sample(self, sample_size, inplace=False):
         """Sample a CircuitNodeIds.
@@ -168,19 +171,21 @@ class CircuitNodeIds:
             res.index = res.index[np.random.choice(len(res), size=sample_size, replace=False)]
         if not inplace:
             return res
+        return None
 
     def limit(self, limit_size, inplace=False):
         """Sample a CircuitNodeIds.
 
         Args:
             limit_size (int): the size of the sample. If the size of the sample is greater than
-                the size of the CircuitNodeIds then all ids are taken and shuffled.
+                the size of the CircuitNodeIds then all ids are kept.
             inplace (bool): if set to True. Do the transformation inplace.
         """
         res = self if inplace else self.copy()
         res.index = res.index[0: limit_size]
         if not inplace:
             return res
+        return None
 
     def to_csv(self, filepath):
         """Save NodeCircuitIds to csv format."""
@@ -192,18 +197,20 @@ class CircuitNodeIds:
         return cls(pd.MultiIndex.from_frame(pd.read_csv(filepath)))
 
     def __repr__(self):
-        """Correct repr of the IDs."""
+        """Correct repr of the CircuitNodeIds."""
         res = self.index.__repr__()[len("MultiIndex"):]
         return "CircuitNodeIds" + res
 
     def __str__(self):
-        """Correct str of the IDs."""
+        """Correct str of the CircuitNodeIds."""
         return self.__repr__()
 
     def __eq__(self, other):
+        """Equality for the CircuitNodeIds."""
         if not isinstance(other, CircuitNodeIds):
             return False
         return self.index.equals(other.index)
 
     def __len__(self):
+        """Return the length of the CircuitNodeIds."""
         return len(self.index)

@@ -63,14 +63,14 @@ class MorphHelper(object):
         """Return path to SWC morphology file corresponding to `node_id`.
 
         Args:
-            node_id (int/NodeCircuitIds)
+            node_id (int/CircuitNodeIds): could be a single int or a CircuitNodeIds of length 1.
         """
         if not isinstance(node_id, (CircuitNodeIds, np.integer, int)):
             raise BluepySnapError("node_id must be either a single node id or a NodeCircuitIds "
-                                  "with a single value. You provided : {}".format(node_id))
-        elif isinstance(node_id, CircuitNodeIds) and len(node_id) > 1:
+                                  "with a single value. You provided : {}.".format(node_id))
+        if isinstance(node_id, CircuitNodeIds) and len(node_id) > 1:
             raise BluepySnapError("node_id must be either a single node id or a NodeCircuitIds "
-                                  "with a single value. Length is ".format(len(node_id)))
+                                  "with a single value. Length is {}.".format(len(node_id)))
 
         name = self._population.get(node_id, Node.MORPHOLOGY)
         # to allow the NodeCircuitIds as node_id
@@ -81,8 +81,10 @@ class MorphHelper(object):
     def get(self, node_id, transform=False):
         """Return NeuroM morphology object corresponding to `node_id`.
 
-        If `transform` is True, rotate and translate morphology points
-        according to `node_id` position in the circuit.
+        Args:
+            node_id (int/CircuitNodeIds): could be a single int or a CircuitNodeIds of length 1.
+            transform (bool): If `transform` is True, rotate and translate morphology points
+                according to `node_id` position in the circuit.
         """
         filepath = self.get_filepath(node_id)
         result = self._load(filepath)
