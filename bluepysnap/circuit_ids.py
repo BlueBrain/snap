@@ -79,8 +79,8 @@ class CircuitNodeIds:
 
         if len(populations) != len(population_ids):
             raise BluepySnapError("populations and population_ids must have the same size or "
-                                  "having a single value. {} != {}".format(len(populations),
-                                                                           len(population_ids)))
+                                  "being a single value. {} != {}".format(len(populations),
+                                                                          len(population_ids)))
 
         index = pd.MultiIndex.from_arrays([populations, population_ids])
         return cls(index, sort_index=sort_index)
@@ -141,7 +141,7 @@ class CircuitNodeIds:
         """
         if not inplace:
             return CircuitNodeIds(self.index, sort_index=True)
-        self.index = self.index.sortlevel()
+        self.index = self.index.sortlevel()[0]
 
     def append(self, other, inplace=False):
         """Append a NodeCircuitIds to the current one.

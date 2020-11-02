@@ -108,6 +108,13 @@ class TestCircuitNodeIds:
         tested = self.test_obj_unsorted.get_ids(unique=True)
         npt.assert_equal(tested, [0, 1, 2])
 
+    def test_sort(self):
+        obj = test_module.CircuitNodeIds(circuit_node_ids(), sort_index=False)
+        expected = pd.MultiIndex.from_arrays([['a', 'a', 'a', 'b'], [0, 1, 2, 0]])
+        npt.assert_equal(obj.sort().index.values, expected.values)
+        obj.sort(inplace=True)
+        npt.assert_equal(obj.index.values, expected.values)
+
     def test_append(self):
         other = test_module.CircuitNodeIds(pd.MultiIndex.from_arrays([['c', 'b', 'c'], [0, 5, 1]]))
         expected = test_module.CircuitNodeIds(_create_index(['a', 'a', 'b', 'a', 'c', 'b', 'c'],
