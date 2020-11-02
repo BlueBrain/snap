@@ -43,7 +43,7 @@ setup(
     install_requires=[
         'cached_property>=1.0',
         'functools32;python_version<"3.2"',
-        'h5py>=2.2',
+        'h5py>=2.2,<3',
         'libsonata>=0.1.4',
         'neurom>=1.3',
         'numpy>=1.8',

@@ -182,15 +182,25 @@ def test_nodes_multi_group_wrong_group_id():
 
 def test_no_required_node_group_datasets():
     required_datasets = ['model_template', 'model_type']
+    for ds in required_datasets:
+        with copy_circuit() as (circuit_copy_path, config_copy_path):
+            nodes_file = circuit_copy_path / 'nodes.h5'
+            with h5py.File(nodes_file, 'r+') as h5f:
+                del h5f['nodes/default/0/' + ds]
+            errors = test_module.validate(str(config_copy_path))
+            assert errors == {Error(Error.FATAL,
+                                    'Group default/0 of {} misses "{}" field'
+                                    .format(nodes_file, ds))}
+
+
+def test_ok_virtual_node_group_datasets():
     with copy_circuit() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / 'nodes.h5'
         with h5py.File(nodes_file, 'r+') as h5f:
-            for ds in required_datasets:
-                del h5f['nodes/default/0/' + ds]
+            h5f['nodes/default/0/model_type'][:] = 'virtual'
+            del h5f['nodes/default/0/model_template']
         errors = test_module.validate(str(config_copy_path))
-        assert errors == {Error(Error.FATAL,
-                                'Group default/0 of {} misses required fields: {}'
-                                .format(nodes_file, required_datasets))}
+        assert errors == set()
 
 
 def test_ok_nonbio_node_group_datasets():
