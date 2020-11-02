@@ -199,6 +199,8 @@ class TestCircuitNodeIds:
 
         # different object
         assert test_obj != 1
+        # python2 complains
+        assert not test_obj.__eq__(1)
 
     def test_printing(self):
         tested = self.test_obj_unsorted.__repr__()
@@ -207,7 +209,12 @@ class TestCircuitNodeIds:
             ('b', 0),
             ('a', 2)],
            names=['population', 'node_ids'])"""
-        assert tested == expected
+
+        expected_py2 = """CircuitNodeIds(levels=[[u'a', u'b'], [0, 1, 2]],
+           codes=[[0, 0, 1, 0], [0, 1, 0, 2]],
+           names=[u'population', u'node_ids'])"""
+
+        assert ((tested == expected) or (tested == expected_py2))
         assert self.test_obj_sorted.__repr__() == self.test_obj_sorted.__str__()
 
     def test_roundtrip(self):
