@@ -187,10 +187,7 @@ class Nodes(object):
         ids = np.array([], dtype=np.int64)
         populations = np.array([], dtype=str_type)
         for name, pop in self.items():
-            try:
-                pop_ids = pop.ids(group=group, raise_missing_property=False)
-            except BluepySnapError:
-                continue
+            pop_ids = pop.ids(group=group, raise_missing_property=False)
             pops = np.array(np.full_like(pop_ids, fill_value=name, dtype=str_type))
             ids = pop_ids if ids.size == 0 else np.concatenate([ids, pop_ids])
             populations = pops if populations.size == 0 else np.concatenate([populations, pops])
