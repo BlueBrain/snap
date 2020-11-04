@@ -185,13 +185,13 @@ class Nodes(object):
             diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
-        ids = np.array([], dtype=np.int64)
-        populations = np.array([], dtype=str_type)
+        ids = np.empty((0,), dtype=np.int64)
+        populations = np.empty((0,), dtype=str_type)
         for name, pop in self.items():
             pop_ids = pop.ids(group=group, raise_missing_property=False)
-            pops = np.array(np.full_like(pop_ids, fill_value=name, dtype=str_type))
-            ids = pop_ids if ids.size == 0 else np.concatenate([ids, pop_ids])
-            populations = pops if populations.size == 0 else np.concatenate([populations, pops])
+            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            ids = np.concatenate([ids, pop_ids])
+            populations = np.concatenate([populations, pops])
         return CircuitNodeIds.create_ids(populations, ids)
 
     def get(self, group=None, properties=None):
@@ -202,7 +202,7 @@ class Nodes(object):
                 properties returned depends on the type of the ``group`` argument:
                 See :py:class:`~bluepysnap.nodes.Nodes.ids`.
 
-            properties (list): If specified, return only the properties in the list.
+            properties (str/list): If specified, return only the properties in the list.
                 Otherwise return all properties.
 
         Returns:
@@ -217,11 +217,19 @@ class Nodes(object):
         if properties is None:
             properties = self.property_names
         properties = utils.ensure_list(properties)
+
+        unknown_props = set(properties) - self.property_names
+        if unknown_props:
+            raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
+
         res = pd.DataFrame(index=ids.index, columns=properties)
         for name, pop in self.items():
             global_pop_ids = ids.filter_population(name)
             pop_ids = global_pop_ids.get_ids()
             pop_properties = set(properties) & pop.property_names
+            # indices from NodePopulation and Node get functions are different so I cannot use
+            # a dataframe equal directly and properties have different types so cannot use a multi
+            # dim numpy array
             for prop in pop_properties:
                 res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, properties=prop).to_numpy()
         return res.sort_index()
@@ -376,7 +384,11 @@ class NodePopulation(object):
 
     @property
     def property_names(self):
-        """Set of available node properties."""
+        """Set of available node properties.
+
+        Notes:
+            Properties are a combination of the group attributes and the dynamics_params.
+        """
         return self._property_names | self._dynamics_params_names
 
     def container_property_names(self, container):

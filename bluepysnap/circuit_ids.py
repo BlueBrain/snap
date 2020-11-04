@@ -146,7 +146,7 @@ class CircuitNodeIds:
         return None
 
     def append(self, other, inplace=False):
-        """Append a NodeCircuitIds to the current one.
+        """Append a CircuitNodeIds to the current one.
 
         Args:
             other (CircuitNodeIds): the other CircuitNodeIds to append to the current one.
@@ -188,12 +188,12 @@ class CircuitNodeIds:
         return None
 
     def to_csv(self, filepath):
-        """Save NodeCircuitIds to csv format."""
+        """Save CircuitNodeIds to csv format."""
         self.index.to_frame(index=False).to_csv(filepath, index=False)
 
     @classmethod
     def from_csv(cls, filepath):
-        """Load NodeCircuitIds from csv."""
+        """Load CircuitNodeIds from csv."""
         return cls(pd.MultiIndex.from_frame(pd.read_csv(filepath)))
 
     def __repr__(self):

@@ -66,10 +66,10 @@ class MorphHelper(object):
             node_id (int/CircuitNodeIds): could be a single int or a CircuitNodeIds of length 1.
         """
         if not isinstance(node_id, (CircuitNodeIds, np.integer, int)):
-            raise BluepySnapError("node_id must be either a single node id or a NodeCircuitIds "
+            raise BluepySnapError("node_id must be either a single node id or a CircuitNodeIds "
                                   "with a single value. You provided : {}.".format(node_id))
         if isinstance(node_id, CircuitNodeIds) and len(node_id) > 1:
-            raise BluepySnapError("node_id must be either a single node id or a NodeCircuitIds "
+            raise BluepySnapError("node_id must be either a single node id or a CircuitNodeIds "
                                   "with a single value. Length is {}.".format(len(node_id)))
 
         name = self._population.get(node_id, Node.MORPHOLOGY)

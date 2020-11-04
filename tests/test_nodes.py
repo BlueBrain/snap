@@ -261,6 +261,18 @@ class TestNodes:
         assert tested.loc[("default", 0)].tolist() == [np.NaN, np.NaN, 2]
         assert tested.loc[("default", 1)].tolist() == [np.NaN, np.NaN, 6]
 
+        tested = self.test_obj.get(properties='layer')
+        assert tested["layer"].tolist() == [2, 6, 6, 7, 8, 8, 2]
+
+        tested = self.test_obj.get(properties='other2')
+        assert tested["other2"].tolist() == [np.NaN, np.NaN, np.NaN, 10, 11, 12, 13]
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(properties=["other2", "unknown"])
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(properties="unknown")
+
 
 class TestNodeStorage:
     def setup(self):
