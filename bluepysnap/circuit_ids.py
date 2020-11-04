@@ -160,6 +160,9 @@ class CircuitNodeIds:
     def sample(self, sample_size, inplace=False):
         """Sample a CircuitNodeIds.
 
+        Notes:
+            this function takes randomly ``sample_size`` values of a circuit node ids.
+
         Args:
             sample_size (int): the size of the sample. If the size of the sample is greater than
                 the size of the CircuitNodeIds then all ids are taken and shuffled.
@@ -174,7 +177,10 @@ class CircuitNodeIds:
         return None
 
     def limit(self, limit_size, inplace=False):
-        """Sample a CircuitNodeIds.
+        """Limit the size of a CircuitNodeIds.
+
+        Notes:
+            this function takes the first ``limit_size`` values of a circuit node ids.
 
         Args:
             limit_size (int): the size of the sample. If the size of the sample is greater than

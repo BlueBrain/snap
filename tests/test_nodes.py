@@ -63,7 +63,6 @@ class TestNodes:
         assert isinstance(values[1], test_module.NodePopulation)
         assert values[1].name == 'default2'
 
-
     def test_size(self):
         assert self.test_obj.size == 7
 

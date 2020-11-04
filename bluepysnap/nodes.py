@@ -134,7 +134,7 @@ class Nodes(object):
                    pop.property_values(prop))
 
     def ids(self, group=None):
-        """Retuns the CircuitNodeIds corresponding to the nodes from ``group``.
+        """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
             group (CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be returned
@@ -147,7 +147,7 @@ class Nodes(object):
                     populations, returns a CircuitNodeIds object containing the corresponding node
                     IDs for all populations.
                 - ``str``: use a node set name as input. Returns a CircuitNodeIds object containing
-                    nodes selectected by the node set.
+                    nodes selected by the node set.
                 - ``mapping``: Returns a CircuitNodeIds object containing nodes matching a
                     properties filter.
                 - ``None``: return all node IDs of the circuit in a CircuitNodeIds object.
@@ -158,12 +158,13 @@ class Nodes(object):
                 the circuit.
 
         Raises:
-            BluepySnapError: if a population is explicitly required by the user (via CircuitNodeIds)
-            BluepySnapError: if one or more ids are explicilty asked by the user using int,
-                sequence, or CircuitNodeIds.
+            BluepySnapError: when a population from a CircuitNodeIds is not present in the circuit.
+            BluepySnapError: when an id query via a int, sequence, or CircuitNodeIds is not present
+                in the circuit.
 
         Examples:
-            The available group parameter values (example with 2 nodes populations pop1 and pop2):
+            The available group parameter values (example with 2 node populations pop1 and pop2):
+            >>> nodes = circuit.nodes
             >>> nodes.ids(group=None)  #  returns all CircuitNodeIds from the circuit
             >>> node_ids = CircuitNodeIds.create_ids(["pop1", "pop2"], [1, 3])
             >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
@@ -180,12 +181,13 @@ class Nodes(object):
             >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
             >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
         """
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
         if isinstance(group, CircuitNodeIds):
             diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
+
         ids = np.empty((0,), dtype=np.int64)
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
         populations = np.empty((0,), dtype=str_type)
         for name, pop in self.items():
             pop_ids = pop.ids(group=group, raise_missing_property=False)
