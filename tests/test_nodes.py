@@ -55,7 +55,14 @@ class TestNodes:
         assert list(self.test_obj.values()) == list(self.test_obj.populations())
 
     def test_items(self):
-        items = list(self.test_obj.items())
+        keys, values = zip(*self.test_obj.items())
+        assert keys == ('default', 'default2')
+        assert isinstance(values[0], test_module.NodePopulation)
+        assert values[0].name == 'default'
+
+        assert isinstance(values[1], test_module.NodePopulation)
+        assert values[1].name == 'default2'
+
 
     def test_size(self):
         assert self.test_obj.size == 7

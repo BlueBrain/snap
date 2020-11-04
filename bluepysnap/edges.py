@@ -271,6 +271,9 @@ class EdgePopulation(object):
     def afferent_nodes(self, target, unique=True):
         """Get afferent node IDs for given target ``node_id``.
 
+        Notes:
+            Afferent nodes are nodes projecting an outgoing edge to one of the ``target`` node.
+
         Args:
             target (CircuitNodeIds/int/sequence/str/mapping/None): the target you want to resolve
             and use as target nodes.
@@ -292,6 +295,9 @@ class EdgePopulation(object):
 
     def efferent_nodes(self, source, unique=True):
         """Get efferent node IDs for given source ``node_id``.
+
+        Notes:
+            Efferent nodes are nodes receiving an incoming edge from one of the ``source`` node.
 
         Args:
             source (CircuitNodeIds/int/sequence/str/mapping/None): the source you want to resolve

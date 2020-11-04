@@ -97,11 +97,6 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None):
     if node_sets is not None:
         circuit.node_sets = node_sets
     node_pop = NodeStorage(config, circuit).population(pop_name)
-
-    if isinstance(circuit.nodes, dict):
-        circuit.nodes[node_pop.name] = node_pop
-    else:
-        circuit.config = {"networks": {"nodes": [config]}}
-        circuit.nodes = Nodes(circuit)
-
+    circuit.config = {"networks": {"nodes": [config]}}
+    circuit.nodes = Nodes(circuit)
     return node_pop
