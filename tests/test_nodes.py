@@ -649,6 +649,7 @@ class TestNodePopulation:
         )
 
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
+        assert _call(1, properties={Cell.MTYPE}).tolist() == ["L6_Y"]
         with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
         with pytest.raises(BluepySnapError):

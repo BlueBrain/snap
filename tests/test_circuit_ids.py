@@ -234,6 +234,11 @@ class TestCircuitNodeIds:
         # python2 complains
         assert not test_obj.__eq__(1)
 
+        # same object
+        test_obj = test_module.CircuitNodeIds(values)
+        same_obj = test_obj
+        assert test_obj == same_obj
+
     def test___iter__(self):
         assert list(self.test_obj_sorted) == [('a', 0), ('a', 1), ('a', 2), ('b', 0)]
         assert all(type(cid) == test_module.CircuitNodeId for cid in self.test_obj_sorted)

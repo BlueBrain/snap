@@ -195,6 +195,14 @@ class CircuitNodeIds(object):
         self.index = self.index.append(other.index)
         return None
 
+    def _slice_index(self, my_slice, inplace=False):
+        """Index slicer."""
+        res = self if inplace else self.copy()
+        res.index = res.index[my_slice]
+        if not inplace:
+            return res
+        return None
+
     def sample(self, sample_size, inplace=False):
         """Sample a CircuitNodeIds.
 
@@ -206,13 +214,8 @@ class CircuitNodeIds(object):
                 the size of the CircuitNodeIds then all ids are taken and shuffled.
             inplace (bool): if set to True. Do the transformation inplace.
         """
-        res = self if inplace else self.copy()
-        if len(res) != 0:
-            sample_size = sample_size if sample_size < len(res) else len(res)
-            res.index = res.index[np.random.choice(len(res), size=sample_size, replace=False)]
-        if not inplace:
-            return res
-        return None
+        indices = np.random.choice(len(self), size=min(sample_size, len(self)))
+        return self._slice_index(indices, inplace=inplace)
 
     def limit(self, limit_size, inplace=False):
         """Limit the size of a CircuitNodeIds.
@@ -225,11 +228,7 @@ class CircuitNodeIds(object):
                 the size of the CircuitNodeIds then all ids are kept.
             inplace (bool): if set to True. Do the transformation inplace.
         """
-        res = self if inplace else self.copy()
-        res.index = res.index[0: limit_size]
-        if not inplace:
-            return res
-        return None
+        return self._slice_index(slice(0, limit_size), inplace=inplace)
 
     def to_csv(self, filepath):
         """Save CircuitNodeIds to csv format."""
@@ -246,15 +245,12 @@ class CircuitNodeIds(object):
 
     def __repr__(self):
         """Correct repr of the CircuitNodeIds."""
-        res = self.index.__repr__()[len("MultiIndex"):]
-        return "CircuitNodeIds" + res
-
-    def __str__(self):
-        """Correct str of the CircuitNodeIds."""
-        return self.__repr__()
+        return repr(self.index).replace("MultiIndex", "CircuitNodeIds", 1)
 
     def __eq__(self, other):
         """Equality for the CircuitNodeIds."""
+        if self is other:
+            return True
         if not isinstance(other, CircuitNodeIds):
             return False
         return self.index.equals(other.index)

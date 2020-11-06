@@ -36,7 +36,7 @@ def load_json(filepath):
 
 
 def is_iterable(v):
-    """Check if `v` is any iterable (strings are considered scalar)."""
+    """Check if `v` is any iterable (strings are considered scalar and CircuitNodeId also)."""
     return isinstance(v, collections.Iterable) and not isinstance(v,
                                                                   (six.string_types, CircuitNodeId))
 

@@ -620,7 +620,12 @@ class NodePopulation(object):
             >>> nodes.ids(group=None)  #  returns all IDs
             >>> nodes.ids(group={})  #  returns all IDs
             >>> nodes.ids(group=1)  #  returns the single ID if present in population
+            >>> #  returns the single ID if present in population and the circuit id population
+            >>> #  corresponds to nodes.name
+            >>> nodes.ids(group=CircuitNodeId('pop', 1))
             >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
+            >>> #  returns list of IDs if all present in population
+            >>> nodes.ids(group=CircuitNodeIds.from_dict({"pop": [0, 1,2]}))
             >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
             >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
             >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
@@ -661,8 +666,7 @@ class NodePopulation(object):
 
         if sample is not None:
             if len(result) > 0:
-                sample = sample if sample <= len(result) else len(result)
-                result = np.random.choice(result, sample, replace=False)
+                result = np.random.choice(result, min(sample, len(result)), replace=False)
             preserve_order = False
         if limit is not None:
             result = result[:limit]
