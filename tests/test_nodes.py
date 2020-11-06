@@ -233,7 +233,6 @@ class TestNodes:
         assert ids.filter_population("default2").limit(2) == expected
 
     def test_get(self):
-
         # return all properties for all the ids
         tested = self.test_obj.get()
         assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
@@ -246,7 +245,7 @@ class TestNodes:
 
         # tested accessing data via circuit ids
         tested_ids = self.test_obj.ids({"population": "default"})
-        assert len(tested.loc[tested_ids.index]) == 3
+        assert tested.loc[tested_ids, "layer"].tolist() == [2, 6, 6]
 
         # tested columns
         tested = self.test_obj.get(properties=["other2", "other1", 'layer'])
@@ -278,6 +277,8 @@ class TestNodes:
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get(properties="unknown")
+
+
 
 
 class TestNodeStorage:

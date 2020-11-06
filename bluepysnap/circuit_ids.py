@@ -220,3 +220,11 @@ class CircuitNodeIds:
     def __len__(self):
         """Return the length of the CircuitNodeIds."""
         return len(self.index)
+
+    def __iter__(self):
+        """Iterator on the CircuitNodeIds."""
+        return iter(self.index)
+
+    def __call__(self, *args, **kwargs):
+        """Allows to use the CircuitNodeIds as normal indices in a DataFrame."""
+        return self.index
