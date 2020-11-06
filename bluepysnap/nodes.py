@@ -32,7 +32,7 @@ from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
-from bluepysnap.circuit_ids import CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 
 # this constant is not part of the sonata standard
 NODE_SET_KEY = "$node_set"
@@ -137,8 +137,10 @@ class Nodes(object):
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
-            group (CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be returned
+            group (CircuitNodeId/CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be returned
                 depends on the type of the ``group`` argument:
+                - ``CircuitNodeId``: return the ID in a CircuitNodeIds object if it belongs to
+                    the circuit.
                 - ``CircuitNodeIds``: return the IDs in a CircuitNodeIds object if they belong to
                     the circuit.
                 - ``int``: if the node ID is present in all populations, returns a CircuitNodeIds
@@ -166,7 +168,7 @@ class Nodes(object):
             The available group parameter values (example with 2 node populations pop1 and pop2):
             >>> nodes = circuit.nodes
             >>> nodes.ids(group=None)  #  returns all CircuitNodeIds from the circuit
-            >>> node_ids = CircuitNodeIds.create_ids(["pop1", "pop2"], [1, 3])
+            >>> node_ids = CircuitNodeIds.from_arrays(["pop1", "pop2"], [1, 3])
             >>> nodes.ids(group=node_ids)  #  returns ID 1 from pop1 and ID 3 from pop2
             >>> nodes.ids(group=0)  #  returns CircuitNodeIds 0 from pop1 and pop2
             >>> nodes.ids(group=[0, 1])  #  returns CircuitNodeIds 0 and 1 from pop1 and pop2
@@ -194,7 +196,7 @@ class Nodes(object):
             pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
             ids = np.concatenate([ids, pop_ids])
             populations = np.concatenate([populations, pops])
-        return CircuitNodeIds.create_ids(populations, ids)
+        return CircuitNodeIds.from_arrays(populations, ids)
 
     def get(self, group=None, properties=None):
         """Node properties as a pandas DataFrame.
@@ -585,10 +587,10 @@ class NodePopulation(object):
         """Node IDs corresponding to node ``group``.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which IDs will be returned
-                depends on the type of the ``group`` argument:
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which IDs will be
+                returned depends on the type of the ``group`` argument:
 
-                - ``int``: return a single node ID if it belongs to the circuit.
+                - ``int``, ``CircuitNodeId``: return a single node ID if it belongs to the circuit.
                 - ``CircuitNodeIds`` return IDs of nodes in an array.
                 - ``sequence``: return IDs of nodes in an array.
                 - ``str``: return IDs of nodes in a node set.
@@ -647,6 +649,12 @@ class NodePopulation(object):
             preserve_order = True
         else:
             result = utils.ensure_list(group)
+            if isinstance(next(iter(result), None), CircuitNodeId):
+                try:
+                    result = [cid.id for cid in result if cid.population == self.name]
+                except AttributeError:
+                    raise BluepySnapError("All values from a list must be of type int or "
+                                          "CircuitNodeId.")
             self._check_ids(result)
             preserve_order = isinstance(group, collections.Sequence)
 
@@ -668,10 +676,10 @@ class NodePopulation(object):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
-            properties returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+                have their properties returned depends on the type of the ``group`` argument:
 
-                - ``int``: return the properties of a single node.
+                - ``int``, ``CircuitNodeId``: return the properties of a single node.
                 - ``CircuitNodeIds`` return the properties from a NodeCircuitNodeIds.
                 - ``sequence``: return the properties from a list of node.
                 - ``str``: return the properties of nodes in a node set.
@@ -700,6 +708,8 @@ class NodePopulation(object):
         if group is not None:
             if isinstance(group, six.integer_types + (np.integer,)):
                 self._check_id(group)
+            elif isinstance(group, CircuitNodeId):
+                group = self.ids(group)[0]
             else:
                 group = self.ids(group)
             result = result.loc[group]
@@ -710,10 +720,10 @@ class NodePopulation(object):
         """Node position(s) as pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
-            positions returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+                have their positions returned depends on the type of the ``group`` argument:
 
-                - ``int``: return the position of a single node.
+                - ``int``, ``CircuitNodeId``: return the position of a single node.
                 - ``CircuitNodeIds`` return the position from a NodeCircuitNodeIds.
                 - ``sequence``: return the positions from a list of node IDs.
                 - ``str``: return the positions of nodes in a node set.
@@ -734,10 +744,10 @@ class NodePopulation(object):
         """Node orientation(s) as a pandas numpy array or pandas Series.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
-            positions returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+                have their positions returned depends on the type of the ``group`` argument:
 
-                - ``int``: return the orientation of a single node.
+                - ``int``, ``CircuitNodeId``: return the orientation of a single node.
                 - ``CircuitNodeIds`` return the orientation from a NodeCircuitNodeIds.
                 - ``sequence``: return the orientations from a list of node IDs.
                 - ``str``: return the orientations of nodes in a node set.
@@ -782,7 +792,7 @@ class NodePopulation(object):
             return result.get(prop, np.zeros((result.shape[0],)))
 
         args = [_get_values(prop) for prop in props]
-        if isinstance(group, six.integer_types + (np.integer,)):
+        if isinstance(group, six.integer_types + (np.integer, CircuitNodeId)):
             return trans(*args)[0]
         return pd.Series(trans(*args), index=result.index, name='orientation')
 
@@ -790,10 +800,10 @@ class NodePopulation(object):
         """Total number of nodes for a given node group.
 
         Args:
-            group (int/CircuitNodeIds/sequence/str/mapping/None): Which nodes will have their
-            positions returned depends on the type of the ``group`` argument:
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
+                have their positions returned depends on the type of the ``group`` argument:
 
-                - ``int``: return the count of a single node.
+                - ``int``, ``CircuitNodeId``: return the count of a single node.
                 - ``CircuitNodeIds`` return the count of nodes from a NodeCircuitNodeIds.
                 - ``sequence``: return the count of nodes from a list of node IDs.
                 - ``str``: return the count of nodes in a node set.

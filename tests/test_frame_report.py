@@ -9,7 +9,7 @@ from bluepysnap.simulation import Simulation
 import bluepysnap.frame_report as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.bbp import Cell
-from bluepysnap.circuit_ids import CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
 
 from utils import TEST_DATA_DIR
 
@@ -148,10 +148,10 @@ class TestSomaReport:
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
         pdt.assert_frame_equal(filtered.report, pd.DataFrame())
 
-        ids = CircuitNodeIds.create_ids(["default", "default", "default2"], [0, 1, 1])
+        ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 1])
         filtered = self.test_obj.filter(group=ids, t_start=0.3, t_stop=0.6)
         assert filtered.report.columns.tolist() == [("default", 0), ("default", 1), ("default2", 1)]
-        ids = CircuitNodeIds.create_ids("default2", 1)
+        ids = CircuitNodeIds.from_tuples([("default2", 1)])
         npt.assert_allclose(filtered.report.loc[:, ids.index].index, np.array([0.3, 0.4, 0.5, 0.6]))
         npt.assert_allclose(filtered.report.loc[:, ids.index], np.array([[1.3, 1.4, 1.5, 1.6]]).T)
 
@@ -200,6 +200,10 @@ class TestPopulationCompartmentReport:
         pdt.assert_frame_equal(self.test_obj.get(()), pd.DataFrame())
 
         pdt.assert_frame_equal(self.test_obj.get(2), self.df.loc[:, [2]])
+        pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default", 2)), self.df.loc[:, [2]])
+
+        # not from this population
+        pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default2", 2)),  pd.DataFrame())
 
         pdt.assert_frame_equal(self.test_obj.get([2, 0]), self.df.loc[:, [0, 2]])
 
@@ -232,7 +236,7 @@ class TestPopulationCompartmentReport:
         pdt.assert_frame_equal(
             self.test_obj.get(group="Layer23"), self.df.loc[:, [0]])
 
-        ids = CircuitNodeIds.create_ids(["default", "default", "default2"], [0, 2, 1])
+        ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 2, 1])
         pdt.assert_frame_equal(self.test_obj.get(group=ids), self.df.loc[:, [0, 2]])
 
         with pytest.raises(BluepySnapError):

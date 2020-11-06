@@ -25,6 +25,7 @@ import numpy as np
 import six
 
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
 
@@ -36,7 +37,8 @@ def load_json(filepath):
 
 def is_iterable(v):
     """Check if `v` is any iterable (strings are considered scalar)."""
-    return isinstance(v, collections.Iterable) and not isinstance(v, six.string_types)
+    return isinstance(v, collections.Iterable) and not isinstance(v,
+                                                                  (six.string_types, CircuitNodeId))
 
 
 def ensure_list(v):

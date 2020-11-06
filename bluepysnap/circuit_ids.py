@@ -16,16 +16,20 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Circuit ids."""
+from collections import namedtuple
+
 import numpy as np
 import pandas as pd
-import six
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 
-class CircuitNodeIds:
-    """Global Node ids.
+CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
+
+
+class CircuitNodeIds(object):
+    """High performances CircuitNodeID container.
 
     This class aims at defining the global node ids for the circuit. The pandas.MultiIndex class
     is used as backend and can be accessed using CircuitNodeIds.index.
@@ -49,13 +53,13 @@ class CircuitNodeIds:
         self.index = index
 
     @classmethod
-    def create_ids(cls, populations, population_ids, sort_index=True):
-        """Create a set of ids using population(s) and ids.
+    def from_arrays(cls, populations, population_ids, sort_index=True):
+        """Create a set of ids using two arrays population(s) and id(s).
 
         Args:
-            populations (str/list/numpy.array): a sequence of populations. If the population is a
+            populations (list/numpy.array): a sequence of populations. If the population is a
                 string then all the ids will be connected to this population.
-            population_ids (int/list/numpy.array): a sequence of node IDs or a single node ID.
+            population_ids (list/numpy.array): a sequence of node IDs or a single node ID.
             sort_index (bool): will sort the index if set to True. Otherwise the ordering from the
                 user inputs is kept. Sorting the index can result in better performances.
 
@@ -63,27 +67,61 @@ class CircuitNodeIds:
             CircuitNodeIds: a set of global node IDs created via the populations and the node IDs
                 provided.
         """
-        def _reformat(to_reformat, other):
-            if len(to_reformat) == 1:
-                return np.full(len(other), fill_value=to_reformat[0])
-            return to_reformat
-
-        if np.issubdtype(type(population_ids), np.integer):
-            population_ids = utils.ensure_list(population_ids)
-
-        if isinstance(populations, six.string_types):
-            populations = utils.ensure_list(populations)
-
-        populations = _reformat(populations, population_ids)
-        population_ids = _reformat(population_ids, populations)
+        populations = np.asarray(populations)
+        population_ids = np.asarray(population_ids)
 
         if len(populations) != len(population_ids):
-            raise BluepySnapError("populations and population_ids must have the same size or "
-                                  "being a single value. {} != {}".format(len(populations),
-                                                                          len(population_ids)))
+            raise BluepySnapError("populations and population_ids must have the same size. "
+                                  "{} != {}".format(len(populations), len(population_ids)))
 
         index = pd.MultiIndex.from_arrays([populations, population_ids])
         return cls(index, sort_index=sort_index)
+
+    @classmethod
+    def from_dict(cls, ids_dictionary):
+        """Create a set of ids using a dictionary as input.
+
+        Args:
+            ids_dictionary (dict): a dictionary with the population as keys and node IDs as
+                values.
+
+        Notes:
+            with the support of python 2 we cannot guaranty the ordering so we force the sorting
+            of ids.
+
+        Returns:
+            CircuitNodeIds: a set of global node IDs created via the provided dictionary.
+
+        Examples:
+            >>> CircuitNodeIds.from_dict({"pop1": [0,2,4], "pop2": [1,2,5]})
+        """
+        populations = np.empty((0,), dtype=str)
+        population_ids = np.empty((0,), dtype=np.int64)
+        for population, ids in ids_dictionary.items():
+            ids = np.asarray(ids)
+            population_ids = np.append(population_ids, ids)
+            populations = np.append(populations, np.full(ids.shape, fill_value=population))
+        index = pd.MultiIndex.from_arrays([populations, population_ids])
+        return cls(index, sort_index=True)
+
+    @classmethod
+    def from_tuples(cls, circuit_id_list, sort_index=True):
+        """Create a set of ids using a list of CircuitNodeId or tuples as input.
+
+        Args:
+            circuit_id_list (list): a list of CircuitNodeId or list of tuples.
+            sort_index (bool): will sort the index if set to True. Otherwise the ordering from the
+                user inputs is kept. Sorting the index can result in better performances.
+
+        Returns:
+            CircuitNodeIds: a set of global node IDs created via the provided dictionary.
+
+        Examples:
+            >>> CircuitNodeIds.from_tuples([("pop1", 0), ("pop1", 2), ("pop2", 0)])
+            >>> CircuitNodeIds.from_tuples([CircuitNodeId("pop1", 0), CircuitNodeId("pop1", 2),
+            >>>                             CircuitNodeId("pop2", 0)])
+        """
+        return cls(pd.MultiIndex.from_tuples(circuit_id_list), sort_index=sort_index)
 
     def _locate(self, population):
         """Returns the index indices corresponding to a given population.
@@ -202,6 +240,10 @@ class CircuitNodeIds:
         """Load CircuitNodeIds from csv."""
         return cls(pd.MultiIndex.from_frame(pd.read_csv(filepath)))
 
+    def tolist(self):
+        """Convert the CircuitNodeIds to a list of tuples."""
+        return self.index.tolist()
+
     def __repr__(self):
         """Correct repr of the CircuitNodeIds."""
         res = self.index.__repr__()[len("MultiIndex"):]
@@ -223,7 +265,7 @@ class CircuitNodeIds:
 
     def __iter__(self):
         """Iterator on the CircuitNodeIds."""
-        return iter(self.index)
+        return map(lambda x: CircuitNodeId(x[0], x[1]), self.index)
 
     def __call__(self, *args, **kwargs):
         """Allows to use the CircuitNodeIds as normal indices in a DataFrame."""

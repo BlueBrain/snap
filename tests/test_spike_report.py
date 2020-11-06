@@ -10,7 +10,7 @@ from bluepysnap.simulation import Simulation
 import bluepysnap.spike_report as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.bbp import Cell
-from bluepysnap.circuit_ids import CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
 
 from utils import TEST_DATA_DIR
 
@@ -98,7 +98,7 @@ class TestSpikeReport:
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
         assert len(filtered.report) == 0
 
-        ids = CircuitNodeIds.create_ids(["default", "default", "default2"], [0, 1, 2])
+        ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 2])
         filtered = self.test_obj.filter(group=ids)
         npt.assert_array_equal(sorted(filtered.report["ids"].unique()), [0, 1, 2])
         npt.assert_array_equal(filtered.report[filtered.report["population"] == "default"]["ids"].unique(), [0, 1])
@@ -145,6 +145,11 @@ class TestPopulationSpikeReport:
         pdt.assert_series_equal(self.test_obj.get(np.array([])), _create_series([], []))
         pdt.assert_series_equal(self.test_obj.get(()), _create_series([], []))
         pdt.assert_series_equal(self.test_obj.get(2), _create_series([2, 2], [0.1, 0.7]))
+
+        pdt.assert_series_equal(self.test_obj.get(CircuitNodeId("default", 2)), _create_series([2, 2], [0.1, 0.7]))
+        # not in population
+        pdt.assert_series_equal(self.test_obj.get(CircuitNodeId("default2", 2)), _create_series([], []))
+
         pdt.assert_series_equal(self.test_obj.get(0, t_start=1.), _create_series([0], [1.3]))
         pdt.assert_series_equal(self.test_obj.get(0, t_stop=1.), _create_series([0], [0.2]))
         pdt.assert_series_equal(self.test_obj.get(0, t_start=1., t_stop=12),
@@ -185,7 +190,7 @@ class TestPopulationSpikeReport:
             self.test_obj.get(group="Layer23"), _create_series([0, 0], [0.2, 1.3]))
 
         # no 0.1, 0.7 from  ("default2", 2)
-        ids = CircuitNodeIds.create_ids(["default", "default", "default2"], [0, 1, 2])
+        ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 2])
         npt.assert_array_equal(self.test_obj.get(ids), _create_series([0, 1, 0], [0.2, 0.3, 1.3]))
 
         with pytest.raises(BluepySnapError):

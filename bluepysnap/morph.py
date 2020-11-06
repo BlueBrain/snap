@@ -26,7 +26,7 @@ import neurom as nm
 from bluepysnap.settings import MORPH_CACHE_SIZE
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.circuit_ids import CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeId
 
 
 class MorphHelper(object):
@@ -63,26 +63,18 @@ class MorphHelper(object):
         """Return path to SWC morphology file corresponding to `node_id`.
 
         Args:
-            node_id (int/CircuitNodeIds): could be a single int or a CircuitNodeIds of length 1.
+            node_id (int/CircuitNodeId): could be a int or CircuitNodeId.
         """
-        if not isinstance(node_id, (CircuitNodeIds, np.integer, int)):
-            raise BluepySnapError("node_id must be either a single node id or a CircuitNodeIds "
-                                  "with a single value. You provided : {}.".format(node_id))
-        if isinstance(node_id, CircuitNodeIds) and len(node_id) > 1:
-            raise BluepySnapError("node_id must be either a single node id or a CircuitNodeIds "
-                                  "with a single value. Length is {}.".format(len(node_id)))
-
         name = self._population.get(node_id, Node.MORPHOLOGY)
-        # to allow the NodeCircuitIds as node_id
-        if not isinstance(name, six.string_types):
-            name = name.squeeze()
-        return os.path.join(self._morph_dir, "%s.swc" % name)
+        if isinstance(node_id, (int, CircuitNodeId)):
+            return os.path.join(self._morph_dir, "%s.swc" % name)
+        raise BluepySnapError("node_id must be a int or a CircuitNodeId")
 
     def get(self, node_id, transform=False):
         """Return NeuroM morphology object corresponding to `node_id`.
 
         Args:
-            node_id (int/CircuitNodeIds): could be a single int or a CircuitNodeIds of length 1.
+            node_id (int/CircuitNodeId): could be a single int or a CircuitNodeId.
             transform (bool): If `transform` is True, rotate and translate morphology points
                 according to `node_id` position in the circuit.
         """

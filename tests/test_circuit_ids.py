@@ -26,6 +26,19 @@ def _multi_index():
     return pd.MultiIndex.from_arrays([['a', 'a', 'b', 'a'], [0, 1, 0, 2]])
 
 
+class TestCircuitId:
+    def setup(self):
+        self.test_obj = test_module.CircuitNodeId("pop", 1)
+
+    def test_init(self):
+        assert isinstance(self.test_obj, test_module.CircuitNodeId)
+        assert isinstance(self.test_obj, tuple)
+
+    def test_accessors(self):
+        assert self.test_obj.population == "pop"
+        assert self.test_obj.id == 1
+
+
 class TestCircuitNodeIds:
     def setup(self):
         self.test_obj_unsorted = test_module.CircuitNodeIds(_multi_index(), sort_index=False)
@@ -44,38 +57,53 @@ class TestCircuitNodeIds:
         with pytest.raises(BluepySnapError):
             test_module.CircuitNodeIds(1)
 
-    def test_create_ids(self):
-        tested = test_module.CircuitNodeIds.create_ids('a', 0)
-        pdt.assert_index_equal(tested.index, _circuit_ids(['a'], [0]))
-
-        tested = test_module.CircuitNodeIds.create_ids('a', [0, 1])
-        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'a'], [0, 1]))
-
-        # duplicate ids if id is single int
-        tested = test_module.CircuitNodeIds.create_ids(['a', 'b'], 0)
-        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [0, 0]))
-
-        tested = test_module.CircuitNodeIds.create_ids(['a', 'b'], [0, 1])
+    def test_from_arrays(self):
+        tested = test_module.CircuitNodeIds.from_arrays(['a', 'b'], [0, 1])
         pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [0, 1]))
 
         # keep ids ordering
-        tested = test_module.CircuitNodeIds.create_ids(['a', 'b'], [1, 0], sort_index=False)
+        tested = test_module.CircuitNodeIds.from_arrays(['a', 'b'], [1, 0], sort_index=False)
         pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [1, 0]))
 
         # keep population ordering
-        tested = test_module.CircuitNodeIds.create_ids(['b', 'a'], [0, 1], sort_index=False)
+        tested = test_module.CircuitNodeIds.from_arrays(['b', 'a'], [0, 1], sort_index=False)
         pdt.assert_index_equal(tested.index, _circuit_ids(['b', 'a'], [0, 1]))
 
         # keep duplicates
-        tested = test_module.CircuitNodeIds.create_ids(['a', 'a'], [0, 0])
+        tested = test_module.CircuitNodeIds.from_arrays(['a', 'a'], [0, 0])
         pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'a'], [0, 0]))
         assert tested.index.size == 2
 
         with pytest.raises(BluepySnapError):
-            test_module.CircuitNodeIds.create_ids(['a', 'a', 'a'], [0, 0])
+            test_module.CircuitNodeIds.from_arrays(['a', 'a', 'a'], [0, 0])
 
         with pytest.raises(BluepySnapError):
-            test_module.CircuitNodeIds.create_ids(['a', 'a'], [0, 0, 0])
+            test_module.CircuitNodeIds.from_arrays(['a', 'a'], [0, 0, 0])
+
+    def test_create_ids(self):
+        tested = test_module.CircuitNodeIds.from_dict({'a': [0]})
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a'], [0]))
+
+        tested = test_module.CircuitNodeIds.from_dict({'a': [0, 1]})
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'a'], [0, 1]))
+
+        tested = test_module.CircuitNodeIds.from_dict({'a': [0], 'b': [0]})
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [0, 0]))
+
+        tested = test_module.CircuitNodeIds.from_dict({'a': [0], 'b': [1]})
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [0, 1]))
+
+        # keep duplicates
+        tested = test_module.CircuitNodeIds.from_dict({'a': [0, 0]})
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'a'], [0, 0]))
+        assert tested.index.size == 2
+
+    def test_from_tuples(self):
+        tested = test_module.CircuitNodeIds.from_tuples([test_module.CircuitNodeId("a", 0),
+                                                         test_module.CircuitNodeId("b", 1)])
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [0, 1]))
+        tested = test_module.CircuitNodeIds.from_tuples([("a", 0), ("b", 1)])
+        pdt.assert_index_equal(tested.index, _circuit_ids(['a', 'b'], [0, 1]))
 
     def test_copy(self):
         tested = self.test_obj_sorted.copy()
@@ -177,6 +205,10 @@ class TestCircuitNodeIds:
         assert len(tested) == 2
         assert tested == test_module.CircuitNodeIds(_circuit_ids(['a', 'a'], [0, 1]))
 
+    def test_tolist(self):
+        expected = [('a', 0), ('a', 1), ('b', 0), ('a', 2)]
+        assert self.test_obj_unsorted.tolist() == expected
+
     def test_combined_operators(self):
         tested = self.test_obj_sorted.copy()
         tested.filter_population("a", inplace=True)
@@ -204,6 +236,7 @@ class TestCircuitNodeIds:
 
     def test___iter__(self):
         assert list(self.test_obj_sorted) == [('a', 0), ('a', 1), ('a', 2), ('b', 0)]
+        assert all(type(cid) == test_module.CircuitNodeId for cid in self.test_obj_sorted)
 
     def test___call__(self):
         # the call is used so we can use the CircuitNodeIds directly in a dataframe
