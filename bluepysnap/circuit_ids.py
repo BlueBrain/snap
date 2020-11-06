@@ -21,7 +21,7 @@ from collections import namedtuple
 import numpy as np
 import pandas as pd
 
-from bluepysnap import utils
+import bluepysnap.utils
 from bluepysnap.exceptions import BluepySnapError
 
 
@@ -133,7 +133,7 @@ class CircuitNodeIds(object):
             numpy.array: indices corresponding to the population.
         """
         try:
-            return self.index.get_locs(utils.ensure_list(population))
+            return self.index.get_locs(bluepysnap.utils.ensure_list(population))
         except KeyError:
             return []
 
@@ -265,7 +265,8 @@ class CircuitNodeIds(object):
 
     def __iter__(self):
         """Iterator on the CircuitNodeIds."""
-        return map(lambda x: CircuitNodeId(x[0], x[1]), self.index)
+        for index in self.index:
+            yield CircuitNodeId(*index)
 
     def __call__(self, *args, **kwargs):
         """Allows to use the CircuitNodeIds as normal indices in a DataFrame."""

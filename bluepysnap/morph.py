@@ -19,7 +19,6 @@
 
 import os
 
-import six
 import numpy as np
 import neurom as nm
 

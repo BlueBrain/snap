@@ -137,8 +137,8 @@ class Nodes(object):
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
-            group (CircuitNodeId/CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be returned
-                depends on the type of the ``group`` argument:
+            group (CircuitNodeId/CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be
+            returned depends on the type of the ``group`` argument:
                 - ``CircuitNodeId``: return the ID in a CircuitNodeIds object if it belongs to
                     the circuit.
                 - ``CircuitNodeIds``: return the IDs in a CircuitNodeIds object if they belong to
@@ -632,6 +632,7 @@ class NodePopulation(object):
             >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
             >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
         """
+        # pylint: disable=too-many-branches
         preserve_order = False
         if isinstance(group, six.string_types):
             group = self._get_node_set(group)
