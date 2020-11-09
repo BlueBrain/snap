@@ -1,4 +1,4 @@
-name: Publish Python on TestPyPI and pypi
+name: Publish Python on pypi
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-n-publish:
-    name: Build and publish on TestPyPI
+    name: Build and publish on PyPI
     runs-on: ubuntu-latest
 
     steps:
@@ -19,9 +19,8 @@ jobs:
       - name: Build a source tarball
         run:
             python setup.py sdist
-      - name: Publish distribution package to Test PyPI
+      - name: Publish distribution package to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
-          password: ${{ secrets.TESTPYPI_TOKEN_PASSWORD}}
-          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_TOKEN_PASSWORD}}
