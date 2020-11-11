@@ -2,23 +2,282 @@ import json
 
 import numpy as np
 import numpy.testing as npt
+from numpy import dtype
+
 import pandas as pd
 import pandas.testing as pdt
 from pandas.api.types import is_categorical
 
 import pytest
 import libsonata
-from mock import Mock
+from mock import Mock, patch, PropertyMock
 
 from bluepysnap.bbp import Cell
 from bluepysnap.sonata_constants import Node
 from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
+from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 
 import bluepysnap.nodes as test_module
 
 from utils import TEST_DATA_DIR, create_node_population
+
+
+class TestNodes:
+    def setup(self):
+        circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
+        self.test_obj = test_module.Nodes(circuit)
+
+    def test_get_population(self):
+        assert isinstance(self.test_obj["default"], test_module.NodePopulation)
+        with pytest.raises(BluepySnapError):
+            self.test_obj["unknown"]
+
+    def test_iter(self):
+        assert sorted(self.test_obj) == ['default', 'default2']
+
+    def test_population_names(self):
+        assert self.test_obj.population_names == ['default', 'default2']
+
+    def test_keys_names(self):
+        assert list(self.test_obj.keys()) == ['default', 'default2']
+        assert list(self.test_obj.names()) == list(self.test_obj.keys())
+
+    def test_values_population(self):
+        values = list(self.test_obj.values())
+        assert isinstance(values[0], test_module.NodePopulation)
+        assert values[0].name == 'default'
+
+        assert isinstance(values[1], test_module.NodePopulation)
+        assert values[1].name == 'default2'
+
+        assert list(self.test_obj.values()) == list(self.test_obj.populations())
+
+    def test_items(self):
+        keys, values = zip(*self.test_obj.items())
+        assert keys == ('default', 'default2')
+        assert isinstance(values[0], test_module.NodePopulation)
+        assert values[0].name == 'default'
+
+        assert isinstance(values[1], test_module.NodePopulation)
+        assert values[1].name == 'default2'
+
+    def test_size(self):
+        assert self.test_obj.size == 7
+
+    def test_property_names(self):
+        assert self.test_obj.property_names == {'rotation_angle_zaxis', 'y', 'layer', 'mtype',
+                                                'model_type', 'z', 'x', 'rotation_angle_yaxis',
+                                                'morphology', 'rotation_angle_xaxis',
+                                                'model_template', 'other1', 'other2',
+                                                '@dynamics:holding_current'}
+
+    def test_property_value(self):
+        assert self.test_obj.property_values('mtype') == {'L2_X', 'L7_X', 'L9_Z', 'L8_Y', 'L6_Y'}
+        assert self.test_obj.property_values('other2') == {10, 11, 12, 13}
+
+    def test_property_dtypes(self):
+        expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
+                                   dtype('float64'), dtype('float64'), dtype('float64'),
+                                   dtype('float64'),
+                                   dtype('float64'), dtype('float64'), dtype('float64'),
+                                   dtype('O'), dtype('int64')],
+                             index=['layer', 'model_template', 'model_type', 'morphology', 'mtype',
+                                    'rotation_angle_xaxis', 'rotation_angle_yaxis',
+                                    'rotation_angle_zaxis',
+                                    'x', 'y', 'z', '@dynamics:holding_current', 'other1', 'other2']).sort_index()
+        pdt.assert_series_equal(self.test_obj.property_dtypes.sort_index(), expected)
+
+    def test_property_dtypes_fail(self):
+        a = pd.Series(data=[dtype('int64'), dtype('O')],
+                      index=['layer', 'model_template']).sort_index()
+        b = pd.Series(data=[dtype('int32'), dtype('O')],
+                      index=['layer', 'model_template']).sort_index()
+
+        with patch("bluepysnap.nodes.NodePopulation.property_dtypes", new_callable=PropertyMock) as mock:
+            mock.side_effect = [a, b]
+            circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
+            test_obj = test_module.Nodes(circuit)
+            with pytest.raises(BluepySnapError):
+                test_obj.property_dtypes.sort_index()
+
+    def test_ids(self):
+        # None --> CircuitNodeIds with all ids
+        tested = self.test_obj.ids()
+        expected = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2, 3]})
+        assert tested == expected
+
+        # CircuitNodeIds --> CircuitNodeIds and check if the population and node ids exist
+        ids = CircuitNodeIds.from_arrays(["default", "default2"], [0, 3])
+        tested = self.test_obj.ids(ids)
+        assert tested == ids
+
+        # default3 population does not exist and is asked explicitly
+        with pytest.raises(BluepySnapError):
+            ids = CircuitNodeIds.from_arrays(["default", "default3"], [0, 3])
+            self.test_obj.ids(ids)
+
+        # (default2, 5) does not exist and is asked explicitly
+        with pytest.raises(BluepySnapError):
+            ids = CircuitNodeIds.from_arrays(["default", "default2"], [0, 5])
+            self.test_obj.ids(ids)
+
+        # single node ID --> CircuitNodeIds return populations with the 0 id
+        expected = CircuitNodeIds.from_arrays(["default", "default2"], [0, 0])
+        tested = self.test_obj.ids(0)
+        assert tested == expected
+
+        # single node ID --> CircuitNodeIds raise if the ID is not in all population
+        with pytest.raises(BluepySnapError):
+            self.test_obj.ids(3)
+
+        # seq of node ID --> CircuitNodeIds return populations with the array of ids
+        expected = CircuitNodeIds.from_arrays(["default", "default", "default2", "default2"],
+                                              [0, 1, 0, 1])
+        tested = self.test_obj.ids([0, 1])
+        assert tested == expected
+        tested = self.test_obj.ids((0, 1))
+        assert tested == expected
+        tested = self.test_obj.ids(np.array([0, 1]))
+        assert tested == expected
+
+        # seq node ID --> CircuitNodeIds raise if on ID is not in all populations
+        with pytest.raises(BluepySnapError):
+            self.test_obj.ids([0, 1, 2, 3])
+
+        # node sets
+        assert self.test_obj.ids('Layer2') == CircuitNodeIds.from_arrays(
+            ["default", 'default2'], [0, 3])
+        assert self.test_obj.ids('Layer23') == CircuitNodeIds.from_arrays(
+            ["default", 'default2'], [0, 3])
+        assert self.test_obj.ids(
+            'Population_default_L6_Y_Node2') == CircuitNodeIds.from_arrays(["default"], [2])
+        assert self.test_obj.ids(
+            'combined_combined_Node0_L6_Y__Node12_L6_Y__') == CircuitNodeIds.from_arrays(
+            ["default", "default", "default", "default2"], [0, 1, 2, 3])
+
+        # Mapping --> CircuitNodeIds query on the populations empty dict return all
+        assert self.test_obj.ids({}) == self.test_obj.ids()
+
+        # Mapping --> CircuitNodeIds query on the populations
+        tested = self.test_obj.ids({'layer': 2})
+        expected = CircuitNodeIds.from_arrays(["default", "default2"], [0, 3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'other1': ['A', 'D']})
+        expected = CircuitNodeIds.from_arrays(["default2", "default2"], [0, 3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'other1': ['A', 'D'], 'layer': 2})
+        expected = CircuitNodeIds.from_arrays(["default2"], [3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'$or': [{'other1': ['A', 'D']}, {'layer': 2}]})
+        expected = CircuitNodeIds.from_arrays(["default", "default2", "default2"], [0, 0, 3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the populations no raise if not in one of the pop
+        tested = self.test_obj.ids({'$and': [{'other1': ['A', 'D']}, {'layer': 2}]})
+        expected = CircuitNodeIds.from_arrays(["default2"], [3])
+        assert tested == expected
+
+        # Mapping --> CircuitNodeIds query on the population node ids with mapping.
+        # single pop
+        tested = self.test_obj.ids({"population": "default"})
+        expected = self.test_obj.ids().filter_population("default")
+        assert tested == expected
+        # multiple pop
+        tested = self.test_obj.ids({"population": ["default", "default2"]})
+        expected = self.test_obj.ids()
+        assert tested == expected
+        # not existing pop (should not raise)
+        tested = self.test_obj.ids({"population": "default4"})
+        expected = CircuitNodeIds.from_arrays([], [])
+        assert tested == expected
+
+        # single pop and node ids
+        tested = self.test_obj.ids({"population": ["default"], "node_id": [1, 2]})
+        expected = CircuitNodeIds.from_arrays(["default", "default"], [1, 2])
+        assert tested == expected
+        # single pop and node ids with not present node id (should not raise)
+        tested = self.test_obj.ids({"population": ["default"], "node_id": [1, 5]})
+        expected = CircuitNodeIds.from_arrays(["default"], [1])
+        assert tested == expected
+        # not existing node ids (should not raise)
+        tested = self.test_obj.ids({"population": ["default"], "node_id": [5, 6, 7]})
+        expected = CircuitNodeIds.from_arrays([], [])
+        assert tested == expected
+
+        # multiple pop and node ids
+        tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0]})
+        expected = CircuitNodeIds.from_arrays(["default", "default", "default2", "default2"],
+                                              [1, 0, 1, 0])
+        assert tested == expected
+        # multiple pop and node ids with not present node id (should not raise)
+        tested = self.test_obj.ids({"population": ["default", "default2"], "node_id": [1, 0, 3]})
+        expected = CircuitNodeIds.from_arrays(
+            ["default", "default", "default2", "default2", "default2"],
+            [1, 0, 1, 0, 3])
+        assert tested == expected
+
+        # Check operations on global ids
+        ids = self.test_obj.ids()
+        assert ids.filter_population("default").append(ids.filter_population("default2")) == ids
+
+        expected = CircuitNodeIds.from_arrays(["default2", "default2"], [0, 1])
+        assert ids.filter_population("default2").limit(2) == expected
+
+    def test_get(self):
+        # return all properties for all the ids
+        tested = self.test_obj.get()
+        assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
+
+        # put NaN for the undefined values : only values for default2 in dropna
+        assert len(tested.dropna()) == 4
+
+        # the index of the dataframe is the index from all the NodeCircuitIds
+        pdt.assert_index_equal(tested.index, self.test_obj.ids().index)
+
+        # tested accessing data via circuit ids
+        tested_ids = self.test_obj.ids({"population": "default"})
+        assert tested.loc[tested_ids, "layer"].tolist() == [2, 6, 6]
+
+        # tested columns
+        tested = self.test_obj.get(properties=["other2", "other1", 'layer'])
+        assert tested.shape == (self.test_obj.size, 3)
+        assert list(tested) == ["other2", "other1", 'layer']
+
+        tested = self.test_obj.get(group={"population": "default2"},
+                                   properties=["other2", "other1", 'layer'])
+        assert tested.shape == (4, 3)
+        # correct ordering when setting the dataframe with the population dataframe
+        assert tested.loc[("default2", 0)].tolist() == [10, 'A', 7]
+        with pytest.raises(KeyError):
+            tested.loc[("default", 0)]
+
+        tested = self.test_obj.get(group={"population": "default"},
+                                   properties=["other2", "other1", 'layer'])
+        assert tested.shape == (3, 3)
+        assert tested.loc[("default", 0)].tolist() == [np.NaN, np.NaN, 2]
+        assert tested.loc[("default", 1)].tolist() == [np.NaN, np.NaN, 6]
+
+        tested = self.test_obj.get(properties='layer')
+        assert tested["layer"].tolist() == [2, 6, 6, 7, 8, 8, 2]
+
+        tested = self.test_obj.get(properties='other2')
+        assert tested["other2"].tolist() == [np.NaN, np.NaN, np.NaN, 10, 11, 12, 13]
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(properties=["other2", "unknown"])
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(properties="unknown")
+
+
 
 
 class TestNodeStorage:
@@ -103,8 +362,6 @@ class TestNodePopulation:
         assert test_obj_library.property_values("categorical", is_present=True) == {"A", "B"}
 
     def test_property_dtypes(self):
-        from numpy import dtype
-
         expected = pd.Series(data=[dtype('int64'), dtype('O'), dtype('O'), dtype('O'), dtype('O'),
                                    dtype('float64'), dtype('float64'), dtype('float64'),
                                    dtype('float64'),
@@ -160,17 +417,17 @@ class TestNodePopulation:
 
     def test__node_population_mask(self):
         queries, mask = self.test_obj._circuit_mask({"population": "default",
-                                                             "other": "val"})
+                                                     "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [True, True, True])
 
         queries, mask = self.test_obj._circuit_mask({"population": "unknown",
-                                                             "other": "val"})
+                                                     "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, False])
 
         queries, mask = self.test_obj._circuit_mask({"population": "default",
-                                                             "node_id": [2], "other": "val"})
+                                                     "node_id": [2], "other": "val"})
         assert queries == {"other": "val"}
         npt.assert_array_equal(mask, [False, False, True])
 
@@ -184,13 +441,39 @@ class TestNodePopulation:
         npt.assert_equal(_call(group={}), [0, 1, 2])
         npt.assert_equal(_call(group=[]), [])
         npt.assert_equal(_call(limit=1), [0])
+        # limit too big compared to the number of ids
+        npt.assert_equal(_call(limit=15), [0, 1, 2])
         npt.assert_equal(len(_call(sample=2)), 2)
+        # if sample > population.size --> sample = population.size
+        npt.assert_equal(len(_call(sample=25)), 3)
         npt.assert_equal(_call(group=[], sample=2), [])
         npt.assert_equal(_call(group={Cell.MTYPE: "unknown"}, sample=2), [])
         npt.assert_equal(_call(0), [0])
         npt.assert_equal(_call([0, 1]), [0, 1])
         npt.assert_equal(_call([1, 0, 1]), [1, 0, 1])  # order and duplicates preserved
         npt.assert_equal(_call(np.array([1, 0, 1])), np.array([1, 0, 1]))
+
+        # NodeCircuitId
+        npt.assert_equal(_call(CircuitNodeId("default", 0)), [0])
+        # List of NodeCircuitId
+        npt.assert_equal(_call([CircuitNodeId("default", 0), CircuitNodeId("default", 1)]), [0, 1])
+        # tuple of NodeCircuitId
+        npt.assert_equal(_call((CircuitNodeId("default", 0), CircuitNodeId("default", 1))), [0, 1])
+        # NodeCircuitId with wrong population
+        npt.assert_equal(_call(CircuitNodeId("default2", 0)), [])
+        npt.assert_equal(_call([CircuitNodeId("default2", 0), CircuitNodeId("default2", 1)]), [])
+        # NodeCircuitId list with one wrong population and one ok
+        npt.assert_equal(_call([CircuitNodeId("default2", 0), CircuitNodeId("default", 1)]), [1])
+
+        # NodeCircuitIds
+        ids = CircuitNodeIds.from_arrays(["default", "default"], [0, 1])
+        npt.assert_equal(_call(ids), [0, 1])
+        # returns only the ids for the default population
+        ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 0])
+        npt.assert_equal(_call(ids), [0, 1])
+        # returns only the ids for the default population so should be []
+        ids = CircuitNodeIds.from_arrays(["default2", "default2", "default2"], [0, 1, 2])
+        npt.assert_equal(_call(ids), [])
 
         npt.assert_equal(_call({Cell.MTYPE: 'L6_Y'}), [1, 2])
         npt.assert_equal(_call({Cell.X: (100, 203)}), [0, 1])
@@ -249,7 +532,7 @@ class TestNodePopulation:
         npt.assert_equal(_call({"$and": [{"$node_set": 'Node12_L6_Y', "population": "default"},
                                          {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         npt.assert_equal(_call({"$or": [{"$node_set": 'Node12_L6_Y', "population": "default"},
-                                         {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
+                                        {Cell.MORPHOLOGY: "morph-B"}]}), [1, 2])
 
         with pytest.raises(BluepySnapError):
             _call('no-such-node-set')
@@ -269,6 +552,8 @@ class TestNodePopulation:
             _call({"$node_set": [1, 2]})
         with pytest.raises(BluepySnapError):
             _call({"$node_set": 'no-such-node-set'})
+        with pytest.raises(BluepySnapError):
+            _call([CircuitNodeId("default", 1), CircuitNodeId("default2", 1), ("default2", 1)])
 
     def test_node_ids_by_filter_complex_query(self):
         test_obj = create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
@@ -309,6 +594,7 @@ class TestNodePopulation:
         _call = self.test_obj.get
         assert _call().shape == (3, 12)
         assert _call(0, Cell.MTYPE) == 'L2_X'
+        assert _call(CircuitNodeId("default", 0), Cell.MTYPE) == 'L2_X'
         assert _call(np.int32(0), Cell.MTYPE) == 'L2_X'
         pdt.assert_frame_equal(
             _call([1, 2], properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
@@ -321,6 +607,35 @@ class TestNodePopulation:
                 index=[1, 2]
             )
         )
+
+        # NodeCircuitId same as [1, 2] for the default
+        pdt.assert_frame_equal(
+            _call(CircuitNodeIds.from_dict({"default": [1, 2]}),
+                  properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
+            pd.DataFrame(
+                [
+                    [201., 'L6_Y', 0.2],
+                    [301., 'L6_Y', 0.3],
+                ],
+                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
+                index=[1, 2]
+            )
+        )
+
+        # NodeCircuitId only consider the default population
+        pdt.assert_frame_equal(
+            _call(CircuitNodeIds.from_arrays(["default", "default", "default2"], [1, 2, 0]),
+                  properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
+            pd.DataFrame(
+                [
+                    [201., 'L6_Y', 0.2],
+                    [301., 'L6_Y', 0.3],
+                ],
+                columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
+                index=[1, 2]
+            )
+        )
+
         pdt.assert_frame_equal(
             _call("Node12_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]),
             pd.DataFrame(
@@ -334,6 +649,7 @@ class TestNodePopulation:
         )
 
         assert _call("Node0_L6_Y", properties=[Cell.X, Cell.MTYPE, Cell.LAYER]).empty
+        assert _call(1, properties={Cell.MTYPE}).tolist() == ["L6_Y"]
         with pytest.raises(BluepySnapError):
             _call(0, properties='no-such-property')
         with pytest.raises(BluepySnapError):
@@ -369,9 +685,14 @@ class TestNodePopulation:
 
     def test_positions(self):
         _call = self.test_obj.positions
+        expected = pd.Series([101., 102., 103.], index=[Cell.X, Cell.Y, Cell.Z], name=0)
         pdt.assert_series_equal(
             _call(0),
-            pd.Series([101., 102., 103.], index=[Cell.X, Cell.Y, Cell.Z], name=0)
+            expected
+        )
+        pdt.assert_series_equal(
+            _call(CircuitNodeId("default", 0)),
+            expected
         )
         pdt.assert_frame_equal(
             _call([2, 0]),
@@ -381,15 +702,26 @@ class TestNodePopulation:
             ], index=[2, 0], columns=[Cell.X, Cell.Y, Cell.Z])
         )
 
+        # NodeCircuitIds
+        pdt.assert_frame_equal(
+            _call(CircuitNodeIds.from_arrays(["default", "default"], [2, 0], sort_index=False)),
+            _call([2, 0]))
+
     def test_orientations(self):
         _call = self.test_obj.orientations
-        npt.assert_almost_equal(
-            _call(0),
-            [
+        expected = [
                 [0.738219, 0., 0.674560],
                 [0., 1., 0.],
                 [-0.674560, 0., 0.738219],
-            ],
+            ]
+        npt.assert_almost_equal(
+            _call(0),
+            expected,
+            decimal=6
+        )
+        npt.assert_almost_equal(
+            _call(CircuitNodeId("default", 0)),
+            expected,
             decimal=6
         )
         pdt.assert_series_equal(
@@ -416,6 +748,11 @@ class TestNodePopulation:
                 name='orientation'
             )
         )
+
+        # NodeCircuitIds
+        pdt.assert_series_equal(
+            _call(CircuitNodeIds.from_arrays(["default","default","default"], [2, 0, 1], sort_index=False)),
+            _call([2, 0, 1]))
 
         # NodePopulation without rotation_angle[x|z]
         _call_no_xz = create_node_population(
@@ -503,6 +840,7 @@ class TestNodePopulation:
         _call = self.test_obj.count
         assert _call(0) == 1
         assert _call([0, 1]) == 2
+        assert _call(CircuitNodeIds.from_dict({"default": [0, 1]})) == 2
         assert _call({Cell.MTYPE: 'L6_Y'}) == 2
         assert _call('Layer23') == 1
 

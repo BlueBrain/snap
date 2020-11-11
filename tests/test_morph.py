@@ -11,6 +11,7 @@ import pytest
 import bluepysnap.morph as test_module
 from bluepysnap.circuit import Circuit
 from bluepysnap.sonata_constants import Node
+from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 
 from utils import TEST_DATA_DIR, copy_circuit, edit_config, create_node_population
@@ -66,6 +67,16 @@ class TestMorphHelper(object):
         actual = self.test_obj.get_filepath(node_id)
         expected = str(self.morph_path / 'morph-A.swc')
         assert actual == expected
+        node_id = CircuitNodeId("default", 0)
+        assert self.nodes.get(node_id, properties="morphology") == "morph-A"
+        actual = self.test_obj.get_filepath(node_id)
+        assert actual == expected
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get_filepath([CircuitNodeId("default", 0), CircuitNodeId("default", 1)])
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get_filepath([0, 1])
 
     def test_get_morphology(self):
         actual = self.test_obj.get(0).points
@@ -75,6 +86,9 @@ class TestMorphHelper(object):
             [-0.32, 0.9, 0., 0.820],
         ]
         npt.assert_almost_equal(expected, actual[:2])
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get([0, 1])
 
     def test_get_morphology_simple_rotation(self):
         node_id = 0

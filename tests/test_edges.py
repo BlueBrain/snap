@@ -9,9 +9,11 @@ import libsonata
 from mock import Mock
 
 from bluepysnap.bbp import Synapse
+from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
 from bluepysnap.node_sets import NodeSets
+
 
 import bluepysnap.edges as test_module
 
@@ -144,17 +146,8 @@ class TestEdgePopulation(object):
         with pytest.raises(BluepySnapError):
             self.test_obj.container_property_names(int)
 
-    def test_nodes_1(self):
+    def test_nodes(self):
         assert self.test_obj._nodes('default').name == 'default'
-        with pytest.raises(BluepySnapError):
-            self.test_obj._nodes('no-such-population')
-
-    def test_nodes_2(self):
-        self.test_obj._edge_storage.circuit.nodes = {
-            'A': 'aa',
-            'B': 'bb',
-        }
-        assert self.test_obj._nodes('B') == 'bb'
         with pytest.raises(BluepySnapError):
             self.test_obj._nodes('no-such-population')
 
@@ -272,13 +265,48 @@ class TestEdgePopulation(object):
 
     def test_afferent_nodes(self):
         npt.assert_equal(self.test_obj.afferent_nodes(0), [2])
+        npt.assert_equal(self.test_obj.afferent_nodes(0, unique=False), [2])
+
         npt.assert_equal(self.test_obj.afferent_nodes(1), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes(1, unique=False), [0, 0, 2])
+
         npt.assert_equal(self.test_obj.afferent_nodes(2), [])
+
+        npt.assert_equal(self.test_obj.afferent_nodes([0, 1]), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes([0, 1], unique=False), [2, 0, 0, 2])
+
+        npt.assert_equal(self.test_obj.afferent_nodes({}), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}), [2])  # eq node id 0 as target
+        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}), [2])  # eq node id 0 as target
+
+        npt.assert_equal(self.test_obj.afferent_nodes(None), [0, 2])
+        npt.assert_equal(self.test_obj.afferent_nodes(None, unique=False), [2, 0, 0, 2])
 
     def test_efferent_nodes(self):
         npt.assert_equal(self.test_obj.efferent_nodes(0), [1])
+        npt.assert_equal(self.test_obj.efferent_nodes(0, unique=False), [1, 1])
+
         npt.assert_equal(self.test_obj.efferent_nodes(1), [])
+        npt.assert_equal(self.test_obj.efferent_nodes(1, unique=False), [])
+
         npt.assert_equal(self.test_obj.efferent_nodes(2), [0, 1])
+        npt.assert_equal(self.test_obj.efferent_nodes(2, unique=False), [0, 1])
+
+        npt.assert_equal(self.test_obj.efferent_nodes([0, 1]), [1])
+        npt.assert_equal(self.test_obj.efferent_nodes([0, 1], unique=False), [1, 1])
+
+        npt.assert_equal(self.test_obj.efferent_nodes({}), [0, 1])
+        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}), [1])  # eq node id 0 as source
+        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}), [1])  # eq node id 0 as source
+
+        npt.assert_equal(self.test_obj.efferent_nodes(None), [0, 1])
+        npt.assert_equal(self.test_obj.efferent_nodes(None, unique=False), [0, 1, 1, 1])
+
+    def test_afferent_edges(self):
+        npt.assert_equal(
+            self.test_obj.afferent_edges([0, 1], None),
+            [0, 1, 2, 3]
+        )
 
     def test_afferent_edges_1(self):
         npt.assert_equal(
@@ -379,6 +407,10 @@ class TestEdgePopulation(object):
     def test_pathway_edges_5(self):
         with pytest.raises(BluepySnapError):
             self.test_obj.pathway_edges(None, None, None)
+
+    def test_pathway_edges_6(self):
+        ids = CircuitNodeIds.from_dict({"default": [0, 1]})
+        npt.assert_equal(self.test_obj.pathway_edges(ids, None, None), [1, 2])
 
     def test_iter_connections_1(self):
         it = self.test_obj.iter_connections(
