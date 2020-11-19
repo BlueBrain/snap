@@ -17,13 +17,10 @@
 """Simulation access."""
 
 from cached_property import cached_property
-from pathlib2 import Path
 
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.config import Config
 from bluepysnap.exceptions import BluepySnapError
-
-from bluepysnap import utils
 
 
 def _resolve_config(config):
