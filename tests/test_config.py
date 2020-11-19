@@ -1,5 +1,6 @@
 import pytest
 from pathlib2 import Path
+import json
 
 import bluepysnap.config as test_module
 from bluepysnap.exceptions import BluepySnapError
@@ -123,3 +124,26 @@ def test_simulation_config():
     assert actual["mechanisms_dir"] == str(Path(TEST_DATA_DIR / "../shared_components_mechanisms").resolve())
     assert actual["conditions"]["celsius"] == 34.0
     assert actual["conditions"]["v_init"] == -80
+
+
+def test_dict_config():
+    config = json.load(open(str(TEST_DATA_DIR / 'circuit_config.json'), "r"))
+    with pytest.raises(BluepySnapError):
+        test_module.Config(config)
+
+    config["manifest"]["$NETWORK_DIR"] = str(TEST_DATA_DIR)
+    config["manifest"]["$BASE_DIR"] = str(TEST_DATA_DIR)
+
+    expected = test_module.Config.parse(str(TEST_DATA_DIR / 'circuit_config.json'))
+    assert test_module.Config(config).resolve() == expected
+
+    config = json.load(open(str(TEST_DATA_DIR / 'simulation_config.json'), "r"))
+    with pytest.raises(BluepySnapError):
+        test_module.Config(config)
+
+    config["manifest"]["$OUTPUT_DIR"] = str(TEST_DATA_DIR / "reporting")
+    config["manifest"]["$INPUT_DIR"] = str(TEST_DATA_DIR)
+
+    # the field "mechanisms_dir" is using a relative path
+    with pytest.raises(BluepySnapError):
+        test_module.Config(config).resolve()

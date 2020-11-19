@@ -1,4 +1,5 @@
 import pytest
+import json
 
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.simulation as test_module
@@ -80,3 +81,32 @@ def test_no_node_set():
     # replace the _config dict with random one that does not contain "node_sets_file" key
     simulation._config = {"key": "value"}
     assert simulation.node_sets == {}
+
+
+def test__resolve_config_dict():
+    input_dict = {
+        "network": "./circuit_config.json",
+        "simulation": "./simulation_config.json"
+    }
+    with pytest.raises(BluepySnapError):
+        test_module.Simulation(input_dict)
+
+    input_dict = {
+        "network": str(TEST_DATA_DIR / "./circuit_config.json"),
+        "simulation": str(TEST_DATA_DIR / "./simulation_config.json")
+    }
+    simulation = test_module.Simulation(input_dict)
+    assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
+    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+
+    input_dict = json.load(open(str(TEST_DATA_DIR / "./simulation_config.json"), "r"))
+    with pytest.raises(BluepySnapError):
+        test_module.Simulation(input_dict)
+
+    input_dict['mechanisms_dir'] = "/abspath"
+    input_dict["manifest"]["$OUTPUT_DIR"] = str(TEST_DATA_DIR / "reporting")
+    input_dict["manifest"]["$INPUT_DIR"] = str(TEST_DATA_DIR)
+
+    simulation = test_module.Simulation(input_dict)
+    assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
+    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']

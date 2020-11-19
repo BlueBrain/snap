@@ -35,17 +35,21 @@ class Config(object):
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
 
-    def __init__(self, filepath):
+    def __init__(self, config):
         """Initializes a Config object from a path to the actual config.
 
         Args:
-            filepath (str): Path the SONATA configuration file.
+            config (str/dict): Path to the SONATA configuration file or dict containing the config.
 
         Returns:
              Config: A Config object.
         """
-        configdir = str(Path(filepath).parent.resolve())
-        content = utils.load_json(str(filepath))
+        if isinstance(config, dict):
+            content = config.copy()
+            configdir = None
+        else:
+            configdir = str(Path(config).parent.resolve())
+            content = utils.load_json(str(config))
         self.manifest = Config._resolve_manifest(content.pop('manifest', {}), configdir)
         self.content = content
 
@@ -53,11 +57,10 @@ class Config(object):
     def _resolve_manifest(manifest, configdir):
         result = manifest.copy()
 
-        assert '${configdir}' not in result
-        result['${configdir}'] = configdir
-
         for k, v in six.iteritems(result):
             if v.startswith('.'):
+                if configdir is None:
+                    raise BluepySnapError("Dictionary config with relative paths is not allowed.")
                 result[k] = str(Path(configdir, v).resolve())
 
         while True:
@@ -79,6 +82,9 @@ class Config(object):
             if not v.startswith('/'):
                 raise BluepySnapError("{} cannot be resolved as an abs path.".format(k))
 
+        assert '${configdir}' not in result
+        result['${configdir}'] = configdir
+
         return result
 
     def _resolve_string(self, value):
@@ -94,7 +100,9 @@ class Config(object):
                                       "Please verify your '$' usage.".format(value))
             return str(Path(*vs))
         elif value.startswith('.'):
-            return str(Path(self.manifest['${configdir}'], value).resolve())
+            if self.manifest['${configdir}'] is not None:
+                return str(Path(self.manifest['${configdir}'], value).resolve())
+            raise BluepySnapError("Dictionary config with relative paths is not allowed.")
         else:
             # we cannot know if a string is a path or not if it does not contain anchor or .
             return value
