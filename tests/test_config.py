@@ -65,6 +65,14 @@ def test_parse():
         actual = test_module.Config.parse(config_path)
         assert actual["something"] == str(Path(config_path.parent) / 'somet$hing' / 'else')
 
+    # check resolution with relative path without "." in the manifest
+    with copy_config() as config_path:
+        with edit_config(config_path) as config:
+            config["manifest"]["$NOPOINT"] = "nopoint"
+            config["components"]["other"] = "$NOPOINT/other"
+        actual = test_module.Config.parse(config_path)
+        assert actual["components"]["other"] == str(Path(config_path.parent) / 'nopoint' / 'other')
+
     # check resolution for non path objects
     with copy_config() as config_path:
         with edit_config(config_path) as config:

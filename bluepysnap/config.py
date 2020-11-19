@@ -80,10 +80,6 @@ class Config(object):
             if not update:
                 break
 
-        for k, v in result.items():
-            if not Path(v).is_absolute():
-                raise BluepySnapError("{} cannot be resolved as an abs path.".format(k))
-
         assert '${configdir}' not in result
         result['${configdir}'] = configdir
 
