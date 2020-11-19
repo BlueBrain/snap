@@ -14,7 +14,7 @@ from utils import TEST_DATA_DIR
 def test_all():
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
-    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+    assert set(list(simulation.circuit.nodes)) == set(['default', 'default2'])
     assert list(simulation.circuit.edges) == ['default']
 
     assert simulation.run == {"tstop": 1000.0, "dt": 0.01, "spike_threshold": -15,
@@ -31,16 +31,16 @@ def test_all():
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
-    assert sorted(list(simulation.reports)) == sorted(list(['soma_report', 'section_report']))
+    assert set(list(simulation.reports)) == set(list(['soma_report', 'section_report']))
     assert isinstance(simulation.reports['soma_report'], SomaReport)
     assert isinstance(simulation.reports['section_report'], CompartmentReport)
 
     rep = simulation.reports['soma_report']
-    assert sorted(list(rep.population_names)) == ["default", "default2"]
+    assert set(list(rep.population_names)) == {"default", "default2"}
     assert isinstance(rep['default'], PopulationSomaReport)
 
     rep = simulation.reports['section_report']
-    assert sorted(list(rep.population_names)) == ["default", "default2"]
+    assert set(list(rep.population_names)) == {"default", "default2"}
     assert isinstance(rep['default'], PopulationCompartmentReport)
 
 
@@ -61,11 +61,11 @@ def test_unknown_report():
 def test__resolve_config():
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'config.json'))
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
-    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+    assert set(list(simulation.circuit.nodes)) == set(['default', 'default2'])
 
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'config_sim_no_network.json'))
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
-    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+    assert set(simulation.circuit.nodes) == {'default', 'default2'}
 
 
 def test_no_network_config():
@@ -97,7 +97,7 @@ def test__resolve_config_dict():
     }
     simulation = test_module.Simulation(input_dict)
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
-    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+    assert set(simulation.circuit.nodes) == {'default', 'default2'}
 
     input_dict = json.load(open(str(TEST_DATA_DIR / "./simulation_config.json"), "r"))
     with pytest.raises(BluepySnapError):
@@ -109,4 +109,4 @@ def test__resolve_config_dict():
 
     simulation = test_module.Simulation(input_dict)
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
-    assert sorted(list(simulation.circuit.nodes)) == ['default', 'default2']
+    assert set(simulation.circuit.nodes) == {'default', 'default2'}

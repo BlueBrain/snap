@@ -58,6 +58,13 @@ def test_parse():
         actual = test_module.Config.parse(config_path)
         assert actual["something"] == str(Path(config_path.parent) / 'something' / 'else')
 
+    # check resolution with $ in a middle of the words
+    with copy_config() as config_path:
+        with edit_config(config_path) as config:
+            config["something"] = "$COMPONENT_DIR/somet$hing/else"
+        actual = test_module.Config.parse(config_path)
+        assert actual["something"] == str(Path(config_path.parent) / 'somet$hing' / 'else')
+
     # check resolution for non path objects
     with copy_config() as config_path:
         with edit_config(config_path) as config:
@@ -83,35 +90,40 @@ def test_parse():
 
 
 def test_bad_manifest():
-    # not abs path in
-    with copy_config() as config_path:
-        with edit_config(config_path) as config:
-            config["manifest"]["$BASE_DIR"] = "not_absolute"
-        with pytest.raises(BluepySnapError):
-            test_module.Config.parse(config_path)
-
+    # 2 anchors would result in the absolute path of the last one : misleading
     with copy_config() as config_path:
         with edit_config(config_path) as config:
             config["manifest"]["$COMPONENT_DIR"] = "$BASE_DIR/$NETWORK_DIR"
         with pytest.raises(BluepySnapError):
             test_module.Config.parse(config_path)
 
+    # same but not in the manifest
     with copy_config() as config_path:
         with edit_config(config_path) as config:
             config["components"]["other"] = "$COMPONENT_DIR/$BASE_DIR"
         with pytest.raises(BluepySnapError):
             test_module.Config.parse(config_path)
 
+    # relative path with an anchor in the middle is not allowed this breaks the purpose of the
+    # anchors (they are not just generic placeholders)
     with copy_config() as config_path:
         with edit_config(config_path) as config:
             config["components"]["other"] = "something/$COMPONENT_DIR/"
         with pytest.raises(BluepySnapError):
             test_module.Config.parse(config_path)
 
+    # abs path with an anchor in the middle is not allowed
     with copy_config() as config_path:
         with edit_config(config_path) as config:
             config["components"]["other"] = "/something/$COMPONENT_DIR/"
         with pytest.raises(BluepySnapError):
+            test_module.Config.parse(config_path)
+
+    # unknown anchor
+    with copy_config() as config_path:
+        with edit_config(config_path) as config:
+            config["components"]["other"] = "$UNKNOWN/something/"
+        with pytest.raises(KeyError):
             test_module.Config.parse(config_path)
 
 
@@ -128,6 +140,7 @@ def test_simulation_config():
 
 def test_dict_config():
     config = json.load(open(str(TEST_DATA_DIR / 'circuit_config.json'), "r"))
+    # there are relative paths in the manifest you cannot resolve if you are using a dict
     with pytest.raises(BluepySnapError):
         test_module.Config(config)
 
@@ -138,12 +151,21 @@ def test_dict_config():
     assert test_module.Config(config).resolve() == expected
 
     config = json.load(open(str(TEST_DATA_DIR / 'simulation_config.json'), "r"))
+    # there are relative paths in the manifest you cannot resolve if you are using a dict and
+    # the field "mechanisms_dir" is using a relative path
     with pytest.raises(BluepySnapError):
         test_module.Config(config)
 
     config["manifest"]["$OUTPUT_DIR"] = str(TEST_DATA_DIR / "reporting")
     config["manifest"]["$INPUT_DIR"] = str(TEST_DATA_DIR)
 
-    # the field "mechanisms_dir" is using a relative path
+    # the field "mechanisms_dir" is still using a relative path
     with pytest.raises(BluepySnapError):
         test_module.Config(config).resolve()
+
+    # does not allow Paths as values
+    with pytest.raises(BluepySnapError):
+        config = json.load(open(str(TEST_DATA_DIR / 'circuit_config.json'), "r"))
+        config["manifest"]["$NETWORK_DIR"] = TEST_DATA_DIR
+        config["manifest"]["$BASE_DIR"] = TEST_DATA_DIR
+        test_module.Config.parse(config)

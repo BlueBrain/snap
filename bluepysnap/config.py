@@ -58,7 +58,9 @@ class Config(object):
         result = manifest.copy()
 
         for k, v in six.iteritems(result):
-            if v.startswith('.'):
+            if not isinstance(v, six.string_types):
+                raise BluepySnapError('{} should be a string value.'.format(v))
+            if not Path(v).is_absolute() and not v.startswith("$"):
                 if configdir is None:
                     raise BluepySnapError("Dictionary config with relative paths is not allowed.")
                 result[k] = str(Path(configdir, v).resolve())
@@ -79,7 +81,7 @@ class Config(object):
                 break
 
         for k, v in result.items():
-            if not v.startswith('/'):
+            if not Path(v).is_absolute():
                 raise BluepySnapError("{} cannot be resolved as an abs path.".format(k))
 
         assert '${configdir}' not in result
@@ -99,6 +101,7 @@ class Config(object):
                 raise BluepySnapError("Misplaced anchors in : {}."
                                       "Please verify your '$' usage.".format(value))
             return str(Path(*vs))
+        # only way to know if value is a relative path or a normal string
         elif value.startswith('.'):
             if self.manifest['${configdir}'] is not None:
                 return str(Path(self.manifest['${configdir}'], value).resolve())
