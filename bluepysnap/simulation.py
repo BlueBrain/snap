@@ -17,34 +17,29 @@
 """Simulation access."""
 
 from cached_property import cached_property
-from pathlib2 import Path
 
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.config import Config
 from bluepysnap.exceptions import BluepySnapError
 
-from bluepysnap import utils
 
-
-def _resolve_config(filepath):
+def _resolve_config(config):
     """Resolve the config file if global ('network' and 'simulation' keys).
 
     Args:
-        filepath (str): the path to the configuration file.
+        config (str/dict): the path to the configuration file or a dict containing the config.
 
     Returns:
         dict: the complete simulation config file.
     """
-    filepath = Path(filepath)
-    content = utils.load_json(str(filepath))
-    parent = filepath.parent
+    content = Config(config).resolve()
     if "simulation" in content and "network" in content:
-        simulation_path = parent / content["simulation"]
+        simulation_path = content["simulation"]
         res = Config(str(simulation_path)).resolve()
         if "network" not in res:
-            res["network"] = str(parent / content["network"])
+            res["network"] = str(content["network"])
         return res
-    return Config(str(filepath)).resolve()
+    return content
 
 
 def _collect_frame_reports(sim):
