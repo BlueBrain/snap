@@ -18,7 +18,7 @@
 
 from contextlib import contextmanager
 
-from pathlib2 import Path
+from pathlib import Path
 from cached_property import cached_property
 import pandas as pd
 import numpy as np

@@ -2,10 +2,7 @@ try:
     from unittest.mock import patch
 except ImportError:
     from mock import patch
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
+
 import h5py
 
 import six
@@ -310,7 +307,7 @@ def test_no_morph_library_files():
             grp = h5f['nodes/default/0']
             str_dtype = h5py.special_dtype(vlen=str)
             grp.create_dataset('@library/morphology', shape=(1,), dtype=str_dtype)
-            grp['@library/morphology'][:] = u'noname'
+            grp['@library/morphology'][:] = 'noname'
             shape = grp['morphology'].shape
             del grp['morphology']
             grp.create_dataset('morphology', shape=shape, fillvalue=0)

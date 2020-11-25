@@ -18,7 +18,7 @@
 import logging
 
 from cached_property import cached_property
-from pathlib2 import Path
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from libsonata import ElementReportReader, SonataError

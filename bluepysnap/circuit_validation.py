@@ -4,7 +4,7 @@ import itertools as it
 import numpy as np
 import pandas as pd
 import click
-from pathlib2 import Path
+from pathlib import Path
 import h5py
 import six
 
@@ -231,11 +231,14 @@ def _nodes_group_to_dataframe(group, types_file, population):
     df = df[df['group_id'] == int(str(_get_group_name(group)))]
     for k, v in group.items():
         if isinstance(v, h5py.Dataset):
-            df[k] = v[:]
+            if v.dtype == h5py.string_dtype():
+                df[k] = v.asstr()[:]
+            else:
+                df[k] = v[:]
     if '@library' in group:
         for k, v in group['@library'].items():
             if isinstance(v, h5py.Dataset):
-                df[k] = v[:][df[k].to_numpy(dtype=int)]
+                df[k] = v.asstr()[:][df[k].to_numpy(dtype=int)]
     if types_file is None:
         return df
     types = pd.read_csv(types_file, sep=r'\s+')

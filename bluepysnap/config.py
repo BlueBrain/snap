@@ -20,7 +20,7 @@
 # TODO: move to `libsonata` library
 
 import collections
-from pathlib2 import Path
+from pathlib import Path
 
 import six
 
