@@ -17,10 +17,8 @@
 
 """SONATA network config parsing."""
 
-# TODO: move to `libsonata` library
-
-import collections
 from pathlib import Path
+from collections.abc import Mapping, Iterable
 
 import six
 
@@ -107,13 +105,13 @@ class Config(object):
             return value
 
     def _resolve(self, value):
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, Mapping):
             return {
                 k: self._resolve(v) for k, v in six.iteritems(value)
             }
         elif isinstance(value, six.string_types):
             return self._resolve_string(value)
-        elif isinstance(value, collections.Iterable):
+        elif isinstance(value, Iterable):
             return [self._resolve(v) for v in value]
         else:
             return value

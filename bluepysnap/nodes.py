@@ -16,9 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Node population access."""
-
-import collections
 import inspect
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 
 import libsonata
@@ -535,7 +534,7 @@ class NodePopulation(object):
                 prop_mask = np.logical_and(prop >= v1, prop <= v2)
             elif isinstance(values, six.string_types) and values.startswith('regex:'):
                 prop_mask = _complex_query(prop, {'$regex': values[6:]})
-            elif isinstance(values, collections.Mapping):
+            elif isinstance(values, Mapping):
                 prop_mask = _complex_query(prop, values)
             else:
                 prop_mask = np.in1d(prop, values)
@@ -646,7 +645,7 @@ class NodePopulation(object):
 
         if group is None:
             result = self._data.index.values
-        elif isinstance(group, collections.Mapping):
+        elif isinstance(group, Mapping):
             result = self._node_ids_by_filter(queries=group,
                                               raise_missing_prop=raise_missing_property)
         elif isinstance(group, np.ndarray):
@@ -662,7 +661,7 @@ class NodePopulation(object):
                     raise BluepySnapError("All values from a list must be of type int or "
                                           "CircuitNodeId.")
             self._check_ids(result)
-            preserve_order = isinstance(group, collections.Sequence)
+            preserve_order = isinstance(group, Sequence)
 
         if sample is not None:
             if len(result) > 0:

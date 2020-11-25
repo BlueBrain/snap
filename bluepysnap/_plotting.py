@@ -307,8 +307,8 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
         y_limits = [data[y_axis].min(), data[y_axis].max()]
         ax.set_xlim(*x_limits)
         ax.set_ylim(*y_limits)
-        ax.set_xlabel('{} $\mu$m'.format(x_axis))  # noqa
-        ax.set_ylabel('{} $\mu$m'.format(y_axis))  # noqa
+        ax.set_xlabel(r'{} $\mu$m'.format(x_axis))  # noqa
+        ax.set_ylabel(r'{} $\mu$m'.format(y_axis))  # noqa
 
     else:
         fig = ax.figure

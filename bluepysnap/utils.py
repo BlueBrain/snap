@@ -17,7 +17,7 @@
 
 """Miscellaneous utilities."""
 
-import collections
+from collections.abc import Iterable
 import json
 import itertools
 
@@ -37,8 +37,7 @@ def load_json(filepath):
 
 def is_iterable(v):
     """Check if `v` is any iterable (strings are considered scalar and CircuitNodeId also)."""
-    return isinstance(v, collections.Iterable) and not isinstance(v,
-                                                                  (six.string_types, CircuitNodeId))
+    return isinstance(v, Iterable) and not isinstance(v, (six.string_types, CircuitNodeId))
 
 
 def ensure_list(v):

@@ -1,10 +1,10 @@
 """Standalone module that validates Sonata circuit. See ``validate`` function."""
 import itertools as it
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import click
-from pathlib import Path
 import h5py
 import six
 

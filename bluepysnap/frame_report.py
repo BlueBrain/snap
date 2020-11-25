@@ -16,9 +16,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
 import logging
+from pathlib import Path
 
 from cached_property import cached_property
-from pathlib import Path
 import numpy as np
 import pandas as pd
 from libsonata import ElementReportReader, SonataError

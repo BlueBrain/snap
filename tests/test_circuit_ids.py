@@ -5,10 +5,8 @@ import pandas.testing as pdt
 import numpy.testing as npt
 import numpy as np
 
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
+from pathlib import Path
+
 
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.circuit_ids as test_module
