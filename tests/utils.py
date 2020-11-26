@@ -8,10 +8,8 @@ import mock
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
 
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
+from pathlib import Path
+
 
 from bluepysnap.nodes import Nodes, NodeStorage
 

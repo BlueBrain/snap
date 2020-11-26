@@ -2,10 +2,7 @@ try:
     from unittest.mock import patch
 except ImportError:
     from mock import patch
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
+
 import h5py
 
 import six
@@ -20,8 +17,7 @@ from utils import TEST_DATA_DIR, copy_circuit, edit_config
 
 def test_error_comparison():
     err = Error(Error.WARNING, 'hello')
-    # we don't use `err == 'hello'` because of py27 compatibility
-    assert (err == 'hello') is False
+    assert err != 'hello'
 
 
 def test_empty_group_size():
@@ -310,7 +306,7 @@ def test_no_morph_library_files():
             grp = h5f['nodes/default/0']
             str_dtype = h5py.special_dtype(vlen=str)
             grp.create_dataset('@library/morphology', shape=(1,), dtype=str_dtype)
-            grp['@library/morphology'][:] = u'noname'
+            grp['@library/morphology'][:] = 'noname'
             shape = grp['morphology'].shape
             del grp['morphology']
             grp.create_dataset('morphology', shape=shape, fillvalue=0)
@@ -341,7 +337,7 @@ def test_no_template_library_files():
             grp = h5f['nodes/default/0']
             str_dtype = h5py.special_dtype(vlen=str)
             grp.create_dataset('@library/model_template', shape=(1,), dtype=str_dtype)
-            grp['@library/model_template'][:] = u'hoc:noname'
+            grp['@library/model_template'][:] = 'hoc:noname'
             shape = grp['model_template'].shape
             del grp['model_template']
             grp.create_dataset('model_template', shape=shape, fillvalue=0)

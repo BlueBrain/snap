@@ -217,7 +217,7 @@ class EdgePopulation(object):
                     result[p] = self._get_property(p, selection)
         else:
             if len(edge_ids) == 0:
-                result = pd.Series(name=properties)
+                result = pd.Series(name=properties, dtype=np.float64)
             else:
                 result = pd.Series(
                     self._get_property(properties, selection),

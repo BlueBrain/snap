@@ -49,10 +49,7 @@ class MorphHelper(object):
             raise BluepySnapError("Node population does not contain biophysical nodes.")
         self._load = nm.load_neuron
         if MORPH_CACHE_SIZE is not None:
-            try:
-                from functools import lru_cache
-            except ImportError:  # pragma: nocover
-                from functools32 import lru_cache
+            from functools import lru_cache
             self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
 
     def _is_biophysical(self, node_id):

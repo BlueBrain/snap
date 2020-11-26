@@ -17,9 +17,8 @@
 
 """Miscellaneous utilities."""
 
-import collections
+from collections.abc import Iterable
 import json
-import itertools
 
 import numpy as np
 import six
@@ -37,8 +36,7 @@ def load_json(filepath):
 
 def is_iterable(v):
     """Check if `v` is any iterable (strings are considered scalar and CircuitNodeId also)."""
-    return isinstance(v, collections.Iterable) and not isinstance(v,
-                                                                  (six.string_types, CircuitNodeId))
+    return isinstance(v, Iterable) and not isinstance(v, (six.string_types, CircuitNodeId))
 
 
 def ensure_list(v):
@@ -47,31 +45,6 @@ def ensure_list(v):
         return list(v)
     else:
         return [v]
-
-
-def roundrobin(*iterables):
-    """Roundrobin function.
-
-    roundrobin('ABC', 'D', 'EF') --> A D E B F C.
-    From: https://docs.python.org/3.6/library/itertools.html
-    """
-    num_active = len(iterables)
-
-    # cannot use six.next. Need the function and not the call and cannot use ternary operator
-    if six.PY3:  # pragma: no cover
-        next_wrapper = lambda x: x.__next__
-    else:  # pragma: no cover
-        next_wrapper = lambda x: x.next
-
-    nexts = itertools.cycle(next_wrapper(iter(it)) for it in iterables)
-    while num_active:
-        try:
-            for next_ in nexts:
-                yield next_.__call__()
-        except StopIteration:
-            # Remove the iterator we just exhausted from the cycle.
-            num_active -= 1
-            nexts = itertools.cycle(itertools.islice(nexts, num_active))
 
 
 def add_dynamic_prefix(properties):

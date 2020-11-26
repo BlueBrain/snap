@@ -204,7 +204,7 @@ class TestEdgePopulation(object):
         properties = [Synapse.PRE_GID, Synapse.AXONAL_DELAY]
         pdt.assert_series_equal(
             self.test_obj.properties([], properties[0]),
-            pd.Series(name=properties[0])
+            pd.Series(name=properties[0], dtype=np.float64)
         )
         pdt.assert_frame_equal(
             self.test_obj.properties([], properties),

@@ -6,7 +6,7 @@ from numpy import dtype
 
 import pandas as pd
 import pandas.testing as pdt
-from pandas.api.types import is_categorical
+from pandas.api.types import is_categorical_dtype
 
 import pytest
 import libsonata
@@ -663,7 +663,7 @@ class TestNodePopulation:
             "default")
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
-        assert is_categorical(res["categorical"])
+        assert is_categorical_dtype(res["categorical"])
         assert res["categorical"].tolist() == ['A', 'A', 'B', 'A', 'A', 'A', 'A']
         assert res["categorical"].cat.categories.tolist() == ['A', 'B', 'C']
         assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0, 0, 0, 0]
@@ -677,7 +677,7 @@ class TestNodePopulation:
             "default")
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
-        assert not is_categorical(res["categorical"])
+        assert not is_categorical_dtype(res["categorical"])
         assert res["categorical"].tolist() == ['A', 'A', 'B', 'A']
         assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
         assert res["int"].tolist() == [0, 0, 1, 0]

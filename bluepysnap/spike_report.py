@@ -18,7 +18,7 @@
 
 from contextlib import contextmanager
 
-from pathlib2 import Path
+from pathlib import Path
 from cached_property import cached_property
 import pandas as pd
 import numpy as np
@@ -104,7 +104,8 @@ class PopulationSpikeReport(object):
             raise BluepySnapError(e)
 
         if not res:
-            return pd.Series(data=[], index=pd.Index([], name="times"), name=series_name)
+            return pd.Series(data=[], index=pd.Index([], name="times"),
+                             name=series_name, dtype=np.float64)
 
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":

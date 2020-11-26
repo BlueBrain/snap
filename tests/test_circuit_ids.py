@@ -5,10 +5,8 @@ import pandas.testing as pdt
 import numpy.testing as npt
 import numpy as np
 
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
+from pathlib import Path
+
 
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.circuit_ids as test_module
@@ -260,12 +258,8 @@ class TestCircuitNodeIds:
             ('a', 2)],
            names=['population', 'node_ids'])"""
 
-        expected_py2 = """CircuitNodeIds(levels=[[u'a', u'b'], [0, 1, 2]],
-           codes=[[0, 0, 1, 0], [0, 1, 0, 2]],
-           names=[u'population', u'node_ids'])"""
-
-        assert ((tested == expected) or (tested == expected_py2))
-        assert self.test_obj_sorted.__repr__() == self.test_obj_sorted.__str__()
+        assert tested == expected
+        assert repr(self.test_obj_sorted) == str(self.test_obj_sorted)
 
     def test_roundtrip(self):
         with setup_tempdir() as tmp_dir:
