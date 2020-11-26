@@ -259,7 +259,7 @@ class TestCircuitNodeIds:
            names=['population', 'node_ids'])"""
 
         assert tested == expected
-        assert self.test_obj_sorted.__repr__() == self.test_obj_sorted.__str__()
+        assert repr(self.test_obj_sorted) == str(self.test_obj_sorted)
 
     def test_roundtrip(self):
         with setup_tempdir() as tmp_dir:

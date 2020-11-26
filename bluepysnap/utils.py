@@ -19,7 +19,6 @@
 
 from collections.abc import Iterable
 import json
-import itertools
 
 import numpy as np
 import six
@@ -46,26 +45,6 @@ def ensure_list(v):
         return list(v)
     else:
         return [v]
-
-
-def roundrobin(*iterables):
-    """Roundrobin function.
-
-    roundrobin('ABC', 'D', 'EF') --> A D E B F C.
-    From: https://docs.python.org/3.6/library/itertools.html
-    """
-    num_active = len(iterables)
-
-    # cannot use six.next. Need the function and not the call and cannot use ternary operator
-    nexts = itertools.cycle(iter(it).__next__ for it in iterables)
-    while num_active:
-        try:
-            for next_ in nexts:
-                yield next_()
-        except StopIteration:
-            # Remove the iterator we just exhausted from the cycle.
-            num_active -= 1
-            nexts = itertools.cycle(itertools.islice(nexts, num_active))
 
 
 def add_dynamic_prefix(properties):

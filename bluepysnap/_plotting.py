@@ -18,10 +18,10 @@
 import logging
 import numpy as np
 import pandas as pd
+from more_itertools import roundrobin
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-from bluepysnap.utils import roundrobin
 
 
 L = logging.getLogger(__name__)
