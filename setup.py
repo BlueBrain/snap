@@ -44,7 +44,7 @@ setup(
         'cached_property>=1.0',
         'h5py>=3.0.1',
         'libsonata>=0.1.6',
-        'neurom>=1.3',
+        'neurom>=1.6',
         'numpy>=1.8',
         'pandas>=1.0.0',
         'six>=1.0',
