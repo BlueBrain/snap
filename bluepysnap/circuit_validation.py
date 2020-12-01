@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import click
 import h5py
-import six
 
 from bluepysnap import BluepySnapError
 from bluepysnap.config import Config
@@ -453,7 +452,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
     """
     if 'node_population' not in nodes_ds.attrs:
         return [fatal('Missing "node_population" attribute for "{}"'.format(nodes_ds.name))]
-    node_population_name = six.ensure_str(nodes_ds.attrs['node_population'])
+    node_population_name = nodes_ds.attrs['node_population']
     nodes_dict = _find_nodes_population(node_population_name, nodes)
     if not nodes_dict:
         return [fatal('No node population for "{}"'.format(nodes_ds.name))]

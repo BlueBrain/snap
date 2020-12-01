@@ -24,7 +24,6 @@ import inspect
 import libsonata
 import numpy as np
 import pandas as pd
-import six
 from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
@@ -144,7 +143,7 @@ class EdgePopulation(object):
 
     @property
     def _topology_property_names(self):
-        return {six.text_type(Edge.SOURCE_NODE_ID), six.text_type(Edge.TARGET_NODE_ID)}
+        return {Edge.SOURCE_NODE_ID, Edge.TARGET_NODE_ID}
 
     @property
     def property_names(self):
