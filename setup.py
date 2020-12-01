@@ -47,7 +47,6 @@ setup(
         'neurom>=1.6',
         'numpy>=1.8',
         'pandas>=1.0.0',
-        'six>=1.0',
         'click>=7.0',
         'more-itertools>=8.2.0'
     ],

@@ -20,8 +20,6 @@
 from pathlib import Path
 from collections.abc import Mapping, Iterable
 
-import six
-
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
@@ -55,8 +53,8 @@ class Config(object):
     def _resolve_manifest(manifest, configdir):
         result = manifest.copy()
 
-        for k, v in six.iteritems(result):
-            if not isinstance(v, six.string_types):
+        for k, v in result.items():
+            if not isinstance(v, str):
                 raise BluepySnapError('{} should be a string value.'.format(v))
             if not Path(v).is_absolute() and not v.startswith("$"):
                 if configdir is None:
@@ -65,7 +63,7 @@ class Config(object):
 
         while True:
             update = False
-            for k, v in six.iteritems(result):
+            for k, v in result.items():
                 if v.count('$') > 1:
                     raise BluepySnapError(
                         '{} is not a valid anchor : contains more than one sub anchor.'.format(k))
@@ -107,9 +105,9 @@ class Config(object):
     def _resolve(self, value):
         if isinstance(value, Mapping):
             return {
-                k: self._resolve(v) for k, v in six.iteritems(value)
+                k: self._resolve(v) for k, v in value.items()
             }
-        elif isinstance(value, six.string_types):
+        elif isinstance(value, str):
             return self._resolve_string(value)
         elif isinstance(value, Iterable):
             return [self._resolve(v) for v in value]

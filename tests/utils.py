@@ -3,7 +3,6 @@
 import shutil
 import tempfile
 import json
-import six
 import mock
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
@@ -73,7 +72,7 @@ def edit_config(config_path):
         yield config
     finally:
         with config_path.open('w') as f:
-            f.write(six.u(json.dumps(config)))
+            f.write(json.dumps(config))
 
 
 def create_node_population(filepath, pop_name, circuit=None, node_sets=None):

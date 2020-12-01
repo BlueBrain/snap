@@ -1,5 +1,4 @@
 import h5py
-import six
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -36,9 +35,8 @@ class TestMorphHelper(object):
                 del h5f['nodes/default/0/model_type']
                 h5f.create_dataset('nodes/default/0/model_type',
                                    data=np.zeros_like(data, dtype=int))
-                dt = h5py.special_dtype(vlen=six.text_type)
                 h5f.create_dataset('nodes/default/0/@library/model_type',
-                                   data=np.array(["biophysical", ], dtype=object), dtype=dt)
+                                   data=np.array(["biophysical", ], dtype=h5py.string_dtype()))
 
             circuit = Circuit(str(config_copy_path))
             assert isinstance(circuit.nodes['default'].morph,  test_module.MorphHelper)
@@ -53,9 +51,8 @@ class TestMorphHelper(object):
                 del h5f['nodes/default/0/model_type']
                 h5f.create_dataset('nodes/default/0/model_type',
                                    data=np.zeros_like(data, dtype=int))
-                dt = h5py.special_dtype(vlen=six.text_type)
                 h5f.create_dataset('nodes/default/0/@library/model_type',
-                                   data=np.array(["virtual", ], dtype=object), dtype=dt)
+                                   data=np.array(["virtual", ], dtype=h5py.string_dtype()))
 
             with pytest.raises(BluepySnapError):
                 circuit = Circuit(str(config_copy_path))

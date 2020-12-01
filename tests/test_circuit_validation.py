@@ -5,7 +5,6 @@ except ImportError:
 
 import h5py
 
-import six
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import Error, BbpError
@@ -228,9 +227,8 @@ def test_ok_bio_model_type_in_library():
             data = h5f['nodes/default/0/model_type'][:]
             del h5f['nodes/default/0/model_type']
             h5f.create_dataset('nodes/default/0/model_type', data=np.zeros_like(data, dtype=int))
-            dt = h5py.special_dtype(vlen=six.text_type)
             h5f.create_dataset('nodes/default/0/@library/model_type',
-                               data=np.array(["biophysical", ], dtype=object), dtype=dt)
+                               data=np.array(["biophysical", ], dtype=h5py.string_dtype()))
         errors = test_module.validate(str(config_copy_path))
         assert errors == set()
 

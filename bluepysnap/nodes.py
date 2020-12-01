@@ -23,7 +23,6 @@ from copy import deepcopy
 import libsonata
 import numpy as np
 import pandas as pd
-import six
 
 from cached_property import cached_property
 
@@ -315,7 +314,7 @@ class NodeStorage(object):
 def _complex_query(prop, query):
     # pylint: disable=assignment-from-no-return
     result = np.full(len(prop), True)
-    for key, value in six.iteritems(query):
+    for key, value in query.items():
         if key == '$regex':
             result = np.logical_and(result, prop.str.match(value + "\\Z"))
         else:
@@ -505,7 +504,7 @@ class NodePopulation(object):
             node_ids = queries.pop(NODE_ID_KEY, None)
         node_set = queries.pop(NODE_SET_KEY, None)
         if node_set is not None:
-            if not isinstance(node_set, six.string_types):
+            if not isinstance(node_set, str):
                 raise BluepySnapError("{} is not a valid node set name.".format(node_set))
             node_ids = node_ids if node_ids else self._data.index.values
             node_ids = np.intersect1d(node_ids, self.ids(node_set))
@@ -527,12 +526,12 @@ class NodePopulation(object):
             # Avoid fail and/or processing time if wrong population or no nodes
             return mask
 
-        for prop, values in six.iteritems(queries):
+        for prop, values in queries.items():
             prop = self._data[prop]
             if np.issubdtype(prop.dtype.type, np.floating):
                 v1, v2 = values
                 prop_mask = np.logical_and(prop >= v1, prop <= v2)
-            elif isinstance(values, six.string_types) and values.startswith('regex:'):
+            elif isinstance(values, str) and values.startswith('regex:'):
                 prop_mask = _complex_query(prop, {'$regex': values[6:]})
             elif isinstance(values, Mapping):
                 prop_mask = _complex_query(prop, values)
@@ -638,7 +637,7 @@ class NodePopulation(object):
         """
         # pylint: disable=too-many-branches
         preserve_order = False
-        if isinstance(group, six.string_types):
+        if isinstance(group, str):
             group = self._get_node_set(group)
         elif isinstance(group, CircuitNodeIds):
             group = group.filter_population(self.name).get_ids()
@@ -710,7 +709,7 @@ class NodePopulation(object):
             result = result[properties]
 
         if group is not None:
-            if isinstance(group, six.integer_types + (np.integer,)):
+            if isinstance(group, (int, np.integer)):
                 self._check_id(group)
             elif isinstance(group, CircuitNodeId):
                 group = self.ids(group)[0]
@@ -796,7 +795,7 @@ class NodePopulation(object):
             return result.get(prop, np.zeros((result.shape[0],)))
 
         args = [_get_values(prop) for prop in props]
-        if isinstance(group, six.integer_types + (np.integer, CircuitNodeId)):
+        if isinstance(group, (int, np.integer, CircuitNodeId)):
             return trans(*args)[0]
         return pd.Series(trans(*args), index=result.index, name='orientation')
 
