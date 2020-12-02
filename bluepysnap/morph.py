@@ -28,7 +28,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.circuit_ids import CircuitNodeId
 
 
-class MorphHelper(object):
+class MorphHelper:
     """Collection of morphology-related methods."""
 
     def __init__(self, morph_dir, population):

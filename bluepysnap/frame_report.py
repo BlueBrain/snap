@@ -45,7 +45,7 @@ def _get_reader(reader_report, cls):
     return cls(path)
 
 
-class PopulationFrameReport(object):
+class PopulationFrameReport:
     """Access to PopulationFrameReport data."""
 
     def __init__(self, frame_report, population_name):
@@ -124,7 +124,7 @@ class PopulationFrameReport(object):
         return np.sort(np.asarray(self._frame_population.get_node_ids(), dtype=np.int64))
 
 
-class FilteredFrameReport(object):
+class FilteredFrameReport:
     """Access to filtered FrameReport data."""
 
     def __init__(self, frame_report, group=None, t_start=None, t_stop=None):
@@ -177,7 +177,7 @@ class FilteredFrameReport(object):
     trace = bluepysnap._plotting.frame_trace
 
 
-class FrameReport(object):
+class FrameReport:
     """Access to FrameReport data."""
 
     def __init__(self, simulation, report_name):

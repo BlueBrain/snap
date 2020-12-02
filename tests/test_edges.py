@@ -74,7 +74,7 @@ class TestEdgeStorage:
         assert pop is pop2
 
 
-class TestEdgePopulation(object):
+class TestEdgePopulation:
 
     @staticmethod
     def create_edge_population(filepath, pop_name):

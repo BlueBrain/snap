@@ -24,7 +24,7 @@ from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 
-class Config(object):
+class Config:
     """SONATA network config parser.
 
     See Also:

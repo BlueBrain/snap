@@ -37,7 +37,7 @@ def _collect_populations(partial_config, cls):
     return result
 
 
-class Circuit(object):
+class Circuit:
     """Access to circuit data."""
 
     def __init__(self, config):

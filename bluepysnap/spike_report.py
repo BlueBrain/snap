@@ -38,7 +38,7 @@ def _collect_spikes(spike_report):
             spike_report.population_names}
 
 
-class PopulationSpikeReport(object):
+class PopulationSpikeReport:
     """Access to PopulationSpikeReport data."""
 
     def __init__(self, spike_report, population_name):
@@ -122,7 +122,7 @@ class PopulationSpikeReport(object):
         return np.unique(self.get())
 
 
-class FilteredSpikeReport(object):
+class FilteredSpikeReport:
     """Access to filtered SpikeReport data."""
 
     def __init__(self, spike_report, group=None, t_start=None, t_stop=None):
@@ -174,7 +174,7 @@ class FilteredSpikeReport(object):
     firing_animation = bluepysnap._plotting.spikes_firing_animation
 
 
-class SpikeReport(object):
+class SpikeReport:
     """Access to SpikeReport data."""
 
     def __init__(self, simulation):

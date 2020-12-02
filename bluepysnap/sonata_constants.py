@@ -22,7 +22,7 @@ NODE_ID_KEY = "node_id"
 POPULATION_KEY = "population"
 
 
-class ConstContainer(object):
+class ConstContainer:
     """Constant Container for snap.
 
     Notes:

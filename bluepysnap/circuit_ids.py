@@ -28,7 +28,7 @@ from bluepysnap.exceptions import BluepySnapError
 CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
 
 
-class CircuitNodeIds(object):
+class CircuitNodeIds:
     """High performances CircuitNodeID container.
 
     This class aims at defining the global node ids for the circuit. The pandas.MultiIndex class

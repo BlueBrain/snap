@@ -13,7 +13,7 @@ from bluepysnap.config import Config
 MAX_MISSING_FILES_DISPLAY = 10
 
 
-class Error(object):
+class Error:
     """Error used for reporting of validation errors."""
     FATAL = 'FATAL'
     WARNING = 'WARNING'
