@@ -60,7 +60,7 @@ def _collect_frame_reports(sim):
     return res
 
 
-class Simulation(object):
+class Simulation:
     """Access to Simulation data."""
 
     def __init__(self, config):

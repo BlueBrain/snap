@@ -16,7 +16,7 @@ from bluepysnap.exceptions import BluepySnapError
 from utils import TEST_DATA_DIR, copy_circuit, edit_config, create_node_population
 
 
-class TestMorphHelper(object):
+class TestMorphHelper:
 
     def setup(self):
         self.nodes = create_node_population(

@@ -36,7 +36,7 @@ from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 NODE_SET_KEY = "$node_set"
 
 
-class Nodes(object):
+class Nodes:
     """The top level Nodes accessor."""
 
     def __init__(self, circuit):
@@ -237,7 +237,7 @@ class Nodes(object):
         return res.sort_index()
 
 
-class NodeStorage(object):
+class NodeStorage:
     """Node storage access."""
 
     def __init__(self, config, circuit):
@@ -322,7 +322,7 @@ def _complex_query(prop, query):
     return result
 
 
-class NodePopulation(object):
+class NodePopulation:
     """Node population access."""
 
     def __init__(self, node_storage, population_name):

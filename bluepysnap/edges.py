@@ -31,7 +31,7 @@ from bluepysnap import utils
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 
 
-class EdgeStorage(object):
+class EdgeStorage:
     """Edge storage access."""
 
     def __init__(self, config, circuit):
@@ -93,7 +93,7 @@ def _estimate_range_size(func, node_ids, n=3):
     ])
 
 
-class EdgePopulation(object):
+class EdgePopulation:
     """Edge population access."""
 
     def __init__(self, edge_storage, population_name):
