@@ -9,3 +9,4 @@ Utilities
    bbp
    exceptions
    sonata_constants
+   circuit_ids

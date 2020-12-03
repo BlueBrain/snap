@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Circuit ids."""
+import abc
 from collections import namedtuple
 
 import numpy as np
@@ -23,21 +24,23 @@ import pandas as pd
 
 import bluepysnap.utils
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap._doctools import DocUpdater
 
 
 CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
+CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
 
 
-class CircuitNodeIds:
-    """High performances CircuitNodeID container.
+class CircuitIds(abc.ABC):
+    """High performances CircuitID container.
 
-    This class aims at defining the global node ids for the circuit. The pandas.MultiIndex class
-    is used as backend and can be accessed using CircuitNodeIds.index.
-    A global circuit node id is the combination of a population and a node ID inside this
+    This class aims at defining the global ids for the circuit. The pandas.MultiIndex class
+    is used as backend and can be accessed using CircuitIds.index.
+    A global circuit node id is the combination of a population and an ID inside this
     population.
     """
     def __init__(self, index, sort_index=True):
-        """Return an instance of CircuitNodeIds.
+        """Return an instance of CircuitIds.
 
         Args:
             index (pandas.MultiIndex): a multi index from pandas with the population names as
@@ -46,11 +49,15 @@ class CircuitNodeIds:
         """
         if not isinstance(index, pd.MultiIndex):
             raise BluepySnapError("index must be a pandas.MultiIndex object.")
-        index.names = ["population", "node_ids"]
         if sort_index:
             # best perf compared to sort_values. Sorted by population and ids.
             index = index.sortlevel()[0]
         self.index = index
+
+    @classmethod
+    def _instance(cls, index, sort_index=True):
+        """The instance returned by the functions."""
+        return cls(index, sort_index=sort_index)
 
     @classmethod
     def from_arrays(cls, populations, population_ids, sort_index=True):
@@ -64,7 +71,7 @@ class CircuitNodeIds:
                 user inputs is kept. Sorting the index can result in better performances.
 
         Returns:
-            CircuitNodeIds: a set of global node IDs created via the populations and the node IDs
+            CircuitIds: a set of global node IDs created via the populations and the node IDs
                 provided.
         """
         populations = np.asarray(populations)
@@ -90,10 +97,10 @@ class CircuitNodeIds:
             of ids.
 
         Returns:
-            CircuitNodeIds: a set of global node IDs created via the provided dictionary.
+            CircuitIds: a set of global node IDs created via the provided dictionary.
 
         Examples:
-            >>> CircuitNodeIds.from_dict({"pop1": [0,2,4], "pop2": [1,2,5]})
+            >>> CircuitIds.from_dict({"pop1": [0,2,4], "pop2": [1,2,5]})
         """
         populations = np.empty((0,), dtype=str)
         population_ids = np.empty((0,), dtype=np.int64)
@@ -114,11 +121,11 @@ class CircuitNodeIds:
                 user inputs is kept. Sorting the index can result in better performances.
 
         Returns:
-            CircuitNodeIds: a set of global node IDs created via the provided dictionary.
+            CircuitIds: a set of global node IDs created via the provided dictionary.
 
         Examples:
-            >>> CircuitNodeIds.from_tuples([("pop1", 0), ("pop1", 2), ("pop2", 0)])
-            >>> CircuitNodeIds.from_tuples([CircuitNodeId("pop1", 0), CircuitNodeId("pop1", 2),
+            >>> CircuitIds.from_tuples([("pop1", 0), ("pop1", 2), ("pop2", 0)])
+            >>> CircuitIds.from_tuples([CircuitNodeId("pop1", 0), CircuitNodeId("pop1", 2),
             >>>                             CircuitNodeId("pop2", 0)])
         """
         return cls(pd.MultiIndex.from_tuples(circuit_id_list), sort_index=sort_index)
@@ -145,10 +152,10 @@ class CircuitNodeIds:
             inplace (bool): if set to True. Do the transformation inplace.
 
         Returns:
-            CircuitNodeIds : a filtered CircuitNodeIds containing only IDs for the given population.
+            CircuitIds : a filtered CircuitIds containing only IDs for the given population.
         """
         if not inplace:
-            return CircuitNodeIds(self.index[self._locate(population)], sort_index=False)
+            return self._instance(self.index[self._locate(population)], sort_index=False)
         self.index = self.index[self._locate(population)]
         return None
 
@@ -165,33 +172,33 @@ class CircuitNodeIds:
         return self.index.get_level_values(1).to_numpy()
 
     def copy(self):
-        """Copy a CircuitNodeIds."""
-        return CircuitNodeIds(self.index.copy())
+        """Copy a CircuitIds."""
+        return self._instance(self.index.copy())
 
     def sort(self, inplace=False):
-        """Sort the CircuitNodeIds by population and then by ids.
+        """Sort the CircuitIds by population and then by ids.
 
         Args:
             inplace (bool): if set to True. Do the transformation inplace.
 
         Notes:
-            sorting a CircuitNodeIds will gives better perf for the population extraction and the
+            sorting a CircuitIds will gives better perf for the population extraction and the
             data extraction from a sorted dataframe.
         """
         if not inplace:
-            return CircuitNodeIds(self.index, sort_index=True)
+            return self._instance(self.index, sort_index=True)
         self.index = self.index.sortlevel()[0]
         return None
 
     def append(self, other, inplace=False):
-        """Append a CircuitNodeIds to the current one.
+        """Append a CircuitIds to the current one.
 
         Args:
-            other (CircuitNodeIds): the other CircuitNodeIds to append to the current one.
+            other (CircuitIds): the other CircuitIds to append to the current one.
             inplace (bool): if set to True. Do the transformation inplace.
         """
         if not inplace:
-            return CircuitNodeIds(self.index.append(other.index))
+            return self._instance(self.index.append(other.index))
         self.index = self.index.append(other.index)
         return None
 
@@ -204,66 +211,120 @@ class CircuitNodeIds:
         return None
 
     def sample(self, sample_size, inplace=False):
-        """Sample a CircuitNodeIds.
+        """Sample a CircuitIds.
 
         Notes:
             this function takes randomly ``sample_size`` values of a circuit node ids.
 
         Args:
             sample_size (int): the size of the sample. If the size of the sample is greater than
-                the size of the CircuitNodeIds then all ids are taken and shuffled.
+                the size of the CircuitIds then all ids are taken and shuffled.
             inplace (bool): if set to True. Do the transformation inplace.
         """
         indices = np.random.choice(len(self), size=min(sample_size, len(self)))
         return self._slice_index(indices, inplace=inplace)
 
     def limit(self, limit_size, inplace=False):
-        """Limit the size of a CircuitNodeIds.
+        """Limit the size of a CircuitIds.
 
         Notes:
             this function takes the first ``limit_size`` values of a circuit node ids.
 
         Args:
             limit_size (int): the size of the sample. If the size of the sample is greater than
-                the size of the CircuitNodeIds then all ids are kept.
+                the size of the CircuitIds then all ids are kept.
             inplace (bool): if set to True. Do the transformation inplace.
         """
         return self._slice_index(slice(0, limit_size), inplace=inplace)
 
     def to_csv(self, filepath):
-        """Save CircuitNodeIds to csv format."""
+        """Save CircuitIds to csv format."""
         self.index.to_frame(index=False).to_csv(filepath, index=False)
 
     @classmethod
     def from_csv(cls, filepath):
-        """Load CircuitNodeIds from csv."""
+        """Load CircuitIds from csv."""
         return cls(pd.MultiIndex.from_frame(pd.read_csv(filepath)))
 
     def tolist(self):
-        """Convert the CircuitNodeIds to a list of tuples."""
+        """Convert the CircuitIds to a list of tuples."""
         return self.index.tolist()
 
+    def __call__(self, *args, **kwargs):
+        """Allows to use the CircuitIds as normal indices in a DataFrame."""
+        return self.index
+
+    def __len__(self):
+        """Return the length of the CircuitIds."""
+        return len(self.index)
+
     def __repr__(self):
-        """Correct repr of the CircuitNodeIds."""
-        return repr(self.index).replace("MultiIndex", "CircuitNodeIds", 1)
+        """Correct repr of the CircuitIds."""
+        return repr(self.index).replace("MultiIndex", self.__class__.__name__, 1)
 
     def __eq__(self, other):
-        """Equality for the CircuitNodeIds."""
+        """Equality for the CircuitIds."""
         if self is other:
             return True
-        if not isinstance(other, CircuitNodeIds):
+        if not isinstance(other, type(self)):
             return False
         return self.index.equals(other.index)
 
-    def __len__(self):
-        """Return the length of the CircuitNodeIds."""
-        return len(self.index)
+    @abc.abstractmethod
+    def __iter__(self):
+        """Iterator on the CircuitIds."""
+
+    @abc.abstractmethod
+    def __getitem__(self, item):
+        """Getter on the CircuitIds."""
+
+
+class CircuitNodeIds(CircuitIds):
+
+    def __init__(self, index, sort_index=True):
+        """Return an instance of CircuitNodeIds.
+
+        Args:
+            index (pandas.MultiIndex): a multi index from pandas with the population names as
+                first level and node IDs as the second level.
+            sort_index (bool): if true sort the index per population and then node IDs.
+        """
+        super().__init__(index, sort_index)
+        self.index.names = ["population", "node_ids"]
 
     def __iter__(self):
         """Iterator on the CircuitNodeIds."""
         for index in self.index:
             yield CircuitNodeId(*index)
 
-    def __call__(self, *args, **kwargs):
-        """Allows to use the CircuitNodeIds as normal indices in a DataFrame."""
-        return self.index
+    def __getitem__(self, item):
+        """Getter on the CircuitNodeIds."""
+        return CircuitNodeId(*self.index[item])
+
+
+class CircuitEdgeIds(CircuitIds):
+
+    def __init__(self, index, sort_index=True):
+        """Return an instance of CircuitEdgeIds.
+
+        Args:
+            index (pandas.MultiIndex): a multi index from pandas with the population names as
+                first level and node IDs as the second level.
+            sort_index (bool): if true sort the index per population and then node IDs.
+        """
+        super().__init__(index, sort_index)
+        self.index.names = ["population", "edge_ids"]
+
+    def __iter__(self):
+        """Iterator on the CircuitEdgeIds."""
+        for index in self.index:
+            yield CircuitEdgeId(*index)
+
+    def __getitem__(self, item):
+        """Getter on the CircuitEdgeIds."""
+        return CircuitEdgeId(*self.index[item])
+
+
+# TODO: find a way to propagate all the class methods to the sphinx doc
+DocUpdater(CircuitNodeIds).replace_all("CircuitIds", "CircuitNodeIds")
+DocUpdater(CircuitEdgeIds).replace_all("CircuitIds", "CircuitEdgeIds")
