@@ -79,6 +79,8 @@ class TestCircuitNodeIds:
         with pytest.raises(BluepySnapError):
             self.ids_cls(1)
 
+        assert isinstance(self.test_obj_sorted, self.ids_cls)
+
     def test_from_arrays(self):
         tested = self.ids_cls.from_arrays(['a', 'b'], [0, 1])
         pdt.assert_index_equal(tested.index, self._circuit_ids(['a', 'b'], [0, 1]))

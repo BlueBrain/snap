@@ -36,6 +36,9 @@ def _copy_func(f):
     return g
 
 
+# better than decorator to do that due to the returned type being correct with this
+# with wrapper <class 'bluepysnap._doctools.DocSubstitutionDecorator.__call__.<locals>.Wrapped'>
+# works well with Sphinx also
 class DocSubstitutionMeta(type):
     """Tool to update an inheritate class documentation."""
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
