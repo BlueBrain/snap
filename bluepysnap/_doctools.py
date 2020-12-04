@@ -16,6 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Module containing tools related to the documentation and docstrings."""
 import inspect
+import types
+import functools
 
 
 def _word_swapper(doc, source_word, target_word):
@@ -25,17 +27,28 @@ def _word_swapper(doc, source_word, target_word):
     return doc.replace(source_word, target_word)
 
 
-class DocUpdater:
-    """Tool to update a class documentation."""
-    def __init__(self, cls):
-        """Return an instance of DocUpdater.
+def _copy_func(f):
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__, argdefs=f.__defaults__,
+                           closure=f.__closure__)
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return g
 
-        Args:
-            cls (class): the class containing the doc string you want to update.
-        """
-        self.cls = cls
 
-    def replace_all(self, source_word, target_word):
-        """Replace source_word with target_word in all method docstrings."""
-        for fun_name, fun_value in inspect.getmembers(self.cls, predicate=inspect.isfunction):
-            fun_value.__doc__ = _word_swapper(fun_value.__doc__, source_word, target_word)
+class DocSubstitutionMeta(type):
+    """Tool to update an inheritate class documentation."""
+    def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
+        for parent in parents:
+            for fun_name, fun_value in inspect.getmembers(parent, predicate=inspect.isfunction):
+                # skip special methods
+                if fun_name.startswith("__"):
+                    continue
+
+                changed_fun = _copy_func(fun_value)
+                changed_fun.__doc__ = _word_swapper(changed_fun.__doc__, source_word, target_word)
+                attrs[fun_name] = changed_fun
+
+        # create the class
+        obj = super(DocSubstitutionMeta, mcs).__new__(mcs, name, parents, attrs)
+        return obj

@@ -24,14 +24,14 @@ import pandas as pd
 
 import bluepysnap.utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap._doctools import DocUpdater
+from bluepysnap._doctools import DocSubstitutionMeta
 
 
 CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
 CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
 
 
-class CircuitIds(abc.ABC):
+class CircuitIds:
     """High performances CircuitID container.
 
     This class aims at defining the global ids for the circuit. The pandas.MultiIndex class
@@ -39,6 +39,10 @@ class CircuitIds(abc.ABC):
     A global circuit node id is the combination of a population and an ID inside this
     population.
     """
+
+    def __new__(cls, index, sort_index=True):
+        return object.__new__(cls)
+
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitIds.
 
@@ -270,16 +274,16 @@ class CircuitIds(abc.ABC):
             return False
         return self.index.equals(other.index)
 
-    @abc.abstractmethod
     def __iter__(self):
         """Iterator on the CircuitIds."""
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def __getitem__(self, item):
         """Getter on the CircuitIds."""
+        raise NotImplementedError
 
 
-class CircuitNodeIds(CircuitIds):
+class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta, source_word="CircuitIds", target_word="CircuitNodeIds"):
 
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitNodeIds.
@@ -302,7 +306,7 @@ class CircuitNodeIds(CircuitIds):
         return CircuitNodeId(*self.index[item])
 
 
-class CircuitEdgeIds(CircuitIds):
+class CircuitEdgeIds(CircuitIds, metaclass=DocSubstitutionMeta, source_word="CircuitIds", target_word="CircuitEdgeIds"):
 
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitEdgeIds.
@@ -323,8 +327,3 @@ class CircuitEdgeIds(CircuitIds):
     def __getitem__(self, item):
         """Getter on the CircuitEdgeIds."""
         return CircuitEdgeId(*self.index[item])
-
-
-# TODO: find a way to propagate all the class methods to the sphinx doc
-DocUpdater(CircuitNodeIds).replace_all("CircuitIds", "CircuitNodeIds")
-DocUpdater(CircuitEdgeIds).replace_all("CircuitIds", "CircuitEdgeIds")
