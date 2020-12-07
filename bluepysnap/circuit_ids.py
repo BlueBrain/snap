@@ -117,10 +117,10 @@ class CircuitIds:
 
     @classmethod
     def from_tuples(cls, circuit_id_list, sort_index=True):
-        """Create a set of ids using a list of CircuitNodeId or tuples as input.
+        """Create a set of ids using a list of CircuitId or tuples as input.
 
         Args:
-            circuit_id_list (list): a list of CircuitNodeId or list of tuples.
+            circuit_id_list (list): a list of CircuitId or list of tuples.
             sort_index (bool): will sort the index if set to True. Otherwise the ordering from the
                 user inputs is kept. Sorting the index can result in better performances.
 
@@ -129,8 +129,8 @@ class CircuitIds:
 
         Examples:
             >>> CircuitIds.from_tuples([("pop1", 0), ("pop1", 2), ("pop2", 0)])
-            >>> CircuitIds.from_tuples([CircuitNodeId("pop1", 0), CircuitNodeId("pop1", 2),
-            >>>                             CircuitNodeId("pop2", 0)])
+            >>> CircuitIds.from_tuples([CircuitId("pop1", 0), CircuitId("pop1", 2),
+            >>>                             CircuitId("pop2", 0)])
         """
         return cls(pd.MultiIndex.from_tuples(circuit_id_list), sort_index=sort_index)
 
@@ -241,6 +241,18 @@ class CircuitIds:
         """
         return self._slice_index(slice(0, limit_size), inplace=inplace)
 
+    def unique(self, inplace=False):
+        """Returns only unique CircuitIds.
+
+        Notes:
+            this function does not sort the ids
+        """
+        res = self if inplace else self.copy()
+        res.index = res.index.unique()
+        if not inplace:
+            return res
+        return None
+
     def to_csv(self, filepath):
         """Save CircuitIds to csv format."""
         self.index.to_frame(index=False).to_csv(filepath, index=False)
@@ -283,7 +295,8 @@ class CircuitIds:
         raise NotImplementedError
 
 
-class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta, source_word="CircuitIds", target_word="CircuitNodeIds"):
+class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
+                     source_word="CircuitIds", target_word="CircuitNodeIds"):
 
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitNodeIds.
@@ -306,7 +319,8 @@ class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta, source_word="Cir
         return CircuitNodeId(*self.index[item])
 
 
-class CircuitEdgeIds(CircuitIds, metaclass=DocSubstitutionMeta, source_word="CircuitIds", target_word="CircuitEdgeIds"):
+class CircuitEdgeIds(CircuitIds, metaclass=DocSubstitutionMeta,
+                     source_word="CircuitIds", target_word="CircuitEdgeIds"):
 
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitEdgeIds.

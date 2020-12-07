@@ -229,6 +229,11 @@ class TestCircuitNodeIds:
         assert len(tested) == 2
         assert tested == self.ids_cls(self._circuit_ids(['a', 'a'], [0, 1]))
 
+    def test_unique(self):
+        tested = self.ids_cls.from_dict({"a": [0, 0, 1], "b": [1, 2, 2]}).unique()
+        expected = self.ids_cls.from_dict({"a": [0, 1], "b": [1, 2]})
+        assert tested == expected
+
     def test_tolist(self):
         expected = [('a', 0), ('a', 1), ('b', 0), ('a', 2)]
         assert self.test_obj_unsorted.tolist() == expected
