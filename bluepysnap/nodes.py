@@ -653,6 +653,7 @@ class NodePopulation:
             preserve_order = True
         else:
             result = utils.ensure_list(group)
+            # test if first value is a CircuitNodeId all values are all CircuitNodeId
             if isinstance(next(iter(result), None), CircuitNodeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
@@ -669,7 +670,7 @@ class NodePopulation:
         if limit is not None:
             result = result[:limit]
 
-        result = np.array(result, dtype=np.int64)
+        result = np.asarray(result, dtype=np.int64)
         if preserve_order:
             return result
         else:

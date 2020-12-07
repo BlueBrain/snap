@@ -27,8 +27,222 @@ import pandas as pd
 from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap import utils
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
+from bluepysnap import utils
+
+
+class Edges:
+    """The top level Edges accessor."""
+
+    def __init__(self, circuit):
+        """Initialize the top level Edges accessor."""
+        self._circuit = circuit
+        self._config = self._circuit.config['networks']['edges']
+        self._populations = self._get_populations()
+
+    def _get_populations(self):
+        """Collect the different EdgePopulation."""
+        res = {}
+        for file_config in self._config:
+            storage = EdgeStorage(file_config, self._circuit)
+            for population in storage.population_names:  # pylint: disable=not-an-iterable
+                if population in res:
+                    raise BluepySnapError("Duplicated edge population: '%s'" % population)
+                res[population] = storage.population(population)
+        return res
+
+    @cached_property
+    def population_names(self):
+        """Returns all the population names from the Circuit."""
+        return sorted(self._populations)
+
+    @cached_property
+    def property_dtypes(self):
+        """Returns all the property dtypes for the Circuit."""
+
+        def _update(d, index, value):
+            if index not in d:
+                d[index] = value
+            elif d[index] != value:
+                raise BluepySnapError("Same property with different "
+                                      "dtype. {}: {}!= {}".format(index, value, d[index]))
+
+        res = dict()
+        for pop in self.populations():
+            for varname, dtype in pop.property_dtypes.iteritems():
+                _update(res, varname, dtype)
+        return pd.Series(res)
+
+    def keys(self):
+        """Returns iterator on the population names.
+
+        Made to simulate the behavior of a dict.keys().
+        """
+        for name in self.population_names:
+            yield name
+
+    def values(self):
+        """Returns iterator on the EdgePopulations.
+
+        Made to simulate the behavior of a dict.values().
+        """
+        for name in self.population_names:
+            yield self[name]
+
+    def items(self):
+        """Returns iterator on the tuples (population name, EdgePopulations).
+
+        Made to simulate the behavior of a dict.items().
+        """
+        for name in self.population_names:
+            yield name, self[name]
+
+    # helper renaming
+    names = keys
+    populations = values
+
+    def __getitem__(self, population_name):
+        """Access the EdgePopulation corresponding to the population 'population_name'."""
+        try:
+            return self._populations[population_name]
+        except KeyError:
+            raise BluepySnapError("{} not a node population.".format(population_name))
+
+    def __iter__(self):
+        """Allows iteration over the different EdgePopulation."""
+        return iter(self.names())
+
+    @cached_property
+    def size(self):
+        """Total number of nodes inside the circuit."""
+        return sum(pop.size for pop in self.populations())
+
+    @cached_property
+    def property_names(self):
+        """Returns all the properties present inside the circuit."""
+        return set(prop for pop in self.populations() for prop in pop.property_names)
+
+    def ids(self, edge_ids):
+        """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
+
+        Args:
+            edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
+                returned depends on the type of the ``group`` argument:
+
+                - ``int``, ``CircuitEdgeId``: return a single node ID.
+                - ``CircuitEdgeIds`` return IDs of edges in an array.
+                - ``sequence``: return IDs of edges in an array.
+        Returns:
+            CircuitEdgeId: returns a CircuitEdgeId containing all the edge IDs and the
+                corresponding populations. For performance reasons we do not test if the edge ids
+                are present or not in the circuit.
+        """
+        if isinstance(edge_ids, CircuitEdgeIds):
+            diff = np.setdiff1d(edge_ids.get_populations(unique=True), self.population_names)
+            if diff.size != 0:
+                raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
+
+        ids = np.empty((0,), dtype=np.int64)
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        populations = np.empty((0,), dtype=str_type)
+        for name, pop in self.items():
+            pop_ids = pop.ids(edge_ids)
+            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            ids = np.concatenate([ids, pop_ids])
+            populations = np.concatenate([populations, pops])
+        return CircuitEdgeIds.from_arrays(populations, ids)
+
+    def properties(self, edge_ids, properties):
+        """Edge properties as pandas DataFrame.
+
+        Args:
+            edge_ids (array-like): array-like of edge IDs
+            properties (str/list): an edge property name or a list of edge property names
+
+        Returns:
+            pandas.Series/pandas.DataFrame:
+                A pandas Series indexed by edge IDs if ``properties`` is scalar.
+                A pandas DataFrame indexed by edge IDs if ``properties`` is list.
+
+        Notes:
+            The EdgePopulation.property_names function will give you all the usable properties
+            for the `properties` argument.
+        """
+        ids = self.ids(edge_ids)
+        if properties is None:
+            properties = self.property_names
+        properties = utils.ensure_list(properties)
+
+        unknown_props = set(properties) - self.property_names
+        if unknown_props:
+            raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
+
+        res = pd.DataFrame(index=ids.index, columns=properties)
+        for name, pop in self.items():
+            global_pop_ids = ids.filter_population(name)
+            pop_ids = global_pop_ids.get_ids()
+            pop_properties = set(properties) & pop.property_names
+            # indices from EdgePopulation and Edge properties functions are different so I cannot
+            # use a dataframe equal directly and properties have different types so cannot use a
+            # multi dim numpy array
+            for prop in pop_properties:
+                res.loc[global_pop_ids.index, prop] = pop.properties(pop_ids, prop).to_numpy()
+        return res.sort_index()
+
+    def afferent_nodes(self, target, unique=True):
+        """Get afferent node IDs for given target ``node_id``.
+
+        Notes:
+            Afferent nodes are nodes projecting an outgoing edge to one of the ``target`` node.
+
+        Args:
+            target (CircuitNodeIds/int/sequence/str/mapping/None): the target you want to resolve
+            and use as target nodes.
+            unique (bool): If ``True``, return only unique afferent node IDs.
+
+        Returns:
+            numpy.ndarray: Afferent node IDs for all the targets.
+        """
+        ids = np.empty((0,), dtype=np.int64)
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        populations = np.empty((0,), dtype=str_type)
+        for name, pop in self.items():
+            pop_ids = pop.afferent_nodes(target)
+            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            ids = np.concatenate([ids, pop_ids])
+            populations = np.concatenate([populations, pops])
+        result = CircuitEdgeIds.from_arrays(populations, ids)
+        if unique:
+            result.unique(inplace=True)
+        return result
+
+    def efferent_nodes(self, source, unique=True):
+        """Get efferent node IDs for given source ``node_id``.
+
+        Notes:
+            Efferent nodes are nodes receiving an incoming edge from one of the ``source`` node.
+
+        Args:
+            source (CircuitNodeIds/int/sequence/str/mapping/None): the source you want to resolve
+                and use as source nodes.
+            unique (bool): If ``True``, return only unique afferent node IDs.
+
+        Returns:
+            numpy.ndarray: Efferent node IDs for all the sources.
+        """
+        ids = np.empty((0,), dtype=np.int64)
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        populations = np.empty((0,), dtype=str_type)
+        for name, pop in self.items():
+            pop_ids = pop.efferent_nodes(source)
+            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            ids = np.concatenate([ids, pop_ids])
+            populations = np.concatenate([populations, pops])
+        result = CircuitEdgeIds.from_arrays(populations, ids)
+        if unique:
+            result.unique(inplace=True)
+        return result
 
 
 class EdgeStorage:
@@ -203,7 +417,6 @@ class EdgePopulation:
     def _get(self, selection, properties=None):
         """Get an array of edge IDs or DataFrame with edge properties."""
         edge_ids = selection.flatten()
-
         if properties is None:
             return edge_ids
 
@@ -213,7 +426,8 @@ class EdgePopulation:
             else:
                 result = pd.DataFrame(index=edge_ids)
                 for p in properties:
-                    result[p] = self._get_property(p, selection)
+                    dtype = self.property_dtypes[p]
+                    result[p] = self._get_property(p, selection).astype(dtype)
         else:
             if len(edge_ids) == 0:
                 result = pd.Series(name=properties, dtype=np.float64)
@@ -225,6 +439,35 @@ class EdgePopulation:
                 )
 
         return result
+
+    def ids(self, edge_ids):
+        """Edge IDs corresponding to edges ``edge_ids``.
+
+        Args:
+            edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
+                returned depends on the type of the ``group`` argument:
+
+                - ``int``, ``CircuitEdgeId``: return a single node ID.
+                - ``CircuitEdgeIds`` return IDs of edges in an array.
+                - ``sequence``: return IDs of edges in an array.
+        Returns:
+            numpy.array: A numpy array of IDs.
+        """
+        if isinstance(edge_ids, CircuitEdgeIds):
+            result = edge_ids.filter_population(self.name).get_ids()
+        elif isinstance(edge_ids, np.ndarray):
+            result = edge_ids
+        else:
+            result = utils.ensure_list(edge_ids)
+            # test if first value is a CircuitEdgeId all values are all CircuitEdgeId
+            if isinstance(next(iter(result), None), CircuitEdgeId):
+                try:
+                    result = [cid.id for cid in result if cid.population == self.name]
+                except AttributeError:
+                    raise BluepySnapError("All values from a list must be of type int or "
+                                          "CircuitEdgeId.")
+        return np.asarray(result)
+
 
     def properties(self, edge_ids, properties):
         """Edge properties as pandas DataFrame.
@@ -242,6 +485,7 @@ class EdgePopulation:
             The EdgePopulation.property_names function will give you all the usable properties
             for the `properties` argument.
         """
+        edge_ids = self.ids(edge_ids)
         selection = libsonata.Selection(edge_ids)
         return self._get(selection, properties)
 
