@@ -82,24 +82,21 @@ class Nodes:
 
         Made to simulate the behavior of a dict.keys().
         """
-        for name in self.population_names:
-            yield name
+        return (name for name in self.population_names)
 
     def values(self):
         """Returns iterator on the NodePopulations.
 
         Made to simulate the behavior of a dict.values().
         """
-        for name in self.population_names:
-            yield self[name]
+        return (self[name] for name in self.population_names)
 
     def items(self):
         """Returns iterator on the tuples (population name, NodePopulations).
 
         Made to simulate the behavior of a dict.items().
         """
-        for name in self.population_names:
-            yield name, self[name]
+        return ((name, self[name]) for name in self.population_names)
 
     # helper renaming
     names = keys

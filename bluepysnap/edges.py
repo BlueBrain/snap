@@ -27,7 +27,7 @@ import pandas as pd
 from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 from bluepysnap import utils
 
@@ -79,24 +79,21 @@ class Edges:
 
         Made to simulate the behavior of a dict.keys().
         """
-        for name in self.population_names:
-            yield name
+        return (name for name in self.population_names)
 
     def values(self):
         """Returns iterator on the EdgePopulations.
 
         Made to simulate the behavior of a dict.values().
         """
-        for name in self.population_names:
-            yield self[name]
+        return (self[name] for name in self.population_names)
 
     def items(self):
         """Returns iterator on the tuples (population name, EdgePopulations).
 
         Made to simulate the behavior of a dict.items().
         """
-        for name in self.population_names:
-            yield name, self[name]
+        return ((name, self[name]) for name in self.population_names)
 
     # helper renaming
     names = keys
@@ -134,7 +131,7 @@ class Edges:
                 - ``CircuitEdgeIds`` return IDs of edges in an array.
                 - ``sequence``: return IDs of edges in an array.
         Returns:
-            CircuitEdgeId: returns a CircuitEdgeId containing all the edge IDs and the
+            CircuitEdgeIds: returns a CircuitEdgeIds containing all the edge IDs and the
                 corresponding populations. For performance reasons we do not test if the edge ids
                 are present or not in the circuit.
         """
@@ -166,7 +163,7 @@ class Edges:
                 A pandas DataFrame indexed by edge IDs if ``properties`` is list.
 
         Notes:
-            The EdgePopulation.property_names function will give you all the usable properties
+            The Edges.property_names function will give you all the usable properties
             for the `properties` argument.
         """
         ids = self.ids(edge_ids)
@@ -243,6 +240,91 @@ class Edges:
         if unique:
             result.unique(inplace=True)
         return result
+
+    def pathway_edges(self, source=None, target=None, properties=None):
+        ids = np.empty((0,), dtype=np.int64)
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        populations = np.empty((0,), dtype=str_type)
+        for name, pop in self.items():
+            pop_ids = pop.pathway_edges(source=source, target=target)
+            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            ids = np.concatenate([ids, pop_ids])
+            populations = np.concatenate([populations, pops])
+        result = CircuitEdgeIds.from_arrays(populations, ids)
+        if properties:
+            result = self.properties(result, properties)
+        return result
+
+    def afferent_edges(self, node_id, properties=None):
+        """Get afferent edges for given ``node_id``.
+
+        Args:
+            node_id (int): Target node ID.
+            properties: An edge property name, a list of edge property names, or None.
+
+        Returns:
+            pandas.Series/pandas.DataFrame/list:
+                A pandas Series indexed by edge ID if ``properties`` is a string.
+                A pandas DataFrame indexed by edge ID if ``properties`` is a list.
+                A list of edge IDs, if ``properties`` is None.
+        """
+        return self.pathway_edges(source=None, target=node_id, properties=properties)
+
+    def efferent_edges(self, node_id, properties=None):
+        """Get efferent edges for given ``node_id``.
+
+        Args:
+            node_id: source node ID
+            properties: None / edge property name / list of edge property names
+
+        Returns:
+            List of edge IDs, if ``properties`` is None;
+            Pandas Series indexed by edge IDs if ``properties`` is string;
+            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+        """
+        return self.pathway_edges(source=node_id, target=None, properties=properties)
+
+    def pair_edges(self, source_node_id, target_node_id, properties=None):
+        """Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
+
+        Args:
+            source_node_id: source node ID
+            target_node_id: target node ID
+            properties: None / edge property name / list of edge property names
+
+        Returns:
+            List of edge IDs, if ``properties`` is None;
+            Pandas Series indexed by edge IDs if ``properties`` is string;
+            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+        """
+        return self.pathway_edges(
+            source=source_node_id, target=target_node_id, properties=properties
+        )
+
+    def iter_connections(
+            self, source=None, target=None, unique_node_ids=False, shuffle=False,
+            return_edge_ids=False, return_edge_count=False
+    ):
+        for name, pop in self.items():
+            it = pop.iter_connections(source=source, target=target,
+                                      unique_node_ids=unique_node_ids, shuffle=shuffle,
+                                      return_edge_ids=return_edge_ids,
+                                      return_edge_count=return_edge_count)
+            source_pop = pop.source.name
+            target_pop = pop.target.name
+            if return_edge_count:
+                add_circuit = lambda x: (CircuitNodeId(source_pop, x[0]),
+                                         CircuitNodeId(target_pop, x[1]), x[2])
+                return map(add_circuit, it)
+            elif return_edge_ids:
+                add_edge_ids = lambda x: (CircuitNodeId(source_pop, x[0]),
+                                          CircuitNodeId(target_pop, x[1]),
+                                          CircuitEdgeId(name, x[2]))
+                return map(add_edge_ids, it)
+            else:
+                omit_edge_count = lambda x: (CircuitNodeId(source_pop, x[0]),
+                                             CircuitNodeId(target_pop, x[1]))
+                return map(omit_edge_count, it)
 
 
 class EdgeStorage:
@@ -416,7 +498,7 @@ class EdgePopulation:
 
     def _get(self, selection, properties=None):
         """Get an array of edge IDs or DataFrame with edge properties."""
-        edge_ids = selection.flatten()
+        edge_ids = np.asarray(selection.flatten(), dtype=np.int64)
         if properties is None:
             return edge_ids
 
@@ -426,8 +508,7 @@ class EdgePopulation:
             else:
                 result = pd.DataFrame(index=edge_ids)
                 for p in properties:
-                    dtype = self.property_dtypes[p]
-                    result[p] = self._get_property(p, selection).astype(dtype)
+                    result[p] = self._get_property(p, selection)
         else:
             if len(edge_ids) == 0:
                 result = pd.Series(name=properties, dtype=np.float64)
@@ -467,7 +548,6 @@ class EdgePopulation:
                     raise BluepySnapError("All values from a list must be of type int or "
                                           "CircuitEdgeId.")
         return np.asarray(result)
-
 
     def properties(self, edge_ids, properties):
         """Edge properties as pandas DataFrame.
@@ -561,6 +641,34 @@ class EdgePopulation:
             result = np.unique(result)
         return result
 
+    def pathway_edges(self, source=None, target=None, properties=None):
+        """Get edges corresponding to ``source`` -> ``target`` connections.
+
+        Args:
+            source: source node group
+            target: target node group
+            properties: None / edge property name / list of edge property names
+
+        Returns:
+            List of edge IDs, if ``properties`` is None;
+            Pandas Series indexed by edge IDs if ``properties`` is string;
+            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+        """
+        if source is None and target is None:
+            raise BluepySnapError("Either `source` or `target` should be specified")
+
+        source_node_ids = _resolve_node_ids(self.source, source)
+        target_edge_ids = _resolve_node_ids(self.target, target)
+
+        if source_node_ids is None:
+            selection = self._population.afferent_edges(target_edge_ids)
+        elif target_edge_ids is None:
+            selection = self._population.efferent_edges(source_node_ids)
+        else:
+            selection = self._population.connecting_edges(source_node_ids, target_edge_ids)
+
+        return self._get(selection, properties)
+
     def afferent_edges(self, node_id, properties=None):
         """Get afferent edges for given ``node_id``.
 
@@ -606,34 +714,6 @@ class EdgePopulation:
         return self.pathway_edges(
             source=source_node_id, target=target_node_id, properties=properties
         )
-
-    def pathway_edges(self, source=None, target=None, properties=None):
-        """Get edges corresponding to ``source`` -> ``target`` connections.
-
-        Args:
-            source: source node group
-            target: target node group
-            properties: None / edge property name / list of edge property names
-
-        Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
-        """
-        if source is None and target is None:
-            raise BluepySnapError("Either `source` or `target` should be specified")
-
-        source_node_ids = _resolve_node_ids(self.source, source)
-        target_edge_ids = _resolve_node_ids(self.target, target)
-
-        if source_node_ids is None:
-            selection = self._population.afferent_edges(target_edge_ids)
-        elif target_edge_ids is None:
-            selection = self._population.efferent_edges(source_node_ids)
-        else:
-            selection = self._population.connecting_edges(source_node_ids, target_edge_ids)
-
-        return self._get(selection, properties)
 
     def _iter_connections(self, source_node_ids, target_node_ids, unique_node_ids, shuffle):
         """Iterate through `source_node_ids` -> `target_node_ids` connections."""

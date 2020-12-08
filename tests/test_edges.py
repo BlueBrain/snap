@@ -10,12 +10,11 @@ import libsonata
 from mock import Mock, patch, PropertyMock
 
 from bluepysnap.bbp import Synapse
-from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.circuit import Circuit
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeIds, CircuitNodeId
 
 import bluepysnap.edges as test_module
 
@@ -112,7 +111,7 @@ class TestEdges:
                 'int64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype(
                 'float64'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
                 'float32'), dtype('float32'), dtype('float64'), dtype('float64'),
-                dtype('uint64'), dtype('uint64'), dtype('O'), dtype('int32')]
+                  dtype('uint64'), dtype('uint64'), dtype('O'), dtype('int32')]
             , index=['syn_weight', '@dynamics:param1', 'afferent_surface_y',
                      'afferent_surface_z', 'conductance', 'efferent_center_x',
                      'delay', 'afferent_center_z', 'efferent_section_id',
@@ -131,7 +130,8 @@ class TestEdges:
         b = pd.Series(data=[dtype('int32'), dtype('float64')],
                       index=['syn_weight', 'efferent_surface_z']).sort_index()
 
-        with patch("bluepysnap.edges.EdgePopulation.property_dtypes", new_callable=PropertyMock) as mock:
+        with patch("bluepysnap.edges.EdgePopulation.property_dtypes",
+                   new_callable=PropertyMock) as mock:
             mock.side_effect = [a, b]
             circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
             test_obj = test_module.Edges(circuit)
@@ -139,10 +139,9 @@ class TestEdges:
                 test_obj.property_dtypes.sort_index()
 
     def test_ids(self):
-
         # single edge ID --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
-        assert self.test_obj.ids(0) ==  expected
+        assert self.test_obj.ids(0) == expected
 
         # single edge ID list --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
@@ -153,7 +152,7 @@ class TestEdges:
             ids = CircuitEdgeIds.from_arrays(["default", "default3"], [0, 3])
             self.test_obj.ids(ids)
 
-        # seq of node ID --> CircuitNodeIds return populations with the array of ids
+        # seq of node ID --> CircuitEdgeIds return populations with the array of ids
         expected = CircuitEdgeIds.from_arrays(["default", "default", "default2", "default2"],
                                               [0, 1, 0, 1])
         tested = self.test_obj.ids([0, 1])
@@ -163,6 +162,13 @@ class TestEdges:
         tested = self.test_obj.ids(np.array([0, 1]))
         assert tested == expected
 
+        ids = [CircuitEdgeId("default", 0), CircuitEdgeId("default", 1)]
+        assert self.test_obj.ids(ids) == CircuitEdgeIds.from_dict({"default": [0, 1]})
+
+        with pytest.raises(BluepySnapError):
+            ids = [CircuitEdgeId("default", 0), ("default", 1)]
+            self.test_obj.ids(ids)
+
         # Check operations on global ids
         ids = self.test_obj.ids([0, 1, 2, 3])
         assert ids.filter_population("default").append(ids.filter_population("default2")) == ids
@@ -171,7 +177,7 @@ class TestEdges:
         assert ids.filter_population("default2").limit(2) == expected
 
     def test_properties(self):
-        ids = CircuitEdgeIds.from_dict({"default": [0,1,2,3], "default2": [0,1,2,3]})
+        ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
         tested = self.test_obj.properties(ids, properties=self.test_obj.property_names)
         assert len(tested) == 8
         assert len(list(tested)) == 24
@@ -181,23 +187,24 @@ class TestEdges:
 
         # the index of the dataframe is indentical to the CircuitEdgeIds index
         pdt.assert_index_equal(tested.index, ids.index)
-        pdt.assert_frame_equal(self.test_obj.properties([0,1,2,3], properties=self.test_obj.property_names), tested)
+        pdt.assert_frame_equal(
+            self.test_obj.properties([0, 1, 2, 3], properties=self.test_obj.property_names), tested)
 
         # tested columns
         tested = self.test_obj.properties(ids, properties=["other2", "other1", "@source_node"])
         assert tested.shape == (self.test_obj.size, 3)
         assert list(tested) == ["other2", "other1", "@source_node"]
 
-        tested = self.test_obj.properties(CircuitEdgeIds.from_dict({"default2": [0,1,2,3]}),
-                                   properties=["other2", "other1", "@source_node"])
+        tested = self.test_obj.properties(CircuitEdgeIds.from_dict({"default2": [0, 1, 2, 3]}),
+                                          properties=["other2", "other1", "@source_node"])
         assert tested.shape == (4, 3)
         # correct ordering when setting the dataframe with the population dataframe
         assert tested.loc[("default2", 0)].tolist() == [10, 'A', 2]
         with pytest.raises(KeyError):
             tested.loc[("default", 0)]
 
-        tested = self.test_obj.properties(CircuitEdgeIds.from_dict({"default": [0,1,2,3]}),
-                                   properties=["other2", "other1", '@source_node'])
+        tested = self.test_obj.properties(CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3]}),
+                                          properties=["other2", "other1", '@source_node'])
         assert tested.shape == (4, 3)
         assert tested.loc[("default", 0)].tolist() == [np.NaN, np.NaN, 2]
         assert tested.loc[("default", 1)].tolist() == [np.NaN, np.NaN, 0]
@@ -215,12 +222,217 @@ class TestEdges:
             self.test_obj.properties(ids, properties="unknown")
 
     def test_afferent_nodes(self):
-        assert self.test_obj.afferent_nodes(0) == CircuitEdgeIds.from_arrays(["default", "default2"], [2, 2])
-        assert self.test_obj.afferent_nodes([0, 1]) == CircuitEdgeIds.from_dict({"default": [2, 0], "default2": [2,0]})
+        assert self.test_obj.afferent_nodes(0) == CircuitEdgeIds.from_arrays(
+            ["default", "default2"], [2, 2])
+        assert self.test_obj.afferent_nodes(CircuitNodeId("default", 0)) == CircuitEdgeIds.from_arrays(
+            ["default", "default2"], [2, 2])
+        assert self.test_obj.afferent_nodes([0, 1]) == CircuitEdgeIds.from_dict(
+            {"default": [2, 0], "default2": [2, 0]})
         ids = CircuitNodeIds.from_dict({"default": [0, 1], "default2": [0, 1]})
-        assert self.test_obj.afferent_nodes(ids) == CircuitEdgeIds.from_dict({"default": [2, 0], "default2": [2,0]})
+        assert self.test_obj.afferent_nodes(ids) == CircuitEdgeIds.from_dict(
+            {"default": [2, 0], "default2": [2, 0]})
 
+    def test_efferent_nodes(self):
+        assert self.test_obj.efferent_nodes(0) == CircuitEdgeIds.from_arrays(
+            ["default", "default2"], [1, 1])
+        assert self.test_obj.efferent_nodes(CircuitNodeId("default", 0)) == CircuitEdgeIds.from_arrays(
+            ["default", "default2"], [1, 1])
+        assert self.test_obj.efferent_nodes([0, 2]) == CircuitEdgeIds.from_dict(
+            {"default": [0, 1], "default2": [0, 1]})
+        ids = CircuitNodeIds.from_dict({"default": [0, 2], "default2": [0, 2]})
+        assert self.test_obj.efferent_nodes(ids) == CircuitEdgeIds.from_dict(
+            {"default": [1, 0], "default2": [1, 0]})
 
+    def test_pathway_edges(self):
+        properties = [Synapse.AXONAL_DELAY]
+        source = CircuitNodeIds.from_dict({"default": [0, 1]})
+        target = CircuitNodeIds.from_dict({"default": [1, 2]})
+
+        expected_index = CircuitEdgeIds.from_dict({"default": [1, 2], "default2": [1, 2]})
+        pdt.assert_frame_equal(
+            self.test_obj.pathway_edges(source=source, target=target, properties=properties),
+            pd.DataFrame(
+                [
+                    [88.1862],
+                    [52.1881],
+                    [88.1862],
+                    [52.1881],
+                ],
+                columns=properties, index=expected_index.index
+            ),
+            check_dtype=False
+        )
+
+        properties = [Synapse.SOURCE_NODE_ID, "other1"]
+        expected_index = CircuitEdgeIds.from_dict({"default": [1, 2], "default2": [1, 2]})
+        pdt.assert_frame_equal(
+            self.test_obj.pathway_edges(source=source, target=target, properties=properties),
+            pd.DataFrame(
+                [
+                    [0, np.nan],
+                    [0, np.nan],
+                    [0, "B"],
+                    [0, "C"],
+                ],
+                columns=properties, index=expected_index.index
+            ),
+            check_dtype=False
+        )
+
+        # without the properties should return the CircuitEdgeIds
+        assert self.test_obj.pathway_edges(source, target) == expected_index
+        assert self.test_obj.pathway_edges(source, target, None) == expected_index
+
+        # without the properties and the target
+        assert self.test_obj.pathway_edges(source, None) == CircuitEdgeIds.from_dict(
+            {"default": [1, 2], "default2": [1, 2]})
+        # without the properties and the source
+        assert self.test_obj.pathway_edges(None, source) == CircuitEdgeIds.from_dict(
+            {"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
+
+        # raise if both source and target are not set
+        with pytest.raises(BluepySnapError):
+            self.test_obj.pathway_edges(None, None, None)
+
+        # test with simple CircuitNodeId
+        properties = [Synapse.SOURCE_NODE_ID, Synapse.TARGET_NODE_ID]
+        source = CircuitNodeId("default", 0)
+        target = CircuitNodeId("default", 1)
+        expected_index = CircuitEdgeIds.from_dict({"default": [1, 2], "default2": [1, 2]})
+        pdt.assert_frame_equal(
+            self.test_obj.pathway_edges(source=source, target=target, properties=properties),
+            pd.DataFrame(
+                [
+                    [0, 1],
+                    [0, 1],
+                    [0, 1],
+                    [0, 1],
+                ],
+                columns=properties, index=expected_index.index
+            ),
+            check_dtype=False
+        )
+
+    def test_afferent_edges(self):
+        # without the properties
+        target = CircuitNodeIds.from_dict({"default": [0, 1]})
+        assert self.test_obj.afferent_edges(target, None) == CircuitEdgeIds.from_dict(
+            {"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
+
+        # with a single int
+        expected = CircuitEdgeIds.from_dict({"default": [1, 2, 3], "default2": [1, 2, 3]})
+        assert self.test_obj.afferent_edges(1, None) == expected
+
+        # with a CircuitNodeId
+        assert self.test_obj.afferent_edges(CircuitNodeId("default", 1), None) == expected
+
+        properties = [Synapse.AXONAL_DELAY]
+        pdt.assert_frame_equal(
+            self.test_obj.afferent_edges(1, properties),
+            pd.DataFrame(
+                [
+                    [88.1862],
+                    [52.1881],
+                    [11.1058],
+                    [88.1862],
+                    [52.1881],
+                    [11.1058],
+                ],
+                columns=properties, index=expected.index
+            ),
+            check_dtype=False
+        )
+
+        # with an undefined other1 field for the population default
+        properties = [Synapse.SOURCE_NODE_ID, "other1"]
+        expected_index = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
+        pdt.assert_frame_equal(
+            self.test_obj.afferent_edges(CircuitNodeIds.from_dict({"default": [0, 1]}), properties=properties),
+            pd.DataFrame(
+                [
+                    [2, np.nan],
+                    [0, np.nan],
+                    [0, np.nan],
+                    [2, np.nan],
+                    [2, "A"],
+                    [0, "B"],
+                    [0, "C"],
+                    [2, "D"],
+                ],
+                columns=properties, index=expected_index.index
+            ),
+            check_dtype=False
+        )
+
+    def test_efferent_edges(self):
+        target = CircuitNodeIds.from_dict({"default": [2]})
+        expected = CircuitEdgeIds.from_dict({"default": [0, 3], "default2": [0, 3]})
+        assert self.test_obj.efferent_edges(target, None) == expected
+        assert self.test_obj.efferent_edges(2, None) == expected
+        assert self.test_obj.efferent_edges(CircuitNodeId("default", 2), None) == expected
+
+        properties = [Synapse.AXONAL_DELAY]
+        pdt.assert_frame_equal(
+            self.test_obj.efferent_edges(2, properties),
+            pd.DataFrame(
+                [
+                    [99.8945],
+                    [11.1058],
+                    [99.8945],
+                    [11.1058],
+                ],
+                columns=properties, index=expected.index
+            ),
+            check_dtype=False
+        )
+
+        # with an undefined other1 field for the population default
+        properties = [Synapse.TARGET_NODE_ID, "other1"]
+        expected_index = CircuitEdgeIds.from_dict(
+            {"default": [0, 3], "default2": [0, 3]})
+
+        pdt.assert_frame_equal(
+            self.test_obj.efferent_edges(2, properties),
+            pd.DataFrame(
+                [
+                    [0, np.nan],
+                    [1, np.nan],
+                    [0, "A"],
+                    [1, "D"],
+                ],
+                columns=properties, index=expected_index.index
+            ),
+            check_dtype=False
+        )
+
+    def test_pair_edges(self):
+
+        # no connection between 0 and 2
+        assert self.test_obj.pair_edges(0, 2, None) == CircuitEdgeIds.from_arrays([], [])
+        actual = self.test_obj.pair_edges(0, 2, [Synapse.AXONAL_DELAY])
+        assert actual.empty
+
+        assert self.test_obj.pair_edges(2, 0, None) == CircuitEdgeIds.from_tuples([('default', 0),
+                                                                                   ('default2', 0)])
+
+        properties = [Synapse.AXONAL_DELAY]
+        pdt.assert_frame_equal(
+            self.test_obj.pair_edges(2, 0, properties),
+            pd.DataFrame(
+                [
+                    [99.8945],
+                    [99.8945],
+                ],
+                columns=properties, index=CircuitEdgeIds.from_tuples([('default', 0), ('default2', 0)]).index
+            ),
+            check_dtype=False
+        )
+
+    def test_iter_connections(self):
+        ids = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2]})
+        for a in self.test_obj.iter_connections(source=ids, target=ids):
+            print(a)
+        assert False
 
 
 class TestEdgeStorage:
@@ -334,7 +546,7 @@ class TestEdgePopulation:
                 'int64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype(
                 'float64'), dtype('float64'), dtype('float64'), dtype('float64'), dtype(
                 'float32'), dtype('float32'), dtype('float64'), dtype('float64'),
-                dtype('uint64'), dtype('uint64')]
+                  dtype('uint64'), dtype('uint64')]
             , index=['syn_weight', '@dynamics:param1', 'afferent_surface_y',
                      'afferent_surface_z', 'conductance', 'efferent_center_x',
                      'delay', 'afferent_center_z', 'efferent_section_id',
@@ -360,7 +572,6 @@ class TestEdgePopulation:
         npt.assert_equal(self.test_obj.ids(ids), np.array([0]))
         ids = CircuitEdgeIds.from_tuples([("default2", 0), ("default2", 1)])
         npt.assert_equal(self.test_obj.ids(ids), [])
-
 
     def test_properties_1(self):
         properties = [
@@ -405,16 +616,24 @@ class TestEdgePopulation:
             self.test_obj.properties([0], 'no-such-property')
 
     def test_properties_all_edge_ids_types(self):
-
         assert self.test_obj.properties(0, Synapse.PRE_GID).tolist() == [2]
         assert self.test_obj.properties([0], Synapse.PRE_GID).tolist() == [2]
         assert self.test_obj.properties([0, 1], Synapse.PRE_GID).tolist() == [2, 0]
-        assert self.test_obj.properties(CircuitEdgeId("default", 0), Synapse.PRE_GID).tolist() == [2]
-        assert self.test_obj.properties(CircuitEdgeIds.from_tuples([("default", 0)]), Synapse.PRE_GID).tolist() == [2]
-        assert self.test_obj.properties(CircuitEdgeId("default2", 0), Synapse.PRE_GID).tolist() == []
-        assert self.test_obj.properties(CircuitEdgeIds.from_tuples([("default", 0), ("default", 1)]), Synapse.PRE_GID).tolist() == [2, 0]
-        assert self.test_obj.properties(CircuitEdgeIds.from_tuples([("default", 0), ("default2", 1)]), Synapse.PRE_GID).tolist() == [2]
-        assert self.test_obj.properties(CircuitEdgeIds.from_tuples([("default2", 0), ("default2", 1)]), Synapse.PRE_GID).tolist() == []
+        assert self.test_obj.properties(CircuitEdgeId("default", 0), Synapse.PRE_GID).tolist() == [
+            2]
+        assert self.test_obj.properties(CircuitEdgeIds.from_tuples([("default", 0)]),
+                                        Synapse.PRE_GID).tolist() == [2]
+        assert self.test_obj.properties(CircuitEdgeId("default2", 0),
+                                        Synapse.PRE_GID).tolist() == []
+        assert self.test_obj.properties(
+            CircuitEdgeIds.from_tuples([("default", 0), ("default", 1)]),
+            Synapse.PRE_GID).tolist() == [2, 0]
+        assert self.test_obj.properties(
+            CircuitEdgeIds.from_tuples([("default", 0), ("default2", 1)]),
+            Synapse.PRE_GID).tolist() == [2]
+        assert self.test_obj.properties(
+            CircuitEdgeIds.from_tuples([("default2", 0), ("default2", 1)]),
+            Synapse.PRE_GID).tolist() == []
 
     def test_positions_1(self):
         actual = self.test_obj.positions([0], 'afferent', 'center')
@@ -477,8 +696,10 @@ class TestEdgePopulation:
         npt.assert_equal(self.test_obj.afferent_nodes([0, 1], unique=False), [2, 0, 0, 2])
 
         npt.assert_equal(self.test_obj.afferent_nodes({}), [0, 2])
-        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}), [2])  # eq node id 0 as target
-        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}), [2])  # eq node id 0 as target
+        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}),
+                         [2])  # eq node id 0 as target
+        npt.assert_equal(self.test_obj.afferent_nodes({'mtype': 'L2_X'}),
+                         [2])  # eq node id 0 as target
 
         npt.assert_equal(self.test_obj.afferent_nodes(None), [0, 2])
         npt.assert_equal(self.test_obj.afferent_nodes(None, unique=False), [2, 0, 0, 2])
@@ -497,8 +718,10 @@ class TestEdgePopulation:
         npt.assert_equal(self.test_obj.efferent_nodes([0, 1], unique=False), [1, 1])
 
         npt.assert_equal(self.test_obj.efferent_nodes({}), [0, 1])
-        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}), [1])  # eq node id 0 as source
-        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}), [1])  # eq node id 0 as source
+        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}),
+                         [1])  # eq node id 0 as source
+        npt.assert_equal(self.test_obj.efferent_nodes({'mtype': 'L2_X'}),
+                         [1])  # eq node id 0 as source
 
         npt.assert_equal(self.test_obj.efferent_nodes(None), [0, 1])
         npt.assert_equal(self.test_obj.efferent_nodes(None, unique=False), [0, 1, 1, 1])
