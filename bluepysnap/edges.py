@@ -16,8 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Edge population access."""
-
-from builtins import map
+from itertools import chain
 
 import inspect
 
@@ -301,30 +300,33 @@ class Edges:
             source=source_node_id, target=target_node_id, properties=properties
         )
 
+    def _add_circuit_ids(self, its, source, target):
+        return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1]), it[2]) for it in its)
+
+    def _add_edge_ids(self, its, source, target, pop_name):
+        return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1]),
+                 CircuitEdgeIds.from_dict({pop_name: it[2]})) for it in its)
+
+    def _omit_edge_count(self, its, source, target):
+        return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1])) for it in its)
+
     def iter_connections(
-            self, source=None, target=None, unique_node_ids=False, shuffle=False,
-            return_edge_ids=False, return_edge_count=False
-    ):
+            self, source=None, target=None, return_edge_ids=False,
+            return_edge_count=False):
+        its = []
         for name, pop in self.items():
             it = pop.iter_connections(source=source, target=target,
-                                      unique_node_ids=unique_node_ids, shuffle=shuffle,
                                       return_edge_ids=return_edge_ids,
                                       return_edge_count=return_edge_count)
             source_pop = pop.source.name
             target_pop = pop.target.name
             if return_edge_count:
-                add_circuit = lambda x: (CircuitNodeId(source_pop, x[0]),
-                                         CircuitNodeId(target_pop, x[1]), x[2])
-                return map(add_circuit, it)
+                its.append(self._add_circuit_ids(it, source_pop, target_pop))
             elif return_edge_ids:
-                add_edge_ids = lambda x: (CircuitNodeId(source_pop, x[0]),
-                                          CircuitNodeId(target_pop, x[1]),
-                                          CircuitEdgeId(name, x[2]))
-                return map(add_edge_ids, it)
+                its.append(self._add_edge_ids(it, source_pop, target_pop, name))
             else:
-                omit_edge_count = lambda x: (CircuitNodeId(source_pop, x[0]),
-                                             CircuitNodeId(target_pop, x[1]))
-                return map(omit_edge_count, it)
+                its.append(self._omit_edge_count(it, source_pop, target_pop))
+        return chain.from_iterable(its)
 
 
 class EdgeStorage:

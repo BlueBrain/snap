@@ -430,9 +430,57 @@ class TestEdges:
 
     def test_iter_connections(self):
         ids = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2]})
-        for a in self.test_obj.iter_connections(source=ids, target=ids):
-            print(a)
-        assert False
+        expected = [
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0)),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0)),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1))
+        ]
+        for i, tested in enumerate(self.test_obj.iter_connections(source=ids, target=ids)):
+            assert tested == expected[i]
+
+        for i, tested in enumerate(self.test_obj.iter_connections(source=None, target=ids)):
+            assert tested == expected[i]
+
+        expected = [
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1)),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0)),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1))
+        ]
+        for i, tested in enumerate(self.test_obj.iter_connections(source=ids, target=None)):
+            assert tested == expected[i]
+
+        expected = [
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0), CircuitEdgeIds.from_dict({'default': [0]})),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1), CircuitEdgeIds.from_dict({'default': [1, 2]})),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1), CircuitEdgeIds.from_dict({'default': [3]})),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0), CircuitEdgeIds.from_dict({'default2': [0]})),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1), CircuitEdgeIds.from_dict({'default2': [1, 2]})),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1), CircuitEdgeIds.from_dict({'default2': [3]}))
+        ]
+        for i, tested in enumerate(self.test_obj.iter_connections(source=ids, target=ids,
+                                                                  return_edge_ids=True)):
+            assert tested == expected[i]
+
+        expected = [
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0), 1),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1), 2),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1), 1),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 0), 1),
+            (CircuitNodeId('default', 0), CircuitNodeId('default', 1), 2),
+            (CircuitNodeId('default', 2), CircuitNodeId('default', 1), 1),
+        ]
+        for i, tested in enumerate(self.test_obj.iter_connections(source=ids, target=ids,
+                                                                  return_edge_count=True)):
+            assert tested == expected[i]
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.iter_connections(ids, ids, return_edge_ids=True, return_edge_count=True)
 
 
 class TestEdgeStorage:
