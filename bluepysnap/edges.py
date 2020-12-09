@@ -119,6 +119,18 @@ class Edges:
         """Returns all the properties present inside the circuit."""
         return set(prop for pop in self.populations() for prop in pop.property_names)
 
+    def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls):
+        """Get ids of class 'returned_ids_cls' for all populations using 'fun_to_apply'."""
+        ids = np.empty((0,), dtype=np.int64)
+        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        populations = np.empty((0,), dtype=str_type)
+        for name, pop in self.items():
+            pop_ids, ids_name = fun_to_apply(pop)
+            pops = np.full_like(pop_ids, fill_value=ids_name, dtype=str_type)
+            ids = np.concatenate([ids, pop_ids])
+            populations = np.concatenate([populations, pops])
+        return returned_ids_cls.from_arrays(populations, ids)
+
     def ids(self, edge_ids):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
 
@@ -138,16 +150,7 @@ class Edges:
             diff = np.setdiff1d(edge_ids.get_populations(unique=True), self.population_names)
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
-
-        ids = np.empty((0,), dtype=np.int64)
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        populations = np.empty((0,), dtype=str_type)
-        for name, pop in self.items():
-            pop_ids = pop.ids(edge_ids)
-            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
-            ids = np.concatenate([ids, pop_ids])
-            populations = np.concatenate([populations, pops])
-        return CircuitEdgeIds.from_arrays(populations, ids)
+        return self._get_ids_from_pop(lambda x: (x.ids(edge_ids), x.name), CircuitEdgeIds)
 
     def properties(self, edge_ids, properties):
         """Edge properties as pandas DataFrame.
@@ -202,15 +205,8 @@ class Edges:
         Returns:
             numpy.ndarray: Afferent node IDs for all the targets.
         """
-        ids = np.empty((0,), dtype=np.int64)
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        populations = np.empty((0,), dtype=str_type)
-        for name, pop in self.items():
-            pop_ids = pop.afferent_nodes(target)
-            pops = np.full_like(pop_ids, fill_value=pop.source.name, dtype=str_type)
-            ids = np.concatenate([ids, pop_ids])
-            populations = np.concatenate([populations, pops])
-        result = CircuitNodeIds.from_arrays(populations, ids)
+        result = self._get_ids_from_pop(lambda x: (x.afferent_nodes(target), x.source.name),
+                                        CircuitNodeIds)
         if unique:
             result.unique(inplace=True)
         return result
@@ -229,29 +225,15 @@ class Edges:
         Returns:
             numpy.ndarray: Efferent node IDs for all the sources.
         """
-        ids = np.empty((0,), dtype=np.int64)
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        populations = np.empty((0,), dtype=str_type)
-        for name, pop in self.items():
-            pop_ids = pop.efferent_nodes(source)
-            pops = np.full_like(pop_ids, fill_value=pop.target.name, dtype=str_type)
-            ids = np.concatenate([ids, pop_ids])
-            populations = np.concatenate([populations, pops])
-        result = CircuitNodeIds.from_arrays(populations, ids)
+        result = self._get_ids_from_pop(lambda x: (x.efferent_nodes(source), x.target.name),
+                                        CircuitNodeIds)
         if unique:
             result.unique(inplace=True)
         return result
 
     def pathway_edges(self, source=None, target=None, properties=None):
-        ids = np.empty((0,), dtype=np.int64)
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        populations = np.empty((0,), dtype=str_type)
-        for name, pop in self.items():
-            pop_ids = pop.pathway_edges(source=source, target=target)
-            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
-            ids = np.concatenate([ids, pop_ids])
-            populations = np.concatenate([populations, pops])
-        result = CircuitEdgeIds.from_arrays(populations, ids)
+        result = self._get_ids_from_pop(lambda x: (x.pathway_edges(source, target), x.name),
+                                        CircuitEdgeIds)
         if properties:
             result = self.properties(result, properties)
         return result
