@@ -205,10 +205,10 @@ class CircuitIds:
         self.index = self.index.append(other.index)
         return None
 
-    def _slice_index(self, my_slice, inplace=False):
-        """Index slicer."""
+    def _apply(self, fun, inplace):
+        """Apply fun on index."""
         res = self if inplace else self.copy()
-        res.index = res.index[my_slice]
+        res.index = fun(res.index)
         if not inplace:
             return res
         return None
@@ -224,8 +224,8 @@ class CircuitIds:
                 the size of the CircuitIds then all ids are taken and shuffled.
             inplace (bool): if set to True. Do the transformation inplace.
         """
-        indices = np.random.choice(len(self), size=min(sample_size, len(self)))
-        return self._slice_index(indices, inplace=inplace)
+        sampling = np.random.choice(len(self), size=min(sample_size, len(self)))
+        return self._apply(lambda x: x[sampling], inplace)
 
     def limit(self, limit_size, inplace=False):
         """Limit the size of a CircuitIds.
@@ -238,7 +238,7 @@ class CircuitIds:
                 the size of the CircuitIds then all ids are kept.
             inplace (bool): if set to True. Do the transformation inplace.
         """
-        return self._slice_index(slice(0, limit_size), inplace=inplace)
+        return self._apply(lambda x: x[:limit_size], inplace)
 
     def unique(self, inplace=False):
         """Returns only unique CircuitIds.
@@ -246,11 +246,7 @@ class CircuitIds:
         Notes:
             this function does not sort the ids
         """
-        res = self if inplace else self.copy()
-        res.index = res.index.unique()
-        if not inplace:
-            return res
-        return None
+        return self._apply(lambda x: x.unique(), inplace)
 
     def to_csv(self, filepath):
         """Save CircuitIds to csv format."""
