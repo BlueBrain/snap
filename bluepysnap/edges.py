@@ -133,7 +133,7 @@ class Edges:
         ids = np.empty((0,), dtype=np.int64)
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
         populations = np.empty((0,), dtype=str_type)
-        for name, pop in self.items():
+        for pop in self.populations():
             pop_ids, name_ids = fun_to_apply(pop)
             pops = np.full_like(pop_ids, fill_value=name_ids, dtype=str_type)
             ids = np.concatenate([ids, pop_ids])
@@ -152,6 +152,7 @@ class Edges:
                     for all populations.
                 - ``sequence``: returns a CircuitNodeIds object containing the corresponding edge
                     IDs for all populations.
+
         Returns:
             CircuitEdgeIds: returns a CircuitEdgeIds containing all the edge IDs and the
                 corresponding populations. For performance reasons we do not test if the edge ids
@@ -343,6 +344,21 @@ class Edges:
     def iter_connections(
             self, source=None, target=None, return_edge_ids=False,
             return_edge_count=False):
+        """Iterate through ``source`` -> ``target`` connections.
+
+        Args:
+            source (CircuitNodeIds/int/sequence/str/mapping/None): source node group
+            target (CircuitNodeIds/int/sequence/str/mapping/None): target node group
+            return_edge_count: if True, edge count is added to yield result
+            return_edge_ids: if True, edge ID list is added to yield result
+
+        ``return_edge_count`` and ``return_edge_ids`` are mutually exclusive.
+
+        Yields:
+            (source_node_id, target_node_id, edge_ids) if return_edge_ids == True;
+            (source_node_id, target_node_id, edge_count) if return_edge_count == True;
+            (source_node_id, target_node_id) otherwise.
+        """
         its = []
         for name, pop in self.items():
             it = pop.iter_connections(source=source, target=target,
@@ -563,6 +579,7 @@ class EdgePopulation:
                 - ``int``, ``CircuitEdgeId``: return a single edge ID.
                 - ``CircuitEdgeIds`` return IDs of edges in an array.
                 - ``sequence``: return IDs of edges in an array.
+
         Returns:
             numpy.array: A numpy array of IDs.
         """
@@ -734,8 +751,8 @@ class EdgePopulation:
         """Get edges corresponding to ``source_node_id`` -> ``target_node_id`` connection.
 
         Args:
-            source_node_id: source node ID
-            target_node_id: target node ID
+            source_node_id (CircuitNodeIds/int/sequence/str/mapping/None): source node ID
+            target_node_id (CircuitNodeIds/int/sequence/str/mapping/None): target node ID
             properties: None / edge property name / list of edge property names
 
         Returns:
@@ -821,8 +838,8 @@ class EdgePopulation:
         """Iterate through ``source`` -> ``target`` connections.
 
         Args:
-            source: source node group
-            target: target node group
+            source (CircuitNodeIds/int/sequence/str/mapping/None): source node group
+            target (CircuitNodeIds/int/sequence/str/mapping/None): target node group
             unique_node_ids: if True, no node ID will be used more than once as source or
                 target for edges. Careful, this flag does not provide unique (source, target)
                 pairs but unique node IDs.

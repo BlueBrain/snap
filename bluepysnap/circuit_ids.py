@@ -39,7 +39,8 @@ class CircuitIds:
     population.
     """
 
-    def __new__(cls, index, sort_index=True):
+    def __new__(cls, index, sort_index=True):  # pylint: disable=unused-argument
+        """Return a CircuitIds object."""
         return object.__new__(cls)
 
     def __init__(self, index, sort_index=True):
@@ -292,6 +293,7 @@ class CircuitIds:
 
 class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
                      source_word="CircuitIds", target_word="CircuitNodeIds"):
+    """High performances CircuitNodeID container."""
 
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitNodeIds.
@@ -316,6 +318,7 @@ class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
 
 class CircuitEdgeIds(CircuitIds, metaclass=DocSubstitutionMeta,
                      source_word="CircuitIds", target_word="CircuitEdgeIds"):
+    """High performances CircuitEdgeID container."""
 
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitEdgeIds.

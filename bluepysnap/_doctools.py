@@ -28,7 +28,7 @@ def _word_swapper(doc, source_word, target_word):
 
 
 def _copy_func(f):
-    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)."""
     g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__, argdefs=f.__defaults__,
                            closure=f.__closure__)
     g = functools.update_wrapper(g, f)
@@ -42,6 +42,7 @@ def _copy_func(f):
 class DocSubstitutionMeta(type):
     """Tool to update an inheritate class documentation."""
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
+        """Define the new class to return."""
         for parent in parents:
             for fun_name, fun_value in inspect.getmembers(parent, predicate=inspect.isfunction):
                 # skip special methods
