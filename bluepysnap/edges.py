@@ -103,7 +103,7 @@ class Edges:
         try:
             return self._populations[population_name]
         except KeyError:
-            raise BluepySnapError("{} not a node population.".format(population_name))
+            raise BluepySnapError("{} not a edge population.".format(population_name))
 
     def __iter__(self):
         """Allows iteration over the different EdgePopulation."""
@@ -111,7 +111,7 @@ class Edges:
 
     @cached_property
     def size(self):
-        """Total number of nodes inside the circuit."""
+        """Total number of edges inside the circuit."""
         return sum(pop.size for pop in self.populations())
 
     @cached_property
@@ -120,13 +120,22 @@ class Edges:
         return set(prop for pop in self.populations() for prop in pop.property_names)
 
     def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls):
-        """Get ids of class 'returned_ids_cls' for all populations using 'fun_to_apply'."""
+        """Get CircuitIds of class 'returned_ids_cls' for all populations using 'fun_to_apply'.
+
+        Args:
+            fun_to_apply (function): A function that returns the list of IDs for each population
+                and the population containing these IDs.
+            returned_ids_cls (CircuitNodeIds/CircuitEdgeIds): the class for the CircuitIds.
+
+        Returns:
+            CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
+        """
         ids = np.empty((0,), dtype=np.int64)
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
         populations = np.empty((0,), dtype=str_type)
         for name, pop in self.items():
-            pop_ids, ids_name = fun_to_apply(pop)
-            pops = np.full_like(pop_ids, fill_value=ids_name, dtype=str_type)
+            pop_ids, name_ids = fun_to_apply(pop)
+            pops = np.full_like(pop_ids, fill_value=name_ids, dtype=str_type)
             ids = np.concatenate([ids, pop_ids])
             populations = np.concatenate([populations, pops])
         return returned_ids_cls.from_arrays(populations, ids)
@@ -137,14 +146,19 @@ class Edges:
         Args:
             edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
                 returned depends on the type of the ``group`` argument:
-
-                - ``int``, ``CircuitEdgeId``: return a single node ID.
-                - ``CircuitEdgeIds`` return IDs of edges in an array.
-                - ``sequence``: return IDs of edges in an array.
+                - ``CircuitEdgeId``: return the ID in a CircuitEdgeIds object.
+                - ``CircuitEdgeIds``: return the IDs in a CircuitNodeIds object.
+                - ``int``: returns a CircuitEdgeIds object containing the corresponding edge ID
+                    for all populations.
+                - ``sequence``: returns a CircuitNodeIds object containing the corresponding edge
+                    IDs for all populations.
         Returns:
             CircuitEdgeIds: returns a CircuitEdgeIds containing all the edge IDs and the
                 corresponding populations. For performance reasons we do not test if the edge ids
                 are present or not in the circuit.
+
+        Notes:
+            This envision also the maybe future selection of edges on queries.
         """
         if isinstance(edge_ids, CircuitEdgeIds):
             diff = np.setdiff1d(edge_ids.get_populations(unique=True), self.population_names)
@@ -156,9 +170,9 @@ class Edges:
         """Edge properties as pandas DataFrame.
 
         Args:
-            edge_ids (array-like): array-like of edge IDs
+            edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): same as Edges.ids().
             properties (None/str/list): an edge property name or a list of edge property names.
-                If set to None all properties for the edges are used.
+                If set to None ids are returned.
 
         Returns:
             pandas.Series/pandas.DataFrame:
@@ -192,7 +206,7 @@ class Edges:
         return res.sort_index()
 
     def afferent_nodes(self, target, unique=True):
-        """Get afferent node IDs for given target ``node_id``.
+        """Get afferent CircuitNodeIDs for given target ``node_id``.
 
         Notes:
             Afferent nodes are nodes projecting an outgoing edge to one of the ``target`` node.
@@ -203,9 +217,10 @@ class Edges:
             unique (bool): If ``True``, return only unique afferent node IDs.
 
         Returns:
-            numpy.ndarray: Afferent node IDs for all the targets.
+            CircuitNodeIDs: Afferent CircuitNodeIDs for all the targets from all edge population.
         """
-        result = self._get_ids_from_pop(lambda x: (x.afferent_nodes(target), x.source.name),
+        target_ids = self._circuit.nodes.ids(target)
+        result = self._get_ids_from_pop(lambda x: (x.afferent_nodes(target_ids), x.source.name),
                                         CircuitNodeIds)
         if unique:
             result.unique(inplace=True)
@@ -225,15 +240,35 @@ class Edges:
         Returns:
             numpy.ndarray: Efferent node IDs for all the sources.
         """
-        result = self._get_ids_from_pop(lambda x: (x.efferent_nodes(source), x.target.name),
+        source_ids = self._circuit.nodes.ids(source)
+        result = self._get_ids_from_pop(lambda x: (x.efferent_nodes(source_ids), x.target.name),
                                         CircuitNodeIds)
         if unique:
             result.unique(inplace=True)
         return result
 
     def pathway_edges(self, source=None, target=None, properties=None):
-        result = self._get_ids_from_pop(lambda x: (x.pathway_edges(source, target), x.name),
+        """Get edges corresponding to ``source`` -> ``target`` connections.
+
+        Args:
+            source: source node group
+            target: target node group
+            properties: None / edge property name / list of edge property names
+
+        Returns:
+            CircuitEdgeIDs, if ``properties`` is None;
+            Pandas Series indexed by CircuitEdgeIDs if ``properties`` is string;
+            Pandas DataFrame indexed by CircuitEdgeIDs if ``properties`` is list.
+        """
+        if source is None and target is None:
+            raise BluepySnapError("Either `source` or `target` should be specified")
+
+        source_ids = self._circuit.nodes.ids(source)
+        target_ids = self._circuit.nodes.ids(target)
+
+        result = self._get_ids_from_pop(lambda x: (x.pathway_edges(source_ids, target_ids), x.name),
                                         CircuitEdgeIds)
+
         if properties:
             result = self.properties(result, properties)
         return result
@@ -525,7 +560,7 @@ class EdgePopulation:
             edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
                 returned depends on the type of the ``group`` argument:
 
-                - ``int``, ``CircuitEdgeId``: return a single node ID.
+                - ``int``, ``CircuitEdgeId``: return a single edge ID.
                 - ``CircuitEdgeIds`` return IDs of edges in an array.
                 - ``sequence``: return IDs of edges in an array.
         Returns:
@@ -642,8 +677,8 @@ class EdgePopulation:
         """Get edges corresponding to ``source`` -> ``target`` connections.
 
         Args:
-            source: source node group
-            target: target node group
+            source (CircuitNodeIds/int/sequence/str/mapping/None): source node group
+            target (CircuitNodeIds/int/sequence/str/mapping/None): target node group
             properties: None / edge property name / list of edge property names
 
         Returns:
@@ -670,7 +705,7 @@ class EdgePopulation:
         """Get afferent edges for given ``node_id``.
 
         Args:
-            node_id (int): Target node ID.
+            node_id (CircuitNodeIds/int/sequence/str/mapping/None) : Target node ID.
             properties: An edge property name, a list of edge property names, or None.
 
         Returns:
@@ -685,7 +720,7 @@ class EdgePopulation:
         """Get efferent edges for given ``node_id``.
 
         Args:
-            node_id: source node ID
+            node_id (CircuitNodeIds/int/sequence/str/mapping/None): source node ID
             properties: None / edge property name / list of edge property names
 
         Returns:

@@ -234,6 +234,10 @@ class TestEdges:
         assert self.test_obj.afferent_nodes(0, unique=False) == CircuitNodeIds.from_arrays(
             ["default", "default"], [2, 2])
 
+        # use global mapping for nodes
+        assert self.test_obj.afferent_nodes({"other1": "A"}) == CircuitNodeIds.from_arrays([], [])
+        assert self.test_obj.afferent_nodes({"mtype": "L6_Y"}) == CircuitNodeIds.from_dict({"default": [0, 2]})
+
     def test_efferent_nodes(self):
         assert self.test_obj.efferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [1])
         assert self.test_obj.efferent_nodes(CircuitNodeId("default", 0)) == CircuitNodeIds.from_arrays(
@@ -243,6 +247,10 @@ class TestEdges:
         assert self.test_obj.efferent_nodes(ids) == CircuitNodeIds.from_dict({"default": [1, 0]})
         assert self.test_obj.efferent_nodes(0, unique=False) == CircuitNodeIds.from_arrays(
             ["default", "default"], [1, 1])
+
+        # use global mapping for nodes
+        assert self.test_obj.efferent_nodes({"other1": "A"}) == CircuitNodeIds.from_arrays([], [])
+        assert self.test_obj.efferent_nodes({"mtype": "L6_Y"}) == CircuitNodeIds.from_dict({"default": [0, 1]})
 
     def test_pathway_edges(self):
         properties = [Synapse.AXONAL_DELAY]
@@ -313,6 +321,9 @@ class TestEdges:
             ),
             check_dtype=False
         )
+
+        # use global mapping for nodes
+        assert self.test_obj.pathway_edges(source={"mtype": "L6_Y"}, target={"mtype": "L2_X"}) == CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
 
     def test_afferent_edges(self):
         # without the properties
