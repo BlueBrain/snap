@@ -123,6 +123,8 @@ def test_no_nodes_h5():
             Error(Error.FATAL, 'No "nodes" in {}.'.format(nodes_file)),
             Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
             Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default2/source_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default2/target_node_id"'),
         }
 
 
@@ -563,7 +565,12 @@ def test_no_edge_all_node_ids():
             Error(Error.FATAL,
                   '/edges/default/source_node_id does not have node ids in its node population'),
             Error(Error.FATAL,
-                  '/edges/default/target_node_id does not have node ids in its node population')}
+                  '/edges/default/target_node_id does not have node ids in its node population'),
+            Error(Error.FATAL,
+                  '/edges/default2/source_node_id does not have node ids in its node population'),
+            Error(Error.FATAL,
+                  '/edges/default2/target_node_id does not have node ids in its node population')
+        }
 
 
 def test_invalid_edge_node_ids():

@@ -23,7 +23,7 @@ from utils import TEST_DATA_DIR, create_node_population
 
 def index_as_uint64(values):
     '''have pandas index types match'''
-    return np.array(values, dtype=np.uint64)
+    return np.array(values, dtype=np.int64)
 
 
 def test_estimate_range_size_1():
@@ -430,6 +430,7 @@ class TestEdges:
 
     def test_iter_connections(self):
         ids = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2]})
+        # ordered by target
         expected = [
             (CircuitNodeId('default', 2), CircuitNodeId('default', 0)),
             (CircuitNodeId('default', 0), CircuitNodeId('default', 1)),
@@ -444,6 +445,7 @@ class TestEdges:
         for i, tested in enumerate(self.test_obj.iter_connections(source=None, target=ids)):
             assert tested == expected[i]
 
+        # same but ordered by source
         expected = [
             (CircuitNodeId('default', 0), CircuitNodeId('default', 1)),
             (CircuitNodeId('default', 2), CircuitNodeId('default', 0)),
