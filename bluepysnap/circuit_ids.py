@@ -16,7 +16,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Circuit ids."""
-import abc
 from collections import namedtuple
 
 import numpy as np
@@ -286,11 +285,11 @@ class CircuitIds:
             return False
         return self.index.equals(other.index)
 
-    def __iter__(self):
+    def __iter__(self):  # pragma: no cover
         """Iterator on the CircuitIds."""
         raise NotImplementedError
 
-    def __getitem__(self, item):
+    def __getitem__(self, item):  # pragma: no cover
         """Getter on the CircuitIds."""
         raise NotImplementedError
 

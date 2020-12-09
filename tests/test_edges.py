@@ -21,7 +21,7 @@ import bluepysnap.edges as test_module
 from utils import TEST_DATA_DIR, create_node_population
 
 
-def index_as_uint64(values):
+def index_as_int64(values):
     '''have pandas index types match'''
     return np.array(values, dtype=np.int64)
 
@@ -178,6 +178,9 @@ class TestEdges:
 
     def test_properties(self):
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
+        tested = self.test_obj.properties(ids, None)
+        assert tested == ids
+
         tested = self.test_obj.properties(ids, properties=self.test_obj.property_names)
         assert len(tested) == 8
         assert len(list(tested)) == 24
@@ -639,7 +642,7 @@ class TestEdgePopulation:
                 (0, 1, 88.1862, 1111., 1.),
             ],
             columns=properties,
-            index=index_as_uint64(edge_ids)
+            index=index_as_int64(edge_ids)
         )
         pdt.assert_frame_equal(actual, expected, check_dtype=False)
 
@@ -647,7 +650,7 @@ class TestEdgePopulation:
         prop = Synapse.AXONAL_DELAY
         edge_ids = [1, 0]
         actual = self.test_obj.properties(edge_ids, prop)
-        expected = pd.Series([88.1862, 99.8945], index=index_as_uint64(edge_ids), name=prop)
+        expected = pd.Series([88.1862, 99.8945], index=index_as_int64(edge_ids), name=prop)
         pdt.assert_series_equal(actual, expected, check_dtype=False)
 
     def test_properties_3(self):
@@ -690,7 +693,7 @@ class TestEdgePopulation:
         expected = pd.DataFrame([
             [1110., 1120., 1130.]
         ],
-            index=index_as_uint64([0]),
+            index=index_as_int64([0]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -700,7 +703,7 @@ class TestEdgePopulation:
         expected = pd.DataFrame([
             [1211., 1221., 1231.]
         ],
-            index=index_as_uint64([1]),
+            index=index_as_int64([1]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -710,7 +713,7 @@ class TestEdgePopulation:
         expected = pd.DataFrame([
             [2112., 2122., 2132.]
         ],
-            index=index_as_uint64([2]),
+            index=index_as_int64([2]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -720,7 +723,7 @@ class TestEdgePopulation:
         expected = pd.DataFrame([
             [2213., 2223., 2233.]
         ],
-            index=index_as_uint64([3]),
+            index=index_as_int64([3]),
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
@@ -798,7 +801,7 @@ class TestEdgePopulation:
                     [52.1881],
                     [11.1058],
                 ],
-                columns=properties, index=index_as_uint64([1, 2, 3])
+                columns=properties, index=index_as_int64([1, 2, 3])
             ),
             check_dtype=False
         )
@@ -818,7 +821,7 @@ class TestEdgePopulation:
                     [99.8945],
                     [11.1058],
                 ],
-                columns=properties, index=index_as_uint64([0, 3])
+                columns=properties, index=index_as_int64([0, 3])
             ),
             check_dtype=False
         )
@@ -841,7 +844,7 @@ class TestEdgePopulation:
                 [
                     [99.8945],
                 ],
-                columns=properties, index=index_as_uint64([0])
+                columns=properties, index=index_as_int64([0])
             ),
             check_dtype=False
         )
@@ -855,7 +858,7 @@ class TestEdgePopulation:
                     [88.1862],
                     [52.1881],
                 ],
-                columns=properties, index=index_as_uint64([1, 2])
+                columns=properties, index=index_as_int64([1, 2])
             ),
             check_dtype=False
         )

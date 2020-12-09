@@ -154,7 +154,8 @@ class Edges:
 
         Args:
             edge_ids (array-like): array-like of edge IDs
-            properties (str/list): an edge property name or a list of edge property names
+            properties (None/str/list): an edge property name or a list of edge property names.
+                If set to None all properties for the edges are used.
 
         Returns:
             pandas.Series/pandas.DataFrame:
@@ -166,8 +167,9 @@ class Edges:
             for the `properties` argument.
         """
         ids = self.ids(edge_ids)
+        # TODO : remove this due to the addition of ids to the EdgePopulation
         if properties is None:
-            properties = self.property_names
+            return ids
         properties = utils.ensure_list(properties)
 
         unknown_props = set(properties) - self.property_names
@@ -553,7 +555,7 @@ class EdgePopulation:
             result = edge_ids
         else:
             result = utils.ensure_list(edge_ids)
-            # test if first value is a CircuitEdgeId all values are all CircuitEdgeId
+            # test if first value is a CircuitEdgeId if yes then all values must be CircuitEdgeId
             if isinstance(next(iter(result), None), CircuitEdgeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
