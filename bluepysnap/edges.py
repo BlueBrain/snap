@@ -300,14 +300,25 @@ class Edges:
             source=source_node_id, target=target_node_id, properties=properties
         )
 
-    def _add_circuit_ids(self, its, source, target):
+    @staticmethod
+    def _add_circuit_ids(its, source, target):
+        """Generator comprehension adding the CircuitIds to the iterator.
+
+        Notes:
+            Using closures or lambda functions would result in override functions and so the
+            source and target would be the same for all the populations.
+        """
         return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1]), it[2]) for it in its)
 
-    def _add_edge_ids(self, its, source, target, pop_name):
+    @staticmethod
+    def _add_edge_ids(its, source, target, pop_name):
+        """Generator comprehension adding the CircuitIds to the iterator."""
         return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1]),
                  CircuitEdgeIds.from_dict({pop_name: it[2]})) for it in its)
 
-    def _omit_edge_count(self, its, source, target):
+    @staticmethod
+    def _omit_edge_count(its, source, target):
+        """Generator comprehension adding the CircuitIds to the iterator."""
         return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1])) for it in its)
 
     def iter_connections(
