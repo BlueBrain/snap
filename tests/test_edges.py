@@ -225,26 +225,24 @@ class TestEdges:
             self.test_obj.properties(ids, properties="unknown")
 
     def test_afferent_nodes(self):
-        assert self.test_obj.afferent_nodes(0) == CircuitEdgeIds.from_arrays(
-            ["default", "default2"], [2, 2])
-        assert self.test_obj.afferent_nodes(CircuitNodeId("default", 0)) == CircuitEdgeIds.from_arrays(
-            ["default", "default2"], [2, 2])
-        assert self.test_obj.afferent_nodes([0, 1]) == CircuitEdgeIds.from_dict(
-            {"default": [2, 0], "default2": [2, 0]})
+        assert self.test_obj.afferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [2])
+        assert self.test_obj.afferent_nodes(CircuitNodeId("default", 0)) == CircuitNodeIds.from_arrays(
+            ["default"], [2])
+        assert self.test_obj.afferent_nodes([0, 1]) == CircuitNodeIds.from_dict({"default": [2, 0]})
         ids = CircuitNodeIds.from_dict({"default": [0, 1], "default2": [0, 1]})
-        assert self.test_obj.afferent_nodes(ids) == CircuitEdgeIds.from_dict(
-            {"default": [2, 0], "default2": [2, 0]})
+        assert self.test_obj.afferent_nodes(ids) == CircuitNodeIds.from_dict({"default": [2, 0]})
+        assert self.test_obj.afferent_nodes(0, unique=False) == CircuitNodeIds.from_arrays(
+            ["default", "default"], [2, 2])
 
     def test_efferent_nodes(self):
-        assert self.test_obj.efferent_nodes(0) == CircuitEdgeIds.from_arrays(
-            ["default", "default2"], [1, 1])
-        assert self.test_obj.efferent_nodes(CircuitNodeId("default", 0)) == CircuitEdgeIds.from_arrays(
-            ["default", "default2"], [1, 1])
-        assert self.test_obj.efferent_nodes([0, 2]) == CircuitEdgeIds.from_dict(
-            {"default": [0, 1], "default2": [0, 1]})
-        ids = CircuitNodeIds.from_dict({"default": [0, 2], "default2": [0, 2]})
-        assert self.test_obj.efferent_nodes(ids) == CircuitEdgeIds.from_dict(
-            {"default": [1, 0], "default2": [1, 0]})
+        assert self.test_obj.efferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [1])
+        assert self.test_obj.efferent_nodes(CircuitNodeId("default", 0)) == CircuitNodeIds.from_arrays(
+            ["default"], [1])
+        assert self.test_obj.efferent_nodes([0, 2]) == CircuitNodeIds.from_dict({"default": [0, 1]})
+        ids = CircuitNodeIds.from_dict({"default": [0, 2]})
+        assert self.test_obj.efferent_nodes(ids) == CircuitNodeIds.from_dict({"default": [1, 0]})
+        assert self.test_obj.efferent_nodes(0, unique=False) == CircuitNodeIds.from_arrays(
+            ["default", "default"], [1, 1])
 
     def test_pathway_edges(self):
         properties = [Synapse.AXONAL_DELAY]

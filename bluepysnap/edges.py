@@ -26,7 +26,7 @@ import pandas as pd
 from cached_property import cached_property
 
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 from bluepysnap import utils
 
@@ -207,10 +207,10 @@ class Edges:
         populations = np.empty((0,), dtype=str_type)
         for name, pop in self.items():
             pop_ids = pop.afferent_nodes(target)
-            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            pops = np.full_like(pop_ids, fill_value=pop.source.name, dtype=str_type)
             ids = np.concatenate([ids, pop_ids])
             populations = np.concatenate([populations, pops])
-        result = CircuitEdgeIds.from_arrays(populations, ids)
+        result = CircuitNodeIds.from_arrays(populations, ids)
         if unique:
             result.unique(inplace=True)
         return result
@@ -234,10 +234,10 @@ class Edges:
         populations = np.empty((0,), dtype=str_type)
         for name, pop in self.items():
             pop_ids = pop.efferent_nodes(source)
-            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
+            pops = np.full_like(pop_ids, fill_value=pop.target.name, dtype=str_type)
             ids = np.concatenate([ids, pop_ids])
             populations = np.concatenate([populations, pops])
-        result = CircuitEdgeIds.from_arrays(populations, ids)
+        result = CircuitNodeIds.from_arrays(populations, ids)
         if unique:
             result.unique(inplace=True)
         return result
