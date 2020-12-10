@@ -2,6 +2,8 @@ import bluepysnap._doctools as test_module
 
 
 class TestClass:
+    __test__ = False
+
     def __init__(self):
         """TestClass"""
         self.foo_val = 0

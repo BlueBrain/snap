@@ -40,11 +40,12 @@ def _copy_func(f):
 # with wrapper <class 'bluepysnap._doctools.DocSubstitutionDecorator.__call__.<locals>.Wrapped'>
 # works well with Sphinx also
 class DocSubstitutionMeta(type):
-    """Tool to update an inheritate class documentation."""
+    """Tool to update an inherited class documentation."""
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
         """Define the new class to return."""
         for parent in parents:
-            for fun_name, fun_value in inspect.getmembers(parent, predicate=inspect.isfunction):
+            predicate = lambda x: inspect.isfunction(x)
+            for fun_name, fun_value in inspect.getmembers(parent, predicate=predicate):
                 # skip special methods
                 if fun_name.startswith("__"):
                     continue
@@ -52,7 +53,6 @@ class DocSubstitutionMeta(type):
                 changed_fun = _copy_func(fun_value)
                 changed_fun.__doc__ = _word_swapper(changed_fun.__doc__, source_word, target_word)
                 attrs[fun_name] = changed_fun
-
         # create the class
         obj = super(DocSubstitutionMeta, mcs).__new__(mcs, name, parents, attrs)
         return obj

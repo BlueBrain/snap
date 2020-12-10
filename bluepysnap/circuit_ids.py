@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Circuit ids."""
+import abc
 from collections import namedtuple
 
 import numpy as np
@@ -30,7 +31,14 @@ CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
 CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
 
 
-class CircuitIds:
+class AbstractDocSubstitutionMeta(abc.ABCMeta, DocSubstitutionMeta):
+    """Mixin class to use with abstract classes.
+
+    It solves the metaclass conflict.
+    """
+
+
+class CircuitIds(abc.ABC):
     """High performances CircuitID container.
 
     This abstract class aims at defining the global ids for the circuit. It is the base class of
@@ -39,16 +47,6 @@ class CircuitIds:
     A global circuit node id is the combination of a population and an ID inside this
     population.
     """
-
-    def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
-        """Return a CircuitIds object.
-
-        Notes:
-            This is mandatory to allow the metaclass working.
-
-        """
-        return object.__new__(cls)
-
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitIds.
 
@@ -288,16 +286,16 @@ class CircuitIds:
             return False
         return self.index.equals(other.index)
 
+    @abc.abstractmethod
     def __iter__(self):  # pragma: no cover
         """Iterator on the CircuitIds."""
-        raise NotImplementedError
 
+    @abc.abstractmethod
     def __getitem__(self, item):  # pragma: no cover
         """Getter on the CircuitIds."""
-        raise NotImplementedError
 
 
-class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
+class CircuitNodeIds(CircuitIds, metaclass=AbstractDocSubstitutionMeta,
                      source_word="CircuitId", target_word="CircuitNodeId"):
     """High performances CircuitNodeID container."""
 
@@ -322,7 +320,7 @@ class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
         return CircuitNodeId(*self.index[item])
 
 
-class CircuitEdgeIds(CircuitIds, metaclass=DocSubstitutionMeta,
+class CircuitEdgeIds(CircuitIds, metaclass=AbstractDocSubstitutionMeta,
                      source_word="CircuitId", target_word="CircuitEdgeId"):
     """High performances CircuitEdgeID container."""
 
