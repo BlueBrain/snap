@@ -16,8 +16,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Edge population access."""
-from itertools import chain
-
 import inspect
 
 import libsonata
