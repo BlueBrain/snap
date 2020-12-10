@@ -44,8 +44,7 @@ class DocSubstitutionMeta(type):
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
         """Define the new class to return."""
         for parent in parents:
-            predicate = lambda x: inspect.isfunction(x)
-            for fun_name, fun_value in inspect.getmembers(parent, predicate=predicate):
+            for fun_name, fun_value in inspect.getmembers(parent, predicate=inspect.isfunction):
                 # skip special methods
                 if fun_name.startswith("__"):
                     continue
