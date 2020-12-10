@@ -33,14 +33,20 @@ CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
 class CircuitIds:
     """High performances CircuitID container.
 
-    This class aims at defining the global ids for the circuit. The pandas.MultiIndex class
-    is used as backend and can be accessed using CircuitIds.index.
+    This abstract class aims at defining the global ids for the circuit. It is the base class of
+    CircuitNodeIds and CircuitEdgeIds.
+    The pandas.MultiIndex class is used as backend and can be accessed using CircuitIds.index.
     A global circuit node id is the combination of a population and an ID inside this
     population.
     """
 
-    def __new__(cls, index, sort_index=True):  # pylint: disable=unused-argument
-        """Return a CircuitIds object."""
+    def __new__(cls, *args, **kwargs):  # pylint: disable=unused-argument
+        """Return a CircuitIds object.
+
+        Notes:
+            This is mandatory to allow the metaclass working.
+
+        """
         return object.__new__(cls)
 
     def __init__(self, index, sort_index=True):
@@ -292,7 +298,7 @@ class CircuitIds:
 
 
 class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
-                     source_word="CircuitIds", target_word="CircuitNodeIds"):
+                     source_word="CircuitId", target_word="CircuitNodeId"):
     """High performances CircuitNodeID container."""
 
     def __init__(self, index, sort_index=True):
@@ -317,7 +323,7 @@ class CircuitNodeIds(CircuitIds, metaclass=DocSubstitutionMeta,
 
 
 class CircuitEdgeIds(CircuitIds, metaclass=DocSubstitutionMeta,
-                     source_word="CircuitIds", target_word="CircuitEdgeIds"):
+                     source_word="CircuitId", target_word="CircuitEdgeId"):
     """High performances CircuitEdgeID container."""
 
     def __init__(self, index, sort_index=True):

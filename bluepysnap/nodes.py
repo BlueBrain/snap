@@ -20,6 +20,7 @@ import inspect
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
 
+from more_itertools import first
 import libsonata
 import numpy as np
 import pandas as pd
@@ -65,14 +66,12 @@ class Nodes:
     def property_dtypes(self):
         """Returns all the property dtypes for the Circuit."""
         def _update(d, index, value):
-            if index not in d:
-                d[index] = value
-            elif d[index] != value:
+            if d.setdefault(index, value) != value:
                 raise BluepySnapError("Same property with different "
                                       "dtype. {}: {}!= {}".format(index, value, d[index]))
 
         res = dict()
-        for pop in self.populations():
+        for pop in self.values():
             for varname, dtype in pop.property_dtypes.iteritems():
                 _update(res, varname, dtype)
         return pd.Series(res)
@@ -98,10 +97,6 @@ class Nodes:
         """
         return ((name, self[name]) for name in self.population_names)
 
-    # helper renaming
-    names = keys
-    populations = values
-
     def __getitem__(self, population_name):
         """Access the NodePopulation corresponding to the population 'population_name'."""
         try:
@@ -111,21 +106,21 @@ class Nodes:
 
     def __iter__(self):
         """Allows iteration over the different NodePopulation."""
-        return iter(self.names())
+        return iter(self.keys())
 
     @cached_property
     def size(self):
         """Total number of nodes inside the circuit."""
-        return sum(pop.size for pop in self.populations())
+        return sum(pop.size for pop in self.values())
 
     @cached_property
     def property_names(self):
         """Returns all the properties present inside the circuit."""
-        return set(prop for pop in self.populations() for prop in pop.property_names)
+        return set(prop for pop in self.values() for prop in pop.property_names)
 
     def property_values(self, prop):
         """Returns all the values for a given property."""
-        return set(value for pop in self.populations() if prop in pop.property_names for value in
+        return set(value for pop in self.values() if prop in pop.property_names for value in
                    pop.property_values(prop))
 
     def ids(self, group=None):
@@ -183,14 +178,16 @@ class Nodes:
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
 
-        ids = np.empty((0,), dtype=np.int64)
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        populations = np.empty((0,), dtype=str_type)
+        ids = []
+        populations = []
         for name, pop in self.items():
             pop_ids = pop.ids(group=group, raise_missing_property=False)
             pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
-            ids = np.concatenate([ids, pop_ids])
-            populations = np.concatenate([populations, pops])
+            ids.append(pop_ids)
+            populations.append(pops)
+        ids = np.concatenate(ids).astype(np.int64)
+        populations = np.concatenate(populations).astype(str_type)
         return CircuitNodeIds.from_arrays(populations, ids)
 
     def get(self, group=None, properties=None):
@@ -651,7 +648,7 @@ class NodePopulation:
         else:
             result = utils.ensure_list(group)
             # test if first value is a CircuitNodeId all values are all CircuitNodeId
-            if isinstance(next(iter(result), None), CircuitNodeId):
+            if isinstance(first(result, None), CircuitNodeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
                 except AttributeError:

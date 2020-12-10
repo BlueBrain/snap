@@ -24,6 +24,7 @@ import libsonata
 import numpy as np
 import pandas as pd
 from cached_property import cached_property
+from more_itertools import first
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
@@ -61,14 +62,12 @@ class Edges:
         """Returns all the property dtypes for the Circuit."""
 
         def _update(d, index, value):
-            if index not in d:
-                d[index] = value
-            elif d[index] != value:
+            if d.setdefault(index, value) != value:
                 raise BluepySnapError("Same property with different "
                                       "dtype. {}: {}!= {}".format(index, value, d[index]))
 
         res = dict()
-        for pop in self.populations():
+        for pop in self.values():
             for varname, dtype in pop.property_dtypes.iteritems():
                 _update(res, varname, dtype)
         return pd.Series(res)
@@ -94,10 +93,6 @@ class Edges:
         """
         return ((name, self[name]) for name in self.population_names)
 
-    # helper renaming
-    names = keys
-    populations = values
-
     def __getitem__(self, population_name):
         """Access the EdgePopulation corresponding to the population 'population_name'."""
         try:
@@ -107,17 +102,17 @@ class Edges:
 
     def __iter__(self):
         """Allows iteration over the different EdgePopulation."""
-        return iter(self.names())
+        return iter(self.keys())
 
     @cached_property
     def size(self):
         """Total number of edges inside the circuit."""
-        return sum(pop.size for pop in self.populations())
+        return sum(pop.size for pop in self.values())
 
     @cached_property
     def property_names(self):
         """Returns all the properties present inside the circuit."""
-        return set(prop for pop in self.populations() for prop in pop.property_names)
+        return set(prop for pop in self.values() for prop in pop.property_names)
 
     def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls):
         """Get CircuitIds of class 'returned_ids_cls' for all populations using 'fun_to_apply'.
@@ -130,14 +125,16 @@ class Edges:
         Returns:
             CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
         """
-        ids = np.empty((0,), dtype=np.int64)
         str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        populations = np.empty((0,), dtype=str_type)
-        for pop in self.populations():
+        ids = []
+        populations = []
+        for pop in self.values():
             pop_ids, name_ids = fun_to_apply(pop)
             pops = np.full_like(pop_ids, fill_value=name_ids, dtype=str_type)
-            ids = np.concatenate([ids, pop_ids])
-            populations = np.concatenate([populations, pops])
+            ids.append(pop_ids)
+            populations.append(pops)
+        ids = np.concatenate(ids).astype(np.int64)
+        populations = np.concatenate(populations).astype(str_type)
         return returned_ids_cls.from_arrays(populations, ids)
 
     def ids(self, edge_ids):
@@ -145,7 +142,7 @@ class Edges:
 
         Args:
             edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
-                returned depends on the type of the ``group`` argument:
+            returned depends on the type of the ``group`` argument:
                 - ``CircuitEdgeId``: return the ID in a CircuitEdgeIds object.
                 - ``CircuitEdgeIds``: return the IDs in a CircuitNodeIds object.
                 - ``int``: returns a CircuitEdgeIds object containing the corresponding edge ID
@@ -328,18 +325,21 @@ class Edges:
             Using closures or lambda functions would result in override functions and so the
             source and target would be the same for all the populations.
         """
-        return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1]), it[2]) for it in its)
+        return ((CircuitNodeId(source, source_id), CircuitNodeId(target, target_id), count) for
+                source_id, target_id, count in its)
 
     @staticmethod
     def _add_edge_ids(its, source, target, pop_name):
         """Generator comprehension adding the CircuitIds to the iterator."""
-        return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1]),
-                 CircuitEdgeIds.from_dict({pop_name: it[2]})) for it in its)
+        return ((CircuitNodeId(source, source_id), CircuitNodeId(target, target_id),
+                 CircuitEdgeIds.from_dict({pop_name: edge_id})) for source_id, target_id, edge_id in
+                its)
 
     @staticmethod
     def _omit_edge_count(its, source, target):
         """Generator comprehension adding the CircuitIds to the iterator."""
-        return ((CircuitNodeId(source, it[0]), CircuitNodeId(target, it[1])) for it in its)
+        return ((CircuitNodeId(source, source_id), CircuitNodeId(target, target_id)) for
+                source_id, target_id in its)
 
     def iter_connections(
             self, source=None, target=None, return_edge_ids=False,
@@ -359,7 +359,10 @@ class Edges:
             (source_node_id, target_node_id, edge_count) if return_edge_count == True;
             (source_node_id, target_node_id) otherwise.
         """
-        its = []
+        if return_edge_ids and return_edge_count:
+            raise BluepySnapError(
+                "`return_edge_count` and `return_edge_ids` are mutually exclusive"
+            )
         for name, pop in self.items():
             it = pop.iter_connections(source=source, target=target,
                                       return_edge_ids=return_edge_ids,
@@ -367,12 +370,11 @@ class Edges:
             source_pop = pop.source.name
             target_pop = pop.target.name
             if return_edge_count:
-                its.append(self._add_circuit_ids(it, source_pop, target_pop))
+                yield from self._add_circuit_ids(it, source_pop, target_pop)
             elif return_edge_ids:
-                its.append(self._add_edge_ids(it, source_pop, target_pop, name))
+                yield from self._add_edge_ids(it, source_pop, target_pop, name)
             else:
-                its.append(self._omit_edge_count(it, source_pop, target_pop))
-        return chain.from_iterable(its)
+                yield from self._omit_edge_count(it, source_pop, target_pop)
 
 
 class EdgeStorage:
@@ -590,7 +592,7 @@ class EdgePopulation:
         else:
             result = utils.ensure_list(edge_ids)
             # test if first value is a CircuitEdgeId if yes then all values must be CircuitEdgeId
-            if isinstance(next(iter(result), None), CircuitEdgeId):
+            if isinstance(first(result, None), CircuitEdgeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
                 except AttributeError:

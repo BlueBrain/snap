@@ -42,7 +42,6 @@ class TestNodes:
 
     def test_keys_names(self):
         assert list(self.test_obj.keys()) == ['default', 'default2']
-        assert list(self.test_obj.names()) == list(self.test_obj.keys())
 
     def test_values_population(self):
         values = list(self.test_obj.values())
@@ -51,8 +50,6 @@ class TestNodes:
 
         assert isinstance(values[1], test_module.NodePopulation)
         assert values[1].name == 'default2'
-
-        assert list(self.test_obj.values()) == list(self.test_obj.populations())
 
     def test_items(self):
         keys, values = zip(*self.test_obj.items())

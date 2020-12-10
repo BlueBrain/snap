@@ -32,10 +32,10 @@ class TestCircuitNodeId:
 
 class TestCircuitEdgeId:
     def setup(self):
-        self.test_obj = test_module.CircuitNodeId("pop", 1)
+        self.test_obj = test_module.CircuitEdgeId("pop", 1)
 
     def test_init(self):
-        assert isinstance(self.test_obj, test_module.CircuitNodeId)
+        assert isinstance(self.test_obj, test_module.CircuitEdgeId)
         assert isinstance(self.test_obj, tuple)
 
     def test_accessors(self):
