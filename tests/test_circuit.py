@@ -38,7 +38,7 @@ def test_duplicate_node_populations():
         str(TEST_DATA_DIR / 'circuit_config_duplicate.json')
     )
     with pytest.raises(BluepySnapError):
-        circuit.nodes
+        list(circuit.nodes)
 
 
 def test_duplicate_edge_populations():
@@ -46,7 +46,7 @@ def test_duplicate_edge_populations():
         str(TEST_DATA_DIR / 'circuit_config_duplicate.json')
     )
     with pytest.raises(BluepySnapError):
-        circuit.edges
+        list(circuit.edges)
 
 
 def test_no_node_set():

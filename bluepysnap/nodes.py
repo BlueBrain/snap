@@ -27,29 +27,30 @@ import pandas as pd
 
 from cached_property import cached_property
 
+from bluepysnap.network import NetworkObject
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap._doctools import AbstractDocSubstitutionMeta
 
 # this constant is not part of the sonata standard
 NODE_SET_KEY = "$node_set"
 
 
-class Nodes:
+class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
+            source_word="NetworkObject", target_word="Node"):
     """The top level Nodes accessor."""
 
     def __init__(self, circuit):
         """Initialize the top level Nodes accessor."""
-        self._circuit = circuit
-        self._config = self._circuit.config['networks']['nodes']
-        self._populations = self._get_populations()
+        super().__init__(circuit)
 
     def _get_populations(self):
-        """Collect the different NodePopulation."""
+        """Collect the different NodePopulations."""
         res = {}
-        for file_config in self._config:
+        for file_config in self._config['networks']['nodes']:
             storage = NodeStorage(file_config, self._circuit)
             for population in storage.population_names:  # pylint: disable=not-an-iterable
                 if population in res:
@@ -57,69 +58,8 @@ class Nodes:
                 res[population] = storage.population(population)
         return res
 
-    @cached_property
-    def population_names(self):
-        """Returns all the population names from the Circuit."""
-        return sorted(self._populations)
-
-    @cached_property
-    def property_dtypes(self):
-        """Returns all the property dtypes for the Circuit."""
-        def _update(d, index, value):
-            if d.setdefault(index, value) != value:
-                raise BluepySnapError("Same property with different "
-                                      "dtype. {}: {}!= {}".format(index, value, d[index]))
-
-        res = dict()
-        for pop in self.values():
-            for varname, dtype in pop.property_dtypes.iteritems():
-                _update(res, varname, dtype)
-        return pd.Series(res)
-
-    def keys(self):
-        """Returns iterator on the population names.
-
-        Made to simulate the behavior of a dict.keys().
-        """
-        return (name for name in self.population_names)
-
-    def values(self):
-        """Returns iterator on the NodePopulations.
-
-        Made to simulate the behavior of a dict.values().
-        """
-        return (self[name] for name in self.population_names)
-
-    def items(self):
-        """Returns iterator on the tuples (population name, NodePopulations).
-
-        Made to simulate the behavior of a dict.items().
-        """
-        return ((name, self[name]) for name in self.population_names)
-
-    def __getitem__(self, population_name):
-        """Access the NodePopulation corresponding to the population 'population_name'."""
-        try:
-            return self._populations[population_name]
-        except KeyError:
-            raise BluepySnapError("{} not a node population.".format(population_name))
-
-    def __iter__(self):
-        """Allows iteration over the different NodePopulation."""
-        return iter(self.keys())
-
-    @cached_property
-    def size(self):
-        """Total number of nodes inside the circuit."""
-        return sum(pop.size for pop in self.values())
-
-    @cached_property
-    def property_names(self):
-        """Returns all the properties present inside the circuit."""
-        return set(prop for pop in self.values() for prop in pop.property_names)
-
     def property_values(self, prop):
-        """Returns all the values for a given property."""
+        """Returns all the values for a given Nodes property."""
         return set(value for pop in self.values() if prop in pop.property_names for value in
                    pop.property_values(prop))
 
@@ -156,6 +96,7 @@ class Nodes:
 
         Examples:
             The available group parameter values (example with 2 node populations pop1 and pop2):
+
             >>> nodes = circuit.nodes
             >>> nodes.ids(group=None)  #  returns all CircuitNodeIds from the circuit
             >>> node_ids = CircuitNodeIds.from_arrays(["pop1", "pop2"], [1, 3])

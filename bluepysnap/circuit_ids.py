@@ -24,18 +24,11 @@ import pandas as pd
 
 import bluepysnap.utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap._doctools import DocSubstitutionMeta
+from bluepysnap._doctools import AbstractDocSubstitutionMeta
 
 
 CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
 CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
-
-
-class AbstractDocSubstitutionMeta(abc.ABCMeta, DocSubstitutionMeta):
-    """Mixin class to use with abstract classes.
-
-    It solves the metaclass conflict.
-    """
 
 
 class CircuitIds(abc.ABC):
