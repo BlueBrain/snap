@@ -4,7 +4,7 @@ import pytest
 
 import bluepysnap.utils as test_module
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
-from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.exceptions import BluepySnapError, BluepySnapDeprecationError, BluepySnapDeprecationWarning
 
 from utils import TEST_DATA_DIR
 
@@ -79,3 +79,20 @@ def test_quaternion2mat():
         ],
     ])
     npt.assert_almost_equal(actual, expected)
+
+
+class TestDeprecate:
+    def test_fail(self):
+        with pytest.raises(BluepySnapDeprecationError):
+            test_module.Deprecate.fail("something")
+
+    def test_warning(self):
+        import warnings
+
+        with warnings.catch_warnings(record=True) as w:
+            test_module.Deprecate.warn("something")
+
+            # Verify some things
+            assert len(w) == 1
+            assert issubclass(w[-1].category, BluepySnapDeprecationWarning)
+            assert "something" in str(w[-1].message)
