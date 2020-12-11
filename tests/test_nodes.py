@@ -42,7 +42,6 @@ class TestNodes:
 
     def test_keys_names(self):
         assert list(self.test_obj.keys()) == ['default', 'default2']
-        assert list(self.test_obj.names()) == list(self.test_obj.keys())
 
     def test_values_population(self):
         values = list(self.test_obj.values())
@@ -51,8 +50,6 @@ class TestNodes:
 
         assert isinstance(values[1], test_module.NodePopulation)
         assert values[1].name == 'default2'
-
-        assert list(self.test_obj.values()) == list(self.test_obj.populations())
 
     def test_items(self):
         keys, values = zip(*self.test_obj.items())
@@ -141,6 +138,13 @@ class TestNodes:
         assert tested == expected
         tested = self.test_obj.ids(np.array([0, 1]))
         assert tested == expected
+
+        ids = [CircuitNodeId("default", 0), CircuitNodeId("default", 1)]
+        assert self.test_obj.ids(ids) == CircuitNodeIds.from_dict({"default": [0, 1]})
+
+        with pytest.raises(BluepySnapError):
+            ids = [CircuitNodeId("default", 0), ("default", 1)]
+            self.test_obj.ids(ids)
 
         # seq node ID --> CircuitNodeIds raise if on ID is not in all populations
         with pytest.raises(BluepySnapError):
@@ -391,8 +395,8 @@ class TestNodePopulation:
 
     def test_as_edge_source_target(self):
         circuit = Circuit(str(TEST_DATA_DIR / 'circuit_config.json'))
-        assert circuit.nodes['default'].source_in_edges() == {"default"}
-        assert circuit.nodes['default'].target_in_edges() == {"default"}
+        assert circuit.nodes['default'].source_in_edges() == {"default", 'default2'}
+        assert circuit.nodes['default'].target_in_edges() == {"default", 'default2'}
 
     def test_as_edge_source_target_mock(self):
         def _mock_edge(name, source, target):

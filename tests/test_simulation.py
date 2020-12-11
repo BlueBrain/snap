@@ -15,7 +15,7 @@ def test_all():
     simulation = test_module.Simulation(str(TEST_DATA_DIR / 'simulation_config.json'))
     assert simulation.config["network"] == str(TEST_DATA_DIR / 'circuit_config.json')
     assert set(simulation.circuit.nodes) == {'default', 'default2'}
-    assert list(simulation.circuit.edges) == ['default']
+    assert set(simulation.circuit.edges) == {'default', 'default2'}
 
     assert simulation.run == {"tstop": 1000.0, "dt": 0.01, "spike_threshold": -15,
                               "nsteps_block": 10000, "seed": 42}

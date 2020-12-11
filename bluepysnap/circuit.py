@@ -22,19 +22,7 @@ from cached_property import cached_property
 from bluepysnap.config import Config
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.nodes import Nodes
-from bluepysnap.edges import EdgeStorage
-from bluepysnap.exceptions import BluepySnapError
-
-
-def _collect_populations(partial_config, cls):
-    result = {}
-    for file_config in partial_config:
-        storage = cls(file_config)
-        for population in storage.population_names:
-            if population in result:
-                raise BluepySnapError("Duplicated population: '%s'" % population)
-            result[population] = storage.population(population)
-    return result
+from bluepysnap.edges import Edges
 
 
 class Circuit:
@@ -65,13 +53,10 @@ class Circuit:
 
     @cached_property
     def nodes(self):
-        """Access to node population(s). See :py:class:`~bluepysnap.nodes.NodePopulation`."""
+        """Access to node population(s). See :py:class:`~bluepysnap.nodes.Nodes`."""
         return Nodes(self)
 
     @cached_property
     def edges(self):
-        """Access to edge population(s). See :py:class:`~bluepysnap.edges.EdgePopulation`."""
-        return _collect_populations(
-            self._config['networks']['edges'],
-            lambda cfg: EdgeStorage(cfg, self)
-        )
+        """Access to edge population(s). See :py:class:`~bluepysnap.edges.Edges`."""
+        return Edges(self)
