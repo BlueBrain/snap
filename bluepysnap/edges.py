@@ -41,39 +41,8 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         """Initialize the top level Edges accessor."""
         super().__init__(circuit)
 
-    def _get_populations(self):
-        """Collect the different EdgePopulation."""
-        res = {}
-        for file_config in self._config['networks']['edges']:
-            storage = EdgeStorage(file_config, self._circuit)
-            for population in storage.population_names:  # pylint: disable=not-an-iterable
-                if population in res:
-                    raise BluepySnapError("Duplicated edge population: '%s'" % population)
-                res[population] = storage.population(population)
-        return res
-
-    def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls):
-        """Get CircuitIds of class 'returned_ids_cls' for all populations using 'fun_to_apply'.
-
-        Args:
-            fun_to_apply (function): A function that returns the list of IDs for each population
-                and the population containing these IDs.
-            returned_ids_cls (CircuitNodeIds/CircuitEdgeIds): the class for the CircuitIds.
-
-        Returns:
-            CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
-        """
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        ids = []
-        populations = []
-        for pop in self.values():
-            pop_ids, name_ids = fun_to_apply(pop)
-            pops = np.full_like(pop_ids, fill_value=name_ids, dtype=str_type)
-            ids.append(pop_ids)
-            populations.append(pops)
-        ids = np.concatenate(ids).astype(np.int64)
-        populations = np.concatenate(populations).astype(str_type)
-        return returned_ids_cls.from_arrays(populations, ids)
+    def _collect_populations(self):
+        return self._get_populations(EdgeStorage, self._config['networks']['edges'])
 
     def ids(self, edge_ids):  # pylint: disable=arguments-differ
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
@@ -85,7 +54,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                 - ``CircuitEdgeIds``: return the IDs in a CircuitNodeIds object.
                 - ``int``: returns a CircuitEdgeIds object containing the corresponding edge ID
                     for all populations.
-                - ``sequence``: returns a CircuitNodeIds object containing the corresponding edge
+                - ``sequence``: returns a CircuitEdgeIds object containing the corresponding edge
                     IDs for all populations.
 
         Returns:
@@ -102,7 +71,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
         return self._get_ids_from_pop(lambda x: (x.ids(edge_ids), x.name), CircuitEdgeIds)
 
-    def get(self, edge_ids, properties):   # pylint: disable=arguments-differ
+    def get(self, edge_ids=None, properties=None):   # pylint: disable=arguments-differ
         """Edge properties as pandas DataFrame.
 
         Args:
@@ -119,29 +88,13 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             The Edges.property_names function will give you all the usable properties
             for the `properties` argument.
         """
-        ids = self.ids(edge_ids)
-        # TODO : remove this due to the addition of ids to the EdgePopulation
+        if edge_ids is None:
+            raise BluepySnapError("You need to set edge_ids in get.")
         if properties is None:
             Deprecate.warn("Returning ids with get/properties will be removed in 1.0.0."
                            "Please use Edges.ids() instead.")
-            return ids
-        properties = utils.ensure_list(properties)
-
-        unknown_props = set(properties) - self.property_names
-        if unknown_props:
-            raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
-
-        res = pd.DataFrame(index=ids.index, columns=properties)
-        for name, pop in self.items():
-            global_pop_ids = ids.filter_population(name)
-            pop_ids = global_pop_ids.get_ids()
-            pop_properties = set(properties) & pop.property_names
-            # indices from EdgePopulation and Edge properties functions are different so I cannot
-            # use a dataframe equal directly and properties have different types so cannot use a
-            # multi dim numpy array
-            for prop in pop_properties:
-                res.loc[global_pop_ids.index, prop] = pop.properties(pop_ids, prop).to_numpy()
-        return res.sort_index()
+            return edge_ids
+        return super().get(edge_ids, properties)
 
     def properties(self, edge_ids, properties):
         """Doc is overridden below."""
@@ -472,8 +425,6 @@ class EdgePopulation:
             >>> from bluepysnap.sonata_constants import Edge
             >>> print(my_edge_population.container_property_names(Edge))
             >>> ["AXONAL_DELAY", "SYN_WEIGHT"] # values you can use with my_edge_population
-            >>> my_edge_population.property_values(Edge.AXONAL_DELAY)
-            >>> my_edge_population.property_values(Edge.get("AXONAL_DELAY"))
         """
         if not inspect.isclass(container) or not issubclass(container, ConstContainer):
             raise BluepySnapError("'container' must be a subclass of ConstContainer")

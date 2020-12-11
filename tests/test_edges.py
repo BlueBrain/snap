@@ -174,6 +174,9 @@ class TestEdges:
         assert ids.filter_population("default2").limit(2) == expected
 
     def test_get(self):
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get(properties=["other2", "unknown"])
+
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
         tested = self.test_obj.get(ids, None)
         assert tested == ids

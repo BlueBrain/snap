@@ -47,16 +47,8 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         """Initialize the top level Nodes accessor."""
         super().__init__(circuit)
 
-    def _get_populations(self):
-        """Collect the different NodePopulations."""
-        res = {}
-        for file_config in self._config['networks']['nodes']:
-            storage = NodeStorage(file_config, self._circuit)
-            for population in storage.population_names:  # pylint: disable=not-an-iterable
-                if population in res:
-                    raise BluepySnapError("Duplicated node population: '%s'" % population)
-                res[population] = storage.population(population)
-        return res
+    def _collect_populations(self):
+        return self._get_populations(NodeStorage, self._config['networks']['nodes'])
 
     def property_values(self, prop):
         """Returns all the values for a given Nodes property."""
@@ -119,17 +111,8 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
 
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        ids = []
-        populations = []
-        for name, pop in self.items():
-            pop_ids = pop.ids(group=group, raise_missing_property=False)
-            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
-            ids.append(pop_ids)
-            populations.append(pops)
-        ids = np.concatenate(ids).astype(np.int64)
-        populations = np.concatenate(populations).astype(str_type)
-        return CircuitNodeIds.from_arrays(populations, ids)
+        fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
+        return self._get_ids_from_pop(fun, CircuitNodeIds)
 
     def get(self, group=None, properties=None):   # pylint: disable=arguments-differ
         """Node properties as a pandas DataFrame.
@@ -150,26 +133,10 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             The NodePopulation.property_names function will give you all the usable properties
             for the `properties` argument.
         """
-        ids = self.ids(group)
+
         if properties is None:
             properties = self.property_names
-        properties = utils.ensure_list(properties)
-
-        unknown_props = set(properties) - self.property_names
-        if unknown_props:
-            raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
-
-        res = pd.DataFrame(index=ids.index, columns=properties)
-        for name, pop in self.items():
-            global_pop_ids = ids.filter_population(name)
-            pop_ids = global_pop_ids.get_ids()
-            pop_properties = set(properties) & pop.property_names
-            # indices from NodePopulation and Node get functions are different so I cannot use
-            # a dataframe equal directly and properties have different types so cannot use a multi
-            # dim numpy array
-            for prop in pop_properties:
-                res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, properties=prop).to_numpy()
-        return res.sort_index()
+        return super().get(group, properties)
 
 
 class NodeStorage:
