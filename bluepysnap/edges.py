@@ -37,7 +37,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             source_word="NetworkObject", target_word="Edge"):
     """The top level Edges accessor."""
 
-    def __init__(self, circuit):
+    def __init__(self, circuit):  # pylint: disable=useless-super-delegation
         """Initialize the top level Edges accessor."""
         super().__init__(circuit)
 
@@ -75,7 +75,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         populations = np.concatenate(populations).astype(str_type)
         return returned_ids_cls.from_arrays(populations, ids)
 
-    def ids(self, edge_ids):
+    def ids(self, edge_ids):  # pylint: disable=arguments-differ
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
 
         Args:
@@ -102,7 +102,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
         return self._get_ids_from_pop(lambda x: (x.ids(edge_ids), x.name), CircuitEdgeIds)
 
-    def get(self, edge_ids, properties):
+    def get(self, edge_ids, properties):   # pylint: disable=arguments-differ
         """Edge properties as pandas DataFrame.
 
         Args:
@@ -144,6 +144,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         return res.sort_index()
 
     def properties(self, edge_ids, properties):
+        """Doc is overridden below."""
         Deprecate.warn("Edges.properties function will be deprecated in 1.0.0. Please use "
                        "Edges.get instead.")
         return self.get(edge_ids, properties)
@@ -570,6 +571,7 @@ class EdgePopulation:
         return self._get(selection, properties)
 
     def properties(self, edge_ids, properties):
+        """Doc is overridden below."""
         Deprecate.warn("EdgePopulation.properties function will be deprecated in 1.0.0. Please use "
                        "EdgePopulation.get instead.")
         return self.get(edge_ids, properties)

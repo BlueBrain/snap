@@ -30,14 +30,15 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
 
 class Deprecate:
+    """Class for the deprecations in BluepySnap."""
     @staticmethod
     def fail(msg=""):
-        """ Raise a deprecation exception. """
+        """Raise a deprecation exception."""
         raise BluepySnapDeprecationError(msg)
 
     @staticmethod
     def warn(msg=""):
-        """ Issue a deprecation warning. """
+        """Issue a deprecation warning."""
         warnings.warn(msg, BluepySnapDeprecationWarning)
 
 

@@ -43,7 +43,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             source_word="NetworkObject", target_word="Node"):
     """The top level Nodes accessor."""
 
-    def __init__(self, circuit):
+    def __init__(self, circuit):  # pylint: disable=useless-super-delegation
         """Initialize the top level Nodes accessor."""
         super().__init__(circuit)
 
@@ -63,7 +63,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         return set(value for pop in self.values() if prop in pop.property_names for value in
                    pop.property_values(prop))
 
-    def ids(self, group=None):
+    def ids(self, group=None):   # pylint: disable=arguments-differ
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
@@ -131,7 +131,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         populations = np.concatenate(populations).astype(str_type)
         return CircuitNodeIds.from_arrays(populations, ids)
 
-    def get(self, group=None, properties=None):
+    def get(self, group=None, properties=None):   # pylint: disable=arguments-differ
         """Node properties as a pandas DataFrame.
 
         Args:
