@@ -366,13 +366,6 @@ class EdgeStorage:
         return self._populations[population_name]
 
 
-def _resolve_node_ids(nodes, group):
-    """Node IDs corresponding to node group filter."""
-    if group is None:
-        return None
-    return nodes.ids(group)
-
-
 def _is_empty(xs):
     return (xs is not None) and (len(xs) == 0)
 
@@ -406,6 +399,13 @@ class EdgePopulation:
     @cached_property
     def _population(self):
         return self._edge_storage.storage.open_population(self.name)
+
+    @staticmethod
+    def _resolve_node_ids(nodes, group):
+        """Node IDs corresponding to node group filter."""
+        if group is None:
+            return None
+        return nodes.ids(group)
 
     @property
     def size(self):
@@ -616,7 +616,7 @@ class EdgePopulation:
         """
         if target is not None:
             selection = self._population.afferent_edges(
-                _resolve_node_ids(self.target, target)
+                self._resolve_node_ids(self.target, target)
             )
         else:
             selection = self._population.select_all()
@@ -641,7 +641,7 @@ class EdgePopulation:
         """
         if source is not None:
             selection = self._population.efferent_edges(
-                _resolve_node_ids(self.source, source)
+                self._resolve_node_ids(self.source, source)
             )
         else:
             selection = self._population.select_all()
@@ -666,8 +666,8 @@ class EdgePopulation:
         if source is None and target is None:
             raise BluepySnapError("Either `source` or `target` should be specified")
 
-        source_node_ids = _resolve_node_ids(self.source, source)
-        target_edge_ids = _resolve_node_ids(self.target, target)
+        source_node_ids = self._resolve_node_ids(self.source, source)
+        target_edge_ids = self._resolve_node_ids(self.target, target)
 
         if source_node_ids is None:
             selection = self._population.afferent_edges(target_edge_ids)
@@ -819,8 +819,8 @@ class EdgePopulation:
                 "`return_edge_count` and `return_edge_ids` are mutually exclusive"
             )
 
-        source_node_ids = _resolve_node_ids(self.source, source)
-        target_node_ids = _resolve_node_ids(self.target, target)
+        source_node_ids = self._resolve_node_ids(self.source, source)
+        target_node_ids = self._resolve_node_ids(self.target, target)
 
         it = self._iter_connections(source_node_ids, target_node_ids, unique_node_ids, shuffle)
 
