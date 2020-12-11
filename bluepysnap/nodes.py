@@ -133,7 +133,6 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             The NodePopulation.property_names function will give you all the usable properties
             for the `properties` argument.
         """
-
         if properties is None:
             properties = self.property_names
         return super().get(group, properties)

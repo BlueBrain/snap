@@ -40,7 +40,9 @@ class NetworkObject(abc.ABC):
             storage = cls(file_config, self._circuit)
             for population in storage.population_names:  # pylint: disable=not-an-iterable
                 if population in res:
-                    raise BluepySnapError("Duplicated {} population: '{}'".format(self.__class__.__name__, population))
+                    raise BluepySnapError(
+                        "Duplicated {} population: '{}'".format(self.__class__.__name__,
+                                                                population))
                 res[population] = storage.population(population)
         return res
 
