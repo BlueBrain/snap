@@ -14,9 +14,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 """Exceptions used throughout the library."""
 
 
 class BluepySnapError(Exception):
     """Base SNAP exception."""
+
+
+class BluepySnapDeprecationError(Exception):
+    """SNAP deprecation exception."""
+
+
+class BluepySnapDeprecationWarning(UserWarning):
+    """SNAP deprecation warning."""

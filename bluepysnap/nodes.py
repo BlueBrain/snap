@@ -27,103 +27,35 @@ import pandas as pd
 
 from cached_property import cached_property
 
+from bluepysnap.network import NetworkObject
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
                                          POPULATION_KEY, Node, ConstContainer)
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap._doctools import AbstractDocSubstitutionMeta
 
 # this constant is not part of the sonata standard
 NODE_SET_KEY = "$node_set"
 
 
-class Nodes:
+class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
+            source_word="NetworkObject", target_word="Node"):
     """The top level Nodes accessor."""
 
-    def __init__(self, circuit):
+    def __init__(self, circuit):  # pylint: disable=useless-super-delegation
         """Initialize the top level Nodes accessor."""
-        self._circuit = circuit
-        self._config = self._circuit.config['networks']['nodes']
-        self._populations = self._get_populations()
+        super().__init__(circuit)
 
-    def _get_populations(self):
-        """Collect the different NodePopulation."""
-        res = {}
-        for file_config in self._config:
-            storage = NodeStorage(file_config, self._circuit)
-            for population in storage.population_names:  # pylint: disable=not-an-iterable
-                if population in res:
-                    raise BluepySnapError("Duplicated node population: '%s'" % population)
-                res[population] = storage.population(population)
-        return res
-
-    @cached_property
-    def population_names(self):
-        """Returns all the population names from the Circuit."""
-        return sorted(self._populations)
-
-    @cached_property
-    def property_dtypes(self):
-        """Returns all the property dtypes for the Circuit."""
-        def _update(d, index, value):
-            if d.setdefault(index, value) != value:
-                raise BluepySnapError("Same property with different "
-                                      "dtype. {}: {}!= {}".format(index, value, d[index]))
-
-        res = dict()
-        for pop in self.values():
-            for varname, dtype in pop.property_dtypes.iteritems():
-                _update(res, varname, dtype)
-        return pd.Series(res)
-
-    def keys(self):
-        """Returns iterator on the population names.
-
-        Made to simulate the behavior of a dict.keys().
-        """
-        return (name for name in self.population_names)
-
-    def values(self):
-        """Returns iterator on the NodePopulations.
-
-        Made to simulate the behavior of a dict.values().
-        """
-        return (self[name] for name in self.population_names)
-
-    def items(self):
-        """Returns iterator on the tuples (population name, NodePopulations).
-
-        Made to simulate the behavior of a dict.items().
-        """
-        return ((name, self[name]) for name in self.population_names)
-
-    def __getitem__(self, population_name):
-        """Access the NodePopulation corresponding to the population 'population_name'."""
-        try:
-            return self._populations[population_name]
-        except KeyError:
-            raise BluepySnapError("{} not a node population.".format(population_name))
-
-    def __iter__(self):
-        """Allows iteration over the different NodePopulation."""
-        return iter(self.keys())
-
-    @cached_property
-    def size(self):
-        """Total number of nodes inside the circuit."""
-        return sum(pop.size for pop in self.values())
-
-    @cached_property
-    def property_names(self):
-        """Returns all the properties present inside the circuit."""
-        return set(prop for pop in self.values() for prop in pop.property_names)
+    def _collect_populations(self):
+        return self._get_populations(NodeStorage, self._config['networks']['nodes'])
 
     def property_values(self, prop):
-        """Returns all the values for a given property."""
+        """Returns all the values for a given Nodes property."""
         return set(value for pop in self.values() if prop in pop.property_names for value in
                    pop.property_values(prop))
 
-    def ids(self, group=None):
+    def ids(self, group=None):   # pylint: disable=arguments-differ
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
@@ -156,6 +88,7 @@ class Nodes:
 
         Examples:
             The available group parameter values (example with 2 node populations pop1 and pop2):
+
             >>> nodes = circuit.nodes
             >>> nodes.ids(group=None)  #  returns all CircuitNodeIds from the circuit
             >>> node_ids = CircuitNodeIds.from_arrays(["pop1", "pop2"], [1, 3])
@@ -178,19 +111,10 @@ class Nodes:
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
 
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
-        ids = []
-        populations = []
-        for name, pop in self.items():
-            pop_ids = pop.ids(group=group, raise_missing_property=False)
-            pops = np.full_like(pop_ids, fill_value=name, dtype=str_type)
-            ids.append(pop_ids)
-            populations.append(pops)
-        ids = np.concatenate(ids).astype(np.int64)
-        populations = np.concatenate(populations).astype(str_type)
-        return CircuitNodeIds.from_arrays(populations, ids)
+        fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
+        return self._get_ids_from_pop(fun, CircuitNodeIds)
 
-    def get(self, group=None, properties=None):
+    def get(self, group=None, properties=None):   # pylint: disable=arguments-differ
         """Node properties as a pandas DataFrame.
 
         Args:
@@ -209,26 +133,9 @@ class Nodes:
             The NodePopulation.property_names function will give you all the usable properties
             for the `properties` argument.
         """
-        ids = self.ids(group)
         if properties is None:
             properties = self.property_names
-        properties = utils.ensure_list(properties)
-
-        unknown_props = set(properties) - self.property_names
-        if unknown_props:
-            raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
-
-        res = pd.DataFrame(index=ids.index, columns=properties)
-        for name, pop in self.items():
-            global_pop_ids = ids.filter_population(name)
-            pop_ids = global_pop_ids.get_ids()
-            pop_properties = set(properties) & pop.property_names
-            # indices from NodePopulation and Node get functions are different so I cannot use
-            # a dataframe equal directly and properties have different types so cannot use a multi
-            # dim numpy array
-            for prop in pop_properties:
-                res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, properties=prop).to_numpy()
-        return res.sort_index()
+        return super().get(group, properties)
 
 
 class NodeStorage:

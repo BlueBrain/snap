@@ -19,12 +19,27 @@
 
 from collections.abc import Iterable
 import json
+import warnings
 
 import numpy as np
 
-from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.exceptions import (BluepySnapError, BluepySnapDeprecationWarning,
+                                   BluepySnapDeprecationError)
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitEdgeId
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
+
+
+class Deprecate:
+    """Class for the deprecations in BluepySnap."""
+    @staticmethod
+    def fail(msg=""):
+        """Raise a deprecation exception."""
+        raise BluepySnapDeprecationError(msg)
+
+    @staticmethod
+    def warn(msg=""):
+        """Issue a deprecation warning."""
+        warnings.warn(msg, BluepySnapDeprecationWarning)
 
 
 def load_json(filepath):
