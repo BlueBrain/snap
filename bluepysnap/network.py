@@ -61,7 +61,7 @@ class NetworkObject(abc.ABC):
 
     @cached_property
     def population_names(self):
-        """Returns all the NetworkObjects population names from the Circuit."""
+        """Returns all the sorted NetworkObjects population names from the Circuit."""
         return sorted(self._populations)
 
     @cached_property
@@ -152,8 +152,10 @@ class NetworkObject(abc.ABC):
         """Returns the properties of a the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)
+        # We don t convert to set properties itself to keep the column order.
+        properties_set = set(properties)
 
-        unknown_props = set(properties) - self.property_names
+        unknown_props = properties_set - self.property_names
         if unknown_props:
             raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
 
@@ -161,7 +163,7 @@ class NetworkObject(abc.ABC):
         for name, pop in self.items():
             global_pop_ids = ids.filter_population(name)
             pop_ids = global_pop_ids.get_ids()
-            pop_properties = set(properties) & pop.property_names
+            pop_properties = properties_set & pop.property_names
             # indices from Population and get functions are different so I cannot
             # use a dataframe equal directly and properties have different types so cannot use a
             # multi dim numpy array

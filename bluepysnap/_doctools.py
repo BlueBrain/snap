@@ -37,11 +37,19 @@ def _copy_func(f):
     return g
 
 
-# better than decorator to do that due to the returned type being correct with this
-# with wrapper <class 'bluepysnap._doctools.DocSubstitutionDecorator.__call__.<locals>.Wrapped'>
-# works well with Sphinx also.
 class DocSubstitutionMeta(type):
-    """Tool to update an inherited class documentation."""
+    """Tool to update an inherited class documentation.
+
+    Notes:
+        Using a metaclass is better than decorator to do that due to the returned type being
+        incorrect when using a wrapper. Ex with CircuitNodeIds:
+        type(CircuitNodeIds)
+        <class 'bluepysnap._doctools.DocSubstitutionDecorator.__call__.<locals>.Wrapped'>
+        when with metaclass:
+        type(CircuitNodeIds)
+        <class 'bluepysnap.CircuitNodeIds'>
+        It works well with Sphinx also.
+    """
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
         """Define the new class to return."""
         for parent in parents:
