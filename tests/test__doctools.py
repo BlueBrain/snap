@@ -33,6 +33,12 @@ class TestClassB(TestClass, metaclass=test_module.DocSubstitutionMeta, source_wo
     """New class with changed docstrings."""
 
 
+class TestClassC(TestClassA):
+    def bar(self):
+        """Is overrode correctly"""
+        return 42
+
+
 def test_DocSubstitutionMeta():
     default = TestClass()
     tested = TestClassA()
@@ -49,3 +55,9 @@ def test_DocSubstitutionMeta():
     assert tested.bar.__doc__ == expected
     assert tested.foo_bar.__doc__ is None
     assert tested.__dict__ == default.__dict__
+
+    # I can inherit from a class above
+    tested = TestClassC()
+    assert tested.foo.__doc__ == TestClassA.foo.__doc__
+    assert tested.bar.__doc__ == "Is overrode correctly"
+    assert tested.bar() == 42
