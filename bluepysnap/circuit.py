@@ -32,7 +32,7 @@ class Circuit:
         """Initializes a circuit object from a SONATA config file.
 
         Args:
-            config (str): Path to a SONATA config file.
+            config (str/dict): Path to a SONATA config file or sonata config dict.
 
         Returns:
             Circuit: A Circuit object.

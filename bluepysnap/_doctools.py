@@ -25,6 +25,8 @@ def _word_swapper(doc, source_word, target_word):
     """Swap a word with another in a docstring."""
     if doc is None:
         return doc
+    if source_word is None or target_word is None:
+        return doc
     return doc.replace(source_word, target_word)
 
 
@@ -52,6 +54,7 @@ class DocSubstitutionMeta(type):
     """
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
         """Define the new class to return."""
+        original_attrs = attrs.copy()
         for parent in parents:
             # skip classmethod with isfunction if I use also ismethod as a predicate I can have the
             # classmethod docstring changed but then the cls argument is not automatically skipped.
@@ -62,6 +65,9 @@ class DocSubstitutionMeta(type):
                         continue
                 except AttributeError:
                     pass
+                # skip overrode functions
+                if fun_name in original_attrs:
+                    continue
                 # skip special methods
                 if fun_name.startswith("__"):
                     continue
