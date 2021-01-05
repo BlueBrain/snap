@@ -223,16 +223,19 @@ class TestCircuitNodeIds:
         assert len(test_obj) == 4
         test_obj.sample(1, inplace=True)
         assert len(test_obj) == 1
+        assert len(self.ids_cls(pd.MultiIndex.from_arrays([[], []])).sample(2)) == 0
 
     def test_limit(self):
         tested = self.test_obj_sorted.limit(2, inplace=False)
         assert len(tested) == 2
         assert tested == self.ids_cls(self._circuit_ids(['a', 'a'], [0, 1]))
+        assert len(self.ids_cls(pd.MultiIndex.from_arrays([[], []])).limit(2)) == 0
 
     def test_unique(self):
         tested = self.ids_cls.from_dict({"a": [0, 0, 1], "b": [1, 2, 2]}).unique()
         expected = self.ids_cls.from_dict({"a": [0, 1], "b": [1, 2]})
         assert tested == expected
+        assert len(self.ids_cls(pd.MultiIndex.from_arrays([[], []])).unique()) == 0
 
     def test_tolist(self):
         expected = [('a', 0), ('a', 1), ('b', 0), ('a', 2)]

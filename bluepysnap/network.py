@@ -120,13 +120,19 @@ class NetworkObject(abc.ABC):
         """Returns all the NetworkObject properties present inside the circuit."""
         return set(prop for pop in self.values() for prop in pop.property_names)
 
-    def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls):
+    def _get_ids_from_pop(self, fun_to_apply, returned_ids_cls, sample=None, limit=None):
         """Get CircuitIds of class 'returned_ids_cls' for all populations using 'fun_to_apply'.
 
         Args:
             fun_to_apply (function): A function that returns the list of IDs for each population
                 and the population containing these IDs.
             returned_ids_cls (CircuitNodeIds/CircuitEdgeIds): the class for the CircuitIds.
+            sample (int): If specified, randomly choose ``sample`` number of
+                IDs from the match result. If the size of the sample is greater than
+                the size of all the NetworkObjectPopulation then all ids are taken and shuffled.
+            limit (int): If specified, return the first ``limit`` number of
+                IDs from the match result. If limit is greater than the size of all the population
+                then all IDs are returned.
 
         Returns:
             CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
@@ -141,10 +147,15 @@ class NetworkObject(abc.ABC):
             populations.append(pops)
         ids = np.concatenate(ids).astype(np.int64)
         populations = np.concatenate(populations).astype(str_type)
-        return returned_ids_cls.from_arrays(populations, ids)
+        res = returned_ids_cls.from_arrays(populations, ids)
+        if sample:
+            res.sample(sample, inplace=True)
+        if limit:
+            res.limit(limit, inplace=True)
+        return res
 
     @abc.abstractmethod
-    def ids(self, *args, **kwargs):
+    def ids(self, group=None, sample=None, limit=None):
         """Resolves the ids of the NetworkObject."""
 
     @abc.abstractmethod

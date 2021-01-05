@@ -55,7 +55,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         return set(value for pop in self.values() if prop in pop.property_names for value in
                    pop.property_values(prop))
 
-    def ids(self, group=None):   # pylint: disable=arguments-differ
+    def ids(self, group=None, sample=None, limit=None):
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
@@ -75,6 +75,12 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                 - ``mapping``: Returns a CircuitNodeIds object containing nodes matching a
                     properties filter.
                 - ``None``: return all node IDs of the circuit in a CircuitNodeIds object.
+            sample (int): If specified, randomly choose ``sample`` number of
+                IDs from the match result. If the size of the sample is greater than
+                the size of all the NodePopulations then all ids are taken and shuffled.
+            limit (int): If specified, return the first ``limit`` number of
+                IDs from the match result. If limit is greater than the size of all the populations,
+                all node IDs are returned.
 
         Returns:
             CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
@@ -112,7 +118,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
 
         fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
-        return self._get_ids_from_pop(fun, CircuitNodeIds)
+        return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
     def get(self, group=None, properties=None):   # pylint: disable=arguments-differ
         """Node properties as a pandas DataFrame.
@@ -490,7 +496,7 @@ class NodePopulation:
                 returned depends on the type of the ``group`` argument:
 
                 - ``int``, ``CircuitNodeId``: return a single node ID if it belongs to the circuit.
-                - ``CircuitNodeIds`` return IDs of nodes in an array.
+                - ``CircuitNodeIds`` return IDs of nodes from the node population in an array.
                 - ``sequence``: return IDs of nodes in an array.
                 - ``str``: return IDs of nodes in a node set.
                 - ``mapping``: return IDs of nodes matching a properties filter.

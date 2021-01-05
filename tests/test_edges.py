@@ -136,6 +136,7 @@ class TestEdges:
                 test_obj.property_dtypes.sort_index()
 
     def test_ids(self):
+        np.random.seed(42)
         # single edge ID --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
         assert self.test_obj.ids(0) == expected
@@ -172,6 +173,14 @@ class TestEdges:
 
         expected = CircuitEdgeIds.from_arrays(["default2", "default2"], [0, 1])
         assert ids.filter_population("default2").limit(2) == expected
+
+        tested = self.test_obj.ids(sample=2)
+        expected = CircuitEdgeIds.from_arrays(["default2", "default"], [2, 3], sort_index=False)
+        assert tested == expected
+
+        tested = self.test_obj.ids(limit=5)
+        expected = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0]})
+        assert tested == expected
 
     def test_get(self):
         with pytest.raises(BluepySnapError):
@@ -630,6 +639,7 @@ class TestEdgePopulation:
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
     def test_ids(self):
+        npt.assert_equal(self.test_obj.ids(), np.array([0, 1, 2, 3]))
         assert self.test_obj.ids(0) == [0]
         npt.assert_equal(self.test_obj.ids([0, 1]), np.array([0, 1]))
         npt.assert_equal(self.test_obj.ids(np.array([0, 1])), np.array([0, 1]))
@@ -641,6 +651,13 @@ class TestEdgePopulation:
         npt.assert_equal(self.test_obj.ids(ids), np.array([0]))
         ids = CircuitEdgeIds.from_tuples([("default2", 0), ("default2", 1)])
         npt.assert_equal(self.test_obj.ids(ids), [])
+        npt.assert_equal(self.test_obj.ids(), np.array([0, 1, 2, 3]))
+
+        # limit too big compared to the number of ids
+        npt.assert_equal(self.test_obj.ids(limit=15), [0, 1, 2, 3])
+        npt.assert_equal(len(self.test_obj.ids(sample=2)), 2)
+        # if sample > population.size --> sample = population.size
+        npt.assert_equal(len(self.test_obj.ids(sample=25)), 4)
 
     def test_get_1(self):
         properties = [
