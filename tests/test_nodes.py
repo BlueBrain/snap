@@ -100,6 +100,8 @@ class TestNodes:
                 test_obj.property_dtypes.sort_index()
 
     def test_ids(self):
+        np.random.seed(42)
+
         # None --> CircuitNodeIds with all ids
         tested = self.test_obj.ids()
         expected = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2, 3]})
@@ -234,6 +236,14 @@ class TestNodes:
 
         expected = CircuitNodeIds.from_arrays(["default2", "default2"], [0, 1])
         assert ids.filter_population("default2").limit(2) == expected
+
+        tested = self.test_obj.ids(sample=2)
+        expected = CircuitNodeIds.from_arrays(["default2","default2"], [3, 0], sort_index=False)
+        assert tested == expected
+
+        tested = self.test_obj.ids(limit=4)
+        expected = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0]})
+        assert tested == expected
 
     def test_get(self):
         # return all properties for all the ids

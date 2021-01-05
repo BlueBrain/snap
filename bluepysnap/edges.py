@@ -44,18 +44,25 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
     def _collect_populations(self):
         return self._get_populations(EdgeStorage, self._config['networks']['edges'])
 
-    def ids(self, edge_ids):  # pylint: disable=arguments-differ
+    def ids(self, group=None, sample=None, limit=None):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
 
         Args:
-            edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
+            group (None/int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
             returned depends on the type of the ``group`` argument:
+                - ``None``: return all CircuitEdgeIds.
                 - ``CircuitEdgeId``: return the ID in a CircuitEdgeIds object.
                 - ``CircuitEdgeIds``: return the IDs in a CircuitNodeIds object.
                 - ``int``: returns a CircuitEdgeIds object containing the corresponding edge ID
                     for all populations.
                 - ``sequence``: returns a CircuitEdgeIds object containing the corresponding edge
                     IDs for all populations.
+            sample (int): If specified, randomly choose ``sample`` number of
+                IDs from the match result. If the size of the sample is greater than
+                the size of all the EdgePopulations then all ids are taken and shuffled.
+            limit (int): If specified, return the first ``limit`` number of
+                IDs from the match result. If limit is greater than the size of all the populations
+                all node IDs are returned.
 
         Returns:
             CircuitEdgeIds: returns a CircuitEdgeIds containing all the edge IDs and the
@@ -65,11 +72,12 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         Notes:
             This envision also the maybe future selection of edges on queries.
         """
-        if isinstance(edge_ids, CircuitEdgeIds):
-            diff = np.setdiff1d(edge_ids.get_populations(unique=True), self.population_names)
+        if isinstance(group, CircuitEdgeIds):
+            diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
             if diff.size != 0:
                 raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
-        return self._get_ids_from_pop(lambda x: (x.ids(edge_ids), x.name), CircuitEdgeIds)
+        fun = lambda x: (x.ids(group), x.name)
+        return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
     def get(self, edge_ids=None, properties=None):   # pylint: disable=arguments-differ
         """Edge properties as pandas DataFrame.
@@ -472,26 +480,36 @@ class EdgePopulation:
 
         return result
 
-    def ids(self, edge_ids):
+    def ids(self, group=None, limit=None, sample=None):
         """Edge IDs corresponding to edges ``edge_ids``.
 
         Args:
-            edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
+            group (None/int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
                 returned depends on the type of the ``group`` argument:
-
+                - ``None``: return all IDs.
                 - ``int``, ``CircuitEdgeId``: return a single edge ID.
-                - ``CircuitEdgeIds`` return IDs of edges in an array.
+                - ``CircuitEdgeIds`` return IDs of edges the edge population in an array.
                 - ``sequence``: return IDs of edges in an array.
+
+            sample (int): If specified, randomly choose ``sample`` number of
+                IDs from the match result. If the size of the sample is greater than
+                the size of the EdgePopulation then all ids are taken and shuffled.
+
+            limit (int): If specified, return the first ``limit`` number of
+                IDs from the match result. If limit is greater than the size of the population
+                all node IDs are returned.
 
         Returns:
             numpy.array: A numpy array of IDs.
         """
-        if isinstance(edge_ids, CircuitEdgeIds):
-            result = edge_ids.filter_population(self.name).get_ids()
-        elif isinstance(edge_ids, np.ndarray):
-            result = edge_ids
+        if group is None:
+            result = self._population.select_all().flatten()
+        elif isinstance(group, CircuitEdgeIds):
+            result = group.filter_population(self.name).get_ids()
+        elif isinstance(group, np.ndarray):
+            result = group
         else:
-            result = utils.ensure_list(edge_ids)
+            result = utils.ensure_list(group)
             # test if first value is a CircuitEdgeId if yes then all values must be CircuitEdgeId
             if isinstance(first(result, None), CircuitEdgeId):
                 try:
@@ -499,6 +517,11 @@ class EdgePopulation:
                 except AttributeError:
                     raise BluepySnapError("All values from a list must be of type int or "
                                           "CircuitEdgeId.")
+        if sample is not None:
+            if len(result) > 0:
+                result = np.random.choice(result, min(sample, len(result)), replace=False)
+        if limit is not None:
+            result = result[:limit]
         return np.asarray(result)
 
     def get(self, edge_ids, properties):
