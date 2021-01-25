@@ -52,7 +52,7 @@ class PopulationFrameReport:
         """Initializes a PopulationFrameReport object from a FrameReport.
 
         Args:
-            frame_report (FrameReport): FrameReport containing this spike report population.
+            frame_report (FrameReport): FrameReport containing this frame report population.
             population_name (str): the population name corresponding to this report.
 
         Returns:
@@ -90,7 +90,7 @@ class PopulationFrameReport:
         """Fetch data from the report.
 
         Args:
-            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get frames filtered by group. See NodePopulation.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
 
@@ -135,7 +135,7 @@ class FilteredFrameReport:
 
         Args:
             frame_report (FrameReport): The FrameReport to filter.
-            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get frames filtered by group. See NodePopulation.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
 
@@ -272,7 +272,7 @@ class FrameReport:
         from all the populations of a report.
 
         Args:
-            group (None/int/list/np.array/dict): Get spikes filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get frames filtered by group. See NodePopulation.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
 
