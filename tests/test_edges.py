@@ -233,6 +233,9 @@ class TestEdges:
         with pytest.raises(BluepySnapError):
             self.test_obj.get(ids, properties="unknown")
 
+        with pytest.deprecated_call():
+            self.test_obj.get(ids)
+
     def test_properties(self):
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
         pdt.assert_frame_equal(self.test_obj.properties(ids, properties=["other2", "@source_node"]),
@@ -727,6 +730,10 @@ class TestEdgePopulation:
         assert self.test_obj.get(
             CircuitEdgeIds.from_tuples([("default2", 0), ("default2", 1)]),
             Synapse.PRE_GID).tolist() == []
+
+    def test_get_no_properties(self):
+        with pytest.deprecated_call():
+            self.test_obj.get(0, properties=None)
 
     def test_positions_1(self):
         actual = self.test_obj.positions([0], 'afferent', 'center')

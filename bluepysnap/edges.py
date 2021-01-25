@@ -177,7 +177,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                                         CircuitEdgeIds)
 
         if properties:
-            result = self.get(result, properties)
+            return self.get(result, properties)
         return result
 
     def afferent_edges(self, node_id, properties=None):
@@ -650,7 +650,9 @@ class EdgePopulation:
         else:
             selection = self._population.connecting_edges(source_node_ids, target_edge_ids)
 
-        return self._get(selection, properties)
+        if properties:
+            return self._get(selection, properties)
+        return np.asarray(selection.flatten(), np.int64)
 
     def afferent_edges(self, node_id, properties=None):
         """Get afferent edges for given ``node_id``.
