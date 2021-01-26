@@ -14,7 +14,7 @@ class EntityFactory:
         self._function_registry = defaultdict(dict)
         self.register("DetailedCircuit", "snap", self.open_circuit_snap)
         self.register("DetailedCircuit", "bluepy", self.open_circuit_bluepy)
-        self.register("Simulation", "snap", self.open_simulation_snap)
+        # self.register("Simulation", "snap", self.open_simulation_snap)
         self.register("Simulation", "bluepy", self.open_simulation_bluepy)
 
     def register(self, resource_type, tool, func):

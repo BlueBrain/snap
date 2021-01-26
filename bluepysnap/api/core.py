@@ -11,6 +11,21 @@ class Api:
     def __init__(self, nexus_config, *, bucket, token, **kwargs):
         self.connector = NexusConnector(nexus_config, bucket=bucket, token=token, **kwargs)
         self.factory = EntityFactory()
+        self.circuit = CircuitApi(self)
+        self.simulation = SimulationApi(self)
+
+    def get_rentity_by_id(self, *args, tool=None, **kwargs):
+        resource = self.connector.get_resource_by_id(*args, **kwargs)
+        entity = self.factory.open(resource, tool=tool)
+        return Rentity(resource, entity)
+
+    def get_rentities_by_query(self, *args, tool=None, **kwargs):
+        resources = self.connector.get_resources_by_query(*args, **kwargs)
+        return [Rentity(r, self.factory.open(r, tool=tool)) for r in resources]
+
+    def get_rentities(self, *args, tool=None, **kwargs):
+        resources = self.connector.get_resources(*args, **kwargs)
+        return [Rentity(r, self.factory.open(r, tool=tool)) for r in resources]
 
     def q1(self):
         # “Give me the last 20 simulations from project ‘SSCxDis’”
@@ -123,3 +138,52 @@ class Api:
             L.warning("No circuits found.")
             return None
         return self.factory.open(resources[0])
+
+
+class ChildApi:
+    def __init__(self, api):
+        self.api = api
+
+
+class CircuitApi(ChildApi):
+    def get_last_circuit(self, tool=None):
+        """Retrieve the last created circuit."""
+        resources = self.api.get_rentities("DetailedCircuit", limit=1, tool=tool)
+        return resources[0] if resources else None
+
+    def get_simulations(self, circuit, tool=None):
+        """Retrieve all simulations that use this circuit either directly or in a campaign."""
+        query = f"""
+            SELECT DISTINCT ?id
+            WHERE {{
+                {{
+                    ?id a Simulation ; wasStartedBy ?scid .
+                    ?scid a SimulationCampaign ; used <{circuit.id}> .
+                }}
+            UNION
+                {{
+                    ?id a Simulation ; used <{circuit.id}> .
+                }}
+            }}
+            """
+        return self.api.get_rentities_by_query(query, tool=tool)
+
+
+class SimulationApi(ChildApi):
+    pass
+
+
+class Rentity:
+    def __init__(self, resource, entity):
+        self.resource = resource
+        self.entity = entity
+
+    def __getattr__(self, name):
+        """Try to get an attribute from resource._store_metadata or from the resource itself."""
+        _name = "_" + name
+        meta = getattr(self.resource, "_store_metadata", None)
+        if meta and _name in meta:
+            return meta[_name]
+        if hasattr(self.resource, name):
+            return getattr(self.resource, name)
+        raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
