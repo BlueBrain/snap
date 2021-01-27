@@ -5,6 +5,7 @@ from collections import defaultdict
 import bluepy
 
 import bluepysnap
+from bluepysnap.api.entity import Entity
 
 L = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class EntityFactory:
             raise Exception(f"Tool {tool} not found for {resource.type}")
         if result is None:
             raise Exception(f"Unable to open {resource.type}")
-        return result
+        return Entity(resource, result)
 
     def open_circuit_snap(self, resource):
         base_path = resource.circuitBase.url.replace("file://", "")
