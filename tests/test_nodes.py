@@ -18,6 +18,7 @@ from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.utils import IDS_DTYPE
 
 import bluepysnap.nodes as test_module
 
@@ -106,6 +107,7 @@ class TestNodes:
         tested = self.test_obj.ids()
         expected = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2, 3]})
         assert tested == expected
+        npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
 
         # CircuitNodeIds --> CircuitNodeIds and check if the population and node ids exist
         ids = CircuitNodeIds.from_arrays(["default", "default2"], [0, 3])
@@ -452,6 +454,7 @@ class TestNodePopulation:
     def test_ids(self):
         _call = self.test_obj.ids
         npt.assert_equal(_call(), [0, 1, 2])
+        npt.assert_equal(_call().dtype, IDS_DTYPE)
         npt.assert_equal(_call(group={}), [0, 1, 2])
         npt.assert_equal(_call(group=[]), [])
         npt.assert_equal(_call(limit=1), [0])

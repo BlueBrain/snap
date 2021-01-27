@@ -28,6 +28,10 @@ from bluepysnap.exceptions import (BluepySnapError, BluepySnapDeprecationWarning
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitEdgeId
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
+# dtypes for the different node and edge ids. We are using np.int64 to avoid the infamous
+# https://github.com/numpy/numpy/issues/15084 numpy problem.
+IDS_DTYPE = np.int64
+
 
 class Deprecate:
     """Class for the deprecations in BluepySnap."""
@@ -59,6 +63,17 @@ def ensure_list(v):
         return list(v)
     else:
         return [v]
+
+
+def ensure_ids(a):
+    """Convert a numpy array dtype into IDS_DTYPE.
+
+    This function is here due to the https://github.com/numpy/numpy/issues/15084 numpy issue.
+    It is quite unsafe to the use uint64 for the ids due to this problem where :
+    numpy.uint64 + int --> float64
+    numpy.uint64 += int --> float64
+    """
+    return np.asarray(a, IDS_DTYPE)
 
 
 def add_dynamic_prefix(properties):

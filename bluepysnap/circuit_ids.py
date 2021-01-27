@@ -22,7 +22,7 @@ from collections import namedtuple
 import numpy as np
 import pandas as pd
 
-import bluepysnap.utils
+from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 
@@ -76,7 +76,7 @@ class CircuitIds(abc.ABC):
                 provided.
         """
         populations = np.asarray(populations)
-        population_ids = np.asarray(population_ids)
+        population_ids = utils.ensure_ids(population_ids)
 
         if len(populations) != len(population_ids):
             raise BluepySnapError("populations and population_ids must have the same size. "
@@ -104,9 +104,9 @@ class CircuitIds(abc.ABC):
             >>> CircuitIds.from_dict({"pop1": [0,2,4], "pop2": [1,2,5]})
         """
         populations = np.empty((0,), dtype=str)
-        population_ids = np.empty((0,), dtype=np.int64)
+        population_ids = np.empty((0,), dtype=utils.IDS_DTYPE)
         for population, ids in ids_dictionary.items():
-            ids = np.asarray(ids)
+            ids = utils.ensure_ids(ids)
             population_ids = np.append(population_ids, ids)
             populations = np.append(populations, np.full(ids.shape, fill_value=population))
         index = pd.MultiIndex.from_arrays([populations, population_ids])
@@ -141,7 +141,7 @@ class CircuitIds(abc.ABC):
             numpy.array: indices corresponding to the population.
         """
         try:
-            return self.index.get_locs(bluepysnap.utils.ensure_list(population))
+            return self.index.get_locs(utils.ensure_list(population))
         except KeyError:
             return []
 

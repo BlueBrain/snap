@@ -577,7 +577,7 @@ class NodePopulation:
         if limit is not None:
             result = result[:limit]
 
-        result = np.asarray(result, dtype=np.int64)
+        result = utils.ensure_ids(result)
         if preserve_order:
             return result
         else:

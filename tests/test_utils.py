@@ -29,6 +29,12 @@ def test_ensure_list():
     assert test_module.ensure_list('abc') == ['abc']
 
 
+def test_ensure_ids():
+    res = test_module.ensure_ids(np.array([1, 2, 3], dtype=np.uint64))
+    npt.assert_equal(res, np.array([1, 2, 3], dtype=test_module.IDS_DTYPE))
+    npt.assert_equal(res.dtype, test_module.IDS_DTYPE)
+
+
 def test_add_dynamic_prefix():
     assert test_module.add_dynamic_prefix(["a", "b"]) == [DYNAMICS_PREFIX + "a",
                                                           DYNAMICS_PREFIX + "b"]
