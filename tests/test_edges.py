@@ -140,9 +140,9 @@ class TestEdges:
         np.random.seed(42)
         # single edge ID --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
-        returned = self.test_obj.ids(0)
-        assert returned == expected
-        npt.assert_equal(returned.get_ids().dtype, IDS_DTYPE)
+        tested = self.test_obj.ids(0)
+        assert tested == expected
+        npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
 
         # single edge ID list --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
@@ -645,9 +645,9 @@ class TestEdgePopulation:
         pdt.assert_series_equal(expected, self.test_obj.property_dtypes)
 
     def test_ids(self):
-        returned = self.test_obj.ids()
-        npt.assert_equal(returned, np.array([0, 1, 2, 3]))
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.ids()
+        npt.assert_equal(tested, np.array([0, 1, 2, 3]))
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
         assert self.test_obj.ids(0) == [0]
         npt.assert_equal(self.test_obj.ids([0, 1]), np.array([0, 1]))
@@ -790,9 +790,9 @@ class TestEdgePopulation:
             self.test_obj.positions([2], 'afferent', 'err')
 
     def test_afferent_nodes(self):
-        returned = self.test_obj.afferent_nodes(0)
-        npt.assert_equal(returned, [2])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.afferent_nodes(0)
+        npt.assert_equal(tested, [2])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
         npt.assert_equal(self.test_obj.afferent_nodes(0, unique=False), [2])
 
@@ -814,9 +814,9 @@ class TestEdgePopulation:
         npt.assert_equal(self.test_obj.afferent_nodes(None, unique=False), [2, 0, 0, 2])
 
     def test_efferent_nodes(self):
-        returned = self.test_obj.efferent_nodes(0)
-        npt.assert_equal(returned, [1])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.efferent_nodes(0)
+        npt.assert_equal(tested, [1])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
         npt.assert_equal(self.test_obj.efferent_nodes(0, unique=False), [1, 1])
 
@@ -839,9 +839,9 @@ class TestEdgePopulation:
         npt.assert_equal(self.test_obj.efferent_nodes(None, unique=False), [0, 1, 1, 1])
 
     def test_afferent_edges(self):
-        returned = self.test_obj.afferent_edges([0, 1], None)
-        npt.assert_equal(returned, [0, 1, 2, 3])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.afferent_edges([0, 1], None)
+        npt.assert_equal(tested, [0, 1, 2, 3])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
     def test_afferent_edges_1(self):
         npt.assert_equal(
@@ -865,9 +865,9 @@ class TestEdgePopulation:
         )
 
     def test_efferent_edges_1(self):
-        returned = self.test_obj.efferent_edges(2, None)
-        npt.assert_equal(returned, [0, 3])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.efferent_edges(2, None)
+        npt.assert_equal(tested, [0, 3])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
     def test_efferent_edges_2(self):
         properties = [Synapse.AXONAL_DELAY]
@@ -884,18 +884,18 @@ class TestEdgePopulation:
         )
 
     def test_pair_edges_1(self):
-        returned = self.test_obj.pair_edges(0, 2, None)
-        npt.assert_equal(returned, [])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.pair_edges(0, 2, None)
+        npt.assert_equal(tested, [])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
     def test_pair_edges_2(self):
         actual = self.test_obj.pair_edges(0, 2, [Synapse.AXONAL_DELAY])
         assert actual.empty
 
     def test_pair_edges_3(self):
-        returned = self.test_obj.pair_edges(2, 0, None)
-        npt.assert_equal(returned, [0])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.pair_edges(2, 0, None)
+        npt.assert_equal(tested, [0])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
     def test_pair_edges_4(self):
         properties = [Synapse.AXONAL_DELAY]
@@ -925,9 +925,9 @@ class TestEdgePopulation:
         )
 
     def test_pathway_edges_2(self):
-        returned = self.test_obj.pathway_edges([1, 2], [0, 2], None)
-        npt.assert_equal(returned, [0])
-        npt.assert_equal(returned.dtype, IDS_DTYPE)
+        tested = self.test_obj.pathway_edges([1, 2], [0, 2], None)
+        npt.assert_equal(tested, [0])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
     def test_pathway_edges_3(self):
         npt.assert_equal(

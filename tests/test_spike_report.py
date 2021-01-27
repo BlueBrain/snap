@@ -11,6 +11,7 @@ import bluepysnap.spike_report as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.bbp import Cell
 from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
+from bluepysnap.utils import IDS_DTYPE
 
 from utils import TEST_DATA_DIR
 
@@ -128,6 +129,7 @@ class TestPopulationSpikeReport:
     def test_nodes(self):
         node_ids = self.test_obj.get([2], t_start=0.5).to_numpy()[0]
         assert self.test_obj.nodes.get(group=node_ids, properties=Cell.MTYPE) == "L6_Y"
+        npt.assert_equal(node_ids.dtype, IDS_DTYPE)
 
     def test_nodes_invalid_population(self):
         test_obj = test_module.SpikeReport(self.simulation)["default2"]
@@ -141,8 +143,11 @@ class TestPopulationSpikeReport:
         npt.assert_array_equal(self.test_obj._resolve_nodes("Node12_L6_Y"), [1, 2])
 
     def test_get(self):
-        pdt.assert_series_equal(self.test_obj.get(),
+        tested = self.test_obj.get()
+        pdt.assert_series_equal(tested,
                                 _create_series([2, 0, 1, 2, 0], [0.1, 0.2, 0.3, 0.7, 1.3]))
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
         pdt.assert_series_equal(self.test_obj.get([]), _create_series([], []))
         pdt.assert_series_equal(self.test_obj.get(np.array([])), _create_series([], []))
         pdt.assert_series_equal(self.test_obj.get(()), _create_series([], []))

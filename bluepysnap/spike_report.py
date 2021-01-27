@@ -25,6 +25,7 @@ import numpy as np
 from libsonata import SpikeReader, SonataError
 
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.utils import IDS_DTYPE
 import bluepysnap._plotting
 
 
@@ -110,7 +111,7 @@ class PopulationSpikeReport:
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
-        return res.astype(np.int64)
+        return res.astype(IDS_DTYPE)
 
     @cached_property
     def node_ids(self):

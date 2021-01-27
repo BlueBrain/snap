@@ -10,6 +10,7 @@ import bluepysnap.frame_report as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.bbp import Cell
 from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
+from bluepysnap.utils import IDS_DTYPE
 
 from utils import TEST_DATA_DIR
 
@@ -194,7 +195,6 @@ class TestPopulationCompartmentReport:
 
     def test_get(self):
         pdt.assert_frame_equal(self.test_obj.get(), self.df)
-
         pdt.assert_frame_equal(self.test_obj.get([]), pd.DataFrame())
         pdt.assert_frame_equal(self.test_obj.get(np.array([])), pd.DataFrame())
         pdt.assert_frame_equal(self.test_obj.get(()), pd.DataFrame())
@@ -260,7 +260,7 @@ class TestPopulationCompartmentReport:
             pdt.assert_frame_equal(self.test_obj.get([4]), pd.DataFrame())
 
     def test_node_ids(self):
-        npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=np.int64))
+        npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=IDS_DTYPE))
 
 
 class TestPopulationSomaReport(TestPopulationCompartmentReport):

@@ -455,7 +455,7 @@ class EdgePopulation:
 
     def _get(self, selection, properties=None):
         """Get an array of edge IDs or DataFrame with edge properties."""
-        edge_ids = np.asarray(selection.flatten(), dtype=np.int64)
+        edge_ids = utils.ensure_ids(selection.flatten())
         if properties is None:
             Deprecate.warn("Returning ids with get/properties will be removed in 1.0.0."
                            "Please use EdgePopulation.ids() instead.")

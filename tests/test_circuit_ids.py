@@ -9,6 +9,7 @@ from pathlib import Path
 
 from bluepysnap.exceptions import BluepySnapError
 import bluepysnap.circuit_ids as test_module
+from bluepysnap.utils import IDS_DTYPE
 
 from utils import setup_tempdir
 
@@ -174,8 +175,10 @@ class TestCircuitNodeIds:
     def test_get_ids(self):
         tested = self.test_obj_sorted.get_ids()
         npt.assert_equal(tested, [0, 1, 2, 0])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
         tested = self.test_obj_unsorted.get_ids()
         npt.assert_equal(tested, [0, 1, 0, 2])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
 
         tested = self.test_obj_sorted.get_ids(unique=True)
         npt.assert_equal(tested, [0, 1, 2])

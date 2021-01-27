@@ -25,7 +25,7 @@ from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import ensure_list
+from bluepysnap.utils import ensure_list, ensure_ids
 
 L = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class PopulationFrameReport:
         Returns:
             np.Array: Numpy array containing the node_ids included in the report
         """
-        return np.sort(np.asarray(self._frame_population.get_node_ids(), dtype=np.int64))
+        return np.sort(ensure_ids(self._frame_population.get_node_ids()))
 
 
 class FilteredFrameReport:
