@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version v0.9.1
+---------------
+
+Bug Fixes
+~~~~~~~~~
+- Ensure the dtypes as int64 for the node/edge ids (#121).
+
 
 Version v0.9.0
 ---------------
