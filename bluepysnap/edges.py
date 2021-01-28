@@ -441,9 +441,9 @@ class EdgePopulation:
 
     def _get_property(self, prop, selection):
         if prop == Edge.SOURCE_NODE_ID:
-            result = self._population.source_nodes(selection)
+            result = utils.ensure_ids(self._population.source_nodes(selection))
         elif prop == Edge.TARGET_NODE_ID:
-            result = self._population.target_nodes(selection)
+            result = utils.ensure_ids(self._population.target_nodes(selection))
         elif prop in self._attribute_names:
             result = self._population.get_attribute(prop, selection)
         elif prop in self._dynamics_params_names:
@@ -455,7 +455,7 @@ class EdgePopulation:
 
     def _get(self, selection, properties=None):
         """Get an array of edge IDs or DataFrame with edge properties."""
-        edge_ids = np.asarray(selection.flatten(), dtype=np.int64)
+        edge_ids = utils.ensure_ids(selection.flatten())
         if properties is None:
             Deprecate.warn("Returning ids with get/properties will be removed in 1.0.0."
                            "Please use EdgePopulation.ids() instead.")
@@ -522,7 +522,7 @@ class EdgePopulation:
                 result = np.random.choice(result, min(sample, len(result)), replace=False)
         if limit is not None:
             result = result[:limit]
-        return np.asarray(result)
+        return utils.ensure_ids(result)
 
     def get(self, edge_ids, properties):
         """Edge properties as pandas DataFrame.
@@ -597,7 +597,7 @@ class EdgePopulation:
         result = self._population.source_nodes(selection)
         if unique:
             result = np.unique(result)
-        return result
+        return utils.ensure_ids(result)
 
     def efferent_nodes(self, source, unique=True):
         """Get efferent node IDs for given source ``node_id``.
@@ -622,7 +622,7 @@ class EdgePopulation:
         result = self._population.target_nodes(selection)
         if unique:
             result = np.unique(result)
-        return result
+        return utils.ensure_ids(result)
 
     def pathway_edges(self, source=None, target=None, properties=None):
         """Get edges corresponding to ``source`` -> ``target`` connections.
@@ -652,7 +652,7 @@ class EdgePopulation:
 
         if properties:
             return self._get(selection, properties)
-        return np.asarray(selection.flatten(), np.int64)
+        return utils.ensure_ids(selection.flatten())
 
     def afferent_edges(self, node_id, properties=None):
         """Get afferent edges for given ``node_id``.

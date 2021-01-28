@@ -145,7 +145,7 @@ class NetworkObject(abc.ABC):
             pops = np.full_like(pop_ids, fill_value=name_ids, dtype=str_type)
             ids.append(pop_ids)
             populations.append(pops)
-        ids = np.concatenate(ids).astype(np.int64)
+        ids = utils.ensure_ids(np.concatenate(ids))
         populations = np.concatenate(populations).astype(str_type)
         res = returned_ids_cls.from_arrays(populations, ids)
         if sample:
