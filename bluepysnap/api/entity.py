@@ -12,3 +12,8 @@ class Entity:
         if hasattr(self.resource, name):
             return getattr(self.resource, name)
         raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+
+    def __repr__(self):
+        resource_type = self.resource.type
+        instance_type = type(self.instance).__name__
+        return f"Entity(resource=<{resource_type}>, instance=<{instance_type}>)"

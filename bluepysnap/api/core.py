@@ -13,6 +13,7 @@ class Api:
         # children APIs
         self.circuit = CircuitApi(self)
         self.simulation = SimulationApi(self)
+        self.morphology = MorphologyApi(self)
         self.examples = ExamplesApi(self)
 
     def get_entity_by_id(self, *args, tool=None, **kwargs):
@@ -57,6 +58,10 @@ class SimulationApi(ChildApi):
             }}
             """
         return self.api.get_entities_by_query(query, tool=tool)
+
+
+class MorphologyApi(ChildApi):
+    pass
 
 
 class ExamplesApi(ChildApi):
