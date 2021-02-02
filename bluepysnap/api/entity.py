@@ -64,6 +64,10 @@ class Entity:
     def instance(self):
         return self._instance
 
+    @property
+    def wrapped(self):
+        return self._resource._wrapped
+
     def __repr__(self):
         resource_id = getattr(self._resource, "id", None)
         resource_type = getattr(self._resource, "type", None)
