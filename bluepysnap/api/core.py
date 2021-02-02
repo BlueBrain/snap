@@ -9,7 +9,7 @@ L = logging.getLogger(__name__)
 class Api:
     def __init__(self, nexus_config, *, bucket, token, **kwargs):
         self.connector = NexusConnector(nexus_config, bucket=bucket, token=token, **kwargs)
-        self.factory = EntityFactory()
+        self.factory = EntityFactory(connector=self.connector)
         # children APIs
         self.circuit = CircuitApi(self)
         self.simulation = SimulationApi(self)
