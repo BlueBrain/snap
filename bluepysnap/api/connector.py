@@ -3,8 +3,6 @@ import re
 import time
 from contextlib import contextmanager
 
-from kgforge.core import KnowledgeGraphForge
-
 L = logging.getLogger(__name__)
 
 NEXUS_NAMESPACE = "https://bluebrain.github.io/nexus/vocabulary/"
@@ -43,14 +41,14 @@ def timed(s):
 
 
 class NexusConnector:
-    def __init__(self, *args, debug=True, **kwargs):
-        self._forge = KnowledgeGraphForge(*args, **kwargs)
+    def __init__(self, forge, debug=True):
+        self._forge = forge
         self._query_builder = QueryBuilder()
-        self.debug = debug
+        self._debug = debug
 
     def query(self, query, limit=None, offset=None):
         with timed("query"):
-            return self._forge.sparql(query, debug=self.debug, limit=limit, offset=offset)
+            return self._forge.sparql(query, debug=self._debug, limit=limit, offset=offset)
 
     def get_resource_by_id(self, resource_id, version=None, cross_bucket=True):
         with timed("get_resource_by_id"):

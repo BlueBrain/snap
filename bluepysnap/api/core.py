@@ -1,6 +1,11 @@
 import logging
+from typing import Dict, List, Union
+
+from kgforge.core import KnowledgeGraphForge
+from pandas import DataFrame
 
 from bluepysnap.api.connector import NexusConnector
+from bluepysnap.api.entity import Entity
 from bluepysnap.api.factory import EntityFactory
 
 L = logging.getLogger(__name__)
@@ -8,25 +13,35 @@ L = logging.getLogger(__name__)
 
 class Api:
     def __init__(self, nexus_config, *, bucket, token, **kwargs):
-        self.connector = NexusConnector(nexus_config, bucket=bucket, token=token, **kwargs)
-        self.factory = EntityFactory(connector=self.connector)
+        self._forge = KnowledgeGraphForge(nexus_config, bucket=bucket, token=token, **kwargs)
+        self._connector = NexusConnector(forge=self._forge)
+        self._factory = EntityFactory(connector=self._connector)
         # children APIs
         self.circuit = CircuitApi(self)
         self.simulation = SimulationApi(self)
         self.morphology = MorphologyApi(self)
         self.examples = ExamplesApi(self)
 
-    def get_entity_by_id(self, *args, tool=None, **kwargs):
-        resource = self.connector.get_resource_by_id(*args, **kwargs)
-        return self.factory.open(resource, tool=tool)
+    def get_entity_by_id(self, *args, tool=None, **kwargs) -> Entity:
+        resource = self._connector.get_resource_by_id(*args, **kwargs)
+        return self._factory.open(resource, tool=tool)
 
-    def get_entities_by_query(self, *args, tool=None, **kwargs):
-        resources = self.connector.get_resources_by_query(*args, **kwargs)
-        return [self.factory.open(r, tool=tool) for r in resources]
+    def get_entities_by_query(self, *args, tool=None, **kwargs) -> List[Entity]:
+        resources = self._connector.get_resources_by_query(*args, **kwargs)
+        return [self._factory.open(r, tool=tool) for r in resources]
 
-    def get_entities(self, *args, tool=None, **kwargs):
-        resources = self.connector.get_resources(*args, **kwargs)
-        return [self.factory.open(r, tool=tool) for r in resources]
+    def get_entities(self, *args, tool=None, **kwargs) -> List[Entity]:
+        resources = self._connector.get_resources(*args, **kwargs)
+        return [self._factory.open(r, tool=tool) for r in resources]
+
+    def as_dataframe(self, data: List[Entity], store_metadata: bool = True, **kwargs) -> DataFrame:
+        data = [e.wrapped for e in data]
+        return self._forge.as_dataframe(data, store_metadata=store_metadata, **kwargs)
+
+    def as_json(
+        self, data: Union[Entity, List[Entity]], store_metadata: bool = True, **kwargs
+    ) -> Union[Dict, List[Dict]]:
+        return self._forge.as_json(data.wrapped, store_metadata=store_metadata, **kwargs)
 
 
 class ChildApi:
@@ -110,7 +125,7 @@ class ExamplesApi(ChildApi):
 
     def q3(self):
         # retrieve all the morphology releases
-        return self.api.connector.get_resources(
+        return self.api._connector.get_resources(
             "MorphologyRelease",
             limit=10,
         )
@@ -118,7 +133,7 @@ class ExamplesApi(ChildApi):
     def q4(self):
         # retrieve all the morphology releases with any of the given names
         names = ["O1-20190624-syn_morph_release", "O1-20190624_morph_release"]
-        return self.api.connector.get_resources(
+        return self.api._connector.get_resources(
             "MorphologyRelease",
             {"name": names},
             limit=10,
@@ -127,7 +142,7 @@ class ExamplesApi(ChildApi):
     def q5(self):
         # retrieve the DetailedCircuit(s) using the morphologyRelease with the given name
         name = "O0-20180419_morph_release"
-        return self.api.connector.get_resources(
+        return self.api._connector.get_resources(
             "DetailedCircuit",
             {"nodeCollection.memodelRelease.morphologyRelease.name": name},
             limit=10,
@@ -136,7 +151,7 @@ class ExamplesApi(ChildApi):
     def q6(self):
         # retrieve the MorphologyRelease(s) used by the circuit with the given name
         name = "Thalamus microcircuit v1"
-        return self.api.connector.get_resources(
+        return self.api._connector.get_resources(
             "MorphologyRelease",
             {"^morphologyRelease.^memodelRelease.^nodeCollection.name": name},
             limit=10,
@@ -144,7 +159,7 @@ class ExamplesApi(ChildApi):
 
     def q7(self, circuit):
         # retrieve all the simulation campaigns using the given circuit
-        return self.api.connector.get_resources(
+        return self.api._connector.get_resources(
             "SimulationCampaign",
             {"used": f"<{circuit.id}>"},
             # TODO: alternatively, accept an id without surrounding <> as in
