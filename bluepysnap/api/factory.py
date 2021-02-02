@@ -1,13 +1,14 @@
 import logging
-import os.path
 from collections import defaultdict
 from functools import partial
+from pathlib import Path
 
 import bluepy
-import lazy_object_proxy
+from lazy_object_proxy import Proxy
+from morph_tool.morphdb import MorphDB
 
 import bluepysnap
-from bluepysnap.api.entity import Entity
+from bluepysnap.api.entity import Entity, ResolvingResource
 
 L = logging.getLogger(__name__)
 
@@ -20,13 +21,19 @@ def _try_open(func, *args, **kwargs):
         L.warning("Open error: %s", e)
 
 
+def _get_path(p):
+    return Path(p.replace("file://", ""))
+
+
 class EntityFactory:
-    def __init__(self):
+    def __init__(self, connector):
+        self._connector = connector
         self._function_registry = defaultdict(dict)
         self.register("DetailedCircuit", "snap", self.open_circuit_snap)
         self.register("DetailedCircuit", "bluepy", self.open_circuit_bluepy)
         self.register("Simulation", "snap", self.open_simulation_snap)
         self.register("Simulation", "bluepy", self.open_simulation_bluepy)
+        self.register("MorphologyRelease", "morph-tool", self.open_morphology_release)
 
     def register(self, resource_type, tool, func):
         """Register a tool to open the given resource type.
@@ -41,7 +48,8 @@ class EntityFactory:
 
     def open(self, resource, tool=None):
         """Open the resource and return an entity (resource, proxy)."""
-        proxy = lazy_object_proxy.Proxy(partial(self._open_resource, resource, tool=tool))
+        resource = ResolvingResource(resource, retriever=self._connector.get_resource_by_id)
+        proxy = Proxy(partial(self._open_resource, resource, tool=tool))
         return Entity(resource, proxy)
 
     def _open_resource(self, resource, tool=None):
@@ -68,21 +76,21 @@ class EntityFactory:
         return result
 
     def open_circuit_snap(self, resource):
-        base_path = resource.circuitBase.url.replace("file://", "")
-        config_path = os.path.join(base_path, "sonata/circuit_config.json")
-        return bluepysnap.Circuit(config_path)
+        config_path = _get_path(resource.circuitBase.url) / "sonata/circuit_config.json"
+        return bluepysnap.Circuit(str(config_path))
 
     def open_circuit_bluepy(self, resource):
-        base_path = resource.circuitBase.url.replace("file://", "")
-        config_path = os.path.join(base_path, "CircuitConfig")
-        return bluepy.Circuit(config_path)
+        config_path = _get_path(resource.circuitBase.url) / "CircuitConfig"
+        return bluepy.Circuit(str(config_path))
 
     def open_simulation_snap(self, resource):
-        base_path = resource.path.replace("file://", "")
-        config_path = os.path.join(base_path, "sonata/simulation_config.json")
-        return bluepysnap.Simulation(config_path)
+        config_path = _get_path(resource.path) / "sonata/simulation_config.json"
+        return bluepysnap.Simulation(str(config_path))
 
     def open_simulation_bluepy(self, resource):
-        base_path = resource.path.replace("file://", "")
-        config_path = os.path.join(base_path, "BlueConfig")
-        return bluepy.Simulation(config_path)
+        config_path = _get_path(resource.path) / "BlueConfig"
+        return bluepy.Simulation(str(config_path))
+
+    def open_morphology_release(self, resource):
+        config_path = _get_path(resource.morphologyIndex.distribution.url)
+        return MorphDB.from_neurondb(config_path)
