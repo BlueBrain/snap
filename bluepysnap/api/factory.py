@@ -4,6 +4,7 @@ from functools import partial
 from pathlib import Path
 
 import bluepy
+import neurom
 from lazy_object_proxy import Proxy
 from more_itertools import all_equal, always_iterable, first
 from morph_tool.morphdb import MorphDB
@@ -35,6 +36,16 @@ class EntityFactory:
         self.register("Simulation", "snap", self.open_simulation_snap)
         self.register("Simulation", "bluepy", self.open_simulation_bluepy)
         self.register("MorphologyRelease", "morph-tool", self.open_morphology_release)
+        self.register(
+            [
+                "DummyMorphology",
+                "NeuronMorphology",
+                "ReconstructedPatchedCell",
+                "ReconstructedWholeBrainCell",
+            ],
+            "neurom",
+            self.open_morphology_neurom,
+        )
 
     def register(self, resource_types, tool, func):
         """Register a tool to open the given resource type.
@@ -107,3 +118,17 @@ class EntityFactory:
     def open_morphology_release(self, resource):
         config_path = _get_path(resource.morphologyIndex.distribution.url)
         return MorphDB.from_neurondb(config_path)
+
+    def open_morphology_neurom(self, resource):
+        supported_formats = {"application/swc", "application/h5"}
+        unsupported_formats = set()
+        for item in always_iterable(resource.distribution):
+            encoding_format = getattr(item, "encodingFormat", "").lower()
+            if encoding_format in supported_formats and item.type == "DataDownload":
+                path = _get_path(item.contentUrl)
+                return neurom.load_neuron(path)
+            if encoding_format:
+                unsupported_formats.add(encoding_format)
+        if unsupported_formats:
+            raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
+        raise RuntimeError("Missing morphology url")
