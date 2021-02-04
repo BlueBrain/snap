@@ -1,7 +1,8 @@
 import logging
 from typing import Dict, List, Union
 
-from kgforge.core import KnowledgeGraphForge
+import pandas as pd
+from kgforge.core import KnowledgeGraphForge, Resource
 from pandas import DataFrame
 
 from bluepysnap.api.connector import NexusConnector
@@ -76,7 +77,64 @@ class SimulationApi(ChildApi):
 
 
 class MorphologyApi(ChildApi):
-    pass
+    def get_morphologies_from_df(self, df: pd.DataFrame, tool=None) -> List[Entity]:
+        """Return morphology entities from a given dataframe of morphologies.
+
+        Args:
+            df: dataframe containing at least name and path of the morphology.
+            tool: tool to be used to open the morphologies.
+
+        Returns: list of morphology entities.
+        """
+        df = df[["name", "path"]]
+        resources = (
+            Resource(
+                type="DummyMorphology",
+                distribution=[
+                    Resource(
+                        type="DataDownload",
+                        name=name,
+                        contentUrl=str(path),
+                        encodingFormat=f"application/{path.suffix.lstrip('.')}",
+                    )
+                ],
+            )
+            for name, path in df.values
+        )
+        return [self.api._factory.open(r, tool=tool) for r in resources]
+
+    def get_morphologies_from_morphology_release(
+        self, morphology_release: Entity, query, tool=None
+    ) -> List[Entity]:
+        """Query a morphology release and return morphology entities.
+
+        Args:
+            morphology_release: morphology release entity, using MorphDB as instance.
+            query: query to filter the morphology release dataframe, using index or the columns:
+                name
+                mtype
+                msubtype
+                mtype_no_subtype
+                layer
+                label
+                path
+                use_axon
+                use_dendrites
+                axon_repair
+                dendrite_repair
+                basal_dendrite_repair
+                tuft_dendrite_repair
+                oblique_dendrite_repair
+                unravel
+                use_for_stats
+                axon_inputs
+            tool: tool to be used to open the morphologies.
+
+        Returns: list of morphology entities.
+        """
+        # TODO: should we check it's an instance of MorphDB? and support other classes?
+        df = morphology_release.instance.df.query(query)
+        return self.get_morphologies_from_df(df, tool=tool)
 
 
 class ExamplesApi(ChildApi):
