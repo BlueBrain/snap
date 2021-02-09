@@ -17,7 +17,7 @@
 
 """Morphology access."""
 
-import os
+from pathlib import Path
 
 import numpy as np
 import neurom as nm
@@ -61,9 +61,9 @@ class MorphHelper:
         Args:
             node_id (int/CircuitNodeId): could be a int or CircuitNodeId.
         """
-        name = self._population.get(node_id, Node.MORPHOLOGY)
         if isinstance(node_id, (int, CircuitNodeId)):
-            return os.path.join(self._morph_dir, "%s.swc" % name)
+            name = self._population.get(node_id, Node.MORPHOLOGY)
+            return Path(self._morph_dir, f"{name}.swc")
         raise BluepySnapError("node_id must be a int or a CircuitNodeId")
 
     def get(self, node_id, transform=False):

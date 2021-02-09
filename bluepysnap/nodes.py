@@ -734,3 +734,12 @@ class NodePopulation:
             self._node_storage.circuit.config['components']['morphologies_dir'],
             self
         )
+
+    @cached_property
+    def models(self):
+        """Access to node neuron models."""
+        from bluepysnap.neuron_models import NeuronModelsHelper
+        return NeuronModelsHelper(
+            self._node_storage.circuit.config['components'],
+            self
+        )
