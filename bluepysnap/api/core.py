@@ -13,9 +13,11 @@ L = logging.getLogger(__name__)
 
 
 class Api:
-    def __init__(self, nexus_config, *, bucket, token, **kwargs):
-        self._forge = KnowledgeGraphForge(nexus_config, bucket=bucket, token=token, **kwargs)
-        self._connector = NexusConnector(forge=self._forge)
+    def __init__(self, nexus_config, *, bucket, token, debug=False, **kwargs):
+        self._forge = KnowledgeGraphForge(
+            nexus_config, bucket=bucket, token=token, debug=debug, **kwargs
+        )
+        self._connector = NexusConnector(forge=self._forge, debug=debug)
         self._factory = EntityFactory(connector=self._connector)
         # children APIs
         self.circuit = CircuitApi(self)
@@ -132,7 +134,8 @@ class MorphologyApi(ChildApi):
 
         Returns: list of morphology entities.
         """
-        # TODO: should we check it's an instance of MorphDB? and support other classes?
+        # TODO: should we check if it's an instance of MorphDB?
+        #       should we use an adapter to support other libraries?
         df = morphology_release.instance.df.query(query)
         return self.get_morphologies_from_df(df, tool=tool)
 
