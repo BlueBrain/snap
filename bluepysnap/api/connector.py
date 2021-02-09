@@ -41,7 +41,7 @@ def timed(s):
 
 
 class NexusConnector:
-    def __init__(self, forge, debug=True):
+    def __init__(self, forge, debug=False):
         self._forge = forge
         self._query_builder = QueryBuilder()
         self._debug = debug
