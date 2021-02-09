@@ -419,6 +419,7 @@ class TestNodePopulation:
             return edges
 
         circuit = Mock()
+        circuit.config = {}
         circuit.edges = {"edge1": _mock_edge('edge1', "default", "nodeother"),
                          "edge2": _mock_edge('edge2', "nodeother", "default"),
                          "edge3": _mock_edge('edge3', "default", "nodeother")}
