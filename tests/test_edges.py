@@ -554,6 +554,7 @@ class TestEdgePopulation:
             'edge_types_file': None,
         }
         circuit = Mock()
+        circuit.config = {}
         create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit,
                                node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')))
         storage = test_module.EdgeStorage(config, circuit)

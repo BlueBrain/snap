@@ -91,9 +91,10 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None):
     }
     if circuit is None:
         circuit = mock.Mock()
+        circuit.config = {}
+    circuit.config.update({"networks": {"nodes": [config]}})
     if node_sets is not None:
         circuit.node_sets = node_sets
     node_pop = NodeStorage(config, circuit).population(pop_name)
-    circuit.config = {"networks": {"nodes": [config]}}
     circuit.nodes = Nodes(circuit)
     return node_pop
