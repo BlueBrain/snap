@@ -22,8 +22,19 @@ def test_invalid_model_type():
                                data=["virtual"] * data.shape[0],
                                dtype=h5py.string_dtype())
         nodes = create_node_population(nodes_file, "default")
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError) as e:
             test_module.NeuronModelsHelper({}, nodes)
+        assert 'biophysical or point node population' in e.value.args[0]
+
+
+def test_get_invalid_node_id():
+    nodes = create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
+    config = Config(TEST_DATA_DIR / 'circuit_config.json').resolve()
+    test_obj = test_module.NeuronModelsHelper(config['components'], nodes)
+
+    with pytest.raises(BluepySnapError) as e:
+        test_obj.get_filepath('1')
+    assert "node_id must be a int or a CircuitNodeId" in e.value.args[0]
 
 
 def test_get_filepath_biophysical():
@@ -36,6 +47,17 @@ def test_get_filepath_biophysical():
     actual = test_obj.get_filepath(node_id)
     expected = Path(config['components']['biophysical_neuron_models_dir'], 'small_bio.hoc')
     assert actual == expected
+
+
+def test_no_biophysical_dir():
+    nodes = create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default")
+    config = Config(TEST_DATA_DIR / 'circuit_config.json').resolve()
+    del config['components']['biophysical_neuron_models_dir']
+    test_obj = test_module.NeuronModelsHelper(config['components'], nodes)
+
+    with pytest.raises(BluepySnapError) as e:
+        test_obj.get_filepath(0)
+    assert "Missing 'biophysical_neuron_models_dir'" in e.value.args[0]
 
 
 def test_get_filepath_point():
@@ -52,3 +74,19 @@ def test_get_filepath_point():
         actual = test_obj.get_filepath(node_id)
         expected = Path(circuit.config['components']['point_neuron_models_dir'], 'empty_bio.nml')
         assert actual == expected
+
+        node_id = 1
+        assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "nml:/abs/path/empty_bio"
+        actual = test_obj.get_filepath(node_id)
+        expected = Path('/abs/path/empty_bio.nml')
+        assert actual == expected
+
+
+def test_no_point_dir():
+    nodes = create_node_population(str(TEST_DATA_DIR / 'nodes_points.h5'), "default")
+    config = Config(TEST_DATA_DIR / 'circuit_config.json').resolve()
+    test_obj = test_module.NeuronModelsHelper(config['components'], nodes)
+
+    with pytest.raises(BluepySnapError) as e:
+        test_obj.get_filepath(0)
+    assert "Missing 'point_neuron_models_dir'" in e.value.args[0]
