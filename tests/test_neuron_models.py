@@ -2,6 +2,7 @@ from pathlib import Path
 import h5py
 import bluepysnap.neuron_models as test_module
 from bluepysnap.circuit import Circuit, Config
+from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
 
@@ -44,9 +45,20 @@ def test_get_filepath_biophysical():
     test_obj = test_module.NeuronModelsHelper(config['components'], nodes)
 
     node_id = 0
-    assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio"
+    assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio-A"
     actual = test_obj.get_filepath(node_id)
-    expected = Path(config['components']['biophysical_neuron_models_dir'], 'small_bio.hoc')
+    expected = Path(config['components']['biophysical_neuron_models_dir'], 'small_bio-A.hoc')
+    assert actual == expected
+
+    node_id = CircuitNodeId('default', 0)
+    assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio-A"
+    actual = test_obj.get_filepath(node_id)
+    assert actual == expected
+
+    node_id = CircuitNodeId('default', 2)
+    assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio-C"
+    actual = test_obj.get_filepath(node_id)
+    expected = Path(config['components']['biophysical_neuron_models_dir'], 'small_bio-C.hoc')
     assert actual == expected
 
 
