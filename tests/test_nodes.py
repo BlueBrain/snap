@@ -870,3 +870,10 @@ class TestNodePopulation:
             }
         }
         assert isinstance(self.test_obj.morph, MorphHelper)
+
+    def test_models(self):
+        from bluepysnap.neuron_models import NeuronModelsHelper
+        self.test_obj._node_storage.circuit.config = {
+            'components': {}
+        }
+        assert isinstance(self.test_obj.models, NeuronModelsHelper)
