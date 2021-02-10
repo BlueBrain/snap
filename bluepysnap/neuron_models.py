@@ -28,7 +28,7 @@ class NeuronModelsHelper(object):
     """Collection of neuron models related methods."""
 
     def __init__(self, config_components, population):
-        """Initializes a NeuronModelsHelper object from a directory path and a NodePopulation object.
+        """Constructor.
 
         Args:
             config_components (dict): 'components' part of circuit's config
