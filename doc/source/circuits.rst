@@ -10,4 +10,5 @@ Circuits
    config
    edges
    morph
+   neuron_models
    nodes
