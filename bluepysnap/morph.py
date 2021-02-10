@@ -61,10 +61,10 @@ class MorphHelper:
         Args:
             node_id (int/CircuitNodeId): could be a int or CircuitNodeId.
         """
-        if isinstance(node_id, (int, CircuitNodeId)):
-            name = self._population.get(node_id, Node.MORPHOLOGY)
-            return Path(self._morph_dir, f"{name}.swc")
-        raise BluepySnapError("node_id must be a int or a CircuitNodeId")
+        if not isinstance(node_id, (int, CircuitNodeId)):
+            raise BluepySnapError("node_id must be a int or a CircuitNodeId")
+        name = self._population.get(node_id, Node.MORPHOLOGY)
+        return Path(self._morph_dir, f"{name}.swc")
 
     def get(self, node_id, transform=False):
         """Return NeuroM morphology object corresponding to `node_id`.

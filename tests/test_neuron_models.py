@@ -11,6 +11,7 @@ from utils import TEST_DATA_DIR, copy_circuit, copy_config, edit_config, create_
 
 
 def test_invalid_model_type():
+    """test that model type, other than 'biophysical' or 'point_neuron', throws an error"""
     with copy_circuit() as (circuit_copy_path, config_copy_path):
         config = Config(config_copy_path).resolve()
         nodes_file = config["networks"]["nodes"][0]["nodes_file"]
