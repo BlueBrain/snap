@@ -1,8 +1,15 @@
 Changelog
 =========
 
-Version v0.9.1
+Version v0.10.0
 ---------------
+
+New Features
+~~~~~~~~~~~~~
+- Added NeuronModelsHelper to access nodes neuron models
+
+Version v0.9.1
+--------------
 
 Bug Fixes
 ~~~~~~~~~
