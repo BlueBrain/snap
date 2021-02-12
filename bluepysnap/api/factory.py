@@ -3,13 +3,9 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
-import bluepy
-import neurom
 from lazy_object_proxy import Proxy
 from more_itertools import all_equal, always_iterable, first
-from morph_tool.morphdb import MorphDB
 
-import bluepysnap
 from bluepysnap.api.entity import Entity, ResolvingResource
 
 L = logging.getLogger(__name__)
@@ -31,11 +27,12 @@ class EntityFactory:
     def __init__(self, connector):
         self._connector = connector
         self._function_registry = defaultdict(dict)
-        self.register("DetailedCircuit", "snap", self.open_circuit_snap)
-        self.register("DetailedCircuit", "bluepy", self.open_circuit_bluepy)
-        self.register("Simulation", "snap", self.open_simulation_snap)
-        self.register("Simulation", "bluepy", self.open_simulation_bluepy)
-        self.register("MorphologyRelease", "morph-tool", self.open_morphology_release)
+        self.register("DetailedCircuit", "snap", open_circuit_snap)
+        self.register("DetailedCircuit", "bluepy", open_circuit_bluepy)
+        self.register("Simulation", "snap", open_simulation_snap)
+        self.register("Simulation", "bluepy", open_simulation_bluepy)
+        self.register("Simulation", "bglibpy", open_simulation_bglibpy)
+        self.register("MorphologyRelease", "morph-tool", open_morphology_release)
         self.register(
             [
                 "DummyMorphology",
@@ -44,7 +41,7 @@ class EntityFactory:
                 "ReconstructedWholeBrainCell",
             ],
             "neurom",
-            self.open_morphology_neurom,
+            open_morphology_neurom,
         )
 
     def register(self, resource_types, tool, func):
@@ -99,36 +96,61 @@ class EntityFactory:
             raise RuntimeError(f"Different tools to open {types}")
         return first(available_tool_functions.values())
 
-    def open_circuit_snap(self, resource):
-        config_path = _get_path(resource.circuitBase.url) / "sonata/circuit_config.json"
-        return bluepysnap.Circuit(str(config_path))
 
-    def open_circuit_bluepy(self, resource):
-        config_path = _get_path(resource.circuitBase.url) / "CircuitConfig"
-        return bluepy.Circuit(str(config_path))
+def open_circuit_snap(resource):
+    import bluepysnap
 
-    def open_simulation_snap(self, resource):
-        config_path = _get_path(resource.path) / "sonata/simulation_config.json"
-        return bluepysnap.Simulation(str(config_path))
+    config_path = _get_path(resource.circuitBase.url) / "sonata/circuit_config.json"
+    return bluepysnap.Circuit(str(config_path))
 
-    def open_simulation_bluepy(self, resource):
-        config_path = _get_path(resource.path) / "BlueConfig"
-        return bluepy.Simulation(str(config_path))
 
-    def open_morphology_release(self, resource):
-        config_path = _get_path(resource.morphologyIndex.distribution.url)
-        return MorphDB.from_neurondb(config_path)
+def open_circuit_bluepy(resource):
+    import bluepy
 
-    def open_morphology_neurom(self, resource):
-        supported_formats = {"application/swc", "application/h5"}
-        unsupported_formats = set()
-        for item in always_iterable(resource.distribution):
-            encoding_format = getattr(item, "encodingFormat", "").lower()
-            if encoding_format in supported_formats and item.type == "DataDownload":
-                path = _get_path(item.contentUrl)
-                return neurom.load_neuron(path)
-            if encoding_format:
-                unsupported_formats.add(encoding_format)
-        if unsupported_formats:
-            raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
-        raise RuntimeError("Missing morphology url")
+    config_path = _get_path(resource.circuitBase.url) / "CircuitConfig"
+    return bluepy.Circuit(str(config_path))
+
+
+def open_simulation_snap(resource):
+    import bluepysnap
+
+    config_path = _get_path(resource.path) / "sonata/simulation_config.json"
+    return bluepysnap.Simulation(str(config_path))
+
+
+def open_simulation_bluepy(resource):
+    import bluepy
+
+    config_path = _get_path(resource.path) / "BlueConfig"
+    return bluepy.Simulation(str(config_path))
+
+
+def open_simulation_bglibpy(resource):
+    from bglibpy import SSim
+
+    config_path = _get_path(resource.path) / "BlueConfig"
+    return SSim(str(config_path))
+
+
+def open_morphology_release(resource):
+    from morph_tool.morphdb import MorphDB
+
+    config_path = _get_path(resource.morphologyIndex.distribution.url)
+    return MorphDB.from_neurondb(config_path)
+
+
+def open_morphology_neurom(resource):
+    import neurom
+
+    supported_formats = {"application/swc", "application/h5"}
+    unsupported_formats = set()
+    for item in always_iterable(resource.distribution):
+        encoding_format = getattr(item, "encodingFormat", "").lower()
+        if encoding_format in supported_formats and item.type == "DataDownload":
+            path = _get_path(item.contentUrl)
+            return neurom.load_neuron(path)
+        if encoding_format:
+            unsupported_formats.add(encoding_format)
+    if unsupported_formats:
+        raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
+    raise RuntimeError("Missing morphology url")
