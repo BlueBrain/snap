@@ -30,13 +30,10 @@ from cached_property import cached_property
 from bluepysnap.network import NetworkObject
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, NODE_ID_KEY,
-                                         POPULATION_KEY, Node, ConstContainer)
+import bluepysnap.query as query
+from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, Node, ConstContainer)
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
-
-# this constant is not part of the sonata standard
-NODE_SET_KEY = "$node_set"
 
 
 class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
@@ -217,18 +214,6 @@ class NodeStorage:
         return result
 
 
-# TODO: move to `libsonata` library
-def _complex_query(prop, query):
-    # pylint: disable=assignment-from-no-return
-    result = np.full(len(prop), True)
-    for key, value in query.items():
-        if key == '$regex':
-            result = np.logical_and(result, prop.str.match(value + "\\Z"))
-        else:
-            raise BluepySnapError("Unknown query modifier: '%s'" % key)
-    return result
-
-
 class NodePopulation:
     """Node population access."""
 
@@ -385,89 +370,17 @@ class NodePopulation:
             raise BluepySnapError("Undefined node set: '%s'" % node_set_name)
         return self._node_sets[node_set_name]
 
-    def _positional_mask(self, node_ids):
-        """Positional mask for the node IDs.
+    def _resolve_nodesets(self, queries):
+        def _resolve(queries, queries_key):
+            if queries_key == query.NODE_SET_KEY:
+                if query.AND_KEY not in queries:
+                    queries[query.AND_KEY] = []
+                queries[query.AND_KEY].append(self._get_node_set(queries[queries_key]))
+                del queries[queries_key]
 
-        Args:
-            node_ids (None/numpy.ndarray): the ids array. If None all ids are selected.
-
-        Examples:
-            if the data set contains 5 nodes:
-            _positional_mask([0,2]) --> [True, False, True, False, False]
-        """
-        if node_ids is None:
-            return np.full(len(self._data), fill_value=True)
-        mask = np.full(len(self._data), fill_value=False)
-        valid_node_ids = pd.Index(utils.ensure_list(node_ids)).intersection(self._data.index)
-        mask[valid_node_ids] = True
-        return mask
-
-    def _circuit_mask(self, queries):
-        """Handle the population, node ID and node set queries."""
-        populations = queries.pop(POPULATION_KEY, None)
-        if populations is not None and self.name not in set(utils.ensure_list(populations)):
-            node_ids = []
-        else:
-            node_ids = queries.pop(NODE_ID_KEY, None)
-        node_set = queries.pop(NODE_SET_KEY, None)
-        if node_set is not None:
-            if not isinstance(node_set, str):
-                raise BluepySnapError("{} is not a valid node set name.".format(node_set))
-            node_ids = node_ids if node_ids else self._data.index.values
-            node_ids = np.intersect1d(node_ids, self.ids(node_set))
-        return queries, self._positional_mask(node_ids)
-
-    def _properties_mask(self, queries, raise_missing_prop):
-        """Return mask of node IDs with rows matching `props` dict."""
-        # pylint: disable=assignment-from-no-return
-        circuit_keys = {POPULATION_KEY, NODE_ID_KEY, NODE_SET_KEY}
-        unknown_props = set(queries) - set(self._data.columns) - circuit_keys
-        if unknown_props:
-            if raise_missing_prop:
-                raise BluepySnapError(
-                    "Unknown node properties: [{0}]".format(", ".join(unknown_props)))
-            return np.full(len(self._data), fill_value=False)
-
-        queries, mask = self._circuit_mask(queries)
-        if not mask.any():
-            # Avoid fail and/or processing time if wrong population or no nodes
-            return mask
-
-        for prop, values in queries.items():
-            prop = self._data[prop]
-            if np.issubdtype(prop.dtype.type, np.floating):
-                v1, v2 = values
-                prop_mask = np.logical_and(prop >= v1, prop <= v2)
-            elif isinstance(values, str) and values.startswith('regex:'):
-                prop_mask = _complex_query(prop, {'$regex': values[6:]})
-            elif isinstance(values, Mapping):
-                prop_mask = _complex_query(prop, values)
-            else:
-                prop_mask = np.in1d(prop, values)
-            mask = np.logical_and(mask, prop_mask)
-        return mask
-
-    def _operator_mask(self, queries, raise_missing_prop):
-        """Handle the query operators '$or', '$and'."""
-        if len(queries) == 0:
-            return np.full(len(self._data), True)
-
-        # will pop the population and or/and operators so need to copy
-        queries = deepcopy(queries)
-        first_key = list(queries)[0]
-        if first_key == '$or':
-            queries = queries.pop("$or")
-            operator = np.logical_or
-        elif first_key == '$and':
-            queries = queries.pop("$and")
-            operator = np.logical_and
-        else:
-            return self._properties_mask(queries, raise_missing_prop)
-
-        mask = np.full(len(self._data), first_key != "$or")
-        for query in queries:
-            mask = operator(mask, self._operator_mask(query, raise_missing_prop))
-        return mask
+        resolved_queries = deepcopy(queries)
+        query.traverse_queries_bottom_up(resolved_queries, _resolve)
+        return resolved_queries
 
     def _node_ids_by_filter(self, queries, raise_missing_prop):
         """Return node IDs if their properties match the `queries` dict.
@@ -486,7 +399,14 @@ class NodePopulation:
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 
         """
-        return self._data.index[self._operator_mask(queries, raise_missing_prop)].values
+        queries = self._resolve_nodesets(queries)
+        if raise_missing_prop:
+            properties = query.get_properties(queries)
+            if not properties.issubset(self._data.columns):
+                unknown_props = properties - set(self._data.columns)
+                raise BluepySnapError(f"Unknown node properties: {unknown_props}")
+        idx = query.operator_mask(self._data, self.name, queries)
+        return self._data.index[idx].values
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Node IDs corresponding to node ``group``.

@@ -428,30 +428,6 @@ class TestNodePopulation:
         assert circuit.nodes['default'].source_in_edges() == {"edge1", "edge3"}
         assert circuit.nodes['default'].target_in_edges() == {"edge2"}
 
-    def test__positional_mask(self):
-        npt.assert_array_equal(self.test_obj._positional_mask([1, 2]), [False, True, True])
-        npt.assert_array_equal(self.test_obj._positional_mask([0, 2]), [True, False, True])
-
-    def test__node_population_mask(self):
-        queries, mask = self.test_obj._circuit_mask({"population": "default",
-                                                     "other": "val"})
-        assert queries == {"other": "val"}
-        npt.assert_array_equal(mask, [True, True, True])
-
-        queries, mask = self.test_obj._circuit_mask({"population": "unknown",
-                                                     "other": "val"})
-        assert queries == {"other": "val"}
-        npt.assert_array_equal(mask, [False, False, False])
-
-        queries, mask = self.test_obj._circuit_mask({"population": "default",
-                                                     "node_id": [2], "other": "val"})
-        assert queries == {"other": "val"}
-        npt.assert_array_equal(mask, [False, False, True])
-
-        queries, mask = self.test_obj._circuit_mask({"other": "val"})
-        assert queries == {"other": "val"}
-        npt.assert_array_equal(mask, [True, True, True])
-
     def test_ids(self):
         _call = self.test_obj.ids
         npt.assert_equal(_call(), [0, 1, 2])
@@ -584,19 +560,17 @@ class TestNodePopulation:
         # only full match is accepted
         npt.assert_equal(
             [1, 2],
-            test_obj.ids({Cell.MTYPE: {'$regex': '.*BP'}, })
+            test_obj.ids({Cell.MTYPE: 'regex:.*BP'})
         )
         # ...not 'startswith'
         npt.assert_equal(
             [],
-            test_obj.ids({
-                Cell.MTYPE: {'$regex': 'L6'}, })
+            test_obj.ids({Cell.MTYPE: 'regex:L6'})
         )
         # ...or 'endswith'
         npt.assert_equal(
             [],
-            test_obj.ids({
-                Cell.MTYPE: {'$regex': 'BP'}, })
+            test_obj.ids({Cell.MTYPE: 'regex:.BP'})
         )
         # tentative support for 'regex:' prefix
         npt.assert_equal(
