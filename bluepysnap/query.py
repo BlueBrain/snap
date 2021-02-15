@@ -1,3 +1,4 @@
+"""Module to process search queries of nodes/edges."""
 from collections.abc import Mapping
 from copy import deepcopy
 
@@ -12,8 +13,21 @@ EDGE_ID_KEY = "edge_id"
 POPULATION_KEY = "population"
 OR_KEY = "$or"
 AND_KEY = "$and"
-NODE_SET_KEY = "$node_set"  # the only key that is not a part of QUERY_KEYS
-QUERY_KEYS = {NODE_ID_KEY, EDGE_ID_KEY, POPULATION_KEY, OR_KEY, AND_KEY}
+REGEX_KEY = "$regex"
+NODE_SET_KEY = "$node_set"
+VALUE_KEYS = {REGEX_KEY}
+ALL_KEYS = {NODE_ID_KEY, EDGE_ID_KEY, POPULATION_KEY, OR_KEY, AND_KEY, NODE_SET_KEY} | VALUE_KEYS
+
+
+# TODO: move to `libsonata` library
+def _complex_query(prop, query):
+    result = np.full(len(prop), True)
+    for key, value in query.items():
+        if key == '$regex':
+            result = np.logical_and(result, prop.str.match(value + "\\Z"))
+        else:
+            raise BluepySnapError("Unknown query modifier: '%s'" % key)
+    return result
 
 
 def _positional_mask(data, node_ids):
@@ -46,8 +60,7 @@ def _circuit_mask(data, population_name, queries):
 
 def _properties_mask(data, population_name, queries):
     """Return mask of IDs matching `props` dict."""
-    # pylint: disable=assignment-from-no-return
-    unknown_props = set(queries) - set(data.columns) - QUERY_KEYS
+    unknown_props = set(queries) - set(data.columns) - ALL_KEYS
     if unknown_props:
         return np.full(len(data), fill_value=False)
 
@@ -62,7 +75,9 @@ def _properties_mask(data, population_name, queries):
             v1, v2 = values
             prop_mask = np.logical_and(prop >= v1, prop <= v2)
         elif isinstance(values, str) and values.startswith('regex:'):
-            prop_mask = np.logical_and(np.full(len(prop), True), prop.str.match(values[6:] + "\\Z"))
+            prop_mask = _complex_query(prop, {'$regex': values[6:]})
+        elif isinstance(values, Mapping):
+            prop_mask = _complex_query(prop, values)
         else:
             prop_mask = np.in1d(prop, values)
         mask = np.logical_and(mask, prop_mask)
@@ -70,20 +85,37 @@ def _properties_mask(data, population_name, queries):
 
 
 def traverse_queries_bottom_up(queries, node_function):
-    # traverse from leaves to root
+    """Traverse queries tree from leaves to root, left to right.
+
+    Args:
+        queries (dict): queries
+        node_function (function): function to execute on each node of queries tree in traverse order
+    """
     for key in queries:
-        if key in QUERY_KEYS:
-            if key in {OR_KEY, AND_KEY}:
-                for subquery in queries[key]:
-                    traverse_queries_bottom_up(subquery, node_function)
+        if key in {OR_KEY, AND_KEY}:
+            for subquery in queries[key]:
+                traverse_queries_bottom_up(subquery, node_function)
         elif isinstance(queries[key], Mapping):
-            traverse_queries_bottom_up(queries[key], node_function)
+            if VALUE_KEYS & set(queries[key]):
+                assert set(queries[key]).issubset(VALUE_KEYS), \
+                    "Value operators can't be used with plain values"
+            else:
+                traverse_queries_bottom_up(queries[key], node_function)
         node_function(queries, key)
 
 
 def get_properties(queries):
+    """Extracts properties names from `queries`.
+
+    Args:
+        queries (dict): queries
+
+    Returns:
+        set: set of properties names
+    """
+
     def _collect(_, query_key):
-        if query_key not in QUERY_KEYS:
+        if query_key not in ALL_KEYS:
             props.add(query_key)
 
     props = set()
@@ -92,10 +124,21 @@ def get_properties(queries):
 
 
 def operator_mask(data, population_name, queries):
+    """Returns an index mask of `data` for given `queries`.
+
+    Args:
+        data (pd.DataFrame): data
+        population_name (str): population name of `data`
+        queries (dict): queries
+
+    Returns:
+        np.array: index mask
+    """
+
     def _merge_queries_masks(queries):
         if len(queries) == 0:
             return np.full(len(data), True)
-        return np.logical_and.reduce([mask for mask in queries.values()])
+        return np.logical_and.reduce(list(queries.values()))
 
     def _collect(queries, queries_key):
         # each queries value is replaced with a bit mask of corresponding ids

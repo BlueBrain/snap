@@ -560,17 +560,17 @@ class TestNodePopulation:
         # only full match is accepted
         npt.assert_equal(
             [1, 2],
-            test_obj.ids({Cell.MTYPE: 'regex:.*BP'})
+            test_obj.ids({Cell.MTYPE: {'$regex': '.*BP'}, })
         )
         # ...not 'startswith'
         npt.assert_equal(
             [],
-            test_obj.ids({Cell.MTYPE: 'regex:L6'})
+            test_obj.ids({Cell.MTYPE: {'$regex': 'L6'}})
         )
         # ...or 'endswith'
         npt.assert_equal(
             [],
-            test_obj.ids({Cell.MTYPE: 'regex:.BP'})
+            test_obj.ids({Cell.MTYPE: {'$regex': 'BP'}})
         )
         # tentative support for 'regex:' prefix
         npt.assert_equal(
@@ -579,8 +579,12 @@ class TestNodePopulation:
                 Cell.MTYPE: 'regex:.*BP', })
         )
         # '$regex' is the only query modifier supported for the moment
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError) as e:
+            test_obj.ids({Cell.MTYPE: {'err': '.*BP'}}, raise_missing_property=False)
+        assert 'Unknown query modifier' in e.value.args[0]
+        with pytest.raises(BluepySnapError) as e:
             test_obj.ids({Cell.MTYPE: {'err': '.*BP'}})
+        assert 'Unknown node properties' in e.value.args[0]
 
     def test_get(self):
         _call = self.test_obj.get
