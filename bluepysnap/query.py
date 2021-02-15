@@ -91,7 +91,7 @@ def traverse_queries_bottom_up(queries, node_function):
         queries (dict): queries
         node_function (function): function to execute on each node of queries tree in traverse order
     """
-    for key in queries:
+    for key in queries.copy():
         if key in {OR_KEY, AND_KEY}:
             for subquery in queries[key]:
                 traverse_queries_bottom_up(subquery, node_function)
