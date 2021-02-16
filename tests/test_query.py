@@ -32,7 +32,7 @@ def test_population_mask():
     npt.assert_array_equal(mask, [True, True, True])
 
 
-def test_operator_mask():
+def test_resolve_ids():
     data = pd.DataFrame([
         [1, .4, 'seven'],
         [2, .5, 'eight'],
@@ -46,6 +46,8 @@ def test_operator_mask():
         data, '', {'$and': [{'str': 'nine'}, {'int': 3}]}).tolist()
     assert [False, False, True] == resolve_ids(
         data, '', {'$and': [{'str': 'nine'}, {'$or': [{'int': 1}, {'int': 3}]}]}).tolist()
+    assert [False, True, True] == resolve_ids(data, '', {'$or': [
+        {'float': (.59, .61)}, {'$and': [{'str': 'eight'}, {'int': 2}]}]}).tolist()
     assert [True, False, True] == resolve_ids(
         data, '', {'$or': [{'node_id': 0}, {'edge_id': 2}]}).tolist()
 

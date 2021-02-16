@@ -572,12 +572,6 @@ class TestNodePopulation:
             [],
             test_obj.ids({Cell.MTYPE: {'$regex': 'BP'}})
         )
-        # tentative support for 'regex:' prefix
-        npt.assert_equal(
-            [1, 2],
-            test_obj.ids({
-                Cell.MTYPE: 'regex:.*BP', })
-        )
         # '$regex' is the only query modifier supported for the moment
         with pytest.raises(BluepySnapError) as e:
             test_obj.ids({Cell.MTYPE: {'err': '.*BP'}}, raise_missing_property=False)

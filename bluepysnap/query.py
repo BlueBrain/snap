@@ -82,24 +82,24 @@ def _properties_mask(data, population_name, queries):
     return mask
 
 
-def traverse_queries_bottom_up(queries, node_function):
+def traverse_queries_bottom_up(queries, traverse_fn):
     """Traverse queries tree from leaves to root, left to right.
 
     Args:
         queries (dict): queries
-        node_function (function): function to execute on each node of queries tree in traverse order
+        traverse_fn (function): function to execute on each node of `queries` in traverse order
     """
     for key in list(queries.keys()):
         if key in {OR_KEY, AND_KEY}:
             for subquery in queries[key]:
-                traverse_queries_bottom_up(subquery, node_function)
+                traverse_queries_bottom_up(subquery, traverse_fn)
         elif isinstance(queries[key], Mapping):
             if VALUE_KEYS & set(queries[key]):
                 if not set(queries[key]).issubset(VALUE_KEYS):
                     raise BluepySnapError("Value operators can't be used with plain values")
             else:
-                traverse_queries_bottom_up(queries[key], node_function)
-        node_function(queries, key)
+                traverse_queries_bottom_up(queries[key], traverse_fn)
+        traverse_fn(queries, key)
 
 
 def get_properties(queries):
