@@ -41,3 +41,4 @@ ignore-docstrings=yes
 
 [TYPECHECK]
 extension-pkg-whitelist=libsonata
+generated-members=numpy.*
