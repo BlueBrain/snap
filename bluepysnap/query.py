@@ -30,21 +30,21 @@ def _complex_query(prop, query):
     return result
 
 
-def _positional_mask(data, node_ids):
+def _positional_mask(data, ids):
     """Positional mask for the node IDs.
 
     Args:
-        node_ids (None/numpy.ndarray): the ids array. If None all ids are selected.
+        ids (None/numpy.ndarray): the ids array. If None all ids are selected.
 
     Examples:
         if the data set contains 5 nodes:
         _positional_mask([0,2]) --> [True, False, True, False, False]
     """
-    if node_ids is None:
+    if ids is None:
         return np.full(len(data), fill_value=True)
     mask = np.full(len(data), fill_value=False)
-    valid_node_ids = pd.Index(utils.ensure_list(node_ids)).intersection(data.index)
-    mask[valid_node_ids] = True
+    valid_ids = pd.Index(utils.ensure_list(ids)).intersection(data.index)
+    mask[valid_ids] = True
     return mask
 
 
@@ -52,10 +52,10 @@ def _circuit_mask(data, population_name, queries):
     """Handle the population, node ID queries."""
     populations = queries.pop(POPULATION_KEY, None)
     if populations is not None and population_name not in set(utils.ensure_list(populations)):
-        node_ids = []
+        ids = []
     else:
-        node_ids = queries.pop(NODE_ID_KEY, None)
-    return queries, _positional_mask(data, node_ids)
+        ids = queries.pop(NODE_ID_KEY, queries.pop(EDGE_ID_KEY, None))
+    return queries, _positional_mask(data, ids)
 
 
 def _properties_mask(data, population_name, queries):
@@ -91,14 +91,14 @@ def traverse_queries_bottom_up(queries, node_function):
         queries (dict): queries
         node_function (function): function to execute on each node of queries tree in traverse order
     """
-    for key in queries.copy():
+    for key in list(queries.keys()):
         if key in {OR_KEY, AND_KEY}:
             for subquery in queries[key]:
                 traverse_queries_bottom_up(subquery, node_function)
         elif isinstance(queries[key], Mapping):
             if VALUE_KEYS & set(queries[key]):
-                assert set(queries[key]).issubset(VALUE_KEYS), \
-                    "Value operators can't be used with plain values"
+                if not set(queries[key]).issubset(VALUE_KEYS):
+                    raise BluepySnapError("Value operators can't be used with plain values")
             else:
                 traverse_queries_bottom_up(queries[key], node_function)
         node_function(queries, key)
