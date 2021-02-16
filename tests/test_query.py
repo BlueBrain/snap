@@ -3,7 +3,7 @@ import numpy.testing as npt
 import pytest
 
 from bluepysnap import BluepySnapError
-from bluepysnap.query import operator_mask, _positional_mask, _circuit_mask
+from bluepysnap.query import resolve_ids, _positional_mask, _circuit_mask
 
 
 def test_positional_mask():
@@ -38,17 +38,17 @@ def test_operator_mask():
         [2, .5, 'eight'],
         [3, .6, 'nine']],
         columns=['int', 'float', 'str'])
-    assert [False, True, False] == operator_mask(data, '', {'str': 'eight'}).tolist()
-    assert [False, False, False] == operator_mask(data, '', {'int': 1, 'str': 'eight'}).tolist()
-    assert [True, True, False] == operator_mask(
+    assert [False, True, False] == resolve_ids(data, '', {'str': 'eight'}).tolist()
+    assert [False, False, False] == resolve_ids(data, '', {'int': 1, 'str': 'eight'}).tolist()
+    assert [True, True, False] == resolve_ids(
         data, '', {'$or': [{'str': 'seven'}, {'float': (.5, .5)}]}).tolist()
-    assert [False, False, True] == operator_mask(
+    assert [False, False, True] == resolve_ids(
         data, '', {'$and': [{'str': 'nine'}, {'int': 3}]}).tolist()
-    assert [False, False, True] == operator_mask(
+    assert [False, False, True] == resolve_ids(
         data, '', {'$and': [{'str': 'nine'}, {'$or': [{'int': 1}, {'int': 3}]}]}).tolist()
-    assert [True, False, True] == operator_mask(
+    assert [True, False, True] == resolve_ids(
         data, '', {'$or': [{'node_id': 0}, {'edge_id': 2}]}).tolist()
 
     with pytest.raises(BluepySnapError) as e:
-        operator_mask(data, '', {'str': {'$regex': '*.some', 'edge_id': 2}})
+        resolve_ids(data, '', {'str': {'$regex': '*.some', 'edge_id': 2}})
     assert "Value operators can't be used with plain values" in e.value.args[0]

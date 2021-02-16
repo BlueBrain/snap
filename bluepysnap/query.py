@@ -23,7 +23,7 @@ ALL_KEYS = {NODE_ID_KEY, EDGE_ID_KEY, POPULATION_KEY, OR_KEY, AND_KEY, NODE_SET_
 def _complex_query(prop, query):
     result = np.full(len(prop), True)
     for key, value in query.items():
-        if key == '$regex':
+        if key == REGEX_KEY:
             result = np.logical_and(result, prop.str.match(value + "\\Z"))
         else:
             raise BluepySnapError("Unknown query modifier: '%s'" % key)
@@ -38,7 +38,7 @@ def _positional_mask(data, ids):
 
     Examples:
         if the data set contains 5 nodes:
-        _positional_mask([0,2]) --> [True, False, True, False, False]
+        _positional_mask(data, [0,2]) --> [True, False, True, False, False]
     """
     if ids is None:
         return np.full(len(data), fill_value=True)
@@ -74,8 +74,6 @@ def _properties_mask(data, population_name, queries):
         if np.issubdtype(prop.dtype.type, np.floating):
             v1, v2 = values
             prop_mask = np.logical_and(prop >= v1, prop <= v2)
-        elif isinstance(values, str) and values.startswith('regex:'):
-            prop_mask = _complex_query(prop, {'$regex': values[6:]})
         elif isinstance(values, Mapping):
             prop_mask = _complex_query(prop, values)
         else:
@@ -123,7 +121,7 @@ def get_properties(queries):
     return props
 
 
-def operator_mask(data, population_name, queries):
+def resolve_ids(data, population_name, queries):
     """Returns an index mask of `data` for given `queries`.
 
     Args:

@@ -405,7 +405,7 @@ class NodePopulation:
             if not properties.issubset(self._data.columns):
                 unknown_props = properties - set(self._data.columns)
                 raise BluepySnapError(f"Unknown node properties: {unknown_props}")
-        idx = query.operator_mask(self._data, self.name, queries)
+        idx = query.resolve_ids(self._data, self.name, queries)
         return self._data.index[idx].values
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
