@@ -18,8 +18,6 @@
 from bluepysnap.exceptions import BluepySnapError
 
 DYNAMICS_PREFIX = "@dynamics:"
-NODE_ID_KEY = "node_id"
-POPULATION_KEY = "population"
 
 
 class ConstContainer:
