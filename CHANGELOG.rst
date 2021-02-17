@@ -8,6 +8,10 @@ New Features
 ~~~~~~~~~~~~~
 - Added NeuronModelsHelper to access nodes neuron models
 
+Improvements
+~~~~~~~~~~~~~~
+- Moved nodes query mechanism to a separate module
+
 Version v0.9.1
 --------------
 
