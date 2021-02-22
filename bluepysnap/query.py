@@ -3,7 +3,6 @@ from collections.abc import Mapping
 from copy import deepcopy
 
 import numpy as np
-import pandas as pd
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap import utils
 
