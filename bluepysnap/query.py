@@ -42,9 +42,11 @@ def _positional_mask(data, ids):
     """
     if ids is None:
         return np.full(len(data), fill_value=True)
+    if isinstance(ids, int):
+        ids = [ids]
     mask = np.full(len(data), fill_value=False)
-    valid_ids = pd.Index(utils.ensure_list(ids)).intersection(data.index)
-    mask[valid_ids] = True
+    indices = data.index.get_indexer(ids)
+    mask[indices[indices > -1]] = True
     return mask
 
 
