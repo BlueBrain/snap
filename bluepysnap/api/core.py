@@ -26,25 +26,43 @@ class Api:
         self.examples = ExamplesApi(self)
 
     def get_entity_by_id(self, *args, tool=None, **kwargs) -> Entity:
+        """Retrieve and return a single entity based on the id."""
         resource = self._connector.get_resource_by_id(*args, **kwargs)
         return self._factory.open(resource, tool=tool)
 
     def get_entities_by_query(self, *args, tool=None, **kwargs) -> List[Entity]:
+        """Retrieve and return a list of entities based on a SPARQL query."""
         resources = self._connector.get_resources_by_query(*args, **kwargs)
         return [self._factory.open(r, tool=tool) for r in resources]
 
     def get_entities(self, *args, tool=None, **kwargs) -> List[Entity]:
+        """Retrieve and return a list of entities based on the resource type and a filter.
+
+        Example:
+            api.get_entities(
+                "DetailedCircuit",
+                {"brainLocation.brainRegion.label": "Thalamus"},
+                limit=10,
+                tool="snap",
+            )
+        """
         resources = self._connector.get_resources(*args, **kwargs)
         return [self._factory.open(r, tool=tool) for r in resources]
 
     def as_dataframe(self, data: List[Entity], store_metadata: bool = True, **kwargs) -> DataFrame:
+        """Return a pandas dataframe representing the list of entities."""
         data = [e.wrapped for e in data]
         return self._forge.as_dataframe(data, store_metadata=store_metadata, **kwargs)
 
     def as_json(
         self, data: Union[Entity, List[Entity]], store_metadata: bool = True, **kwargs
     ) -> Union[Dict, List[Dict]]:
+        """Return a dictionary or a list of dictionaries representing the entities."""
         return self._forge.as_json(data.wrapped, store_metadata=store_metadata, **kwargs)
+
+    def reopen(self, entity, tool=None):
+        """Return a new entity to be opened with a different tool."""
+        return self._factory.open(entity.resource, tool=tool)
 
 
 class ChildApi:
