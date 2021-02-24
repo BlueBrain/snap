@@ -2,6 +2,9 @@ import logging
 import re
 import time
 from contextlib import contextmanager
+from typing import List
+
+from kgforge.core import Resource
 
 L = logging.getLogger(__name__)
 
@@ -46,21 +49,21 @@ class NexusConnector:
         self._query_builder = QueryBuilder()
         self._debug = debug
 
-    def query(self, query, limit=None, offset=None):
+    def query(self, query: str, limit=None, offset=None) -> List[Resource]:
         with timed("query"):
             return self._forge.sparql(query, debug=self._debug, limit=limit, offset=offset)
 
-    def get_resource_by_id(self, resource_id, version=None, cross_bucket=True):
+    def get_resource_by_id(self, resource_id: str, version=None, cross_bucket=True) -> Resource:
         with timed("get_resource_by_id"):
             return self._forge.retrieve(resource_id, version=version, cross_bucket=cross_bucket)
 
-    def get_resources_by_query(self, query, limit=None, offset=None):
+    def get_resources_by_query(self, query: str, limit=None, offset=None) -> List[Resource]:
         result = self.query(query, limit=limit, offset=offset)
         # TODO: execute requests concurrently, or pass a list of ids if possible,
         #  to avoid calling the nexus endpoint for each resource.
         return [self.get_resource_by_id(r.id) for r in result]
 
-    def get_resources(self, resource_type, resource_filter=(), limit=100):
+    def get_resources(self, resource_type: str, resource_filter=(), limit=100) -> List[Resource]:
         query = self._query_builder.build_query(resource_type, resource_filter)
         return self.get_resources_by_query(query, limit=limit)
 

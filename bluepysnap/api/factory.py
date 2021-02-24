@@ -3,20 +3,13 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
+from kgforge.core import Resource
 from lazy_object_proxy import Proxy
 from more_itertools import all_equal, always_iterable, first
 
 from bluepysnap.api.entity import Entity, ResolvingResource
 
 L = logging.getLogger(__name__)
-
-
-def _try_open(func, *args, **kwargs):
-    """Execute a function and return None in case of error."""
-    try:
-        return func(*args, **kwargs)
-    except Exception as e:
-        L.warning("Open error: %s", e)
 
 
 def _get_path(p):
@@ -43,6 +36,14 @@ class EntityFactory:
             "neurom",
             open_morphology_neurom,
         )
+        self.register(
+            [
+                "BrainAtlasRelease",
+                "AtlasRelease",
+            ],
+            "voxcell",
+            open_atlas_voxcell,
+        )
 
     def register(self, resource_types, tool, func):
         """Register a tool to open the given resource type.
@@ -54,46 +55,53 @@ class EntityFactory:
         """
         for resource_type in always_iterable(resource_types):
             L.info("Registering tool %s for resource type %s", tool, resource_type)
+            # The first registered tool for a type will be used as default.
             self._function_registry[resource_type][tool] = func
 
-    def open(self, resource, tool=None):
-        """Open the resource and return an entity (resource, proxy)."""
+    def open(self, resource: Resource, tool=None) -> Entity:
+        """Open the resource and return an entity (resource, proxy).
+
+        Args:
+            resource: resource to be opened.
+            tool (str): tool name to be used to open the resource, or None to use the default.
+
+        Returns:
+            Entity: entity binding the resource and the opener.
+        """
         resource = ResolvingResource(resource, retriever=self._connector.get_resource_by_id)
         proxy = Proxy(partial(self._open_resource, resource, tool=tool))
         return Entity(resource, proxy)
 
     def _open_resource(self, resource, tool=None):
         """Open the resource and return the associated instance."""
-        result = None
-        types = resource.type
+        types = resource.type  # type or list of types
         tool_functions = self._get_tool_functions(types)
         if tool is None:
-            # try all the available tools for the type of resource
-            for tool, func in tool_functions.items():
-                L.info("Trying to use %s to open %s", tool, types)
-                result = _try_open(func, resource)
-                if result is not None:
-                    break
+            tool, func = first(tool_functions.items())
+            L.info("Using the default tool %s to open %s", tool, types)
         elif tool in tool_functions:
-            L.info("Using %s to open %s", tool, types)
             func = tool_functions[tool]
-            result = _try_open(func, resource)
+            L.info("Using the specified tool %s to open %s", tool, types)
         else:
             raise RuntimeError(f"Tool {tool} not found for {types}")
-        if result is None:
-            raise RuntimeError(f"Unable to open {types}")
-        return result
+        try:
+            return func(resource)
+        except Exception as ex:
+            raise RuntimeError(f"Unable to open {types}") from ex
 
     def _get_tool_functions(self, types):
+        """Iterate over types and return the available functions to open the resource."""
         available_tool_functions = {
-            t: self._function_registry[t]
-            for t in always_iterable(types)
-            if t in self._function_registry
+            resource_type: self._function_registry[resource_type]
+            for resource_type in always_iterable(types)
+            if resource_type in self._function_registry
         }
         if not available_tool_functions:
             raise RuntimeError(f"No available tools to open {types}")
         if not all_equal(available_tool_functions.values()):
-            raise RuntimeError(f"Different tools to open {types}")
+            raise RuntimeError(f"Multiple tools to open {types}")
+        # available_tool_functions contains only one item, or all the values are identical,
+        # so the first value can be returned
         return first(available_tool_functions.values())
 
 
@@ -154,3 +162,10 @@ def open_morphology_neurom(resource):
     if unsupported_formats:
         raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
     raise RuntimeError("Missing morphology url")
+
+
+def open_atlas_voxcell(resource):
+    from voxcell.nexus.voxelbrain import Atlas
+
+    path = _get_path(resource.distribution.url)
+    return Atlas.open(str(path))
