@@ -58,6 +58,14 @@ class EntityFactory:
             # The first registered tool for a type will be used as default.
             self._function_registry[resource_type][tool] = func
 
+    def get_registered_types(self):
+        """Return the registered resource types."""
+        return set(self._function_registry.keys())
+
+    def get_available_tools(self, resource_type):
+        """Return the available tools for a given resource type."""
+        return list(self._function_registry.get(resource_type, {}))
+
     def open(self, resource: Resource, tool=None) -> Entity:
         """Open the resource and return an entity (resource, proxy).
 

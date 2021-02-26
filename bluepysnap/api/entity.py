@@ -2,7 +2,7 @@ from kgforge.core import Resource
 
 
 class ResolvingResource:
-    def __init__(self, resource, retriever=None):
+    def __init__(self, resource: Resource, retriever=None):
         self._wrapped = resource
         self._retriever = retriever
 
@@ -52,7 +52,7 @@ class ResolvingResource:
 
 
 class Entity:
-    def __init__(self, resource, instance):
+    def __init__(self, resource: ResolvingResource, instance):
         self._resource = resource
         self._instance = instance
 
