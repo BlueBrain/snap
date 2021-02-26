@@ -62,7 +62,7 @@ class Api:
 
     def reopen(self, entity, tool=None):
         """Return a new entity to be opened with a different tool."""
-        return self._factory.open(entity.resource, tool=tool)
+        return self._factory.open(entity.wrapped, tool=tool)
 
 
 class ChildApi:

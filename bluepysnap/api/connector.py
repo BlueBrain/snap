@@ -108,8 +108,8 @@ class QueryBuilder:
         for n, (key, value) in enumerate(resource_filter):
             self._process_item(n, key, value, statements, filters)
 
-        statements = ";\n".join(statements)
-        filters = ".\n".join(filters)
+        statements = " ;\n".join(statements)
+        filters = " .\n".join(filters)
         query = f"""
             PREFIX nexus: <{NEXUS_NAMESPACE}>
             SELECT ?id ?project
