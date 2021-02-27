@@ -1,4 +1,7 @@
+from functools import partial
+
 from kgforge.core import Resource
+from lazy_object_proxy import Proxy
 
 
 class ResolvingResource:
@@ -12,7 +15,7 @@ class ResolvingResource:
         It could call the retriever if the resource is not synchronized.
         """
 
-        # ignore private attributes to avoid unnecessary lookups (for example using ipython)
+        # ignore private attributes to avoid unnecessary lookups (for example using notebooks)
         if name.startswith("_"):
             raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
 
@@ -52,25 +55,28 @@ class ResolvingResource:
 
 
 class Entity:
-    def __init__(self, resource: ResolvingResource, instance):
-        self._resource = resource
-        self._instance = instance
+    def __init__(self, resource: Resource, retriever=None, opener=None):
+        """Return a new entity.
+
+        Args:
+            resource: resource to be wrapped.
+            retriever: callable used to retrieve nested resources by id.
+            opener: callable used to open the instance associated to the resource.
+        """
+        self._rr = ResolvingResource(resource, retriever=retriever)
+        self._instance = Proxy(partial(opener, self._rr)) if opener else None
 
     @property
     def resource(self):
-        return self._resource
+        return self._rr._wrapped
 
     @property
     def instance(self):
         return self._instance
 
-    @property
-    def wrapped(self):
-        return self._resource._wrapped
-
     def __repr__(self):
-        resource_id = getattr(self._resource, "id", None)
-        resource_type = getattr(self._resource, "type", None)
+        resource_id = getattr(self._rr, "id", None)
+        resource_type = getattr(self._rr, "type", None)
         instance_type = type(self._instance).__name__
         return (
             f"Entity(resource_id=<{resource_id}>,"
@@ -80,6 +86,6 @@ class Entity:
 
     def __getattr__(self, name):
         try:
-            return getattr(self._resource, name)
+            return getattr(self._rr, name)
         except AttributeError:
             raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")

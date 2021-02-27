@@ -33,13 +33,13 @@ def test_resolving_resource_nested():
 
 def test_entity():
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
-    rr = test_module.ResolvingResource(resource)
-    instance = MagicMock()
 
-    entity = test_module.Entity(resource=rr, instance=instance)
+    def opener(res):
+        return f"Instance of {res.id}"
+
+    entity = test_module.Entity(resource, retriever=None, opener=opener)
 
     assert isinstance(entity, test_module.Entity)
-    assert entity.resource == rr
-    assert entity.wrapped == resource
-    assert entity.instance == instance
-    assert entity.id == resource.id
+    assert entity.resource == resource
+    assert entity.instance == "Instance of id1"
+    assert entity.id == "id1"

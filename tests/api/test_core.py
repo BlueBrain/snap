@@ -2,7 +2,7 @@ from kgforge.core import Resource
 from mock import patch
 
 from bluepysnap.api import core as test_module
-from bluepysnap.api.entity import Entity, ResolvingResource
+from bluepysnap.api.entity import Entity
 import pandas as pd
 
 
@@ -70,7 +70,7 @@ def test_api_as_dataframe(mocked_forge):
         Resource(id="id1", type="DetailedCircuit", name="fake_name_1"),
         Resource(id="id2", type="DetailedCircuit", name="fake_name_2"),
     ]
-    entities = [Entity(ResolvingResource(res), None) for res in resources]
+    entities = [Entity(res) for res in resources]
 
     result = api.as_dataframe(entities)
 
@@ -89,7 +89,7 @@ def test_api_as_json(mocked_forge):
     mocked_forge.return_value.as_json.return_value = resource_dict
     api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
-    entity = Entity(ResolvingResource(resource), None)
+    entity = Entity(resource)
 
     result = api.as_json(entity)
 
@@ -101,12 +101,11 @@ def test_api_as_json(mocked_forge):
 def test_api_reopen(mocked_forge):
     api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
-    entity = Entity(ResolvingResource(resource), None)
+    entity = Entity(resource)
 
     result = api.reopen(entity)
     assert isinstance(result, Entity)
     # only the wrapped resource is the same
-    assert result.wrapped is entity.wrapped
-    # while the resolving resource and the instance are different
-    assert result.resource is not entity.resource
+    assert result.resource is entity.resource
+    # while the instance is different
     assert result.instance is not entity.instance
