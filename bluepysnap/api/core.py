@@ -51,18 +51,18 @@ class Api:
 
     def as_dataframe(self, data: List[Entity], store_metadata: bool = True, **kwargs) -> DataFrame:
         """Return a pandas dataframe representing the list of entities."""
-        data = [e.wrapped for e in data]
+        data = [e.resource for e in data]
         return self._forge.as_dataframe(data, store_metadata=store_metadata, **kwargs)
 
     def as_json(
         self, data: Union[Entity, List[Entity]], store_metadata: bool = True, **kwargs
     ) -> Union[Dict, List[Dict]]:
         """Return a dictionary or a list of dictionaries representing the entities."""
-        return self._forge.as_json(data.wrapped, store_metadata=store_metadata, **kwargs)
+        return self._forge.as_json(data.resource, store_metadata=store_metadata, **kwargs)
 
     def reopen(self, entity, tool=None):
         """Return a new entity to be opened with a different tool."""
-        return self._factory.open(entity.wrapped, tool=tool)
+        return self._factory.open(entity.resource, tool=tool)
 
 
 class ChildApi:

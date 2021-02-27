@@ -4,10 +4,9 @@ from functools import partial
 from pathlib import Path
 
 from kgforge.core import Resource
-from lazy_object_proxy import Proxy
 from more_itertools import all_equal, always_iterable, first
 
-from bluepysnap.api.entity import Entity, ResolvingResource
+from bluepysnap.api.entity import Entity
 
 L = logging.getLogger(__name__)
 
@@ -76,9 +75,11 @@ class EntityFactory:
         Returns:
             Entity: entity binding the resource and the opener.
         """
-        resource = ResolvingResource(resource, retriever=self._connector.get_resource_by_id)
-        proxy = Proxy(partial(self._open_resource, resource, tool=tool))
-        return Entity(resource, proxy)
+        return Entity(
+            resource,
+            retriever=self._connector.get_resource_by_id,
+            opener=partial(self._open_resource, tool=tool),
+        )
 
     def _open_resource(self, resource, tool=None):
         """Open the resource and return the associated instance."""

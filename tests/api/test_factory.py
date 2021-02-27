@@ -3,7 +3,6 @@ from lazy_object_proxy import Proxy
 from mock import MagicMock, patch
 
 from bluepysnap.api import factory as test_module
-from bluepysnap.api.entity import ResolvingResource
 
 
 def test_entity_factory_init():
@@ -55,9 +54,9 @@ def test_entity_factory_open():
 
     result = factory.open(resource)
 
-    assert result.wrapped is resource
-    assert isinstance(result.resource, ResolvingResource)
-    # no need to patch the opener because this will not resolve the proxy
+    assert result.resource is resource
+    # no need to patch the opener in this test,
+    # because the proxy is not resolved when calling `isinstance`
     assert isinstance(result.instance, Proxy)
 
 
@@ -71,8 +70,9 @@ def test_entity_factory_open_instance():
 
         result = factory.open(resource, tool="snap")
 
+        assert isinstance(result.instance, Proxy)
         assert result.instance == mocked_instance
-        mocked_opener.assert_called_once_with(result.resource)
+        mocked_opener.assert_called_once_with(result._rr)
 
 
 def test_entity_factory_open_instance_with_default_tool():
@@ -85,5 +85,6 @@ def test_entity_factory_open_instance_with_default_tool():
 
         result = factory.open(resource)
 
+        assert isinstance(result.instance, Proxy)
         assert result.instance == mocked_instance
-        mocked_opener.assert_called_once_with(result.resource)
+        mocked_opener.assert_called_once_with(result._rr)
