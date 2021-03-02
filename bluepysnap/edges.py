@@ -504,9 +504,13 @@ class EdgePopulation:
         unknown_props = properties - self.property_names
         if raise_missing_prop and unknown_props:
             raise BluepySnapError(f"Unknown edge properties: {unknown_props}")
-        data = self.get(None, properties - unknown_props)
-        idx = query.resolve_ids(data, self.name, queries)
-        return data.index[idx].values
+        res = []
+        ids = self.ids(None)
+        chunk_size = int(1e8)
+        for chunk in np.array_split(ids, 1 + len(ids) // chunk_size):
+            data = self.get(chunk, properties - unknown_props)
+            res.extend(chunk[query.resolve_ids(data, self.name, queries)])
+        return res
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Edge IDs corresponding to edges ``edge_ids``.
