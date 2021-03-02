@@ -27,10 +27,10 @@ import pandas as pd
 
 from cached_property import cached_property
 
+from bluepysnap import query
 from bluepysnap.network import NetworkObject
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
-import bluepysnap.query as query
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, Node, ConstContainer)
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap._doctools import AbstractDocSubstitutionMeta

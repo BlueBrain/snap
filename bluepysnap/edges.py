@@ -17,6 +17,7 @@
 
 """Edge population access."""
 import inspect
+from collections.abc import Mapping
 
 import libsonata
 import numpy as np
@@ -24,6 +25,7 @@ import pandas as pd
 from cached_property import cached_property
 from more_itertools import first
 
+from bluepysnap import query
 from bluepysnap.network import NetworkObject
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
@@ -480,7 +482,33 @@ class EdgePopulation:
 
         return result
 
-    def ids(self, group=None, limit=None, sample=None):
+    def _edge_ids_by_filter(self, queries, raise_missing_prop):
+        """Return edge IDs if their properties match the `queries` dict.
+
+        `props` values could be:
+            pairs (range match for floating dtype fields)
+            scalar or iterables (exact or "one of" match for other fields)
+
+        You can use the special operators '$or' and '$and' also to combine different queries
+        together.
+
+        Examples:
+            >>> self._edge_ids_by_filter({ Edge.POST_SECTION_ID: (0, 1),
+            >>>                            Edge.AXONAL_DELAY: (.5, 2.) })
+            >>> self._edge_ids_by_filter({'$or': [{ Edge.PRE_X_CENTER: [2, 3]},
+            >>>                              { Edge.POST_SECTION_POS: (0, 1),
+            >>>                              Edge.SYN_WEIGHT: (0.,1.4) }]})
+
+        """
+        properties = query.get_properties(queries)
+        unknown_props = properties - self.property_names
+        if raise_missing_prop and unknown_props:
+            raise BluepySnapError(f"Unknown edge properties: {unknown_props}")
+        data = self.get(None, properties - unknown_props)
+        idx = query.resolve_ids(data, self.name, queries)
+        return data.index[idx].values
+
+    def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Edge IDs corresponding to edges ``edge_ids``.
 
         Args:
@@ -499,6 +527,9 @@ class EdgePopulation:
                 IDs from the match result. If limit is greater than the size of the population
                 all node IDs are returned.
 
+            raise_missing_property (bool): if True, raises if a property is not listed in this
+                population. Otherwise the ids are just not selected if a property is missing.
+
         Returns:
             numpy.array: A numpy array of IDs.
         """
@@ -508,6 +539,9 @@ class EdgePopulation:
             result = group.filter_population(self.name).get_ids()
         elif isinstance(group, np.ndarray):
             result = group
+        elif isinstance(group, Mapping):
+            result = self._edge_ids_by_filter(queries=group,
+                                              raise_missing_prop=raise_missing_property)
         else:
             result = utils.ensure_list(group)
             # test if first value is a CircuitEdgeId if yes then all values must be CircuitEdgeId
