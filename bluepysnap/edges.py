@@ -31,7 +31,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
 from bluepysnap import utils
-from bluepysnap.utils import Deprecate
+from bluepysnap.utils import Deprecate, IDS_DTYPE
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 
 
@@ -510,7 +510,7 @@ class EdgePopulation:
         for chunk in np.array_split(ids, 1 + len(ids) // chunk_size):
             data = self.get(chunk, properties - unknown_props)
             res.extend(chunk[query.resolve_ids(data, self.name, queries)])
-        return res
+        return np.array(res, dtype=IDS_DTYPE)
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Edge IDs corresponding to edges ``edge_ids``.
