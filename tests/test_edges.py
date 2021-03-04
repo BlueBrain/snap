@@ -185,6 +185,39 @@ class TestEdges:
         expected = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0]})
         assert tested == expected
 
+        with pytest.raises(BluepySnapError) as e:
+            self.test_obj.ids({'afferent_center_i': (10, 11)})
+        assert "Unknown edge properties: {'afferent_center_i'}" == e.value.args[0]
+
+        tested = self.test_obj.ids({"afferent_center_x": (1110, 1110.5)})
+        expected = CircuitEdgeIds.from_dict({"default": [0], "default2": [0]})
+        assert tested == expected
+
+        tested = self.test_obj.ids({"afferent_center_x": (1111, 1112), "efferent_center_z": (2132, 2134)})
+        expected = CircuitEdgeIds.from_dict({"default": [2], "default2": [2]})
+        assert tested == expected
+
+        tested = self.test_obj.ids({'$and': [{"@dynamics:param1": (0, 2)}, {"afferent_surface_x": (1211, 1211)}]})
+        expected = CircuitEdgeIds.from_dict({"default": [1], "default2": [1]})
+        assert tested == expected
+
+        tested = self.test_obj.ids({'$or': [{"@dynamics:param1": (0, 2)}, {"@source_node": [0]}]})
+        expected = CircuitEdgeIds.from_dict({"default": [0, 1, 2], "default2": [0, 1, 2]})
+        assert tested == expected
+
+        tested = self.test_obj.ids({"population": ["default2"], "afferent_center_x": (1113, 1114)})
+        expected = CircuitEdgeIds.from_dict({"default2": [3]})
+        assert tested == expected
+
+        tested = self.test_obj.ids({"population": ["default3"], "afferent_center_x": (1113, 1114)})
+        expected = CircuitEdgeIds.from_arrays([], [])
+        assert tested == expected
+
+        tested = self.test_obj.ids({"population": ["default", "default2"], "@target_node": [1]})
+        expected = CircuitEdgeIds.from_dict({"default": [1, 2, 3], "default2": [1, 2, 3]})
+        assert tested == expected
+
+
     def test_get(self):
         with pytest.raises(BluepySnapError):
             self.test_obj.get(properties=["other2", "unknown"])

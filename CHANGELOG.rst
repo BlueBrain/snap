@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version v0.11.0
+---------------
+
+New Features
+~~~~~~~~~~~~~
+- Implement queries mechanism for edges
+
 Version v0.10.0
 ---------------
 
