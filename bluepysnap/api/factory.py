@@ -162,15 +162,17 @@ def open_morphology_neurom(resource):
     supported_formats = {"application/swc", "application/h5"}
     unsupported_formats = set()
     for item in always_iterable(resource.distribution):
-        encoding_format = getattr(item, "encodingFormat", "").lower()
-        if encoding_format in supported_formats and item.type == "DataDownload":
-            path = _get_path(item.contentUrl)
-            return neurom.load_neuron(path)
-        if encoding_format:
-            unsupported_formats.add(encoding_format)
+        if item.type == "DataDownload" and hasattr(item, "atLocation"):
+            encoding_format = getattr(item, "encodingFormat", "").lower()
+            if encoding_format in supported_formats:
+                path = _get_path(item.atLocation.location)
+                L.debug("Opening morphology at %s", path)
+                return neurom.load_neuron(path)
+            if encoding_format:
+                unsupported_formats.add(encoding_format)
     if unsupported_formats:
         raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
-    raise RuntimeError("Missing morphology url")
+    raise RuntimeError("Missing morphology location")
 
 
 def open_atlas_voxcell(resource):

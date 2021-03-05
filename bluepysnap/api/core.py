@@ -114,7 +114,7 @@ class MorphologyApi(ChildApi):
                     Resource(
                         type="DataDownload",
                         name=name,
-                        contentUrl=str(path),
+                        atLocation=Resource(location=str(path)),
                         encodingFormat=f"application/{path.suffix.lstrip('.')}",
                     )
                 ],
