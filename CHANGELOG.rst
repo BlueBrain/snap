@@ -8,6 +8,15 @@ New Features
 ~~~~~~~~~~~~~
 - Implement queries mechanism for edges
 
+Improvements
+~~~~~~~~~~~~~~
+- Pinned major versions of dependencies.
+
+Bug Fixes
+~~~~~~~~~
+- Pinned major versions of neuroM to <2.0.0.
+
+
 Version v0.10.0
 ---------------
 
