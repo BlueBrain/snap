@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v0.11.1
+---------------
+
+Improvements
+~~~~~~~~~~~~~~
+- Pinned major versions of neurom to >=2.0.0.
+
+
 Version v0.11.0
 ---------------
 
