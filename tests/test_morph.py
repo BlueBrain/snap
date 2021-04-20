@@ -77,10 +77,10 @@ class TestMorphHelper:
 
     def test_get_morphology(self):
         actual = self.test_obj.get(0).points
-        assert len(actual) == 32
+        assert len(actual) == 13
         expected = [
-            [-0.32, 1.0, 0., 0.725],
-            [-0.32, 0.9, 0., 0.820],
+            [0., 5., 0., 1.],
+            [2., 9., 0., 1.],
         ]
         npt.assert_almost_equal(expected, actual[:2])
 
@@ -104,19 +104,18 @@ class TestMorphHelper:
         )
 
         actual = self.test_obj.get(node_id, transform=True).points
-        assert len(actual) == 32
+        assert len(actual) == 13
         # swc file
         # index       type         X            Y            Z       radius       parent
-        # 1           1    -0.320000     1.000000     0.000000     0.725000          -1
-        # 2           1    -0.320000     0.900000     0.000000     0.820000           1
-
+        #   22           2     0.000000     5.000000     0.000000     1.000000           1
+        #   23           2     2.000000     9.000000     0.000000     1.000000          22
         # rotation around the x axis 90 degrees counter clockwise (swap Y and Z)
         # x = X + 101, y = Z + 102, z = Y + 103, radius does not change
         expected = [
-            [100.68, 102, 104.0, 0.725],
-            [100.68, 102, 103.9, 0.820]
+            [101., 102., 108.,   1.],
+            [103., 102., 112.,   1.]
         ]
-        npt.assert_almost_equal(expected, actual[:2])
+        npt.assert_almost_equal(actual[:2], expected)
 
     def test_get_morphology_standard_rotation(self):
         nodes = create_node_population(
@@ -141,12 +140,12 @@ class TestMorphHelper:
             decimal=6
         )
 
-        assert len(actual) == 32
+        assert len(actual) == 13
         expected = [
-            [100.7637696, 103, 103.2158592, 0.725],
-            [100.7637696, 102.9, 103.2158592, 0.820]
+            [101., 107., 103., 1.],
+            [102.47644, 111., 101.65088, 1.]
         ]
-        npt.assert_almost_equal(expected, actual[:2])
+        npt.assert_almost_equal(actual[:2], expected, decimal=6)
 
 
 @patch(test_module.__name__ + '.MORPH_CACHE_SIZE', 1)
