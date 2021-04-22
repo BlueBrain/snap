@@ -20,9 +20,10 @@
 from pathlib import Path
 
 import numpy as np
-import neurom as nm
+from morphio.mut import Morphology
+import morph_tool.transform as transformations
 
-from bluepysnap.settings import MORPH_CACHE_SIZE
+
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.circuit_ids import CircuitNodeId
@@ -47,10 +48,7 @@ class MorphHelper:
         # all nodes from a population must have the same model type
         if not self._is_biophysical(0):
             raise BluepySnapError("Node population does not contain biophysical nodes.")
-        self._load = nm.load_neuron
-        if MORPH_CACHE_SIZE is not None:
-            from functools import lru_cache
-            self._load = lru_cache(maxsize=MORPH_CACHE_SIZE)(self._load)
+        self._load = Morphology
 
     def _is_biophysical(self, node_id):
         return self._population.get(node_id, Node.MODEL_TYPE) == "biophysical"
@@ -77,7 +75,8 @@ class MorphHelper:
         filepath = self.get_filepath(node_id)
         result = self._load(filepath)
         if transform:
-            A_t = self._population.orientations(node_id).transpose()
-            B = self._population.positions(node_id).values
-            result = result.transform(lambda p: np.dot(p, A_t) + B)
-        return result
+            T = np.eye(4)
+            T[:3, :3] = self._population.orientations(node_id)  # rotations
+            T[:3, 3] = self._population.positions(node_id).values  # translations
+            transformations.transform(result, T)
+        return result.as_immutable()

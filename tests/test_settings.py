@@ -15,12 +15,6 @@ def test_str2bool():
     assert not test_module.str2bool(None)
 
 
-def test_MORPH_CACHE_SIZE():
-    with patch.dict(os.environ, {'BLUESNAP_MORPH_CACHE_SIZE': '42'}):
-        test_module.load_env()
-    assert test_module.MORPH_CACHE_SIZE == 42
-
-
 def test_STRICT_MODE():
     with patch.dict(os.environ, {'BLUESNAP_STRICT_MODE': '1'}):
         test_module.load_env()

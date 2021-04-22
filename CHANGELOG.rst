@@ -1,12 +1,14 @@
 Changelog
 =========
 
-Version v0.11.1
+Version v0.12.0
 ---------------
 
 Improvements
 ~~~~~~~~~~~~~~
-- Pinned major versions of neurom to >=2.0.0.
+- removing the MORPH_CACHE_SIZE
+- removing neurom as the main reader for morphologies
+- adding morphio as the main reader for the morphologies
 
 
 Version v0.11.0

@@ -19,9 +19,6 @@
 
 import os
 
-# NeuroM morphology loader cache size
-MORPH_CACHE_SIZE = None
-
 # All possible checks enabled / deprecated methods disallowed
 STRICT_MODE = False
 
@@ -37,9 +34,6 @@ def str2bool(value):
 def load_env():
     """Load settings from environment variables."""
     # pylint: disable=global-statement
-    if 'BLUESNAP_MORPH_CACHE_SIZE' in os.environ:
-        global MORPH_CACHE_SIZE
-        MORPH_CACHE_SIZE = int(os.environ['BLUESNAP_MORPH_CACHE_SIZE'])
     if 'BLUESNAP_STRICT_MODE' in os.environ:
         global STRICT_MODE
         STRICT_MODE = str2bool(os.environ['BLUESNAP_STRICT_MODE'])

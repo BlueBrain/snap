@@ -3,7 +3,6 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 
-from mock import Mock, patch
 import pandas.testing as pdt
 import pytest
 
@@ -76,13 +75,14 @@ class TestMorphHelper:
             self.test_obj.get_filepath([0, 1])
 
     def test_get_morphology(self):
-        actual = self.test_obj.get(0).points
-        assert len(actual) == 13
+        actual = self.test_obj.get(0)
+        assert len(actual.points) == 13
         expected = [
-            [0., 5., 0., 1.],
-            [2., 9., 0., 1.],
+            [0., 5., 0.],
+            [2., 9., 0.],
         ]
-        npt.assert_almost_equal(expected, actual[:2])
+        npt.assert_almost_equal(expected, actual.points[:2])
+        npt.assert_almost_equal([2., 2.], actual.diameters[:2])
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0, 1])
@@ -103,8 +103,8 @@ class TestMorphHelper:
             decimal=6
         )
 
-        actual = self.test_obj.get(node_id, transform=True).points
-        assert len(actual) == 13
+        actual = self.test_obj.get(node_id, transform=True)
+        assert len(actual.points) == 13
         # swc file
         # index       type         X            Y            Z       radius       parent
         #   22           2     0.000000     5.000000     0.000000     1.000000           1
@@ -112,10 +112,11 @@ class TestMorphHelper:
         # rotation around the x axis 90 degrees counter clockwise (swap Y and Z)
         # x = X + 101, y = Z + 102, z = Y + 103, radius does not change
         expected = [
-            [101., 102., 108.,   1.],
-            [103., 102., 112.,   1.]
+            [101., 102., 108.],
+            [103., 102., 112.]
         ]
-        npt.assert_almost_equal(actual[:2], expected)
+        npt.assert_almost_equal(actual.points[:2], expected)
+        npt.assert_almost_equal(actual.diameters[:2], [2., 2.])
 
     def test_get_morphology_standard_rotation(self):
         nodes = create_node_population(
@@ -142,37 +143,7 @@ class TestMorphHelper:
 
         assert len(actual) == 13
         expected = [
-            [101., 107., 103., 1.],
-            [102.47644, 111., 101.65088, 1.]
+            [101., 107., 103.],
+            [102.47644, 111., 101.65088]
         ]
         npt.assert_almost_equal(actual[:2], expected, decimal=6)
-
-
-@patch(test_module.__name__ + '.MORPH_CACHE_SIZE', 1)
-@patch('neurom.load_neuron')
-def test_MorphHelper_cache_1(nm_load):
-    nodes = Mock()
-    nodes.get.side_effect = ['morph-A', 'morph-A', 'morph-B', 'morph-A']
-    with patch.object(test_module.MorphHelper, '_is_biophysical', return_value=True):
-        test_obj = test_module.MorphHelper('morph-dir', nodes)
-        nm_load.side_effect = Mock
-        morph0 = test_obj.get(0)
-        # should get cached object for 'morph-A'
-        assert test_obj.get(1) is morph0
-        # should get new object ('morph-B')
-        assert test_obj.get(2) is not morph0
-        # 'morph-A' was evicted from cache
-        assert test_obj.get(3) is not morph0
-
-
-@patch(test_module.__name__ + '.MORPH_CACHE_SIZE', None)
-@patch('neurom.load_neuron')
-def test_MorphHelper_cache_2(nm_load):
-    nodes = Mock()
-    nodes.get.side_effect = ['morph-A', 'morph-A']
-    with patch.object(test_module.MorphHelper, '_is_biophysical', return_value=True):
-        test_obj = test_module.MorphHelper('morph-dir', nodes)
-        nm_load.side_effect = Mock
-        morph1 = test_obj.get(0)
-        # same morphology, but no caching
-        assert test_obj.get(1) is not morph1
