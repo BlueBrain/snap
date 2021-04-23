@@ -48,7 +48,6 @@ class MorphHelper:
         # all nodes from a population must have the same model type
         if not self._is_biophysical(0):
             raise BluepySnapError("Node population does not contain biophysical nodes.")
-        self._load = Morphology
 
     def _is_biophysical(self, node_id):
         return self._population.get(node_id, Node.MODEL_TYPE) == "biophysical"
@@ -73,7 +72,7 @@ class MorphHelper:
                 according to `node_id` position in the circuit.
         """
         filepath = self.get_filepath(node_id)
-        result = self._load(filepath)
+        result = Morphology(filepath)
         if transform:
             T = np.eye(4)
             T[:3, :3] = self._population.orientations(node_id)  # rotations
