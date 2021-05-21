@@ -72,6 +72,8 @@ Or a python free function:
 Acknowledgements
 ----------------
 
+The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government’s ETH Board of the Swiss Federal Institutes of Technology.
+
 This project/research has received funding from the European Union’s Horizon 2020 Framework Programme for Research and Innovation under the Specific Grant Agreement No. 785907 (Human Brain Project SGA2).
 
 The Blue Brain Project would like to thank `Dr Eilif Muller <https://github.com/markovg>`_, the author of the precursor to Blue Brain SNAP, for his invaluable insights and contributions
@@ -84,7 +86,7 @@ unless noted otherwise, for example, external dependencies.
 Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER>`__ and
 `COPYING <https://github.com/BlueBrain/snap/blob/master/COPYING>`__ for details.
 
-Copyright (C) 2019-2020, Blue Brain Project/EPFL and contributors.
+Copyright (c) 2019-2021 Blue Brain Project/EPFL
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License version 3
