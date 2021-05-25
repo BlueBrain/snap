@@ -623,7 +623,7 @@ class NodePopulation:
             return result.get(prop, np.zeros((result.shape[0],)))
 
         args = [_get_values(prop) for prop in props]
-        if isinstance(group, (int, np.integer, CircuitNodeId)):
+        if utils.is_node_id(group):
             return trans(*args)[0]
         return pd.Series(trans(*args), index=result.index, name='orientation')
 
