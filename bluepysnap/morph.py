@@ -26,7 +26,7 @@ import morph_tool.transform as transformations
 
 from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.circuit_ids import CircuitNodeId
+from bluepysnap.utils import is_node_id
 
 
 class MorphHelper:
@@ -58,7 +58,7 @@ class MorphHelper:
         Args:
             node_id (int/CircuitNodeId): could be a int or CircuitNodeId.
         """
-        if not isinstance(node_id, (int, CircuitNodeId)):
+        if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         name = self._population.get(node_id, Node.MORPHOLOGY)
         return Path(self._morph_dir, f"{name}.swc")

@@ -443,6 +443,10 @@ class TestNodePopulation:
         npt.assert_equal(_call(group=[], sample=2), [])
         npt.assert_equal(_call(group={Cell.MTYPE: "unknown"}, sample=2), [])
         npt.assert_equal(_call(0), [0])
+        npt.assert_equal(_call(np.int64(0)), [0])
+        npt.assert_equal(_call(np.uint64(0)), [0])
+        npt.assert_equal(_call(np.int32(0)), [0])
+        npt.assert_equal(_call(np.uint32(0)), [0])
         npt.assert_equal(_call([0, 1]), [0, 1])
         npt.assert_equal(_call([1, 0, 1]), [1, 0, 1])  # order and duplicates preserved
         npt.assert_equal(_call(np.array([1, 0, 1])), np.array([1, 0, 1]))

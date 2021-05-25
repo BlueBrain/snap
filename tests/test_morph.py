@@ -60,9 +60,23 @@ class TestMorphHelper:
     def test_get_filepath(self):
         node_id = 0
         assert self.nodes.get(node_id, properties="morphology") == "morph-A"
+
         actual = self.test_obj.get_filepath(node_id)
         expected = self.morph_path / 'morph-A.swc'
         assert actual == expected
+
+        actual = self.test_obj.get_filepath(np.int64(node_id))
+        assert actual == expected
+
+        actual = self.test_obj.get_filepath(np.uint64(node_id))
+        assert actual == expected
+
+        actual = self.test_obj.get_filepath(np.int32(node_id))
+        assert actual == expected
+
+        actual = self.test_obj.get_filepath(np.uint32(node_id))
+        assert actual == expected
+
         node_id = CircuitNodeId("default", 0)
         assert self.nodes.get(node_id, properties="morphology") == "morph-A"
         actual = self.test_obj.get_filepath(node_id)
