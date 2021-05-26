@@ -19,9 +19,9 @@
 
 from pathlib import Path
 
-from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
+from bluepysnap.utils import is_node_id
 
 
 class NeuronModelsHelper:
@@ -54,7 +54,7 @@ class NeuronModelsHelper:
         Returns:
             Path: path to the model file of neuron
         """
-        if not isinstance(node_id, (int, CircuitNodeId)):
+        if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         node = self._population.get(node_id, [Node.MODEL_TYPE, Node.MODEL_TEMPLATE])
         if node[Node.MODEL_TYPE] == "biophysical":

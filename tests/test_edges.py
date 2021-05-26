@@ -143,6 +143,18 @@ class TestEdges:
         tested = self.test_obj.ids(0)
         assert tested == expected
         npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
+        tested = self.test_obj.ids(np.int64(0))
+        assert tested == expected
+        npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
+        tested = self.test_obj.ids(np.uint64(0))
+        assert tested == expected
+        npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
+        tested = self.test_obj.ids(np.int32(0))
+        assert tested == expected
+        npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
+        tested = self.test_obj.ids(np.uint32(0))
+        assert tested == expected
+        npt.assert_equal(tested.get_ids().dtype, IDS_DTYPE)
 
         # single edge ID list --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
@@ -217,7 +229,6 @@ class TestEdges:
         expected = CircuitEdgeIds.from_dict({"default": [1, 2, 3], "default2": [1, 2, 3]})
         assert tested == expected
 
-
     def test_get(self):
         with pytest.raises(BluepySnapError):
             self.test_obj.get(properties=["other2", "unknown"])
@@ -280,6 +291,10 @@ class TestEdges:
 
     def test_afferent_nodes(self):
         assert self.test_obj.afferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [2])
+        assert self.test_obj.afferent_nodes(np.int64(0)) == CircuitNodeIds.from_arrays(["default"], [2])
+        assert self.test_obj.afferent_nodes(np.uint64(0)) == CircuitNodeIds.from_arrays(["default"], [2])
+        assert self.test_obj.afferent_nodes(np.int32(0)) == CircuitNodeIds.from_arrays(["default"], [2])
+        assert self.test_obj.afferent_nodes(np.int32(0)) == CircuitNodeIds.from_arrays(["default"], [2])
         assert self.test_obj.afferent_nodes(CircuitNodeId("default", 0)) == CircuitNodeIds.from_arrays(
             ["default"], [2])
         assert self.test_obj.afferent_nodes([0, 1]) == CircuitNodeIds.from_dict({"default": [2, 0]})
@@ -294,6 +309,10 @@ class TestEdges:
 
     def test_efferent_nodes(self):
         assert self.test_obj.efferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [1])
+        assert self.test_obj.efferent_nodes(np.int64(0)) == CircuitNodeIds.from_arrays(["default"], [1])
+        assert self.test_obj.efferent_nodes(np.uint64(0)) == CircuitNodeIds.from_arrays(["default"], [1])
+        assert self.test_obj.efferent_nodes(np.int32(0)) == CircuitNodeIds.from_arrays(["default"], [1])
+        assert self.test_obj.efferent_nodes(np.uint32(0)) == CircuitNodeIds.from_arrays(["default"], [1])
         assert self.test_obj.efferent_nodes(CircuitNodeId("default", 0)) == CircuitNodeIds.from_arrays(
             ["default"], [1])
         assert self.test_obj.efferent_nodes([0, 2]) == CircuitNodeIds.from_dict({"default": [0, 1]})
@@ -684,6 +703,10 @@ class TestEdgePopulation:
         npt.assert_equal(tested.dtype, IDS_DTYPE)
 
         assert self.test_obj.ids(0) == [0]
+        assert self.test_obj.ids(np.int64(0)) == [0]
+        assert self.test_obj.ids(np.uint64(0)) == [0]
+        assert self.test_obj.ids(np.int32(0)) == [0]
+        assert self.test_obj.ids(np.uint32(0)) == [0]
         npt.assert_equal(self.test_obj.ids([0, 1]), np.array([0, 1]))
         npt.assert_equal(self.test_obj.ids(np.array([0, 1])), np.array([0, 1]))
         npt.assert_equal(self.test_obj.ids(CircuitEdgeId("default", 0)), [0])
@@ -753,6 +776,11 @@ class TestEdgePopulation:
 
     def test_get_all_edge_ids_types(self):
         assert self.test_obj.get(0, Synapse.PRE_GID).tolist() == [2]
+        assert self.test_obj.get(np.int64(0), Synapse.PRE_GID).tolist() == [2]
+        assert self.test_obj.get(np.uint64(0), Synapse.PRE_GID).tolist() == [2]
+        assert self.test_obj.get(np.int32(0), Synapse.PRE_GID).tolist() == [2]
+        assert self.test_obj.get(np.uint32(0), Synapse.PRE_GID).tolist() == [2]
+
         assert self.test_obj.get([0], Synapse.PRE_GID).tolist() == [2]
         assert self.test_obj.get([0, 1], Synapse.PRE_GID).tolist() == [2, 0]
         assert self.test_obj.get(CircuitEdgeId("default", 0), Synapse.PRE_GID).tolist() == [
@@ -784,6 +812,11 @@ class TestEdgePopulation:
             columns=['x', 'y', 'z']
         )
         pdt.assert_frame_equal(actual, expected)
+        pdt.assert_frame_equal(self.test_obj.positions(0, 'afferent', 'center'), actual)
+        pdt.assert_frame_equal(self.test_obj.positions(np.int64(0), 'afferent', 'center'), actual)
+        pdt.assert_frame_equal(self.test_obj.positions(np.uint64(0), 'afferent', 'center'), actual)
+        pdt.assert_frame_equal(self.test_obj.positions(np.int32(0), 'afferent', 'center'), actual)
+        pdt.assert_frame_equal(self.test_obj.positions(np.uint32(0), 'afferent', 'center'), actual)
 
     def test_positions_2(self):
         actual = self.test_obj.positions([1], 'afferent', 'surface')
@@ -828,6 +861,22 @@ class TestEdgePopulation:
         npt.assert_equal(tested, [2])
         npt.assert_equal(tested.dtype, IDS_DTYPE)
 
+        tested = self.test_obj.afferent_nodes(np.int64(0))
+        npt.assert_equal(tested, [2])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.afferent_nodes(np.uint64(0))
+        npt.assert_equal(tested, [2])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.afferent_nodes(np.int32(0))
+        npt.assert_equal(tested, [2])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.afferent_nodes(np.uint32(0))
+        npt.assert_equal(tested, [2])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
         npt.assert_equal(self.test_obj.afferent_nodes(0, unique=False), [2])
 
         npt.assert_equal(self.test_obj.afferent_nodes(1), [0, 2])
@@ -849,6 +898,22 @@ class TestEdgePopulation:
 
     def test_efferent_nodes(self):
         tested = self.test_obj.efferent_nodes(0)
+        npt.assert_equal(tested, [1])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.efferent_nodes(np.int64(0))
+        npt.assert_equal(tested, [1])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.efferent_nodes(np.uint64(0))
+        npt.assert_equal(tested, [1])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.efferent_nodes(np.int32(0))
+        npt.assert_equal(tested, [1])
+        npt.assert_equal(tested.dtype, IDS_DTYPE)
+
+        tested = self.test_obj.efferent_nodes(np.uint32(0))
         npt.assert_equal(tested, [1])
         npt.assert_equal(tested.dtype, IDS_DTYPE)
 
@@ -882,6 +947,27 @@ class TestEdgePopulation:
             self.test_obj.afferent_edges(1, None),
             [1, 2, 3]
         )
+
+        npt.assert_equal(
+            self.test_obj.afferent_edges(np.int64(1), None),
+            [1, 2, 3]
+        )
+
+        npt.assert_equal(
+            self.test_obj.afferent_edges(np.uint64(1), None),
+            [1, 2, 3]
+        )
+
+        npt.assert_equal(
+            self.test_obj.afferent_edges(np.int32(1), None),
+            [1, 2, 3]
+        )
+
+        npt.assert_equal(
+            self.test_obj.afferent_edges(np.uint32(1), None),
+            [1, 2, 3]
+        )
+
 
     def test_afferent_edges_2(self):
         properties = [Synapse.AXONAL_DELAY]

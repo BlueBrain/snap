@@ -53,6 +53,15 @@ def load_json(filepath):
         return json.load(f)
 
 
+def is_node_id(node_id):
+    """Check if node_id can be a valid node id.
+
+    Returns:
+        bool: true is node_id is a int, np.integer or CircuitNodeId. False for anything else.
+    """
+    return isinstance(node_id, (int, np.integer, CircuitNodeId))
+
+
 def is_iterable(v):
     """Check if `v` is any iterable (strings are considered scalar and CircuitNode/EdgeId also)."""
     return isinstance(v, Iterable) and not isinstance(v, (str, CircuitNodeId, CircuitEdgeId))

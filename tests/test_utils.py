@@ -2,11 +2,13 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-import bluepysnap.utils as test_module
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
+from bluepysnap.circuit_ids import CircuitNodeId, CircuitEdgeId
 from bluepysnap.exceptions import BluepySnapError, BluepySnapDeprecationError, BluepySnapDeprecationWarning
 
 from utils import TEST_DATA_DIR
+
+import bluepysnap.utils as test_module
 
 
 def test_load_json():
@@ -19,6 +21,20 @@ def test_is_iterable():
     assert test_module.is_iterable(np.asarray([12, 13]))
     assert not test_module.is_iterable(12)
     assert not test_module.is_iterable('abc')
+
+
+def test_is_node_id():
+    assert test_module.is_node_id(1)
+    assert test_module.is_node_id(np.int(1))
+    assert test_module.is_node_id(np.int32(1))
+    assert test_module.is_node_id(np.uint32(1))
+    assert test_module.is_node_id(np.int64(1))
+    assert test_module.is_node_id(np.uint64(1))
+    assert test_module.is_node_id(CircuitNodeId("default", 1))
+
+    assert not test_module.is_node_id([1])
+    assert not test_module.is_node_id(np.array([1], dtype=np.int64))
+    assert not test_module.is_node_id(CircuitEdgeId("default", 1))
 
 
 def test_ensure_list():

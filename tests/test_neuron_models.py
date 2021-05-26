@@ -1,5 +1,8 @@
 from pathlib import Path
+
 import h5py
+import numpy as np
+
 import bluepysnap.neuron_models as test_module
 from bluepysnap.circuit import Circuit, Config
 from bluepysnap.circuit_ids import CircuitNodeId
@@ -48,6 +51,15 @@ def test_get_filepath_biophysical():
     assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio-A"
     actual = test_obj.get_filepath(node_id)
     expected = Path(config['components']['biophysical_neuron_models_dir'], 'small_bio-A.hoc')
+    assert actual == expected
+
+    actual = test_obj.get_filepath(np.int64(node_id))
+    assert actual == expected
+    actual = test_obj.get_filepath(np.uint64(node_id))
+    assert actual == expected
+    actual = test_obj.get_filepath(np.int32(node_id))
+    assert actual == expected
+    actual = test_obj.get_filepath(np.uint32(node_id))
     assert actual == expected
 
     node_id = CircuitNodeId('default', 0)
