@@ -311,6 +311,12 @@ class TestNodeStorage:
     def test_population_names(self):
         assert sorted(list(self.test_obj.population_names)) == ["default", "default2"]
 
+    def test_h5_filepath(self):
+        assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
+
+    def test_csv_filepath(self):
+        assert self.test_obj.csv_filepath is None
+
     def test_circuit(self):
         assert self.test_obj.circuit is self.circuit
 

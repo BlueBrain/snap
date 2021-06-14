@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v0.12.1
+---------------
+
+New Features
+~~~~~~~~~~~~~
+- Adding the h5 and csv file accessors to the Node/EdgeStorage classes.
+
+
 Version v0.12.0
 ---------------
 
