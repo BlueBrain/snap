@@ -15,7 +15,7 @@ Bug Fixes
 
 Others
 ~~~~~
-- Update the copyrigth.
+- Update the copyright.
 
 
 Version v0.12.0
