@@ -8,6 +8,15 @@ New Features
 ~~~~~~~~~~~~~
 - Adding the h5 and csv file accessors to the Node/EdgeStorage classes.
 
+Bug Fixes
+~~~~~~~~~
+- Fix the morphology/model access using a numpy int (using a numpy integer to access
+  the morphology/model used to fail).
+
+Others
+~~~~~
+- Update the copyright.
+
 
 Version v0.12.0
 ---------------
