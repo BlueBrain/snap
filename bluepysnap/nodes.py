@@ -171,6 +171,16 @@ class NodeStorage:
         return self.storage.population_names
 
     @property
+    def h5_filepath(self):
+        """Returns the filepath of the Storage."""
+        return self._h5_filepath
+
+    @property
+    def csv_filepath(self):
+        """Returns the csv filepath of the Storage."""
+        return self._csv_filepath
+
+    @property
     def circuit(self):
         """Returns the circuit object containing this storage."""
         return self._circuit

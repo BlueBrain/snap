@@ -583,6 +583,12 @@ class TestEdgeStorage:
     def test_storage(self):
         assert isinstance(self.test_obj.storage, libsonata.EdgeStorage)
 
+    def test_h5_filepath(self):
+        assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / 'edges.h5')
+
+    def test_csv_filepath(self):
+        assert self.test_obj.csv_filepath is None
+
     def test_population_names(self):
         assert sorted(list(self.test_obj.population_names)) == ["default", "default2"]
 
