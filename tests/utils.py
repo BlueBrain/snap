@@ -75,7 +75,7 @@ def edit_config(config_path):
             f.write(json.dumps(config))
 
 
-def create_node_population(filepath, pop_name, circuit=None, node_sets=None):
+def create_node_population(filepath, pop_name, circuit=None, node_sets=None, pop_type=None):
     """Creates a node population.
     Args:
         filepath (str): path to the node file.
@@ -88,7 +88,10 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None):
     config = {
         'nodes_file': filepath,
         'node_types_file': None,
+        'populations': {},
     }
+    if pop_type is not None:
+        config['populations'][pop_name] = {'type': pop_type}
     if circuit is None:
         circuit = mock.Mock()
         circuit.config = {}

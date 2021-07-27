@@ -13,7 +13,7 @@ import libsonata
 from mock import Mock, patch, PropertyMock
 
 from bluepysnap.bbp import Cell
-from bluepysnap.sonata_constants import Node
+from bluepysnap.sonata_constants import Node, DEFAULT_NODE_TYPE
 from bluepysnap.circuit import Circuit
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.circuit_ids import CircuitNodeIds, CircuitNodeId
@@ -348,6 +348,7 @@ class TestNodePopulation:
         assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / 'nodes.h5')
         assert self.test_obj.name == 'default'
         assert self.test_obj.size == 3
+        assert self.test_obj.type == DEFAULT_NODE_TYPE
         assert (
                 sorted(self.test_obj.property_names) ==
                 [
@@ -367,6 +368,12 @@ class TestNodePopulation:
         )
         assert (sorted(self.test_obj._node_sets) ==
                 sorted(json.load(open(str(TEST_DATA_DIR / 'node_sets.json')))))
+
+    def test_population_type(self):
+        test_obj = create_node_population(
+            str(TEST_DATA_DIR / 'nodes.h5'), "default",
+            node_sets=NodeSets(str(TEST_DATA_DIR / 'node_sets.json')), pop_type='fake_type')
+        assert test_obj.type == 'fake_type'
 
     def test_property_values(self):
         assert (

@@ -71,6 +71,88 @@ def test_no_config_edges():
         assert errors == {Error(Error.FATAL, 'No "edges" in config "networks"')}
 
 
+def test_no_config_nodes_population():
+    with copy_circuit() as (_, config_copy_path):
+        expected = {Error(Error.FATAL, 'No "populations" defined in config "nodes"')}
+        with edit_config(config_copy_path) as config:
+            del config['networks']['nodes'][0]['populations']['default']
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == expected
+
+        with edit_config(config_copy_path) as config:
+            del config['networks']['nodes'][0]['populations']
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == expected
+
+
+def test_no_config_edges_population():
+    with copy_circuit() as (_, config_copy_path):
+        expected = {Error(Error.FATAL, 'No "populations" defined in config "edges"')}
+        with edit_config(config_copy_path) as config:
+            del config['networks']['edges'][0]['populations']['default']
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == expected
+
+        with edit_config(config_copy_path) as config:
+            del config['networks']['edges'][0]['populations']
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == expected
+
+
+def test_nodes_population_not_found_in_h5():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = circuit_copy_path / 'nodes.h5'
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['populations']['fake_population'] = {}
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == {Error(Error.FATAL, 'populations not found in {}:\n{}'.format(
+            nodes_file, '\tfake_population\n'))}
+
+
+def test_edges_population_not_found_in_h5():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        edges_file = circuit_copy_path / 'edges.h5'
+        with edit_config(config_copy_path) as config:
+            config['networks']['edges'][0]['populations']['fake_population'] = {}
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == {Error(Error.FATAL, 'populations not found in {}:\n{}'.format(
+            edges_file, '\tfake_population\n'))}
+
+
+def test_ok_node_population_type():
+    with copy_circuit() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['populations']['default']['type'] = 'virtual'
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == set()
+
+
+def test_invalid_node_population_type():
+    with copy_circuit() as (_, config_copy_path):
+        fake_type = 'fake_type'
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['populations']['default']['type'] = fake_type
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == {Error(Error.WARNING, 'Invalid node type: {}'.format(fake_type))}
+
+
+def test_ok_edge_population_type():
+    with copy_circuit() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            config['networks']['edges'][0]['populations']['default']['type'] = 'chemical'
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == set()
+
+
+def test_invalid_edge_population_type():
+    with copy_circuit() as (_, config_copy_path):
+        fake_type = 'fake_type'
+        with edit_config(config_copy_path) as config:
+            config['networks']['edges'][0]['populations']['default']['type'] = fake_type
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == {Error(Error.WARNING, 'Invalid edge type: {}'.format(fake_type))}
+
+
 def test_invalid_config_nodes_file():
     with copy_circuit() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
@@ -276,6 +358,17 @@ def test_no_bio_component_dirs():
                                        'Invalid components "{}": {}'.format(dir_, None))}
 
 
+def test_invalid_bio_alternate_morphology_dir():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        component = 'neurolucida-asc'
+        fake_path = str(circuit_copy_path / 'fake/path')
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['populations']['default']['alternate_morphologies'] = {
+                component: fake_path}
+        errors = test_module.validate(str(config_copy_path), True)
+        assert errors == {BbpError(Error.FATAL,
+                                   'Invalid components "{}": {}'.format(component, fake_path))}
+
 @patch('bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY', 1)
 def test_no_morph_files():
     with copy_circuit() as (circuit_copy_path, config_copy_path):
@@ -295,6 +388,19 @@ def test_no_morph_files():
         assert errors == {Error(
             Error.WARNING,
             'missing 3 files in group morphology: default/0[{}]:\n\tnoname0.swc\n\t...\n'.format(
+                nodes_file))}
+
+
+def test_no_alternate_morph_files():
+    with copy_circuit() as (circuit_copy_path, config_copy_path):
+        nodes_file = str(circuit_copy_path / 'nodes.h5')
+        with edit_config(config_copy_path) as config:
+            config['networks']['nodes'][0]['populations']['default']['alternate_morphologies'] = {
+                'neurolucida-asc': config['components']['morphologies_dir']}
+        errors = test_module.validate(str(config_copy_path), bbp_check=True)
+        assert errors == {Error(
+            Error.WARNING,
+            'missing 1 files in group morphology: default/0[{}]:\n\tmorph-A.asc\n'.format(
                 nodes_file))}
 
 

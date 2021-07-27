@@ -19,6 +19,7 @@ def test_all():
             {
                 'nodes_file': str(TEST_DATA_DIR / 'nodes.h5'),
                 'node_types_file': str(TEST_DATA_DIR / 'node_types.csv'),
+                'populations': {'default': {}},
             }
     )
     assert isinstance(circuit.nodes, Nodes)

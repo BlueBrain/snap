@@ -32,6 +32,7 @@ from bluepysnap.network import NetworkObject
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import (DYNAMICS_PREFIX, Node, ConstContainer)
+from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 
@@ -156,7 +157,8 @@ class NodeStorage:
             NodeStorage: A NodeStorage object.
         """
         self._h5_filepath = config['nodes_file']
-        self._csv_filepath = config['node_types_file']
+        self._csv_filepath = config.get('node_types_file')
+        self._populations_config = config.get('populations', {})
         self._circuit = circuit
         self._populations = {}
 
@@ -188,7 +190,12 @@ class NodeStorage:
     def population(self, population_name):
         """Access the different populations from the storage."""
         if population_name not in self._populations:
-            self._populations[population_name] = NodePopulation(self, population_name)
+            population_config = deepcopy(self.circuit.config.get('components', {}))
+            population_config.update(self._populations_config.get(population_name, {}))
+
+            self._populations[population_name] = NodePopulation(
+                self, population_name, population_config)
+
         return self._populations[population_name]
 
     def load_population_data(self, population):
@@ -227,15 +234,18 @@ class NodeStorage:
 class NodePopulation:
     """Node population access."""
 
-    def __init__(self, node_storage, population_name):
+    def __init__(self, node_storage, population_name, population_config):
         """Initializes a NodePopulation object from a NodeStorage and population name.
 
         Args:
             node_storage (NodeStorage): the node storage containing the node population
             population_name (str): the name of the node population
+            population_config (dict): the config for the population
+
         Returns:
             NodePopulation: A NodePopulation object.
         """
+        self._config = population_config
         self._node_storage = node_storage
         self.name = population_name
 
@@ -257,6 +267,16 @@ class NodePopulation:
     def size(self):
         """Node population size."""
         return self._population.size
+
+    @property
+    def config(self):
+        """Population config dictionary."""
+        return self._config
+
+    @property
+    def type(self):
+        """Population type."""
+        return self.config.get('type', DEFAULT_NODE_TYPE)
 
     @cached_property
     def _property_names(self):
@@ -660,13 +680,17 @@ class NodePopulation:
     def morph(self):
         """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
-        return MorphHelper(
-            self._node_storage.circuit.config['components']['morphologies_dir'],
-            self
-        )
+        morph_dirs = {}
+
+        if 'morphologies_dir' in self.config:
+            morph_dirs['morphologies_dir'] = self.config['morphologies_dir']
+
+        morph_dirs.update(self.config.get('alternate_morphologies', {}))
+
+        return MorphHelper(morph_dirs, self)
 
     @cached_property
     def models(self):
         """Access to node neuron models."""
         from bluepysnap.neuron_models import NeuronModelsHelper
-        return NeuronModelsHelper(self._node_storage.circuit.config['components'], self)
+        return NeuronModelsHelper(self.config, self)

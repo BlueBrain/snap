@@ -28,21 +28,27 @@ from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import is_node_id
 
+MAP_EXTENSIONS = {
+    'morphologies_dir': 'swc',
+    'neurolucida-asc': 'asc',
+    'h5v1': 'h5',
+}
+
 
 class MorphHelper:
     """Collection of morphology-related methods."""
 
-    def __init__(self, morph_dir, population):
+    def __init__(self, morph_dirs, population):
         """Initializes a MorphHelper object from a directory path and a NodePopulation object.
 
         Args:
-            morph_dir (str): Path to the directory containing the node morphologies.
+            morph_dirs (dict): Dictionary of paths to directories containing the node morphologies.
             population (NodePopulation): NodePopulation object used to query the nodes.
 
         Returns:
             MorphHelper: A MorphHelper object.
         """
-        self._morph_dir = morph_dir
+        self._morph_dirs = morph_dirs
         self._population = population
 
         # all nodes from a population must have the same model type
@@ -61,7 +67,13 @@ class MorphHelper:
         if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         name = self._population.get(node_id, Node.MORPHOLOGY)
-        return Path(self._morph_dir, f"{name}.swc")
+
+        for key, morph_dir in self._morph_dirs.items():
+            path = Path(morph_dir, f"{name}.{MAP_EXTENSIONS.get(key, '')}")
+            if path.exists():
+                return path
+
+        raise BluepySnapError(f"Morphology file not found for {name}")
 
     def get(self, node_id, transform=False):
         """Return NeuroM morphology object corresponding to `node_id`.
