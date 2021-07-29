@@ -31,16 +31,12 @@ class Astrocyte(ConstContainer):
     Z = "z"  #:
 
     RADIUS = "radius"
-
-    MORPHOLOGY = "morphology"  #:
-    MORPH_CLASS = "morph_class"
-    MODEL_TEMPLATE = "model_template"  #:
-    MODEL_TYPE = "model_type"  #:
-
     MTYPE = "mtype"  #:
+    MORPHOLOGY = "morphology"  #:
 
     MODEL_TYPE = "model_type"  #:
     MODEL_TEMPLATE = "model_template"  #:
+
     NODE_TYPE_ID = "node_type_id"
 
 
@@ -148,7 +144,7 @@ class Chemical(ConstContainer):
     TARGET_NODE_ID = "@target_node"  #:
 
 
-class GliaGlial(ConstContainer):
+class GlialGlial(ConstContainer):
     """Chemical connection type property names."""
 
     # postsynaptic touch position (in the center of the segment)
