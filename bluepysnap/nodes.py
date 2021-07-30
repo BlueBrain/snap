@@ -189,11 +189,9 @@ class NodeStorage:
     def population(self, population_name):
         """Access the different populations from the storage."""
         if population_name not in self._populations:
-            population_config = deepcopy(self.circuit.config.get('components', {}))
-            population_config.update(self._populations_config.get(population_name, {}))
-
+            population_config = self._populations_config.get(population_name)
             self._populations[population_name] = NodePopulation(
-                self, population_name, population_config)
+                self, population_name, population_config=population_config)
 
         return self._populations[population_name]
 
@@ -233,7 +231,7 @@ class NodeStorage:
 class NodePopulation:
     """Node population access."""
 
-    def __init__(self, node_storage, population_name, population_config):
+    def __init__(self, node_storage, population_name, population_config=None):
         """Initializes a NodePopulation object from a NodeStorage and population name.
 
         Args:
@@ -244,7 +242,7 @@ class NodePopulation:
         Returns:
             NodePopulation: A NodePopulation object.
         """
-        self._config = population_config
+        self._config = population_config if population_config else {}
         self._node_storage = node_storage
         self.name = population_name
 
@@ -267,10 +265,12 @@ class NodePopulation:
         """Node population size."""
         return self._population.size
 
-    @property
+    @cached_property
     def config(self):
-        """Population config dictionary."""
-        return self._config
+        """Population config dictionary combined with the components dictionary."""
+        components = deepcopy(self._node_storage.circuit.config.get('components', {}))
+        components.update(self._config)
+        return components
 
     @property
     def type(self):
@@ -679,14 +679,10 @@ class NodePopulation:
     def morph(self):
         """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
-        morph_dirs = {}
 
-        if 'morphologies_dir' in self.config:
-            morph_dirs['morphologies_dir'] = self.config['morphologies_dir']
-
-        morph_dirs.update(self.config.get('alternate_morphologies', {}))
-
-        return MorphHelper(morph_dirs, self)
+        return MorphHelper(self.config.get('morph_dirs'),
+                           self,
+                           alternate_morph_dir=self.config.get('alternate_morphologies'))
 
     @cached_property
     def models(self):

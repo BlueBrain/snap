@@ -337,8 +337,7 @@ class EdgeStorage:
     def population(self, population_name):
         """Access the different populations from the storage."""
         if population_name not in self._populations:
-            population_config = deepcopy(self.circuit.config.get('components', {}))
-            population_config.update(self._populations_config.get(population_name, {}))
+            population_config = self._populations_config.get(population_name, {})
 
             self._populations[population_name] = EdgePopulation(
                 self, population_name, population_config)
@@ -363,7 +362,7 @@ def _estimate_range_size(func, node_ids, n=3):
 class EdgePopulation:
     """Edge population access."""
 
-    def __init__(self, edge_storage, population_name, population_config):
+    def __init__(self, edge_storage, population_name, population_config=None):
         """Initializes a EdgePopulation object from a EdgeStorage and a population name.
 
         Args:
@@ -374,7 +373,7 @@ class EdgePopulation:
         Returns:
             EdgePopulation: An EdgePopulation object.
         """
-        self._config = population_config
+        self._config = population_config if population_config else {}
         self._edge_storage = edge_storage
         self.name = population_name
 
@@ -399,10 +398,12 @@ class EdgePopulation:
         result = self._edge_storage.circuit.nodes[population_name]
         return result
 
-    @property
+    @cached_property
     def config(self):
-        """Population config dictionary."""
-        return self._config
+        """Population config dictionary combined with the components dictionary."""
+        components = deepcopy(self._edge_storage.circuit.config.get('components', {}))
+        components.update(self._config)
+        return components
 
     @property
     def type(self):

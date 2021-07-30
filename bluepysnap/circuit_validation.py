@@ -9,7 +9,7 @@ import h5py
 
 from bluepysnap import BluepySnapError
 from bluepysnap.config import Config
-from bluepysnap.morph import MAP_EXTENSIONS
+from bluepysnap.morph import EXTENSIONS_MAPPING
 from bluepysnap.bbp import NODE_TYPES, EDGE_TYPES
 
 MAX_MISSING_FILES_DISPLAY = 10
@@ -318,19 +318,20 @@ def _check_bio_nodes_group(group_df, group, population):
     errors += _check_components_dir('morphologies_dir', population)
     errors += _check_components_dir('biophysical_neuron_models_dir', population)
 
-    morph_dirs = {}
-    morph_dirs['morphologies_dir'] = population.get('morphologies_dir')
+    morph_dirs = set()
+    if 'morphologies_dir' in population:
+        morph_dirs = {(population['morphologies_dir'], 'swc')}
     if 'alternate_morphologies' in population:
-        for name in population['alternate_morphologies']:
-            errors += _check_components_dir(name, population['alternate_morphologies'])
-            morph_dirs[name] = population['alternate_morphologies'].get(name)
+        for morph_type, morph_path in population['alternate_morphologies'].items():
+            errors += _check_components_dir(morph_type, population['alternate_morphologies'])
+            if morph_type in EXTENSIONS_MAPPING:
+                morph_dirs |= {(morph_path, EXTENSIONS_MAPPING[morph_type])}
     if errors:
         return errors
-    for key, path in morph_dirs.items():
-        ext = MAP_EXTENSIONS[key]
+    for morph_path, ext in morph_dirs:
         errors += _check_files(
             'morphology: {}[{}]'.format(group_name, group.file.filename),
-            (Path(path, m + '.' + ext) for m in group_df['morphology']),
+            (Path(morph_path, m + '.' + ext) for m in group_df['morphology']),
             Error.WARNING)
     bio_path = Path(population['biophysical_neuron_models_dir'])
     errors += _check_files(

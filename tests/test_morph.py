@@ -22,8 +22,7 @@ class TestMorphHelper:
             str(TEST_DATA_DIR / 'nodes_quaternions.h5'),
             "default")
         self.morph_path = TEST_DATA_DIR / 'morphologies'
-        morph_dirs = {'morphologies_dir': str(self.morph_path)}
-        self.test_obj = test_module.MorphHelper(morph_dirs, self.nodes)
+        self.test_obj = test_module.MorphHelper(str(self.morph_path), self.nodes)
 
     def test_biophysical_in_library(self):
         with copy_circuit() as (circuit_copy_path, config_copy_path):
@@ -90,8 +89,8 @@ class TestMorphHelper:
             self.test_obj.get_filepath([0, 1])
 
     def test_alternate_morphology(self):
-        morph_dirs = {'h5v1': str(self.morph_path)}
-        test_obj = test_module.MorphHelper(morph_dirs, self.nodes)
+        alternate_morphs = {'h5v1': str(self.morph_path)}
+        test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
 
         node_id = CircuitNodeId("default", 1)
         assert self.nodes.get(node_id, properties="morphology") == "morph-B"
@@ -99,8 +98,8 @@ class TestMorphHelper:
         actual = test_obj.get_filepath(node_id)
         assert actual == expected
 
-        morph_dirs = {'neurolucida-asc': str(self.morph_path)}
-        test_obj = test_module.MorphHelper(morph_dirs, self.nodes)
+        alternate_morphs = {'neurolucida-asc': str(self.morph_path)}
+        test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
 
         node_id = CircuitNodeId("default", 1)
         assert self.nodes.get(node_id, properties="morphology") == "morph-B"
@@ -160,7 +159,7 @@ class TestMorphHelper:
         nodes = create_node_population(
             str(TEST_DATA_DIR / 'nodes.h5'),
             "default")
-        test_obj = test_module.MorphHelper({'morphologies_dir': str(self.morph_path)}, nodes)
+        test_obj = test_module.MorphHelper(str(self.morph_path), nodes)
 
         node_id = 0
         actual = test_obj.get(node_id, transform=True).points
