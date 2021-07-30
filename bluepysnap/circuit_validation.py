@@ -324,14 +324,15 @@ def _check_bio_nodes_group(group_df, group, population):
     if 'alternate_morphologies' in population:
         for morph_type, morph_path in population['alternate_morphologies'].items():
             errors += _check_components_dir(morph_type, population['alternate_morphologies'])
-            if morph_type in EXTENSIONS_MAPPING:
-                morph_dirs |= {(morph_path, EXTENSIONS_MAPPING[morph_type])}
+            for extension, _type in EXTENSIONS_MAPPING.items():
+                if _type == morph_type:
+                    morph_dirs |= {(morph_path, extension)}
     if errors:
         return errors
-    for morph_path, ext in morph_dirs:
+    for morph_path, extension in morph_dirs:
         errors += _check_files(
             'morphology: {}[{}]'.format(group_name, group.file.filename),
-            (Path(morph_path, m + '.' + ext) for m in group_df['morphology']),
+            (Path(morph_path, m + '.' + extension) for m in group_df['morphology']),
             Error.WARNING)
     bio_path = Path(population['biophysical_neuron_models_dir'])
     errors += _check_files(

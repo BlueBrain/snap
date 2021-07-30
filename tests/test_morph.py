@@ -88,6 +88,12 @@ class TestMorphHelper:
         with pytest.raises(BluepySnapError):
             self.test_obj.get_filepath([0, 1])
 
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get_filepath(0, 'asc')
+
+        with pytest.raises(BluepySnapError):
+            self.test_obj.get_filepath(0, 'fake')
+
     def test_alternate_morphology(self):
         alternate_morphs = {'h5v1': str(self.morph_path)}
         test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
@@ -95,7 +101,7 @@ class TestMorphHelper:
         node_id = CircuitNodeId("default", 1)
         assert self.nodes.get(node_id, properties="morphology") == "morph-B"
         expected = self.morph_path / 'morph-B.h5'
-        actual = test_obj.get_filepath(node_id)
+        actual = test_obj.get_filepath(node_id, extension='h5')
         assert actual == expected
 
         alternate_morphs = {'neurolucida-asc': str(self.morph_path)}
@@ -104,7 +110,7 @@ class TestMorphHelper:
         node_id = CircuitNodeId("default", 1)
         assert self.nodes.get(node_id, properties="morphology") == "morph-B"
         expected = self.morph_path / 'morph-B.asc'
-        actual = test_obj.get_filepath(node_id)
+        actual = test_obj.get_filepath(node_id, extension='asc')
         assert actual == expected
 
         with pytest.raises(BluepySnapError):
@@ -123,6 +129,18 @@ class TestMorphHelper:
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0, 1])
+
+    def test_get_alternate_morphology(self):
+        alternate_morphs = {'h5v1': str(self.morph_path)}
+        test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
+        actual = test_obj.get(0, extension='h5')
+        assert len(actual.points) == 13
+        expected = [
+            [0., 5., 0.],
+            [2., 9., 0.],
+        ]
+        npt.assert_almost_equal(expected, actual.points[:2])
+        npt.assert_almost_equal([2., 2.], actual.diameters[:2])
 
     def test_get_morphology_simple_rotation(self):
         node_id = 0
