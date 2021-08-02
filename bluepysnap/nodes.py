@@ -680,7 +680,7 @@ class NodePopulation:
         """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
 
-        return MorphHelper(self.config.get('morph_dirs'),
+        return MorphHelper(self.config.get('morphologies_dir'),
                            self,
                            alternate_morph_dir=self.config.get('alternate_morphologies'))
 
