@@ -308,7 +308,6 @@ def _check_bio_nodes_group(group_df, group, config):
     if missing_fields:
         errors.append(fatal('Group {} of {} misses biophysical fields: {}'.
                             format(group_name, group.file.filename, missing_fields)))
-    _check_rotations()
     if 'components' not in config:
         errors.append(fatal('No "components" in config'))
         return errors
@@ -317,6 +316,7 @@ def _check_bio_nodes_group(group_df, group, config):
     errors += _check_components_dir('biophysical_neuron_models_dir', components)
     if errors:
         return errors
+    _check_rotations()
     errors += _check_files(
         'morphology: {}[{}]'.format(group_name, group.file.filename),
         (Path(components['morphologies_dir'], m + '.swc') for m in group_df['morphology']),
