@@ -12,6 +12,8 @@ Bug Fixes
 ~~~~~~~~~
 - Fix the morphology/model access using a numpy int (using a numpy integer to access
   the morphology/model used to fail).
+- Fix circuit validation. Validation of morphologies was skipped when no rotations fields were
+  present.
 
 Others
 ~~~~~
