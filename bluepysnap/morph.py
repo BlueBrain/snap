@@ -51,13 +51,6 @@ class MorphHelper:
         self._alternate_morph_dir = alternate_morph_dir if alternate_morph_dir else {}
         self._population = population
 
-        # all nodes from a population must have the same model type
-        if not self._is_biophysical(0):
-            raise BluepySnapError("Node population does not contain biophysical nodes.")
-
-    def _is_biophysical(self, node_id):
-        return self._population.get(node_id, Node.MODEL_TYPE) == "biophysical"
-
     def _get_morph_dir(self, extension):
         """Return morphology directory based on a given extension."""
         if extension == 'swc':

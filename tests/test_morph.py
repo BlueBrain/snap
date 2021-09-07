@@ -40,23 +40,6 @@ class TestMorphHelper:
             circuit = Circuit(str(config_copy_path))
             assert isinstance(circuit.nodes['default'].morph,  test_module.MorphHelper)
 
-    def test_not_biophysical_population(self):
-        with copy_circuit() as (circuit_copy_path, config_copy_path):
-            with edit_config(config_copy_path) as config:
-                config["networks"]["nodes"][0]["nodes_file"] = "$NETWORK_DIR/nodes_quaternions.h5"
-            nodes_file = circuit_copy_path / 'nodes_quaternions.h5'
-            with h5py.File(nodes_file, 'r+') as h5f:
-                data = h5f['nodes/default/0/model_type'][:]
-                del h5f['nodes/default/0/model_type']
-                h5f.create_dataset('nodes/default/0/model_type',
-                                   data=np.zeros_like(data, dtype=int))
-                h5f.create_dataset('nodes/default/0/@library/model_type',
-                                   data=np.array(["virtual", ], dtype=h5py.string_dtype()))
-
-            with pytest.raises(BluepySnapError):
-                circuit = Circuit(str(config_copy_path))
-                circuit.nodes['default'].morph
-
     def test_get_filepath(self):
         node_id = 0
         assert self.nodes.get(node_id, properties="morphology") == "morph-A"
