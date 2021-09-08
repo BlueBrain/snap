@@ -1,6 +1,19 @@
 Changelog
 =========
 
+Version v0.13.0
+---------------
+
+New Features
+~~~~~~~~~~~~~
+- Population type available in NodePopulation/EdgePopulation
+- Node/edge populations are now supported in config
+- Alternate morphology directories (.h5, .asc) are now supported
+
+Improvements
+~~~~~~~~~~~~~~
+- Update circuit validation for the current BBP sonata spec
+
 Version v0.12.1
 ---------------
 
