@@ -242,7 +242,7 @@ class NodePopulation:
         Returns:
             NodePopulation: A NodePopulation object.
         """
-        self._config = population_config if population_config else {}
+        self._config = population_config or {}
         self._node_storage = node_storage
         self.name = population_name
 
@@ -682,7 +682,7 @@ class NodePopulation:
 
         return MorphHelper(self.config.get('morphologies_dir'),
                            self,
-                           alternate_morph_dir=self.config.get('alternate_morphologies'))
+                           alternate_morphologies=self.config.get('alternate_morphologies'))
 
     @cached_property
     def models(self):

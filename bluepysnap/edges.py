@@ -373,7 +373,7 @@ class EdgePopulation:
         Returns:
             EdgePopulation: An EdgePopulation object.
         """
-        self._config = population_config if population_config else {}
+        self._config = population_config or {}
         self._edge_storage = edge_storage
         self.name = population_name
 

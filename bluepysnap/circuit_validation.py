@@ -313,7 +313,6 @@ def _check_bio_nodes_group(group_df, group, population):
     if missing_fields:
         errors.append(fatal('Group {} of {} misses biophysical fields: {}'.
                             format(group_name, group.file.filename, missing_fields)))
-    _check_rotations()
 
     errors += _check_components_dir('morphologies_dir', population)
     errors += _check_components_dir('biophysical_neuron_models_dir', population)
@@ -329,6 +328,7 @@ def _check_bio_nodes_group(group_df, group, population):
                     morph_dirs |= {(morph_path, extension)}
     if errors:
         return errors
+    _check_rotations()
     for morph_path, extension in morph_dirs:
         errors += _check_files(
             'morphology: {}[{}]'.format(group_name, group.file.filename),
@@ -373,21 +373,21 @@ def _check_nodes_group(group_df, group, config, population):
     return errors
 
 
-def _check_populations_dict(populations_dict, populations_h5, file_name):
+def _check_populations_config(populations_config, populations_h5, file_name):
     """Validates the keys (population names) in populations dictionaries.
 
     Args:
-        populations_dict (dict): edge/node populations in config nodes/edges
+        populations_config (dict): edge/node populations in config nodes/edges
         populations_h5 (h5py.Group): nodes/edges group in the h5 file
         config (str): the name of the h5 file
 
     Returns:
         list: List of errors, empty if no errors
     """
-    not_found = set(populations_dict.keys()) - set(populations_h5.keys())
+    not_found = set(populations_config) - set(populations_h5)
     if not_found:
         return [fatal('populations not found in {}:\n{}'.format(
-            file_name, ''.join('\t%s\n' % p for p in not_found)))]
+            file_name, ''.join(f'\t{p}\n' for p in not_found)))]
     return []
 
 
@@ -409,8 +409,8 @@ def _check_nodes_population(nodes_dict, config):
         nodes = _get_h5_data(h5f, 'nodes')
         if not nodes or len(nodes) == 0:
             return [fatal('No "nodes" in {}.'.format(nodes_file))]
-        populations_dict = nodes_dict.get('populations', dict())
-        errors += _check_populations_dict(populations_dict, nodes, nodes_file)
+        populations_config = nodes_dict.get('populations', dict())
+        errors += _check_populations_config(populations_config, nodes, nodes_file)
         if len(errors) > 0:
             return errors
         for population_name in nodes:
@@ -430,7 +430,7 @@ def _check_nodes_population(nodes_dict, config):
             for group in groups:
                 group_df = _nodes_group_to_dataframe(group, node_types_file, population)
                 errors += _check_nodes_group(group_df, group, config,
-                                             populations_dict.get(population_name, dict()))
+                                             populations_config.get(population_name, dict()))
     return errors
 
 
@@ -616,14 +616,14 @@ def _check_edges_population(edges_dict, nodes):
             return errors
 
         populations = edges_dict.get('populations', dict())
-        errors += _check_populations_dict(populations, edges, edges_file)
+        errors += _check_populations_config(populations, edges, edges_file)
         if len(errors) > 0:
             return errors
 
-        for populations_dict in populations.values():
-            if 'type' in populations_dict and populations_dict['type'] not in EDGE_TYPES:
+        for populations_config in populations.values():
+            if 'type' in populations_config and populations_config['type'] not in EDGE_TYPES:
                 errors.append(BbpError(Error.WARNING,
-                                       'Invalid edge type: {}'.format(populations_dict['type'])))
+                                       'Invalid edge type: {}'.format(populations_config['type'])))
 
         for population_name in edges:
             population_path = '/edges/' + population_name

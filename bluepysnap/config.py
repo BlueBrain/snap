@@ -23,6 +23,7 @@ from collections.abc import Mapping, Iterable
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
+# List of keys which are expected to represent keys
 EXPECTED_PATH_KEYS = ['morphologies_dir',
                       'biophysical_neuron_models_dir',
                       'vasculature_file',

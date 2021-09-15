@@ -79,7 +79,8 @@ class TestMorphHelper:
 
     def test_alternate_morphology(self):
         alternate_morphs = {'h5v1': str(self.morph_path)}
-        test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
+        test_obj = test_module.MorphHelper(None, self.nodes,
+                                           alternate_morphologies=alternate_morphs)
 
         node_id = CircuitNodeId("default", 1)
         assert self.nodes.get(node_id, properties="morphology") == "morph-B"
@@ -88,7 +89,8 @@ class TestMorphHelper:
         assert actual == expected
 
         alternate_morphs = {'neurolucida-asc': str(self.morph_path)}
-        test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
+        test_obj = test_module.MorphHelper(None, self.nodes,
+                                           alternate_morphologies=alternate_morphs)
 
         node_id = CircuitNodeId("default", 1)
         assert self.nodes.get(node_id, properties="morphology") == "morph-B"
@@ -115,7 +117,8 @@ class TestMorphHelper:
 
     def test_get_alternate_morphology(self):
         alternate_morphs = {'h5v1': str(self.morph_path)}
-        test_obj = test_module.MorphHelper(None, self.nodes, alternate_morph_dir=alternate_morphs)
+        test_obj = test_module.MorphHelper(None, self.nodes,
+                                           alternate_morphologies=alternate_morphs)
         actual = test_obj.get(0, extension='h5')
         assert len(actual.points) == 13
         expected = [

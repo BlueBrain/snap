@@ -37,18 +37,19 @@ EXTENSIONS_MAPPING = {
 class MorphHelper:
     """Collection of morphology-related methods."""
 
-    def __init__(self, morph_dir, population, alternate_morph_dir=None):
+    def __init__(self, morph_dir, population, alternate_morphologies=None):
         """Initializes a MorphHelper object from a directory path and a NodePopulation object.
 
         Args:
             morph_dir (str): Path to the directory containing the node morphologies.
+            alternate_morphologies (dict): Dictionary containing paths to alternate morphologies.
             population (NodePopulation): NodePopulation object used to query the nodes.
 
         Returns:
             MorphHelper: A MorphHelper object.
         """
-        self._morph_dir = morph_dir if morph_dir else ''
-        self._alternate_morph_dir = alternate_morph_dir if alternate_morph_dir else {}
+        self._morph_dir = morph_dir or ''
+        self._alternate_morphologies = alternate_morphologies or {}
         self._population = population
 
     def _get_morph_dir(self, extension):
@@ -62,7 +63,7 @@ class MorphHelper:
         if not alternate_key:
             raise BluepySnapError(f"Unsupported extension: {extension}")
 
-        morph_dir = self._alternate_morph_dir.get(alternate_key)
+        morph_dir = self._alternate_morphologies.get(alternate_key)
         if not morph_dir:
             raise BluepySnapError(f"'{alternate_key}' is not defined in 'alternate_morphologies'")
 
