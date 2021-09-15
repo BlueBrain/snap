@@ -42,8 +42,8 @@ class MorphHelper:
 
         Args:
             morph_dir (str): Path to the directory containing the node morphologies.
-            alternate_morphologies (dict): Dictionary containing paths to alternate morphologies.
             population (NodePopulation): NodePopulation object used to query the nodes.
+            alternate_morphologies (dict): Dictionary containing paths to alternate morphologies.
 
         Returns:
             MorphHelper: A MorphHelper object.
