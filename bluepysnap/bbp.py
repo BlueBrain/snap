@@ -19,8 +19,8 @@
 
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge, Node
 
-NODE_TYPES = ['biophysical', 'virtual', 'astrocyte', 'single_compartment', 'point_neuron']
-EDGE_TYPES = ['chemical', 'electrical', 'synapse_astrocyte', 'endfoot']
+NODE_TYPES = {'biophysical', 'virtual', 'astrocyte', 'single_compartment', 'point_neuron'}
+EDGE_TYPES = {'chemical', 'electrical', 'synapse_astrocyte', 'endfoot'}
 
 
 class Astrocyte(ConstContainer):

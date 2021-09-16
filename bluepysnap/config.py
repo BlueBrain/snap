@@ -24,7 +24,7 @@ from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 # List of keys which are expected to have paths
-EXPECTED_PATH_KEYS = ['morphologies_dir',
+EXPECTED_PATH_KEYS = {'morphologies_dir',
                       'biophysical_neuron_models_dir',
                       'vasculature_file',
                       'vasculature_mesh',
@@ -35,7 +35,7 @@ EXPECTED_PATH_KEYS = ['morphologies_dir',
                       'nodes_file',
                       'edges_type_file',
                       'nodes_type_file',
-                      'node_sets_file']
+                      'node_sets_file'}
 
 
 class Config:

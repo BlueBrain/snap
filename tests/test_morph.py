@@ -65,16 +65,17 @@ class TestMorphHelper:
         actual = self.test_obj.get_filepath(node_id)
         assert actual == expected
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get_filepath([CircuitNodeId("default", 0), CircuitNodeId("default", 1)])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get_filepath([0, 1])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError,
+                           match="'neurolucida-asc' is not defined in 'alternate_morphologies'"):
             self.test_obj.get_filepath(0, 'asc')
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="Unsupported extension: fake"):
             self.test_obj.get_filepath(0, 'fake')
 
     def test_alternate_morphology(self):
@@ -98,7 +99,7 @@ class TestMorphHelper:
         actual = test_obj.get_filepath(node_id, extension='asc')
         assert actual == expected
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="'morphologies_dir' is not defined in config"):
             node_id = CircuitNodeId("default", 0)
             test_obj.get_filepath(node_id)
 
@@ -112,7 +113,7 @@ class TestMorphHelper:
         npt.assert_almost_equal(expected, actual.points[:2])
         npt.assert_almost_equal([2., 2.], actual.diameters[:2])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get([0, 1])
 
     def test_get_alternate_morphology(self):
