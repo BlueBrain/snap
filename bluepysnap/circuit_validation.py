@@ -379,7 +379,7 @@ def _check_populations_config(populations_config, populations_h5, file_name):
     Args:
         populations_config (dict): edge/node populations in config nodes/edges
         populations_h5 (h5py.Group): nodes/edges group in the h5 file
-        config (str): the name of the h5 file
+        file_name (str): the name of the h5 file
 
     Returns:
         list: List of errors, empty if no errors
