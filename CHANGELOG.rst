@@ -6,10 +6,12 @@ Version v0.13.0
 
 New Features
 ~~~~~~~~~~~~~
-- Node/edge populations are now supported in config
-- Population type available in NodePopulation/EdgePopulation
-- Population config (if given) overwrites the "components" config for that population
-- Alternate morphology directories (.h5, .asc) are now supported
+- Sonata BBP spec:
+
+  - Node/edge populations are now supported in config
+  - Population type available in NodePopulation/EdgePopulation
+  - Population config (if given) overwrites the "components" config for that population
+  - Alternate morphology directories (.h5, .asc) are now supported
 
 Improvements
 ~~~~~~~~~~~~~~
@@ -34,7 +36,7 @@ Bug Fixes
   the morphology/model used to fail).
 
 Others
-~~~~~
+~~~~~~
 - Update the copyright.
 
 
