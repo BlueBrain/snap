@@ -6,14 +6,22 @@ Version v0.13.0
 
 New Features
 ~~~~~~~~~~~~~
-- Node/edge populations are now supported in config
-- Population type available in NodePopulation/EdgePopulation
-- Population config (if given) overwrites the "components" config for that population
-- Alternate morphology directories (.h5, .asc) are now supported
+- Sonata BBP spec:
+
+  - Node/edge populations are now supported in config
+  - Population type available in NodePopulation/EdgePopulation
+  - Population config (if given) overwrites the "components" config for that population
+  - Alternate morphology directories (.h5, .asc) are now supported
 
 Improvements
 ~~~~~~~~~~~~~~
 - Update circuit validation for the current BBP sonata spec
+
+Bug Fixes
+~~~~~~~~~
+- Fix circuit validation. Validation of morphologies was skipped when no rotations fields were
+  present.
+
 
 Version v0.12.1
 ---------------
@@ -26,11 +34,9 @@ Bug Fixes
 ~~~~~~~~~
 - Fix the morphology/model access using a numpy int (using a numpy integer to access
   the morphology/model used to fail).
-- Fix circuit validation. Validation of morphologies was skipped when no rotations fields were
-  present.
 
 Others
-~~~~~
+~~~~~~
 - Update the copyright.
 
 
