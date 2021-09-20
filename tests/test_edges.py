@@ -11,7 +11,7 @@ from mock import Mock, patch, PropertyMock
 
 from bluepysnap.bbp import Synapse
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import Edge
+from bluepysnap.sonata_constants import Edge, DEFAULT_EDGE_TYPE
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeIds, CircuitNodeId
@@ -606,11 +606,14 @@ class TestEdgeStorage:
 class TestEdgePopulation:
 
     @staticmethod
-    def create_edge_population(filepath, pop_name):
+    def create_edge_population(filepath, pop_name, pop_type=None):
         config = {
             'edges_file': filepath,
             'edge_types_file': None,
+            'populations': {},
         }
+        if pop_type is not None:
+            config['populations'][pop_name] = {'type': pop_type}
         circuit = Mock()
         circuit.config = {}
         create_node_population(str(TEST_DATA_DIR / 'nodes.h5'), "default", circuit=circuit,
@@ -660,6 +663,13 @@ class TestEdgePopulation:
                     test_module.DYNAMICS_PREFIX + 'param1'
                 ])
         )
+        assert self.test_obj.type == DEFAULT_EDGE_TYPE
+
+
+    def test_population_type(self):
+        test_obj = TestEdgePopulation.create_edge_population(
+            str(TEST_DATA_DIR / "edges.h5"), 'default', pop_type='fake_type')
+        assert test_obj.type == 'fake_type'
 
     def test_container_properties(self):
         expected = sorted(

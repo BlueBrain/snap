@@ -18,6 +18,8 @@
 from bluepysnap.exceptions import BluepySnapError
 
 DYNAMICS_PREFIX = "@dynamics:"
+DEFAULT_NODE_TYPE = 'biophysical'
+DEFAULT_EDGE_TYPE = 'chemical'
 
 
 class ConstContainer:

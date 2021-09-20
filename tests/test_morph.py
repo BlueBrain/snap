@@ -40,23 +40,6 @@ class TestMorphHelper:
             circuit = Circuit(str(config_copy_path))
             assert isinstance(circuit.nodes['default'].morph,  test_module.MorphHelper)
 
-    def test_not_biophysical_population(self):
-        with copy_circuit() as (circuit_copy_path, config_copy_path):
-            with edit_config(config_copy_path) as config:
-                config["networks"]["nodes"][0]["nodes_file"] = "$NETWORK_DIR/nodes_quaternions.h5"
-            nodes_file = circuit_copy_path / 'nodes_quaternions.h5'
-            with h5py.File(nodes_file, 'r+') as h5f:
-                data = h5f['nodes/default/0/model_type'][:]
-                del h5f['nodes/default/0/model_type']
-                h5f.create_dataset('nodes/default/0/model_type',
-                                   data=np.zeros_like(data, dtype=int))
-                h5f.create_dataset('nodes/default/0/@library/model_type',
-                                   data=np.array(["virtual", ], dtype=h5py.string_dtype()))
-
-            with pytest.raises(BluepySnapError):
-                circuit = Circuit(str(config_copy_path))
-                circuit.nodes['default'].morph
-
     def test_get_filepath(self):
         node_id = 0
         assert self.nodes.get(node_id, properties="morphology") == "morph-A"
@@ -82,11 +65,43 @@ class TestMorphHelper:
         actual = self.test_obj.get_filepath(node_id)
         assert actual == expected
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get_filepath([CircuitNodeId("default", 0), CircuitNodeId("default", 1)])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get_filepath([0, 1])
+
+        with pytest.raises(BluepySnapError,
+                           match="'neurolucida-asc' is not defined in 'alternate_morphologies'"):
+            self.test_obj.get_filepath(0, 'asc')
+
+        with pytest.raises(BluepySnapError, match="Unsupported extension: fake"):
+            self.test_obj.get_filepath(0, 'fake')
+
+    def test_alternate_morphology(self):
+        alternate_morphs = {'h5v1': str(self.morph_path)}
+        test_obj = test_module.MorphHelper(None, self.nodes,
+                                           alternate_morphologies=alternate_morphs)
+
+        node_id = CircuitNodeId("default", 1)
+        assert self.nodes.get(node_id, properties="morphology") == "morph-B"
+        expected = self.morph_path / 'morph-B.h5'
+        actual = test_obj.get_filepath(node_id, extension='h5')
+        assert actual == expected
+
+        alternate_morphs = {'neurolucida-asc': str(self.morph_path)}
+        test_obj = test_module.MorphHelper(None, self.nodes,
+                                           alternate_morphologies=alternate_morphs)
+
+        node_id = CircuitNodeId("default", 1)
+        assert self.nodes.get(node_id, properties="morphology") == "morph-B"
+        expected = self.morph_path / 'morph-B.asc'
+        actual = test_obj.get_filepath(node_id, extension='asc')
+        assert actual == expected
+
+        with pytest.raises(BluepySnapError, match="'morphologies_dir' is not defined in config"):
+            node_id = CircuitNodeId("default", 0)
+            test_obj.get_filepath(node_id)
 
     def test_get_morphology(self):
         actual = self.test_obj.get(0)
@@ -98,8 +113,21 @@ class TestMorphHelper:
         npt.assert_almost_equal(expected, actual.points[:2])
         npt.assert_almost_equal([2., 2.], actual.diameters[:2])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get([0, 1])
+
+    def test_get_alternate_morphology(self):
+        alternate_morphs = {'h5v1': str(self.morph_path)}
+        test_obj = test_module.MorphHelper(None, self.nodes,
+                                           alternate_morphologies=alternate_morphs)
+        actual = test_obj.get(0, extension='h5')
+        assert len(actual.points) == 13
+        expected = [
+            [0., 5., 0.],
+            [2., 9., 0.],
+        ]
+        npt.assert_almost_equal(expected, actual.points[:2])
+        npt.assert_almost_equal([2., 2.], actual.diameters[:2])
 
     def test_get_morphology_simple_rotation(self):
         node_id = 0

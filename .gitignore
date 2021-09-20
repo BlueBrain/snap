@@ -1,5 +1,6 @@
 doc/build
 doc/source/submodules
+coverage.xml
 .coverage
 .eggs
 .tox

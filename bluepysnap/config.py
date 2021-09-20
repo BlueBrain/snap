@@ -23,6 +23,20 @@ from collections.abc import Mapping, Iterable
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
+# List of keys which are expected to have paths
+EXPECTED_PATH_KEYS = {'morphologies_dir',
+                      'biophysical_neuron_models_dir',
+                      'vasculature_file',
+                      'vasculature_mesh',
+                      'end_feet_area',
+                      'neurolucida-asc',
+                      'h5v1',
+                      'edges_file',
+                      'nodes_file',
+                      'edges_type_file',
+                      'nodes_type_file',
+                      'node_sets_file'}
+
 
 class Config:
     """SONATA network config parser.
@@ -81,7 +95,7 @@ class Config:
 
         return result
 
-    def _resolve_string(self, value):
+    def _resolve_string(self, value, key):
         # not a startswith to detect the badly placed anchors
         if '$' in value:
             vs = [
@@ -94,7 +108,7 @@ class Config:
                                       "Please verify your '$' usage.".format(value))
             return str(Path(*vs))
         # only way to know if value is a relative path or a normal string
-        elif value.startswith('.'):
+        elif value.startswith('.') or key in EXPECTED_PATH_KEYS:
             if self.manifest['${configdir}'] is not None:
                 return str(Path(self.manifest['${configdir}'], value).resolve())
             raise BluepySnapError("Dictionary config with relative paths is not allowed.")
@@ -102,13 +116,13 @@ class Config:
             # we cannot know if a string is a path or not if it does not contain anchor or .
             return value
 
-    def _resolve(self, value):
+    def _resolve(self, value, key=None):
         if isinstance(value, Mapping):
             return {
-                k: self._resolve(v) for k, v in value.items()
+                k: self._resolve(v, k) for k, v in value.items()
             }
         elif isinstance(value, str):
-            return self._resolve_string(value)
+            return self._resolve_string(value, key)
         elif isinstance(value, Iterable):
             return [self._resolve(v) for v in value]
         else:

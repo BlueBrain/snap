@@ -18,6 +18,7 @@
 """Edge population access."""
 import inspect
 from collections.abc import Mapping
+from copy import deepcopy
 
 import libsonata
 import numpy as np
@@ -29,7 +30,7 @@ from bluepysnap import query
 from bluepysnap.network import NetworkObject
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
-from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, ConstContainer
+from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DYNAMICS_PREFIX, Edge, ConstContainer
 from bluepysnap import utils
 from bluepysnap.utils import Deprecate, IDS_DTYPE
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
@@ -303,7 +304,8 @@ class EdgeStorage:
             EdgeStorage: A EdgeStorage object.
         """
         self._h5_filepath = config['edges_file']
-        self._csv_filepath = config['edge_types_file']
+        self._csv_filepath = config.get('edge_types_file')
+        self._populations_config = config.get('populations', {})
         self._circuit = circuit
         self._populations = {}
 
@@ -335,7 +337,11 @@ class EdgeStorage:
     def population(self, population_name):
         """Access the different populations from the storage."""
         if population_name not in self._populations:
-            self._populations[population_name] = EdgePopulation(self, population_name)
+            population_config = self._populations_config.get(population_name, {})
+
+            self._populations[population_name] = EdgePopulation(
+                self, population_name, population_config)
+
         return self._populations[population_name]
 
 
@@ -356,16 +362,18 @@ def _estimate_range_size(func, node_ids, n=3):
 class EdgePopulation:
     """Edge population access."""
 
-    def __init__(self, edge_storage, population_name):
+    def __init__(self, edge_storage, population_name, population_config=None):
         """Initializes a EdgePopulation object from a EdgeStorage and a population name.
 
         Args:
             edge_storage (EdgeStorage): the edge storage containing the edge population
             population_name (str): the name of the edge population
+            population_config (dict): the config for the population
 
         Returns:
             EdgePopulation: An EdgePopulation object.
         """
+        self._config = population_config or {}
         self._edge_storage = edge_storage
         self.name = population_name
 
@@ -389,6 +397,18 @@ class EdgePopulation:
         """Returns the NodePopulation corresponding to population."""
         result = self._edge_storage.circuit.nodes[population_name]
         return result
+
+    @cached_property
+    def config(self):
+        """Population config dictionary combined with the components dictionary."""
+        components = deepcopy(self._edge_storage.circuit.config.get('components', {}))
+        components.update(self._config)
+        return components
+
+    @property
+    def type(self):
+        """Population type."""
+        return self.config.get('type', DEFAULT_EDGE_TYPE)
 
     @cached_property
     def source(self):
