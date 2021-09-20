@@ -10,7 +10,6 @@ New Features
 - Population type available in NodePopulation/EdgePopulation
 - Population config (if given) overwrites the "components" config for that population
 - Alternate morphology directories (.h5, .asc) are now supported
-- Added different edge/node types to bluepysnap/bbp.py
 
 Improvements
 ~~~~~~~~~~~~~~
