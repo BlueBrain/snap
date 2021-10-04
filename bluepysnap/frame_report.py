@@ -101,7 +101,7 @@ class PopulationFrameReport:
         try:
             view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
         except SonataError as e:
-            raise BluepySnapError(e)
+            raise BluepySnapError(e) from e
 
         if len(view.ids) == 0:
             return pd.DataFrame()

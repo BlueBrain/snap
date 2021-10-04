@@ -72,7 +72,7 @@ class NetworkObject(abc.ABC):
                 raise BluepySnapError("Same property with different "
                                       "dtype. {}: {}!= {}".format(index, value, d[index]))
 
-        res = dict()
+        res = {}
         for pop in self.values():
             for varname, dtype in pop.property_dtypes.iteritems():
                 _update(res, varname, dtype)
@@ -103,8 +103,9 @@ class NetworkObject(abc.ABC):
         """Access the NetworkObjectPopulation corresponding to the population 'population_name'."""
         try:
             return self._populations[population_name]
-        except KeyError:
-            raise BluepySnapError("{} not a {} population.".format(population_name, self.__class__))
+        except KeyError as e:
+            raise BluepySnapError("{} not a {} population.".format(
+                population_name, self.__class__)) from e
 
     def __iter__(self):
         """Allows iteration over the different NetworkObjectPopulation."""

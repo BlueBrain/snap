@@ -513,9 +513,9 @@ class NodePopulation:
             if isinstance(first(result, None), CircuitNodeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
-                except AttributeError:
+                except AttributeError as e:
                     raise BluepySnapError("All values from a list must be of type int or "
-                                          "CircuitNodeId.")
+                                          "CircuitNodeId.") from e
             self._check_ids(result)
             preserve_order = isinstance(group, Sequence)
 

@@ -36,7 +36,7 @@ def _get_pyplot():
             "Please pip install as follows:\n"
             "  pip install bluepysnap[plots] --upgrade"
         )
-        raise ImportError(str(e) + "\n\n" + msg)
+        raise ImportError(str(e) + "\n\n" + msg) from e
     return plt
 
 

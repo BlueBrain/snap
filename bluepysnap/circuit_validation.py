@@ -247,7 +247,8 @@ def _nodes_group_to_dataframe(group, types_file, population):
     if types_file is None:
         return df
     types = pd.read_csv(types_file, sep=r'\s+')
-    types.rename(columns={types.columns[0]: 'type_id'}, inplace=True)
+    # pylint seems to think that types has no member columns
+    types.rename(columns={types.columns[0]: 'type_id'}, inplace=True)  # pylint: disable=no-member
     return pd.merge(df, types, on='type_id', how='left')
 
 

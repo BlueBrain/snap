@@ -49,7 +49,7 @@ class Deprecate:
 
 def load_json(filepath):
     """Load JSON from file."""
-    with open(filepath) as f:
+    with open(filepath, encoding='utf-8') as f:
         return json.load(f)
 
 

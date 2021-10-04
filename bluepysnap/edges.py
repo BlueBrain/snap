@@ -82,7 +82,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
-    def get(self, edge_ids=None, properties=None):   # pylint: disable=arguments-differ
+    def get(self, edge_ids=None, properties=None):   # pylint: disable=arguments-renamed
         """Edge properties as pandas DataFrame.
 
         Args:
@@ -582,9 +582,9 @@ class EdgePopulation:
             if isinstance(first(result, None), CircuitEdgeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
-                except AttributeError:
+                except AttributeError as e:
                     raise BluepySnapError("All values from a list must be of type int or "
-                                          "CircuitEdgeId.")
+                                          "CircuitEdgeId.") from e
         if sample is not None:
             if len(result) > 0:
                 result = np.random.choice(result, min(sample, len(result)), replace=False)
