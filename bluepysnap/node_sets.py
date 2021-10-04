@@ -77,7 +77,7 @@ def _resolve_set(content, resolved, node_set_name):
     if set_value is None:
         raise BluepySnapError(f"Missing node_set: '{node_set_name}'")
     if not isinstance(set_value, (Mapping, list)) or not set_value:
-        raise BluepySnapError(f"Ambiguous node_set: '{dict(node_set_name=set_value)}'")
+        raise BluepySnapError(f"Ambiguous node_set: { {node_set_name: set_value} }")
     if isinstance(set_value, Mapping):
         resolved[node_set_name] = _sanitize(set_value)
         return resolved[node_set_name]

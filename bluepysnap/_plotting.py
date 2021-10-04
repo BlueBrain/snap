@@ -174,7 +174,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
                 ax.set_yticklabels(labels)
                 if len(labels) > 1:
                     ax.set_ylim(-0.5, len(labels) - 0.5)
-            ax.set_ylabel(f"{y_axis}")
+            ax.set_ylabel(y_axis)
 
     ax.scatter(data.index.to_numpy(), data.to_numpy(), s=10, marker='|')
     if len(props["pop_separators"]) > 1:
