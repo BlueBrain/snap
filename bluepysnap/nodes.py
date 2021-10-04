@@ -112,7 +112,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         if isinstance(group, CircuitNodeIds):
             diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
             if diff.size != 0:
-                raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
+                raise BluepySnapError(f"Population {diff} does not exist in the circuit.")
 
         fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
@@ -370,8 +370,7 @@ class NodePopulation:
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
         if node_id not in self._data.index:
-            raise BluepySnapError("node ID not found: {} in population"
-                                  " '{}'".format(node_id, self.name))
+            raise BluepySnapError(f"node ID not found: {node_id} in population '{self.name}'")
 
     def _check_ids(self, node_ids):
         """Check that node IDs belong to the circuit."""
@@ -385,18 +384,18 @@ class NodePopulation:
             max_id = max(node_ids)
             min_id = min(node_ids)
         if min_id < 0 or max_id >= self._data.index.shape[0]:
-            raise BluepySnapError("All node IDs must be >= 0 and < {} for population "
-                                  "'{}'".format(self._data.index.shape[0], self.name))
+            raise BluepySnapError(f"All node IDs must be >= 0 and < {self._data.index.shape[0]} "
+                                  f"for population '{self.name}'")
 
     def _check_property(self, prop):
         """Check if a property exists inside the dataset."""
         if prop not in self.property_names:
-            raise BluepySnapError("No such property: '%s'" % prop)
+            raise BluepySnapError(f"No such property: '{prop}'")
 
     def _get_node_set(self, node_set_name):
         """Returns the node set named 'node_set_name'."""
         if node_set_name not in self._node_sets:
-            raise BluepySnapError("Undefined node set: '%s'" % node_set_name)
+            raise BluepySnapError(f"Undefined node set: '{node_set_name}'")
         return self._node_sets[node_set_name]
 
     def _resolve_nodesets(self, queries):

@@ -69,7 +69,7 @@ class Config:
 
         for k, v in result.items():
             if not isinstance(v, str):
-                raise BluepySnapError('{} should be a string value.'.format(v))
+                raise BluepySnapError(f'{v} should be a string value.')
             if not Path(v).is_absolute() and not v.startswith("$"):
                 if configdir is None:
                     raise BluepySnapError("Dictionary config with relative paths is not allowed.")
@@ -80,7 +80,7 @@ class Config:
             for k, v in result.items():
                 if v.count('$') > 1:
                     raise BluepySnapError(
-                        '{} is not a valid anchor : contains more than one sub anchor.'.format(k))
+                        f'{k} is not a valid anchor : contains more than one sub anchor.')
                 if v.startswith('$'):
                     tokens = v.split('/', 1)
                     resolved = result[tokens[0]]
@@ -104,8 +104,8 @@ class Config:
             ]
             abs_paths = [v for v in vs[1:] if v.startswith('/')]
             if len(abs_paths) != 0:
-                raise BluepySnapError("Misplaced anchors in : {}."
-                                      "Please verify your '$' usage.".format(value))
+                raise BluepySnapError(
+                    f"Misplaced anchors in : {value}. Please verify your '$' usage.")
             return str(Path(*vs))
         # only way to know if value is a relative path or a normal string
         elif value.startswith('.') or key in EXPECTED_PATH_KEYS:

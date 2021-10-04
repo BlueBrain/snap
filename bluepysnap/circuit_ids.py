@@ -80,7 +80,7 @@ class CircuitIds(abc.ABC):
 
         if len(populations) != len(population_ids):
             raise BluepySnapError("populations and population_ids must have the same size. "
-                                  "{} != {}".format(len(populations), len(population_ids)))
+                                  f"{len(populations)} != {len(population_ids)}")
 
         index = pd.MultiIndex.from_arrays([populations, population_ids])
         return cls(index, sort_index=sort_index)

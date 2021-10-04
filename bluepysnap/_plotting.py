@@ -60,7 +60,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     # pylint: disable=too-many-locals
     plt = _get_pyplot()
     if time_binsize is not None and time_binsize <= 0:
-        raise BluepySnapError("Invalid time_binsize = {}. Should be > 0.".format(time_binsize))
+        raise BluepySnapError(f"Invalid time_binsize = {time_binsize}. Should be > 0.")
 
     spike_report = filtered_report.spike_report
 
@@ -69,7 +69,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
 
     if len(times) == 0:
         raise BluepySnapError("No data to display. You should check your "
-                              "'group' query: {}.".format(spike_report.group))
+                              f"'group' query: {spike_report.group}.")
 
     time_start = np.min(times)
     time_stop = np.max(times)
@@ -174,7 +174,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
                 ax.set_yticklabels(labels)
                 if len(labels) > 1:
                     ax.set_ylim(-0.5, len(labels) - 0.5)
-            ax.set_ylabel("{}".format(y_axis))
+            ax.set_ylabel(f"{y_axis}")
 
     ax.scatter(data.index.to_numpy(), data.to_numpy(), s=10, marker='|')
     if len(props["pop_separators"]) > 1:
@@ -204,14 +204,14 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
     """
     plt = _get_pyplot()
     if binsize is not None and binsize <= 0:
-        raise BluepySnapError("Invalid binsize = {}. Should be > 0.".format(binsize))
+        raise BluepySnapError(f"Invalid binsize = {binsize}. Should be > 0.")
 
     gb = filtered_report.report.groupby(["ids", "population"])
     values = np.concatenate([np.diff(node_spikes.index.to_numpy()) for _, node_spikes in gb])
 
     if len(values) == 0:
         raise BluepySnapError("No data to display. You should check your "
-                              "'group' query: {}.".format(filtered_report.spike_report.group))
+                              f"'group' query: {filtered_report.spike_report.group}.")
     if use_frequency:
         values = values[values > 0]  # filter out zero intervals
         values = 1000.0 / values
@@ -275,7 +275,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
         """Verifies axes values."""
         axes = {Node.X, Node.Y, Node.Z}
         if axis not in axes:
-            raise BluepySnapError('{} is not a valid axis'.format(axis))
+            raise BluepySnapError(f'{axis} is not a valid axis')
 
     _check_axis(x_axis)
     _check_axis(y_axis)
@@ -302,13 +302,13 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
-        ax.set_title('time = {}ms'.format(np.min(data.index)))
+        ax.set_title(f'time = {np.min(data.index)}ms')
         x_limits = [data[x_axis].min(), data[x_axis].max()]
         y_limits = [data[y_axis].min(), data[y_axis].max()]
         ax.set_xlim(*x_limits)
         ax.set_ylim(*y_limits)
-        ax.set_xlabel(r'{} $\mu$m'.format(x_axis))  # noqa
-        ax.set_ylabel(r'{} $\mu$m'.format(y_axis))  # noqa
+        ax.set_xlabel(rf'{x_axis} $\mu$m')  # noqa
+        ax.set_ylabel(rf'{y_axis} $\mu$m')  # noqa
 
     else:
         fig = ax.figure
@@ -349,10 +349,10 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
         ax = plt.gca()
         data_units = filtered_report.frame_report.data_units
         if plot_type == "mean":
-            ax.set_ylabel('Avg volt. [{}]'.format(data_units))
+            ax.set_ylabel(f'Avg volt. [{data_units}]')
         elif plot_type == "all":
-            ax.set_ylabel('Voltage [{}]'.format(data_units))
-        ax.set_xlabel("Time [{}]".format(filtered_report.frame_report.time_units))
+            ax.set_ylabel(f'Voltage [{data_units}]')
+        ax.set_xlabel(f"Time [{filtered_report.frame_report.time_units}]")
         ax.set_xlim([filtered_report.report.index.min(), filtered_report.report.index.max()])
 
     if plot_type == "mean":
@@ -374,5 +374,5 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
         for _, row in data.loc[kept_ids].iterrows():
             ax.plot(row)
     else:
-        raise BluepySnapError("Unknown plot_type {}. Should be 'mean or 'all'.".format(plot_type))
+        raise BluepySnapError(f"Unknown plot_type {plot_type}. Should be 'mean or 'all'.")
     return ax

@@ -78,7 +78,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         if isinstance(group, CircuitEdgeIds):
             diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
             if diff.size != 0:
-                raise BluepySnapError("Population {} does not exist in the circuit.".format(diff))
+                raise BluepySnapError(f"Population {diff} does not exist in the circuit.")
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
@@ -482,7 +482,7 @@ class EdgePopulation:
             result = self._population.get_dynamics_attribute(
                 prop.split(DYNAMICS_PREFIX)[1], selection)
         else:
-            raise BluepySnapError("No such property: %s" % prop)
+            raise BluepySnapError(f"No such property: {prop}")
         return result
 
     def _get(self, selection, properties=None):
@@ -633,10 +633,7 @@ class EdgePopulation:
         """
         assert side in ('afferent', 'efferent')
         assert kind in ('center', 'surface')
-        props = {
-            '{side}_{kind}_{p}'.format(side=side, kind=kind, p=p): p
-            for p in ['x', 'y', 'z']
-        }
+        props = {f'{side}_{kind}_{p}': p for p in ['x', 'y', 'z']}
         result = self.get(edge_ids, list(props))
         result.rename(columns=props, inplace=True)
         result.sort_index(axis=1, inplace=True)

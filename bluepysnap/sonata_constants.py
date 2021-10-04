@@ -65,8 +65,7 @@ class ConstContainer:
         try:
             res = getattr(cls, const_name)
         except AttributeError as e:
-            raise BluepySnapError(
-                "{} does not have a '{}' member".format(cls, const_name)) from e
+            raise BluepySnapError("{cls} does not have a '{const_name}' member") from e
         return res
 
 
