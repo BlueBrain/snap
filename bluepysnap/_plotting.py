@@ -31,12 +31,11 @@ def _get_pyplot():
     try:
         import matplotlib.pyplot as plt
     except ImportError as e:
-        msg = (
+        raise ImportError(
             "Bluepysnap requirements are not installed.\n"
             "Please pip install as follows:\n"
             "  pip install bluepysnap[plots] --upgrade"
-        )
-        raise ImportError(str(e) + "\n\n" + msg) from e
+        ) from e
     return plt
 
 
