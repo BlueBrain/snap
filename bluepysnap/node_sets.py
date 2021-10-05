@@ -75,9 +75,9 @@ def _resolve_set(content, resolved, node_set_name):
     # keep the content intact
     set_value = deepcopy(content.get(node_set_name))
     if set_value is None:
-        raise BluepySnapError("Missing node_set: '{}'".format(node_set_name))
+        raise BluepySnapError(f"Missing node_set: '{node_set_name}'")
     if not isinstance(set_value, (Mapping, list)) or not set_value:
-        raise BluepySnapError("Ambiguous node_set: '{}'".format({node_set_name: set_value}))
+        raise BluepySnapError(f"Ambiguous node_set: { {node_set_name: set_value} }")
     if isinstance(set_value, Mapping):
         resolved[node_set_name] = _sanitize(set_value)
         return resolved[node_set_name]

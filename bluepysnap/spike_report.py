@@ -102,7 +102,7 @@ class PopulationSpikeReport:
         try:
             res = self._spike_population.get(node_ids=node_ids, tstart=t_start, tstop=t_stop)
         except SonataError as e:
-            raise BluepySnapError(e)
+            raise BluepySnapError(e) from e
 
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"),
@@ -225,7 +225,7 @@ class SpikeReport:
         path = Path(self.config["output_dir"]) / self.config["log_file"]
         if not path.exists():
             raise BluepySnapError("Cannot find the log file for the spike report.")
-        yield open(str(path), "r")
+        yield path.open("r", encoding='utf-8')
 
     @cached_property
     def _spike_reader(self):

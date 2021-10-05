@@ -41,8 +41,7 @@ class NetworkObject(abc.ABC):
             for population in storage.population_names:  # pylint: disable=not-an-iterable
                 if population in res:
                     raise BluepySnapError(
-                        "Duplicated {} population: '{}'".format(self.__class__.__name__,
-                                                                population))
+                        f"Duplicated {self.__class__.__name__} population: '{population}'")
                 res[population] = storage.population(population)
         return res
 
@@ -70,9 +69,9 @@ class NetworkObject(abc.ABC):
         def _update(d, index, value):
             if d.setdefault(index, value) != value:
                 raise BluepySnapError("Same property with different "
-                                      "dtype. {}: {}!= {}".format(index, value, d[index]))
+                                      f"dtype. {index}: {value}!= {d[index]}")
 
-        res = dict()
+        res = {}
         for pop in self.values():
             for varname, dtype in pop.property_dtypes.iteritems():
                 _update(res, varname, dtype)
@@ -103,8 +102,8 @@ class NetworkObject(abc.ABC):
         """Access the NetworkObjectPopulation corresponding to the population 'population_name'."""
         try:
             return self._populations[population_name]
-        except KeyError:
-            raise BluepySnapError("{} not a {} population.".format(population_name, self.__class__))
+        except KeyError as e:
+            raise BluepySnapError(f"{population_name} not a {self.__class__} population.") from e
 
     def __iter__(self):
         """Allows iteration over the different NetworkObjectPopulation."""
@@ -137,7 +136,7 @@ class NetworkObject(abc.ABC):
         Returns:
             CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
         """
-        str_type = "<U{}".format(max(len(pop) for pop in self.population_names))
+        str_type = f"<U{max(len(pop) for pop in self.population_names)}"
         ids = []
         populations = []
         for pop in self.values():
@@ -168,7 +167,7 @@ class NetworkObject(abc.ABC):
 
         unknown_props = properties_set - self.property_names
         if unknown_props:
-            raise BluepySnapError("Unknown properties required: {}".format(unknown_props))
+            raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
         res = pd.DataFrame(index=ids.index, columns=properties)
         for name, pop in self.items():

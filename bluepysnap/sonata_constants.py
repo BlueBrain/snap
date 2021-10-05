@@ -51,9 +51,9 @@ class ConstContainer:
                 continue
             try:
                 all_keys.update(base.key_set())
-            except AttributeError:
+            except AttributeError as e:
                 raise BluepySnapError(
-                    "Container classes must derive from classes implementing key_set method")
+                    "Container classes must derive from classes implementing key_set method") from e
         all_keys.update(
             name for name in vars(cls) if
             not name.startswith('_') and name not in ["key_set", "get"])
@@ -64,9 +64,8 @@ class ConstContainer:
         """Get a constant from a string name."""
         try:
             res = getattr(cls, const_name)
-        except AttributeError:
-            raise BluepySnapError(
-                "{} does not have a '{}' member".format(cls, const_name))
+        except AttributeError as e:
+            raise BluepySnapError("{cls} does not have a '{const_name}' member") from e
         return res
 
 

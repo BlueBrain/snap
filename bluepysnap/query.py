@@ -25,7 +25,7 @@ def _complex_query(prop, query):
         if key == REGEX_KEY:
             result = np.logical_and(result, prop.str.match(value + "\\Z"))
         else:
-            raise BluepySnapError("Unknown query modifier: '%s'" % key)
+            raise BluepySnapError(f"Unknown query modifier: '{key}'")
     return result
 
 
