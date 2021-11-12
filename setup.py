@@ -48,7 +48,7 @@ setup(
         'morph-tool>=2.4.3,<3.0.0',
         'numpy>=1.8,<2.0.0',
         'pandas>=1.0.0,<2.0.0',
-        'click>=7.0,<8.0.0',
+        'click>=7.0',
         'more-itertools>=8.2.0'
     ],
     extras_require={
