@@ -40,6 +40,7 @@ with open('README.rst') as f:
 
 setup(
     name='bluepysnap',
+    python_requires=">=3.7",
     install_requires=[
         'cached_property>=1.0',
         'h5py>=3.0.1,<4.0.0',
