@@ -6,7 +6,7 @@ Version v0.13.1
 
 Removed
 ~~~~~~~
-- Drop python3.6 toxenv
+- Drop python3.6 support
 
 
 Version v0.13.0
