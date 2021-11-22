@@ -4,13 +4,9 @@ Changelog
 Version v0.13.1
 ---------------
 
-Improvements
-~~~~~~~~~~~~
-- Add python3.9 toxenv
-
 Removed
 ~~~~~~~
-- Drop python3.6 support
+- Drop python3.6 toxenv
 
 
 Version v0.13.0
