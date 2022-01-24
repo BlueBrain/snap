@@ -9,10 +9,15 @@ from more_itertools import all_equal, always_iterable, first
 from bluepysnap.api.entity import Entity
 
 L = logging.getLogger(__name__)
+DOWNLOADED_CONTENT_PATH = Path(".downloaded_content") # user defined or tmp would be better
 
 
 def _get_path(p):
     return Path(p.replace("file://", ""))
+
+
+def _get_downloaded_path(name):
+    return DOWNLOADED_CONTENT_PATH / name
 
 
 class EntityFactory:
@@ -29,6 +34,7 @@ class EntityFactory:
             [
                 "DummyMorphology",
                 "NeuronMorphology",
+                "ReconstructedCell",
                 "ReconstructedPatchedCell",
                 "ReconstructedWholeBrainCell",
             ],
@@ -94,6 +100,10 @@ class EntityFactory:
         else:
             raise RuntimeError(f"Tool {tool} not found for {types}")
         try:
+            if func == open_morphology_neurom:
+                # TODO: define functions that allow downloads, and those that don't.
+                # Eventually, everything would be downloadable?
+                return func(resource, self._connector.download)
             return func(resource)
         except Exception as ex:
             raise RuntimeError(f"Unable to open {types}") from ex
@@ -156,18 +166,22 @@ def open_morphology_release(resource):
     return MorphDB.from_neurondb(config_path)
 
 
-def open_morphology_neurom(resource):
+def open_morphology_neurom(resource, downloader):
     import neurom
+    # TODO: have a possibility to also read the file atLocation, if found and accessible?
 
     supported_formats = {"application/swc", "application/h5"}
     unsupported_formats = set()
     for item in always_iterable(resource.distribution):
-        if item.type == "DataDownload" and hasattr(item, "atLocation"):
+        if item.type == "DataDownload" and hasattr(item, "contentUrl"):
             encoding_format = getattr(item, "encodingFormat", "").lower()
             if encoding_format in supported_formats:
-                path = _get_path(item.atLocation.location)
+                path = _get_downloaded_path(item.name)
+                if not path.exists():
+                    downloader(item, DOWNLOADED_CONTENT_PATH)
+
                 L.debug("Opening morphology at %s", path)
-                return neurom.load_neuron(path)
+                return neurom.io.utils.load_morphology(path)
             if encoding_format:
                 unsupported_formats.add(encoding_format)
     if unsupported_formats:

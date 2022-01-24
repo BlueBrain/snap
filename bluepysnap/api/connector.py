@@ -31,7 +31,31 @@ _NEXUS_KEYS = {
     "updatedBy",
 }
 _NEXUS_KEYS_RE = re.compile(f"(^)?({'|'.join(_NEXUS_KEYS)})")
-
+PREFIX_LIST="""
+   PREFIX bmc: <https://bbp.epfl.ch/ontologies/core/bmc/>
+   PREFIX bmo: <https://bbp.epfl.ch/ontologies/core/bmo/>
+   PREFIX commonshapes: <https://neuroshapes.org/commons/>
+   PREFIX datashapes: <https://neuroshapes.org/dash/>
+   PREFIX dc: <http://purl.org/dc/elements/1.1/>
+   PREFIX dcat: <http://www.w3.org/ns/dcat#>
+   PREFIX dcterms: <http://purl.org/dc/terms/>
+   PREFIX mba: <http://api.brain-map.org/api/v2/data/Structure/>
+   PREFIX nsg: <https://neuroshapes.org/>
+   PREFIX nxv: <https://bluebrain.github.io/nexus/vocabulary/>
+   PREFIX oa: <http://www.w3.org/ns/oa#>
+   PREFIX owl: <http://www.w3.org/2002/07/owl#>
+   PREFIX prov: <http://www.w3.org/ns/prov#>
+   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+   PREFIX schema: <http://schema.org/>
+   PREFIX sh: <http://www.w3.org/ns/shacl#>
+   PREFIX shsh: <http://www.w3.org/ns/shacl-shacl#>
+   PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+   PREFIX vann: <http://purl.org/vocab/vnn/>
+   PREFIX void: <http://rdfs.org/ns/void#>
+   PREFIX xml: <http://www.w3.org/XML/1998/namespace/>
+   PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+"""
 
 @contextmanager
 def timed(s):
@@ -67,6 +91,12 @@ class NexusConnector:
         query = self._query_builder.build_query(resource_type, resource_filter)
         return self.get_resources_by_query(query, limit=limit)
 
+    def download(self, resource, path):
+        if resource.type == "DataDownload" and hasattr(resource, 'contentUrl'):
+            self._forge.download(resource, 'contentUrl', path)
+        else:
+            raise RuntimeError("resource {resource.type} can not be downloaded.")
+
 
 class QueryBuilder:
     _value_transformation = {
@@ -84,7 +114,7 @@ class QueryBuilder:
 
     def _process_item(self, n, key, value, statements, filters):
         split_key = key.split(".")
-        key = _NEXUS_KEYS_RE.sub(r"\1nexus:\2", " / ".join(split_key))
+        key = _NEXUS_KEYS_RE.sub(r"\1nxv:\2", " / ".join(split_key))
         transform = self._value_transformation.get(split_key[-1], lambda x: x)
         if isinstance(value, (list, tuple, set)):
             values = ", ".join(self._escape(transform(v)) for v in value)
@@ -98,9 +128,9 @@ class QueryBuilder:
         # see https://www.w3.org/TR/sparql11-query/#pp-language
         statements = [
             f"a {resource_type}",
-            "nexus:project ?project",
-            "nexus:createdAt ?createdAt",
-            "nexus:deprecated false",
+            "nxv:project ?project",
+            "nxv:createdAt ?createdAt",
+            "nxv:deprecated false",
         ]
         filters = []
         if isinstance(resource_filter, dict):
@@ -111,12 +141,13 @@ class QueryBuilder:
         statements = " ;\n".join(statements)
         filters = " .\n".join(filters)
         query = f"""
-            PREFIX nexus: <{NEXUS_NAMESPACE}>
+            {PREFIX_LIST}
             SELECT ?id ?project
             WHERE {{
                 ?id\n{statements} .
                 {filters}
             }}
-            ORDER BY DESC(?createdAt)
             """
+            # ORDER BY DESC(?createdAt)
+            # """
         return query
