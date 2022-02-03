@@ -107,7 +107,7 @@ class PopulationFrameReport:
             return pd.DataFrame()
 
         res = pd.DataFrame(data=view.data,
-                           columns=pd.MultiIndex.from_arrays(np.asarray(view.ids).T),
+                           columns=pd.MultiIndex.from_arrays(np.asarray(view.ids, dtype="int64").T),
                            index=view.times).sort_index(axis=1)
 
         # rename from multi index to index cannot be achieved easily through df.rename
