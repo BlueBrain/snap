@@ -25,7 +25,6 @@ def test_is_iterable():
 
 def test_is_node_id():
     assert test_module.is_node_id(1)
-    assert test_module.is_node_id(np.int(1))
     assert test_module.is_node_id(np.int32(1))
     assert test_module.is_node_id(np.uint32(1))
     assert test_module.is_node_id(np.int64(1))

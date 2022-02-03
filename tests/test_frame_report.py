@@ -176,8 +176,8 @@ class TestPopulationCompartmentReport:
         self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
         data = np.array([np.arange(7) + j * 0.1 for j in range(10)], dtype=np.float32)
-        ids = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (2, 1)]
-        self.df = pd.DataFrame(data=data, columns=pd.MultiIndex.from_tuples(ids), index=timestamps)
+        ids = np.array([[0, 0, 1, 1, 2, 2, 2], [0, 1, 0, 1, 0, 1, 1]], dtype="uint64")
+        self.df = pd.DataFrame(data=data, columns=pd.MultiIndex.from_arrays(ids), index=timestamps)
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
@@ -269,4 +269,5 @@ class TestPopulationSomaReport(TestPopulationCompartmentReport):
         self.test_obj = test_module.SomaReport(self.simulation, "soma_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
         data = {0: timestamps, 1: timestamps + 1, 2: timestamps + 2}
-        self.df = pd.DataFrame(data=data, index=timestamps, columns=[0, 1, 2]).astype(np.float32)
+        columns = np.array([0, 1, 2], dtype="uint64")
+        self.df = pd.DataFrame(data=data, index=timestamps, columns=columns).astype(np.float32)
