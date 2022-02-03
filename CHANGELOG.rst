@@ -6,7 +6,8 @@ Version v0.13.1
 
 Removed
 ~~~~~~~
-- Drop python3.6 support
+- Drop python 3.6 support
+- Add python 3.9 tests
 
 
 Version v0.13.0
