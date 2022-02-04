@@ -4,10 +4,13 @@ Changelog
 Version v0.13.1
 ---------------
 
+Improvements
+~~~~~~~~~~~~
+- Add python 3.9 tests
+
 Removed
 ~~~~~~~
 - Drop python 3.6 support
-- Add python 3.9 tests
 
 
 Version v0.13.0
