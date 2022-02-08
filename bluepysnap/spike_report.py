@@ -106,7 +106,7 @@ class PopulationSpikeReport:
 
         if not res:
             return pd.Series(data=[], index=pd.Index([], name="times"),
-                             name=series_name, dtype=np.float64)
+                             name=series_name, dtype=IDS_DTYPE)
 
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":

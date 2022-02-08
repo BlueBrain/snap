@@ -234,7 +234,10 @@ class TestEdges:
             self.test_obj.get(properties=["other2", "unknown"])
 
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
-        tested = self.test_obj.get(ids, None)
+        with pytest.deprecated_call(
+            match="Returning ids with get/properties is deprecated and will be removed in 1.0.0"
+        ):
+            tested = self.test_obj.get(ids, None)
         assert tested == ids
 
         tested = self.test_obj.get(ids, properties=self.test_obj.property_names)
@@ -283,11 +286,14 @@ class TestEdges:
         with pytest.deprecated_call():
             self.test_obj.get(ids)
 
-    def test_properties(self):
+    def test_properties_deprecated(self):
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
-        pdt.assert_frame_equal(self.test_obj.properties(ids, properties=["other2", "@source_node"]),
-                               self.test_obj.get(ids, properties=["other2", "@source_node"]),
-                               check_exact=False)
+        with pytest.deprecated_call(
+            match="Edges.properties function is deprecated and will be removed in 1.0.0"
+        ):
+            tested = self.test_obj.properties(ids, properties=["other2", "@source_node"])
+        expected = self.test_obj.get(ids, properties=["other2", "@source_node"])
+        pdt.assert_frame_equal(tested, expected, check_exact=False)
 
     def test_afferent_nodes(self):
         assert self.test_obj.afferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [2])
@@ -783,12 +789,24 @@ class TestEdgePopulation:
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0], 'no-such-property')
 
-    def test_properties(self):
+    def test_get_without_properties_deprecated(self):
+        edge_ids = [0, 1]
+        with pytest.deprecated_call(
+            match="Returning ids with get/properties is deprecated and will be removed in 1.0.0"
+        ):
+            actual = self.test_obj.get(edge_ids, None)
+        expected = np.asarray(edge_ids, dtype=np.int64)
+        npt.assert_equal(actual, expected)
+
+    def test_properties_deprecated(self):
         ids = [0, 1, 2, 3]
         properties = ["@target_node", "@source_node"]
-        pdt.assert_frame_equal(self.test_obj.properties(ids, properties=properties),
-                               self.test_obj.get(ids, properties=properties),
-                               check_exact=False)
+        with pytest.deprecated_call(
+            match="EdgePopulation.properties function is deprecated and will be removed in 1.0.0"
+        ):
+            actual = self.test_obj.properties(ids, properties=properties)
+        expected = self.test_obj.get(ids, properties=properties)
+        pdt.assert_frame_equal(actual, expected, check_exact=False)
 
     def test_get_all_edge_ids_types(self):
         assert self.test_obj.get(0, Synapse.PRE_GID).tolist() == [2]

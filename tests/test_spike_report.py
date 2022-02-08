@@ -21,7 +21,7 @@ def _create_series(node_ids, index, name="ids"):
         return pd.Index(ids, name="times")
     if len(node_ids) == 0:
         # removing warning
-        return pd.Series(node_ids, index=_get_index(index), name=name, dtype=np.float64)
+        return pd.Series(node_ids, index=_get_index(index), name=name, dtype=np.int64)
     return pd.Series(node_ids, index=_get_index(index), name=name)
 
 

@@ -11,6 +11,7 @@ Improvements
 Bug Fixes
 ~~~~~~~~~
 - Ensure that ids in frame reports are always np.int64 even when using libsonata 0.1.10.
+- Fix deprecation warnings.
 
 Removed
 ~~~~~~~

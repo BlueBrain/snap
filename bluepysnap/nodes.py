@@ -545,14 +545,18 @@ class NodePopulation:
                 - ``mapping``: return the properties of nodes matching a properties filter.
                 - ``None``: return the properties of all nodes.
 
-            properties (list): If specified, return only the properties in the list.
+            properties (list|str): If specified, return only the properties in the list.
                 Otherwise return all properties.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
-                If single node ID is passed as ``group`` and single property as properties returns
-                a single value. If single node ID is passed as ``group`` and list as property
-                returns a pandas Series. Otherwise return a pandas DataFrame indexed by node IDs.
+                If a single node ID is passed as ``group`` and a single property as ``properties``,
+                returns a single value.
+                If a single node ID is passed as ``group`` and a list as ``properties``,
+                returns a pandas Series.
+                If something different from a single node ID is passed as ``group`` and a single
+                property as ``properties``, returns a pandas Series.
+                Otherwise, returns a pandas DataFrame indexed by node IDs.
 
         Notes:
             The NodePopulation.property_names function will give you all the usable properties

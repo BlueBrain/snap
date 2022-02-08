@@ -102,15 +102,19 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         if edge_ids is None:
             raise BluepySnapError("You need to set edge_ids in get.")
         if properties is None:
-            Deprecate.warn("Returning ids with get/properties will be removed in 1.0.0."
-                           "Please use Edges.ids() instead.")
+            Deprecate.warn(
+                "Returning ids with get/properties is deprecated and will be removed in 1.0.0. "
+                "Please use Edges.ids instead."
+            )
             return edge_ids
         return super().get(edge_ids, properties)
 
     def properties(self, edge_ids, properties):
         """Doc is overridden below."""
-        Deprecate.warn("Edges.properties function will be deprecated in 1.0.0. Please use "
-                       "Edges.get instead.")
+        Deprecate.warn(
+            "Edges.properties function is deprecated and will be removed in 1.0.0. "
+            "Please use Edges.get instead."
+        )
         return self.get(edge_ids, properties)
 
     properties.__doc__ = get.__doc__
@@ -489,8 +493,10 @@ class EdgePopulation:
         """Get an array of edge IDs or DataFrame with edge properties."""
         edge_ids = utils.ensure_ids(selection.flatten())
         if properties is None:
-            Deprecate.warn("Returning ids with get/properties will be removed in 1.0.0."
-                           "Please use EdgePopulation.ids() instead.")
+            Deprecate.warn(
+                "Returning ids with get/properties is deprecated and will be removed in 1.0.0. "
+                "Please use EdgePopulation.ids instead."
+            )
             return edge_ids
 
         if utils.is_iterable(properties):
@@ -614,8 +620,10 @@ class EdgePopulation:
 
     def properties(self, edge_ids, properties):
         """Doc is overridden below."""
-        Deprecate.warn("EdgePopulation.properties function will be deprecated in 1.0.0. Please use "
-                       "EdgePopulation.get instead.")
+        Deprecate.warn(
+            "EdgePopulation.properties function is deprecated and will be removed in 1.0.0. "
+            "Please use EdgePopulation.get instead."
+        )
         return self.get(edge_ids, properties)
 
     properties.__doc__ = get.__doc__
