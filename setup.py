@@ -46,6 +46,7 @@ setup(
         "cached_property>=1.0",
         "h5py>=3.0.1,<4.0.0",
         "libsonata>=0.1.13,<1.0.0",
+        'jsonschema==4.4.0',  # tested with this version
         "morphio>=3.0.0,<4.0.0",
         "morph-tool>=2.4.3,<3.0.0",
         "numpy>=1.8,<2.0.0",
@@ -58,6 +59,9 @@ setup(
         "plots": ["matplotlib>=3.0.0,<4.0.0"],
     },
     packages=find_packages(),
+    package_data={
+        "bluepysnap": ["schemas/*.yaml"],
+    },
     use_scm_version=True,
     setup_requires=[
         "setuptools_scm",

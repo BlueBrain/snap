@@ -20,10 +20,12 @@ def cli(verbose):
 
 @cli.command()
 @click.argument("config_file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-def validate(config_file):
+@click.option("--bbp-check", is_flag=True, help="validate the config using BBP specification")
+def validate(config_file, bbp_check):
     """Validate of Sonata circuit based on config file.
 
     Args:
-        config_file: path to Sonata circuit config file
+        config_file (str): path to Sonata circuit config file
+        bbp_check (bool): flag indicating whether or not to do BBP SONATA spec validation
     """
-    circuit_validation.validate(config_file)
+    circuit_validation.validate(config_file, bbp_check=bbp_check)

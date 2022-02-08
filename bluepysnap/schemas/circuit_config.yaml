@@ -1,0 +1,85 @@
+title: SONATA Circuit Config
+description: schema for BBP SONATA circuit config
+required:
+  - networks
+additionalProperties: false
+properties:
+  version:
+    type: number
+  manifest:
+    type: object
+  node_sets_file:
+    type: string
+  components:
+    $ref: "#/$defs/components"
+  networks:
+    type: object
+    required:
+      - nodes
+      - edges
+    additionalProperties: false
+    properties:
+      nodes:
+        $ref: "#/$defs/network_array"
+        items:
+          required:
+            - nodes_file
+      edges:
+        $ref: "#/$defs/network_array"
+        items:
+          required:
+            - edges_file
+$defs:
+  components:
+    type: object
+    properties:
+      morphologies_dir:
+        type: string
+      alternate_morphologies:
+        type: object
+        additionalProperties: false
+        properties:
+          h5v1:
+            type: string
+          neurolucida-asc:
+            type: string
+      biophysical_neuron_models_dir:
+        type: string
+      vasculature_file:
+        type: string
+      vasculature_mesh:
+        type: string
+      end_feet_area:
+        type: string
+      spine_morphologies_dir:
+        type: string
+  network_array:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required:
+        - populations
+      additionalProperties: false
+      properties:
+        edges_file:
+          type: string
+        nodes_file:
+          type: string
+        populations:
+          type: object
+          minProperties: 1
+          patternProperties:
+            "":
+              $ref: "#/$defs/components"
+              properties:
+                type:
+                  type: string
+              # If type is defined and it's biophysical, require biophysical_neuron_models_dir:
+              anyOf:
+                - required:
+                    - biophysical_neuron_models_dir
+                - properties:
+                    type:
+                      not:
+                        const: biophysical

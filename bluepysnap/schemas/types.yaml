@@ -1,0 +1,46 @@
+title: Data Types
+description: data type definitions for schema validation
+$typedefs:
+  general:
+    type: object
+    required:
+      - datatype
+    properties:
+      datatype:
+        type: string
+
+  index_or_utf8:
+      anyOf:
+        - $ref: "#/$typedefs/utf8"
+        - $ref: "#/$typedefs/uint32"
+
+  float32:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: float32
+  int16:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: int16
+  int64:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: int64
+  uint32:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: uint32
+  uint64:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: uint64
+  utf8:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: utf-8

@@ -1,0 +1,137 @@
+title: Edges - chemical
+description: schema for chemical edge types
+properties:
+  edges:
+    maxProperties: 1
+    type: object
+    patternProperties:
+      "":
+        type: object
+        required:
+          - "0"
+          - edge_type_id
+          - source_node_id
+          - target_node_id
+        additionalProperties: false
+        properties:
+          source_node_id:
+            $ref: "#/$defs/edge_node_ids"
+
+          target_node_id:
+            $ref: "#/$defs/edge_node_ids"
+
+          edge_type_id:
+            $ref: "#/$typedefs/int64"
+
+          "0":
+            type: object
+            required:
+              - afferent_center_x
+              - afferent_center_y
+              - afferent_center_z
+              - afferent_surface_x
+              - afferent_surface_y
+              - afferent_surface_z
+              - afferent_section_id
+              - afferent_section_pos
+              - afferent_section_type
+              - afferent_segment_id
+              - afferent_segment_offset
+              - efferent_center_x
+              - efferent_center_y
+              - efferent_center_z
+              - efferent_surface_x
+              - efferent_surface_y
+              - efferent_surface_z
+              - efferent_section_id
+              - efferent_section_pos
+              - efferent_section_type
+              - efferent_segment_id
+              - efferent_segment_offset
+              - conductance
+              - decay_time
+              - depression_time
+              - facilitation_time
+              - u_syn
+              - n_rrp_vesicles
+              - spine_length
+              - syn_type_id
+              - delay
+            patternProperties:
+              # For docs, these would likely need to be changed actual property names.
+              # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
+              # to keep stuff cleaner as they will be reused anyhow.
+              ^(a|e)fferent_(center|surface)_(x|y|z)$:
+                $ref: "#/$typedefs/float32"
+              ^(a|e)fferent_(section|segment)_(id|type)$:
+                $ref: "#/$typedefs/uint32"
+              ^(a|e)fferent_(section|segment)_(pos|offset)$:
+                $ref: "#/$typedefs/float32"
+            properties:
+              conductance:
+                $ref: "#/$typedefs/float32"
+              decay_time:
+                $ref: "#/$typedefs/float32"
+              depression_time:
+                $ref: "#/$typedefs/float32"
+              facilitation_time:
+                $ref: "#/$typedefs/float32"
+              u_syn:
+                $ref: "#/$typedefs/float32"
+              n_rrp_vesicles:
+                $ref: "#/$typedefs/uint32"
+              spine_length:
+                $ref: "#/$typedefs/float32"
+              syn_type_id:
+                $ref: "#/$typedefs/uint32"
+              delay:
+                $ref: "#/$typedefs/float32"
+              # Optional properties
+              spine_morphology:
+                $ref: "#/$typedefs/uint32"
+              spine_psd_id:
+                $ref: "#/$typedefs/int64"
+              spine_sharding_id:
+                $ref: "#/$typedefs/int64"
+              conductance_scale_factor:
+                $ref: "#/$typedefs/float32"
+              u_hill_coefficient:
+                $ref: "#/$typedefs/float32"
+              "@library":
+                type: object
+                properties:
+                  spine_morphology:
+                    $ref: "#/$typedefs/utf8"
+
+          # Optional properties
+          indices:
+            type: object
+            additionalProperties: false
+            properties:
+              target_to_source:
+                $ref: "#/$defs/indices_entries"
+              source_to_target:
+                $ref: "#/$defs/indices_entries"
+
+$defs:
+  indices_entries:
+    type: object
+    additionalProperties: false
+    properties:
+      node_id_to_ranges:
+        $ref: "#/$typedefs/uint64"
+      range_to_edge_id:
+        $ref: "#/$typedefs/uint64"
+
+  edge_node_ids:
+    $ref: "#/$typedefs/uint64"
+    required:
+      - attributes
+    properties:
+      attributes:
+        type: object
+        required:
+          - node_population
+        properties:
+          node_population:
+            type: string

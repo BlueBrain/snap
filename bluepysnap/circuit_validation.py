@@ -861,6 +861,11 @@ def validate(config_file, bbp_check=False, print_errors=True):
         list: List of errors, empty if no errors
     """
     config = Parser.parse(load_json(config_file), str(Path(config_file).parent))
+    if bbp_check:
+        validate_schemas(config)
+        return
+
+    config = config.resolve()
     errors = _check_required_datasets(config)
 
     if not errors:
@@ -873,3 +878,99 @@ def validate(config_file, bbp_check=False, print_errors=True):
         _print_errors(errors)
 
     return set(errors)
+
+
+def get_h5_structure_as_dict(h5):
+    """Recursively translates h5 file into a dictionary.
+
+    For groups, the subgroups/datasets are translated as a subdictionary.
+    Datatype of datasets is resolved and returned as {'datatype': <dtype>}.
+    Attributes of either groups or datasets are returned as {'attributes': {<key>: <value>}}.
+
+    Args:
+        h5 (h5.File instance): h5 file to translate
+
+    Returns:
+        dict: dictionary of the file structure
+    """
+    properties = {}
+
+    def get_dataset_dtype(item):
+        if item.dtype.hasobject:
+            return h5py.check_string_dtype(item.dtype).encoding
+
+        return item.dtype.name
+
+    for key, value in h5.items():
+        if isinstance(value, h5py.Group):
+            properties[key] = get_h5_structure_as_dict(value)
+        elif isinstance(value, h5py.Dataset):
+            properties[key] = {"datatype": get_dataset_dtype(value)}
+        else:
+            properties[key] = {}
+
+        attrs = {k: v for k, v in value.attrs.items()}
+        if attrs:
+            properties[key]["attributes"] = attrs
+
+    # Maybe check for the existence of @library and do the translation to actual values here?
+    # Would make the schemas a bit simpler.
+
+    return properties
+
+
+def validate_schemas(config):
+    def _load_schema(filename):
+        import pkg_resources
+        import yaml
+
+        resource_path = Path(pkg_resources.resource_filename(__name__, "schemas"))
+
+        with open(resource_path / filename) as fd:
+            return yaml.safe_load(fd)
+
+    def _load_json(path):
+        import json
+
+        with open(path) as fd:
+            return json.load(fd)
+
+    def _validate(schema, dict_):
+        import jsonschema
+
+        validator = jsonschema.validators.Draft202012Validator(schema)
+        # currently just printing the errors but the idea would be to have something like
+        for e in validator.iter_errors(dict_):
+            print(f"ERROR: {'/'.join(map(str, e.absolute_path))}: {e.message}")
+
+    def _h5_to_dict(path):
+        with h5py.File(path) as h5:
+            return get_h5_structure_as_dict(h5)
+
+    schema = _load_schema("circuit_config.yaml")
+    _validate(schema, config)
+
+    nodes = [n for n in config.get("networks", {}).get("nodes", ()) if "nodes_file" in n]
+    edges = [e for e in config.get("networks", {}).get("edges", ()) if "edges_file" in e]
+
+    typedefs = _load_schema("types.yaml")
+    bio_node_schema = _load_schema("nodes_biophysical.yaml")
+    chem_edge_schema = _load_schema("edges_chemical.yaml")
+    bio_node_schema.update(typedefs)
+    chem_edge_schema.update(typedefs)
+
+    def _get_file_type(entry):
+        if not entry.get("populations"):
+            return None
+        pop = next(iter(entry["populations"].values()))
+        return pop.get("type")
+
+    for node in nodes:
+        if _get_file_type(node) == "biophysical":
+            _validate(bio_node_schema, _h5_to_dict(node["nodes_file"]))
+
+    for edge in edges:
+        # Should we have projections as other type than chemical?
+        # They will never have all the data.
+        if _get_file_type(edge) == "chemical":
+            _validate(chem_edge_schema, _h5_to_dict(edge["edges_file"]))

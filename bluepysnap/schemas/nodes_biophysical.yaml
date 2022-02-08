@@ -1,0 +1,95 @@
+title: Nodes - biophysical
+description: schema for biophysical node types
+properties:
+  nodes:
+    maxProperties: 1
+    type: object
+    patternProperties:
+      "":
+        type: object
+        required:
+          - "0"
+          - node_type_id
+        additionalProperties: false
+        properties:
+          node_type_id:
+            $ref: "#/$typedefs/int64"
+          "0":
+            additionalProperties: false
+            type: object
+            required:
+              - x
+              - y
+              - z
+              - orientation_w
+              - orientation_x
+              - orientation_y
+              - orientation_z
+              - morphology
+              - model_template
+              - model_type
+              - morph_class
+              - etype
+              - mtype
+              - synapse_class
+              - dynamics_params
+            properties:
+              mtype:
+                $ref: "#/$typedefs/index_or_utf8"
+              morphology:
+                $ref: "#/$typedefs/index_or_utf8"
+              model_template:
+                $ref: "#/$typedefs/index_or_utf8"
+              model_type:
+                $ref: "#/$typedefs/index_or_utf8"
+              morph_class:
+                $ref: "#/$typedefs/index_or_utf8"
+              etype:
+                $ref: "#/$typedefs/index_or_utf8"
+              mtype:
+                $ref: "#/$typedefs/index_or_utf8"
+              synapse_class:
+                $ref: "#/$typedefs/index_or_utf8"
+              dynamics_params:
+                type: object
+                required:
+                  - threshold_current
+                  - holding_current
+                additionalProperties: false
+                properties:
+                  threshold_current:
+                    $ref: "#/$typedefs/float32"
+                  holding_current:
+                    $ref: "#/$typedefs/float32"
+              # Optional
+              layer:
+                $ref: "#/$typedefs/index_or_utf8"
+              me_combo:
+                $ref: "#/$typedefs/index_or_utf8"
+              region:
+                $ref: "#/$typedefs/index_or_utf8"
+              exc-mini_frequency:
+                $ref: "#/$typedefs/float32"
+              inh-mini_frequency:
+                $ref: "#/$typedefs/float32"
+              hemisphere:
+                $ref: "#/$typedefs/index_or_utf8"
+              "@library":
+                type: object
+                patternProperties:
+                  "":
+                    $ref: "#/$typedefs/utf8"
+
+
+
+            patternProperties:
+              ^(x|y|z)$:
+                $ref: "#/$typedefs/float32"
+              ^rotation_angle_(x|y|z)axis$:
+                $ref: "#/$typedefs/float32"
+              # Optional
+              ^orientation_(w|x|y|z)$:
+                $ref: "#/$typedefs/float32"
+
+
+
