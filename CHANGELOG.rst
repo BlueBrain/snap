@@ -6,11 +6,15 @@ Version v0.13.1
 
 Improvements
 ~~~~~~~~~~~~
-- Add python 3.9 tests
+- Add python 3.9 tests.
+
+Bug Fixes
+~~~~~~~~~
+- Ensure that ids in frame reports are always np.int64 even when using libsonata 0.1.10.
 
 Removed
 ~~~~~~~
-- Drop python 3.6 support
+- Drop python 3.6 support.
 
 
 Version v0.13.0
