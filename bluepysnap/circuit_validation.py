@@ -940,6 +940,12 @@ def validate_schemas(config):
 
         validator = jsonschema.validators.Draft202012Validator(schema)
         # currently just printing the errors but the idea would be to have something like
+        # [heavily pseudo code]
+        # errors[field] = e.type
+        # if e.type != 'warning':
+        #   failed_fields.append(e.absolute_path)
+        # ... later ...
+        # validate_data(data_file, file_structure - failed_fields)
         for e in validator.iter_errors(dict_):
             print(f"ERROR: {'/'.join(map(str, e.absolute_path))}: {e.message}")
 
