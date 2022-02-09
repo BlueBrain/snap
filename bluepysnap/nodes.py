@@ -545,22 +545,68 @@ class NodePopulation:
                 - ``mapping``: return the properties of nodes matching a properties filter.
                 - ``None``: return the properties of all nodes.
 
-            properties (list|str): If specified, return only the properties in the list.
+            properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise return all properties.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
-                If a single node ID is passed as ``group`` and a single property as ``properties``,
-                returns a single value.
-                If a single node ID is passed as ``group`` and a list as ``properties``,
-                returns a pandas Series.
-                If something different from a single node ID is passed as ``group`` and a single
-                property as ``properties``, returns a pandas Series.
-                Otherwise, returns a pandas DataFrame indexed by node IDs.
+                The type of the returned object depends on the type of the input parameters,
+                see the Examples for an explanation of the different cases.
 
         Notes:
             The NodePopulation.property_names function will give you all the usable properties
             for the `properties` argument.
+
+        Examples:
+            Considering a node population composed by 3 nodes (0, 1, 2) and 12 properties,
+            the following examples show the types of the returned objects.
+
+            - If ``group`` is a single node ID and ``properties`` a single property,
+              returns a single scalar value.
+
+                >>> result = my_node_population.get(group=0, properties=Cell.MTYPE)
+                >>> type(result)
+                str
+
+            - If ``group`` is a single node ID and ``properties`` a list or None,
+              returns a pandas Series indexed by the properties.
+
+                >>> result = my_node_population.get(group=0)
+                >>> type(result), result.shape
+                (pandas.core.series.Series, (12,))
+
+                >>> result = my_node_population.get(group=0, properties=[Cell.MTYPE])
+                >>> type(result), result.shape
+                (pandas.core.series.Series, (1,))
+
+            - If ``group`` is anything other than a single node ID, and ``properties`` is a single
+              property, returns a pandas Series indexed by node IDs.
+
+                >>> result = my_node_population.get(properties=Cell.MTYPE)
+                >>> type(result), result.shape
+                (pandas.core.series.Series, (3,))
+
+                >>> result = my_node_population.get(group=[0], properties=Cell.MTYPE)
+                >>> type(result), result.shape
+                (pandas.core.series.Series, (1,))
+
+            - In all the other cases, returns a pandas DataFrame indexed by node IDs.
+
+                >>> result = my_node_population.get()
+                >>> type(result), result.shape
+                (pandas.core.frame.DataFrame, (3, 12))
+
+                >>> result = my_node_population.get(group=[0])
+                >>> type(result), result.shape
+                (pandas.core.frame.DataFrame, (1, 12))
+
+                >>> result = my_node_population.get(properties=[Cell.MTYPE])
+                >>> type(result), result.shape
+                (pandas.core.frame.DataFrame, (3, 1))
+
+                >>> result = my_node_population.get(group=[0], properties=[Cell.MTYPE])
+                >>> type(result), result.shape
+                (pandas.core.frame.DataFrame, (1, 1))
         """
         result = self._data
         if properties is not None:
