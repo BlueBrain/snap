@@ -22,7 +22,7 @@ from more_itertools import roundrobin
 
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-
+from bluepysnap.utils import IDS_DTYPE
 
 L = logging.getLogger(__name__)
 
@@ -133,8 +133,9 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
 
     report = filtered_report.report
 
-    dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis] if y_axis else None
-    if dtype and pd.api.types.is_categorical_dtype(dtype):
+    # use np.int64 if displaying node_ids
+    dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis] if y_axis else IDS_DTYPE
+    if pd.api.types.is_categorical_dtype(dtype):
         # this is to prevent the problems when concatenating categoricals with unknown categories
         dtype = str
     data = pd.Series(index=report.index, dtype=dtype)

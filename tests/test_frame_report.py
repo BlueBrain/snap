@@ -203,7 +203,7 @@ class TestPopulationCompartmentReport:
         pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default", 2)), self.df.loc[:, [2]])
 
         # not from this population
-        pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default2", 2)),  pd.DataFrame())
+        pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default2", 2)), pd.DataFrame())
 
         pdt.assert_frame_equal(self.test_obj.get([2, 0]), self.df.loc[:, [0, 2]])
 

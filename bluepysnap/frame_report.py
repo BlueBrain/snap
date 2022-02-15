@@ -106,9 +106,14 @@ class PopulationFrameReport:
         if len(view.ids) == 0:
             return pd.DataFrame()
 
-        res = pd.DataFrame(data=view.data,
-                           columns=pd.MultiIndex.from_arrays(np.asarray(view.ids).T),
-                           index=view.times).sort_index(axis=1)
+        # cell ids and section ids in the columns are enforced to be int64
+        # to avoid issues with numpy automatic conversions and to ensure that
+        # the results are the same regardless of the libsonata version [NSETM-1766]
+        res = pd.DataFrame(
+            data=view.data,
+            columns=pd.MultiIndex.from_arrays(ensure_ids(view.ids).T),
+            index=view.times,
+        ).sort_index(axis=1)
 
         # rename from multi index to index cannot be achieved easily through df.rename
         res.columns = self._wrap_columns(res.columns)
