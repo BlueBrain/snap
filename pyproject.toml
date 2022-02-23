@@ -1,11 +1,84 @@
 [tool.black]
-line-length = 100
-target-version = [
+line-length  =  100
+target-version  =  [
     'py37',
 ]
-include = 'bluepysnap'
-#include = 'projectionizer\/[^/]*\.py$|doc\/source\/conf\.py$|setup\.py$|apps/projectionizer'
+include  =  '(bluepysnap|tests)\/.*\.py'
 
 [tool.isort]
-profile = 'black'
-known_local_folder = 'utils'
+profile  =  'black'
+line_length  =  100
+known_local_folder  =  [
+'utils',
+'test_module',
+]
+
+[tool.pylint.messages_control]
+disable = [
+    'bad-continuation',
+    'fixme',
+    'invalid-name',
+    'len-as-condition',
+    'no-else-return',
+    'ungrouped-imports',
+    'useless-object-inheritance',
+    'import-outside-toplevel',
+    'bad-mcs-classmethod-argument',
+]
+
+[tool.pylint.format]
+# Maximum number of characters on a single line.
+max-line-length = 100
+
+[tool.pylint.design]
+# Maximum number of arguments for function / method
+max-args = 8
+
+# Argument names that match this expression will be ignored. Default to name
+# with leading underscore
+ignored-argument-names = '_.*'
+
+# Maximum number of locals for function / method body
+max-locals = 15
+
+# Maximum number of return / yield for function / method body
+max-returns = 6
+
+# Maximum number of branch for function / method body
+max-branchs = 12
+
+# Maximum number of statements in function / method body
+max-statements = 50
+
+# Maximum number of parents for a class (see R0901).
+max-parents = 7
+
+# Maximum number of attributes for a class (see R0902).
+max-attributes = 40
+
+# Minimum number of public methods for a class (see R0903).
+min-public-methods = 0
+
+# Maximum number of public methods for a class (see R0904).
+max-public-methods = 60
+
+# checks for similarities and duplicated code. This computation may be
+# memory / CPU intensive, so you should disable it if you experiment some
+# problems.
+[tool.pylint.similarities]
+# Minimum lines number of a similarity.
+min-similarity-lines = 25
+
+# Ignore comments when computing similarities.
+ignore-comments = 'yes'
+
+# Ignore docstrings when computing similarities.
+ignore-docstrings = 'yes'
+
+[tool.pylint.typecheck]
+extension-pkg-whitelist = [
+    'libsonata',
+]
+ignored-modules = [
+    'numpy',
+]

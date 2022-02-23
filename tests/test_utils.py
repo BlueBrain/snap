@@ -2,25 +2,28 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
+import bluepysnap.utils as test_module
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitNodeId
+from bluepysnap.exceptions import (
+    BluepySnapDeprecationError,
+    BluepySnapDeprecationWarning,
+    BluepySnapError,
+)
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitEdgeId
-from bluepysnap.exceptions import BluepySnapError, BluepySnapDeprecationError, BluepySnapDeprecationWarning
 
 from utils import TEST_DATA_DIR
 
-import bluepysnap.utils as test_module
-
 
 def test_load_json():
-    actual = test_module.load_json(str(TEST_DATA_DIR / 'circuit_config.json'))
-    assert actual['manifest']['$BASE_DIR'] == '.'
+    actual = test_module.load_json(str(TEST_DATA_DIR / "circuit_config.json"))
+    assert actual["manifest"]["$BASE_DIR"] == "."
 
 
 def test_is_iterable():
     assert test_module.is_iterable([12, 13])
     assert test_module.is_iterable(np.asarray([12, 13]))
     assert not test_module.is_iterable(12)
-    assert not test_module.is_iterable('abc')
+    assert not test_module.is_iterable("abc")
 
 
 def test_is_node_id():
@@ -41,7 +44,7 @@ def test_ensure_list():
     assert test_module.ensure_list([1]) == [1]
     assert test_module.ensure_list(iter([1])) == [1]
     assert test_module.ensure_list((2, 1)) == [2, 1]
-    assert test_module.ensure_list('abc') == ['abc']
+    assert test_module.ensure_list("abc") == ["abc"]
 
 
 def test_ensure_ids():
@@ -51,8 +54,10 @@ def test_ensure_ids():
 
 
 def test_add_dynamic_prefix():
-    assert test_module.add_dynamic_prefix(["a", "b"]) == [DYNAMICS_PREFIX + "a",
-                                                          DYNAMICS_PREFIX + "b"]
+    assert test_module.add_dynamic_prefix(["a", "b"]) == [
+        DYNAMICS_PREFIX + "a",
+        DYNAMICS_PREFIX + "b",
+    ]
 
 
 def test_euler2mat():
@@ -62,18 +67,20 @@ def test_euler2mat():
         [pi2, 0.0],  # rotation_angle_y
         [pi2, pi2],  # rotation_angle_x
     )
-    expected = np.array([
+    expected = np.array(
         [
-            [0., 0., 1.],
-            [1., 0., 0.],
-            [0., 1., 0.],
-        ],
-        [
-            [0., -1., 0.],
-            [0., 0., -1.],
-            [1., 0., 0.],
-        ],
-    ])
+            [
+                [0.0, 0.0, 1.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+            ],
+            [
+                [0.0, -1.0, 0.0],
+                [0.0, 0.0, -1.0],
+                [1.0, 0.0, 0.0],
+            ],
+        ]
+    )
     npt.assert_almost_equal(actual, expected)
 
     with pytest.raises(BluepySnapError):
@@ -81,24 +88,35 @@ def test_euler2mat():
 
 
 def test_quaternion2mat():
-    actual = test_module.quaternion2mat([1, 1, 1], [1, 0, 0, ], [0, 1, 0], [0, 0, 1])
-    expected = np.array([
+    actual = test_module.quaternion2mat(
+        [1, 1, 1],
         [
-            [1., 0., 0.],
-            [0., 0., -1.],
-            [0., 1., 0.],
+            1,
+            0,
+            0,
         ],
+        [0, 1, 0],
+        [0, 0, 1],
+    )
+    expected = np.array(
         [
-            [0., 0., 1.],
-            [0., 1., 0.],
-            [-1., 0., 0.],
-        ],
-        [
-            [0., -1., 0.],
-            [1., 0., 0.],
-            [0., 0., 1.],
-        ],
-    ])
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 0.0, -1.0],
+                [0.0, 1.0, 0.0],
+            ],
+            [
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0],
+                [-1.0, 0.0, 0.0],
+            ],
+            [
+                [0.0, -1.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ],
+        ]
+    )
     npt.assert_almost_equal(actual, expected)
 
 

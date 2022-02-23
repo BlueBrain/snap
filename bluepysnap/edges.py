@@ -28,20 +28,10 @@ from more_itertools import first
 
 from bluepysnap import query, utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
-from bluepysnap.circuit_ids import (
-    CircuitEdgeId,
-    CircuitEdgeIds,
-    CircuitNodeId,
-    CircuitNodeIds,
-)
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
-from bluepysnap.sonata_constants import (
-    DEFAULT_EDGE_TYPE,
-    DYNAMICS_PREFIX,
-    ConstContainer,
-    Edge,
-)
+from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DYNAMICS_PREFIX, ConstContainer, Edge
 from bluepysnap.utils import IDS_DTYPE, Deprecate
 
 

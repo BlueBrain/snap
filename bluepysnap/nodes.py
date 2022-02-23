@@ -31,12 +31,7 @@ from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
-from bluepysnap.sonata_constants import (
-    DEFAULT_NODE_TYPE,
-    DYNAMICS_PREFIX,
-    ConstContainer,
-    Node,
-)
+from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, DYNAMICS_PREFIX, ConstContainer, Node
 
 
 class Nodes(
