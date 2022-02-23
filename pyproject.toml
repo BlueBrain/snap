@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 100
+target-version = [
+    'py37',
+]
+include = 'bluepysnap'
+#include = 'projectionizer\/[^/]*\.py$|doc\/source\/conf\.py$|setup\.py$|apps/projectionizer'
+
+[tool.isort]
+profile = 'black'
+known_local_folder = 'utils'

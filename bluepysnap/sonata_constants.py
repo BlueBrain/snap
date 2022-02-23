@@ -18,8 +18,8 @@
 from bluepysnap.exceptions import BluepySnapError
 
 DYNAMICS_PREFIX = "@dynamics:"
-DEFAULT_NODE_TYPE = 'biophysical'
-DEFAULT_EDGE_TYPE = 'chemical'
+DEFAULT_NODE_TYPE = "biophysical"
+DEFAULT_EDGE_TYPE = "chemical"
 
 
 class ConstContainer:
@@ -53,10 +53,13 @@ class ConstContainer:
                 all_keys.update(base.key_set())
             except AttributeError as e:
                 raise BluepySnapError(
-                    "Container classes must derive from classes implementing key_set method") from e
+                    "Container classes must derive from classes implementing key_set method"
+                ) from e
         all_keys.update(
-            name for name in vars(cls) if
-            not name.startswith('_') and name not in ["key_set", "get"])
+            name
+            for name in vars(cls)
+            if not name.startswith("_") and name not in ["key_set", "get"]
+        )
         return all_keys
 
     @classmethod

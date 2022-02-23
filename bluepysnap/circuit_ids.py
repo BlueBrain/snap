@@ -23,9 +23,8 @@ import numpy as np
 import pandas as pd
 
 from bluepysnap import utils
-from bluepysnap.exceptions import BluepySnapError
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
-
+from bluepysnap.exceptions import BluepySnapError
 
 CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
 CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
@@ -40,6 +39,7 @@ class CircuitIds(abc.ABC):
     A global circuit node id is the combination of a population and an ID inside this
     population.
     """
+
     def __init__(self, index, sort_index=True):
         """Return an instance of CircuitIds.
 
@@ -79,8 +79,10 @@ class CircuitIds(abc.ABC):
         population_ids = utils.ensure_ids(population_ids)
 
         if len(populations) != len(population_ids):
-            raise BluepySnapError("populations and population_ids must have the same size. "
-                                  f"{len(populations)} != {len(population_ids)}")
+            raise BluepySnapError(
+                "populations and population_ids must have the same size. "
+                f"{len(populations)} != {len(population_ids)}"
+            )
 
         index = pd.MultiIndex.from_arrays([populations, population_ids])
         return cls(index, sort_index=sort_index)
@@ -288,8 +290,12 @@ class CircuitIds(abc.ABC):
         """Getter on the CircuitIds."""
 
 
-class CircuitNodeIds(CircuitIds, metaclass=AbstractDocSubstitutionMeta,
-                     source_word="CircuitId", target_word="CircuitNodeId"):
+class CircuitNodeIds(
+    CircuitIds,
+    metaclass=AbstractDocSubstitutionMeta,
+    source_word="CircuitId",
+    target_word="CircuitNodeId",
+):
     """High performances CircuitNodeID container."""
 
     def __init__(self, index, sort_index=True):
@@ -313,8 +319,12 @@ class CircuitNodeIds(CircuitIds, metaclass=AbstractDocSubstitutionMeta,
         return CircuitNodeId(*self.index[item])
 
 
-class CircuitEdgeIds(CircuitIds, metaclass=AbstractDocSubstitutionMeta,
-                     source_word="CircuitId", target_word="CircuitEdgeId"):
+class CircuitEdgeIds(
+    CircuitIds,
+    metaclass=AbstractDocSubstitutionMeta,
+    source_word="CircuitId",
+    target_word="CircuitEdgeId",
+):
     """High performances CircuitEdgeID container."""
 
     def __init__(self, index, sort_index=True):

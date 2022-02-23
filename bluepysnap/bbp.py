@@ -19,8 +19,8 @@
 
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
 
-NODE_TYPES = {'biophysical', 'virtual', 'astrocyte', 'single_compartment', 'point_neuron'}
-EDGE_TYPES = {'chemical', 'electrical', 'synapse_astrocyte', 'endfoot'}
+NODE_TYPES = {"biophysical", "virtual", "astrocyte", "single_compartment", "point_neuron"}
+EDGE_TYPES = {"chemical", "electrical", "synapse_astrocyte", "endfoot"}
 
 
 class Cell(Node):
@@ -32,8 +32,8 @@ class Cell(Node):
     LAYER = "layer"  #:
     REGION = "region"  #:
     SYNAPSE_CLASS = "synapse_class"  #:
-    HOLDING_CURRENT = DYNAMICS_PREFIX + 'holding_current'  #:
-    THRESHOLD_CURRENT = DYNAMICS_PREFIX + 'threshold_current'  #:
+    HOLDING_CURRENT = DYNAMICS_PREFIX + "holding_current"  #:
+    THRESHOLD_CURRENT = DYNAMICS_PREFIX + "threshold_current"  #:
 
 
 class Synapse(Edge):

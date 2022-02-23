@@ -15,10 +15,10 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Module containing tools related to the documentation and docstrings."""
+import abc
+import functools
 import inspect
 import types
-import functools
-import abc
 
 
 def _word_swapper(doc, source_word, target_word):
@@ -32,8 +32,9 @@ def _word_swapper(doc, source_word, target_word):
 
 def _copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)."""
-    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__, argdefs=f.__defaults__,
-                           closure=f.__closure__)
+    g = types.FunctionType(
+        f.__code__, f.__globals__, name=f.__name__, argdefs=f.__defaults__, closure=f.__closure__
+    )
     g = functools.update_wrapper(g, f)
     g.__kwdefaults__ = f.__kwdefaults__
     return g
@@ -52,6 +53,7 @@ class DocSubstitutionMeta(type):
         <class 'bluepysnap.CircuitNodeIds'>
         It works well with Sphinx also.
     """
+
     def __new__(mcs, name, parents, attrs, source_word=None, target_word=None):
         """Define the new class to return."""
         original_attrs = attrs.copy()

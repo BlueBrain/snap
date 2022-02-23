@@ -17,15 +17,18 @@
 
 """Miscellaneous utilities."""
 
-from collections.abc import Iterable
 import json
 import warnings
+from collections.abc import Iterable
 
 import numpy as np
 
-from bluepysnap.exceptions import (BluepySnapError, BluepySnapDeprecationWarning,
-                                   BluepySnapDeprecationError)
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitEdgeId
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitNodeId
+from bluepysnap.exceptions import (
+    BluepySnapDeprecationError,
+    BluepySnapDeprecationWarning,
+    BluepySnapError,
+)
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
 # dtypes for the different node and edge ids. We are using np.int64 to avoid the infamous
@@ -36,6 +39,7 @@ IDS_DTYPE = np.int64
 
 class Deprecate:
     """Class for the deprecations in BluepySnap."""
+
     @staticmethod
     def fail(msg=""):
         """Raise a deprecation exception."""
@@ -49,7 +53,7 @@ class Deprecate:
 
 def load_json(filepath):
     """Load JSON from file."""
-    with open(filepath, encoding='utf-8') as f:
+    with open(filepath, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -113,11 +117,13 @@ def euler2mat(az, ay, ax):
     c2, s2 = np.cos(ay), np.sin(ay)
     c3, s3 = np.cos(az), np.sin(az)
 
-    mm = np.array([
-        [c2 * c3, -c2 * s3, s2],
-        [c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3, -c2 * s1],
-        [s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3, c1 * c2],
-    ])
+    mm = np.array(
+        [
+            [c2 * c3, -c2 * s3, s2],
+            [c1 * s3 + c3 * s1 * s2, c1 * c3 - s1 * s2 * s3, -c2 * s1],
+            [s1 * s3 - c1 * c3 * s2, c3 * s1 + c1 * s2 * s3, c1 * c2],
+        ]
+    )
 
     return [mm[..., i] for i in range(len(az))]
 
@@ -147,7 +153,7 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
         Returns:
            numpy array of normalized quaternions
         """
-        return qs / np.sqrt(np.einsum('...i,...i', qs, qs)).reshape(-1, 1)
+        return qs / np.sqrt(np.einsum("...i,...i", qs, qs)).reshape(-1, 1)
 
     aq = np.dstack([np.asarray(aqw), np.asarray(aqx), np.asarray(aqy), np.asarray(aqz)])[0]
     aq = normalize_quaternions(aq)
@@ -157,8 +163,12 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     y = aq[:, 2]
     z = aq[:, 3]
 
-    mm = np.array([[w * w + x * x - y * y - z * z, 2 * x * y - 2 * w * z, 2 * w * y + 2 * x * z],
-                   [2 * w * z + 2 * x * y, w * w - x * x + y * y - z * z, 2 * y * z - 2 * w * x],
-                   [2 * x * z - 2 * w * y, 2 * w * x + 2 * y * z, w * w - x * x - y * y + z * z]])
+    mm = np.array(
+        [
+            [w * w + x * x - y * y - z * z, 2 * x * y - 2 * w * z, 2 * w * y + 2 * x * z],
+            [2 * w * z + 2 * x * y, w * w - x * x + y * y - z * z, 2 * y * z - 2 * w * x],
+            [2 * x * z - 2 * w * y, 2 * w * x + 2 * y * z, w * w - x * x - y * y + z * z],
+        ]
+    )
 
     return [mm[..., i] for i in range(len(aq))]

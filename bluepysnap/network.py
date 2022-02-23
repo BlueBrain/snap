@@ -17,10 +17,9 @@
 """Module containing the Abstract classes for the Network."""
 import abc
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from cached_property import cached_property
-
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
@@ -41,7 +40,8 @@ class NetworkObject(abc.ABC):
             for population in storage.population_names:  # pylint: disable=not-an-iterable
                 if population in res:
                     raise BluepySnapError(
-                        f"Duplicated {self.__class__.__name__} population: '{population}'")
+                        f"Duplicated {self.__class__.__name__} population: '{population}'"
+                    )
                 res[population] = storage.population(population)
         return res
 
@@ -66,10 +66,12 @@ class NetworkObject(abc.ABC):
     @cached_property
     def property_dtypes(self):
         """Returns all the NetworkObjects property dtypes for the Circuit."""
+
         def _update(d, index, value):
             if d.setdefault(index, value) != value:
-                raise BluepySnapError("Same property with different "
-                                      f"dtype. {index}: {value}!= {d[index]}")
+                raise BluepySnapError(
+                    "Same property with different " f"dtype. {index}: {value}!= {d[index]}"
+                )
 
         res = {}
         for pop in self.values():
