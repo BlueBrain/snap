@@ -9,7 +9,7 @@ from more_itertools import all_equal, always_iterable, first
 from bluepysnap.api.entity import Entity
 
 L = logging.getLogger(__name__)
-DOWNLOADED_CONTENT_PATH = Path(".downloaded_content") # user defined or tmp would be better
+DOWNLOADED_CONTENT_PATH = Path(".downloaded_content")  # user defined or tmp would be better
 
 
 def _get_path(p):
@@ -85,6 +85,7 @@ class EntityFactory:
             resource,
             retriever=self._connector.get_resource_by_id,
             opener=partial(self._open_resource, tool=tool),
+            downloader=self._connector.download
         )
 
     def _open_resource(self, resource, tool=None):
@@ -170,7 +171,7 @@ def open_morphology_neurom(resource, downloader):
     import neurom
     # TODO: have a possibility to also read the file atLocation, if found and accessible?
 
-    supported_formats = {"application/swc", "application/h5"}
+    supported_formats = {"text/plain", "application/swc", "application/h5"}
     unsupported_formats = set()
     for item in always_iterable(resource.distribution):
         if item.type == "DataDownload" and hasattr(item, "contentUrl"):

@@ -2,6 +2,7 @@ import logging
 import re
 import time
 from contextlib import contextmanager
+from more_itertools import always_iterable
 from typing import List
 
 from kgforge.core import Resource
@@ -31,7 +32,7 @@ _NEXUS_KEYS = {
     "updatedBy",
 }
 _NEXUS_KEYS_RE = re.compile(f"(^)?({'|'.join(_NEXUS_KEYS)})")
-PREFIX_LIST="""
+PREFIX_LIST = """
    PREFIX bmc: <https://bbp.epfl.ch/ontologies/core/bmc/>
    PREFIX bmo: <https://bbp.epfl.ch/ontologies/core/bmo/>
    PREFIX commonshapes: <https://neuroshapes.org/commons/>
@@ -57,6 +58,7 @@ PREFIX_LIST="""
    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 """
 
+
 @contextmanager
 def timed(s):
     start_time = time.monotonic()
@@ -72,6 +74,13 @@ class NexusConnector:
         self._forge = forge
         self._query_builder = QueryBuilder()
         self._debug = debug
+
+    def search(self, type_, filters, limit=None, offset=None) -> List[Resource]:
+        search_filters = {"type": type_} if type_ else {}
+        search_filters.update(filters)
+
+        with timed("search"):
+            return self._forge.search(search_filters, debug=self._debug, limit=limit, offset=offset)
 
     def query(self, query: str, limit=None, offset=None) -> List[Resource]:
         with timed("query"):
@@ -89,7 +98,9 @@ class NexusConnector:
 
     def get_resources(self, resource_type: str, resource_filter=(), limit=100) -> List[Resource]:
         query = self._query_builder.build_query(resource_type, resource_filter)
-        return self.get_resources_by_query(query, limit=limit)
+        # return self.get_resources_by_query(query, limit=limit)
+        resources = self.search(resource_type, resource_filter, limit)
+        return [self.get_resource_by_id(r.id) for r in resources]
 
     def download(self, resource, path):
         if resource.type == "DataDownload" and hasattr(resource, 'contentUrl'):
@@ -148,6 +159,6 @@ class QueryBuilder:
                 {filters}
             }}
             """
-            # ORDER BY DESC(?createdAt)
-            # """
+        # ORDER BY DESC(?createdAt)
+        # """
         return query
