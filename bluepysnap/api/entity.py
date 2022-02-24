@@ -33,7 +33,10 @@ class ResolvingResource:
         except AttributeError:
             raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
 
-        if isinstance(result, Resource):
+        # TODO: In some cases 'distribution' contains list, in some cases 'DataDownload'
+        # Figure out how to handle this in a cleaner way.
+        # if isinstance(result, Resource):
+        if isinstance(result, Resource) and (not hasattr(result, 'type') or result.type != 'DataDownload'):
             # Wrap the Resource to resolve nested attributes.
             # The retrieved resource is not saved to avoid modifying the wrapped resource.
             result = ResolvingResource(result, retriever=self._retriever)
@@ -53,9 +56,15 @@ class ResolvingResource:
             return True
         return False
 
+    def __repr__(self):
+        return self._wrapped.__repr__()
+
+    def _repr_json_(self):
+        return self._wrapped._repr_json_()
+
 
 class Entity:
-    def __init__(self, resource: Resource, retriever=None, opener=None):
+    def __init__(self, resource: Resource, retriever=None, opener=None, downloader=None):
         """Return a new entity.
 
         Args:
@@ -65,6 +74,7 @@ class Entity:
         """
         self._rr = ResolvingResource(resource, retriever=retriever)
         self._instance = Proxy(partial(opener, self._rr)) if opener else None
+        self._downloader = downloader
 
     @property
     def resource(self):
@@ -73,6 +83,11 @@ class Entity:
     @property
     def instance(self):
         return self._instance
+
+    # TODO: need to apply this to neuron too and build the logic of finding the distribution here
+    def download(self, path):
+        if hasattr(self.resource, 'distribution'):
+            self._downloader(self.resource.distribution, path)
 
     def __repr__(self):
         resource_id = getattr(self._rr, "id", None)
