@@ -3,7 +3,7 @@ line-length  =  100
 target-version  =  [
     'py37',
 ]
-include  =  '(bluepysnap|tests)\/.*\.py'
+include  =  '(bluepysnap|tests)\/.*\.py|doc\/source\/conf\.py|setup\.py'
 
 [tool.isort]
 profile  =  'black'
@@ -20,8 +20,6 @@ disable = [
     'invalid-name',
     'len-as-condition',
     'no-else-return',
-    'ungrouped-imports',
-    'useless-object-inheritance',
     'import-outside-toplevel',
     'bad-mcs-classmethod-argument',
 ]
