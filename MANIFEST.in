@@ -2,3 +2,5 @@ include COPYING
 include COPYING.LESSER
 include README.rst
 include LICENSE.txt
+prune doc
+prune tests
