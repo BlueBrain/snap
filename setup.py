@@ -18,6 +18,23 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from setuptools import find_packages, setup
+from setuptools.command.egg_info import egg_info
+
+
+# setuptools_scm forcibly includes all files under version control into the sdist
+# See https://github.com/pypa/setuptools_scm/issues/190
+# Workaround taken from:
+# https://github.com/raiden-network/raiden/commit/3fb837e8b6e6343f65d99055459cb440e1a938ff
+class EggInfo(egg_info):
+    def __init__(self, *args, **kwargs):
+        egg_info.__init__(self, *args, **kwargs)
+        try:
+            import setuptools_scm.integration
+
+            setuptools_scm.integration.find_files = lambda _: []
+        except ImportError:
+            pass
+
 
 with open("README.rst") as f:
     README = f.read()
@@ -45,6 +62,9 @@ setup(
     setup_requires=[
         "setuptools_scm",
     ],
+    cmdclass={
+        "egg_info": EggInfo,
+    },
     entry_points="""
         [console_scripts]
         bluepysnap=bluepysnap.cli:cli
