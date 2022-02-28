@@ -26,18 +26,21 @@ import pandas as pd
 from cached_property import cached_property
 from more_itertools import first
 
-from bluepysnap import query
-from bluepysnap.network import NetworkObject
-from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
-from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DYNAMICS_PREFIX, Edge, ConstContainer
-from bluepysnap import utils
-from bluepysnap.utils import Deprecate, IDS_DTYPE
+from bluepysnap import query, utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
+from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
+from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.network import NetworkObject
+from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DYNAMICS_PREFIX, ConstContainer, Edge
+from bluepysnap.utils import IDS_DTYPE, Deprecate
 
 
-class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
-            source_word="NetworkObject", target_word="Edge"):
+class Edges(
+    NetworkObject,
+    metaclass=AbstractDocSubstitutionMeta,
+    source_word="NetworkObject",
+    target_word="Edge",
+):
     """The top level Edges accessor."""
 
     def __init__(self, circuit):  # pylint: disable=useless-super-delegation
@@ -45,7 +48,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         super().__init__(circuit)
 
     def _collect_populations(self):
-        return self._get_populations(EdgeStorage, self._config['networks']['edges'])
+        return self._get_populations(EdgeStorage, self._config["networks"]["edges"])
 
     def ids(self, group=None, sample=None, limit=None):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
@@ -82,7 +85,7 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
-    def get(self, edge_ids=None, properties=None):   # pylint: disable=arguments-renamed
+    def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed
         """Edge properties as pandas DataFrame.
 
         Args:
@@ -134,8 +137,9 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             CircuitNodeIDs: Afferent CircuitNodeIDs for all the targets from all edge population.
         """
         target_ids = self._circuit.nodes.ids(target)
-        result = self._get_ids_from_pop(lambda x: (x.afferent_nodes(target_ids), x.source.name),
-                                        CircuitNodeIds)
+        result = self._get_ids_from_pop(
+            lambda x: (x.afferent_nodes(target_ids), x.source.name), CircuitNodeIds
+        )
         if unique:
             result.unique(inplace=True)
         return result
@@ -155,8 +159,9 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             numpy.ndarray: Efferent node IDs for all the sources.
         """
         source_ids = self._circuit.nodes.ids(source)
-        result = self._get_ids_from_pop(lambda x: (x.efferent_nodes(source_ids), x.target.name),
-                                        CircuitNodeIds)
+        result = self._get_ids_from_pop(
+            lambda x: (x.efferent_nodes(source_ids), x.target.name), CircuitNodeIds
+        )
         if unique:
             result.unique(inplace=True)
         return result
@@ -180,8 +185,9 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         source_ids = self._circuit.nodes.ids(source)
         target_ids = self._circuit.nodes.ids(target)
 
-        result = self._get_ids_from_pop(lambda x: (x.pathway_edges(source_ids, target_ids), x.name),
-                                        CircuitEdgeIds)
+        result = self._get_ids_from_pop(
+            lambda x: (x.pathway_edges(source_ids, target_ids), x.name), CircuitEdgeIds
+        )
 
         if properties:
             return self.get(result, properties)
@@ -241,25 +247,34 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
             Using closures or lambda functions would result in override functions and so the
             source and target would be the same for all the populations.
         """
-        return ((CircuitNodeId(source, source_id), CircuitNodeId(target, target_id), count) for
-                source_id, target_id, count in its)
+        return (
+            (CircuitNodeId(source, source_id), CircuitNodeId(target, target_id), count)
+            for source_id, target_id, count in its
+        )
 
     @staticmethod
     def _add_edge_ids(its, source, target, pop_name):
         """Generator comprehension adding the CircuitIds to the iterator."""
-        return ((CircuitNodeId(source, source_id), CircuitNodeId(target, target_id),
-                 CircuitEdgeIds.from_dict({pop_name: edge_id})) for source_id, target_id, edge_id in
-                its)
+        return (
+            (
+                CircuitNodeId(source, source_id),
+                CircuitNodeId(target, target_id),
+                CircuitEdgeIds.from_dict({pop_name: edge_id}),
+            )
+            for source_id, target_id, edge_id in its
+        )
 
     @staticmethod
     def _omit_edge_count(its, source, target):
         """Generator comprehension adding the CircuitIds to the iterator."""
-        return ((CircuitNodeId(source, source_id), CircuitNodeId(target, target_id)) for
-                source_id, target_id in its)
+        return (
+            (CircuitNodeId(source, source_id), CircuitNodeId(target, target_id))
+            for source_id, target_id in its
+        )
 
     def iter_connections(
-            self, source=None, target=None, return_edge_ids=False,
-            return_edge_count=False):
+        self, source=None, target=None, return_edge_ids=False, return_edge_count=False
+    ):
         """Iterate through ``source`` -> ``target`` connections.
 
         Args:
@@ -280,9 +295,12 @@ class Edges(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
                 "`return_edge_count` and `return_edge_ids` are mutually exclusive"
             )
         for name, pop in self.items():
-            it = pop.iter_connections(source=source, target=target,
-                                      return_edge_ids=return_edge_ids,
-                                      return_edge_count=return_edge_count)
+            it = pop.iter_connections(
+                source=source,
+                target=target,
+                return_edge_ids=return_edge_ids,
+                return_edge_count=return_edge_count,
+            )
             source_pop = pop.source.name
             target_pop = pop.target.name
             if return_edge_count:
@@ -307,9 +325,9 @@ class EdgeStorage:
         Returns:
             EdgeStorage: A EdgeStorage object.
         """
-        self._h5_filepath = config['edges_file']
-        self._csv_filepath = config.get('edge_types_file')
-        self._populations_config = config.get('populations', {})
+        self._h5_filepath = config["edges_file"]
+        self._csv_filepath = config.get("edge_types_file")
+        self._populations_config = config.get("populations", {})
         self._circuit = circuit
         self._populations = {}
 
@@ -344,7 +362,8 @@ class EdgeStorage:
             population_config = self._populations_config.get(population_name, {})
 
             self._populations[population_name] = EdgePopulation(
-                self, population_name, population_config)
+                self, population_name, population_config
+            )
 
         return self._populations[population_name]
 
@@ -358,9 +377,7 @@ def _estimate_range_size(func, node_ids, n=3):
     assert len(node_ids) > 0
     if len(node_ids) > n:
         node_ids = np.random.choice(node_ids, size=n, replace=False)
-    return np.median([
-        len(func(node_id).ranges) for node_id in node_ids
-    ])
+    return np.median([len(func(node_id).ranges) for node_id in node_ids])
 
 
 class EdgePopulation:
@@ -405,14 +422,14 @@ class EdgePopulation:
     @cached_property
     def config(self):
         """Population config dictionary combined with the components dictionary."""
-        components = deepcopy(self._edge_storage.circuit.config.get('components', {}))
+        components = deepcopy(self._edge_storage.circuit.config.get("components", {}))
         components.update(self._config)
         return components
 
     @property
     def type(self):
         """Population type."""
-        return self.config.get('type', DEFAULT_EDGE_TYPE)
+        return self.config.get("type", DEFAULT_EDGE_TYPE)
 
     @cached_property
     def source(self):
@@ -484,7 +501,8 @@ class EdgePopulation:
             result = self._population.get_attribute(prop, selection)
         elif prop in self._dynamics_params_names:
             result = self._population.get_dynamics_attribute(
-                prop.split(DYNAMICS_PREFIX)[1], selection)
+                prop.split(DYNAMICS_PREFIX)[1], selection
+            )
         else:
             raise BluepySnapError(f"No such property: {prop}")
         return result
@@ -511,9 +529,7 @@ class EdgePopulation:
                 result = pd.Series(name=properties, dtype=np.float64)
             else:
                 result = pd.Series(
-                    self._get_property(properties, selection),
-                    index=edge_ids,
-                    name=properties
+                    self._get_property(properties, selection), index=edge_ids, name=properties
                 )
 
         return result
@@ -580,8 +596,9 @@ class EdgePopulation:
         elif isinstance(group, np.ndarray):
             result = group
         elif isinstance(group, Mapping):
-            result = self._edge_ids_by_filter(queries=group,
-                                              raise_missing_prop=raise_missing_property)
+            result = self._edge_ids_by_filter(
+                queries=group, raise_missing_prop=raise_missing_property
+            )
         else:
             result = utils.ensure_list(group)
             # test if first value is a CircuitEdgeId if yes then all values must be CircuitEdgeId
@@ -589,8 +606,9 @@ class EdgePopulation:
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
                 except AttributeError as e:
-                    raise BluepySnapError("All values from a list must be of type int or "
-                                          "CircuitEdgeId.") from e
+                    raise BluepySnapError(
+                        "All values from a list must be of type int or " "CircuitEdgeId."
+                    ) from e
         if sample is not None:
             if len(result) > 0:
                 result = np.random.choice(result, min(sample, len(result)), replace=False)
@@ -639,9 +657,9 @@ class EdgePopulation:
         Returns:
             Pandas Dataframe with ('x', 'y', 'z') columns indexed by edge IDs.
         """
-        assert side in ('afferent', 'efferent')
-        assert kind in ('center', 'surface')
-        props = {f'{side}_{kind}_{p}': p for p in ['x', 'y', 'z']}
+        assert side in ("afferent", "efferent")
+        assert kind in ("center", "surface")
+        props = {f"{side}_{kind}_{p}": p for p in ["x", "y", "z"]}
         result = self.get(edge_ids, list(props))
         result.rename(columns=props, inplace=True)
         result.sort_index(axis=1, inplace=True)
@@ -662,9 +680,7 @@ class EdgePopulation:
             numpy.ndarray: Afferent node IDs for all the targets.
         """
         if target is not None:
-            selection = self._population.afferent_edges(
-                self._resolve_node_ids(self.target, target)
-            )
+            selection = self._population.afferent_edges(self._resolve_node_ids(self.target, target))
         else:
             selection = self._population.select_all()
         result = self._population.source_nodes(selection)
@@ -687,9 +703,7 @@ class EdgePopulation:
             numpy.ndarray: Efferent node IDs for all the sources.
         """
         if source is not None:
-            selection = self._population.efferent_edges(
-                self._resolve_node_ids(self.source, source)
-            )
+            selection = self._population.efferent_edges(self._resolve_node_ids(self.source, source))
         else:
             selection = self._population.select_all()
         result = self._population.target_nodes(selection)
@@ -781,9 +795,9 @@ class EdgePopulation:
             if target_node_ids is None and source_node_ids is None:
                 raise BluepySnapError("Either `source` or `target` should be specified")
             if source_node_ids is None:
-                return 'target'
+                return "target"
             if target_node_ids is None:
-                return 'source'
+                return "source"
             else:
                 # Checking the indexing 'direction'. One direction has contiguous indices.
                 range_size_source = _estimate_range_size(
@@ -792,13 +806,13 @@ class EdgePopulation:
                 range_size_target = _estimate_range_size(
                     self._population.afferent_edges, target_node_ids
                 )
-                return 'source' if (range_size_source < range_size_target) else 'target'
+                return "source" if (range_size_source < range_size_target) else "target"
 
         if _is_empty(source_node_ids) or _is_empty(target_node_ids):
             return
 
         direction = _optimal_direction()
-        if direction == 'target':
+        if direction == "target":
             primary_node_ids, secondary_node_ids = target_node_ids, source_node_ids
             get_connected_node_ids = self.afferent_nodes
         else:
@@ -823,8 +837,9 @@ class EdgePopulation:
             # np.stack(uint64, int64) -> float64
             connected_node_ids_with_count = connected_node_ids_with_count.astype(np.uint32)
             if secondary_node_ids is not None:
-                mask = np.in1d(connected_node_ids_with_count[:, 0],
-                               secondary_node_ids, assume_unique=True)
+                mask = np.in1d(
+                    connected_node_ids_with_count[:, 0], secondary_node_ids, assume_unique=True
+                )
                 connected_node_ids_with_count = connected_node_ids_with_count[mask]
             if shuffle:
                 np.random.shuffle(connected_node_ids_with_count)
@@ -832,7 +847,7 @@ class EdgePopulation:
             for conn_node_id, edge_count in connected_node_ids_with_count:
                 if unique_node_ids and (conn_node_id in secondary_node_ids_used):
                     continue
-                if direction == 'target':
+                if direction == "target":
                     yield conn_node_id, key_node_id, edge_count
                 else:
                     yield key_node_id, conn_node_id, edge_count
@@ -841,8 +856,13 @@ class EdgePopulation:
                     break
 
     def iter_connections(
-            self, source=None, target=None, unique_node_ids=False, shuffle=False,
-            return_edge_ids=False, return_edge_count=False
+        self,
+        source=None,
+        target=None,
+        unique_node_ids=False,
+        shuffle=False,
+        return_edge_ids=False,
+        return_edge_count=False,
     ):
         """Iterate through ``source`` -> ``target`` connections.
 

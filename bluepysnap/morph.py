@@ -19,18 +19,17 @@
 
 from pathlib import Path
 
+import morph_tool.transform as transformations
 import numpy as np
 from morphio.mut import Morphology
-import morph_tool.transform as transformations
 
-
-from bluepysnap.sonata_constants import Node
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.sonata_constants import Node
 from bluepysnap.utils import is_node_id
 
 EXTENSIONS_MAPPING = {
-    'asc': 'neurolucida-asc',
-    'h5': 'h5v1',
+    "asc": "neurolucida-asc",
+    "h5": "h5v1",
 }
 
 
@@ -48,13 +47,13 @@ class MorphHelper:
         Returns:
             MorphHelper: A MorphHelper object.
         """
-        self._morph_dir = morph_dir or ''
+        self._morph_dir = morph_dir or ""
         self._alternate_morphologies = alternate_morphologies or {}
         self._population = population
 
     def _get_morph_dir(self, extension):
         """Return morphology directory based on a given extension."""
-        if extension == 'swc':
+        if extension == "swc":
             if not self._morph_dir:
                 raise BluepySnapError("'morphologies_dir' is not defined in config")
             return self._morph_dir
@@ -69,7 +68,7 @@ class MorphHelper:
 
         return morph_dir
 
-    def get_filepath(self, node_id, extension='swc'):
+    def get_filepath(self, node_id, extension="swc"):
         """Return path to SWC morphology file corresponding to `node_id`.
 
         Args:
@@ -82,7 +81,7 @@ class MorphHelper:
 
         return Path(self._get_morph_dir(extension), f"{name}.{extension}")
 
-    def get(self, node_id, transform=False, extension='swc'):
+    def get(self, node_id, transform=False, extension="swc"):
         """Return NeuroM morphology object corresponding to `node_id`.
 
         Args:

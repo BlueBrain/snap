@@ -18,14 +18,14 @@
 import logging
 from pathlib import Path
 
-from cached_property import cached_property
 import numpy as np
 import pandas as pd
+from cached_property import cached_property
 from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import ensure_list, ensure_ids
+from bluepysnap.utils import ensure_ids, ensure_list
 
 L = logging.getLogger(__name__)
 
@@ -33,8 +33,9 @@ FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
 
 
 def _collect_population_reports(frame_report, cls):
-    return {population: cls(frame_report, population) for population in
-            frame_report.population_names}
+    return {
+        population: cls(frame_report, population) for population in frame_report.population_names
+    }
 
 
 def _get_reader(reader_report, cls):
@@ -175,7 +176,7 @@ class FilteredFrameReport:
             new_index = tuple(tuple([population] + ensure_list(x)) for x in data.columns)
             data.columns = pd.MultiIndex.from_tuples(new_index)
             # need to do this in order to preserve MultiIndex for columns
-            res = data if res.empty else data.join(res, how='outer')
+            res = data if res.empty else data.join(res, how="outer")
         return res.sort_index().sort_index(axis=1)
 
     # pylint: disable=protected-access

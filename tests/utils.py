@@ -1,20 +1,18 @@
 """Module providing utility functions for the tests"""
 
+import json
 import shutil
 import tempfile
-import json
-import mock
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
-
 from pathlib import Path
 
+import mock
 
 from bluepysnap.nodes import Nodes, NodeStorage
 
-
 TEST_DIR = Path(__file__).resolve().parent
-TEST_DATA_DIR = TEST_DIR / 'data'
+TEST_DATA_DIR = TEST_DIR / "data"
 
 
 @contextmanager
@@ -28,7 +26,7 @@ def setup_tempdir(cleanup=True):
 
 
 @contextmanager
-def copy_circuit(config='circuit_config.json'):
+def copy_circuit(config="circuit_config.json"):
     """Copies test/data circuit to a temp directory.
 
     We don't need the whole circuit every time but considering this is a copy into a temp dir,
@@ -43,7 +41,7 @@ def copy_circuit(config='circuit_config.json'):
 
 
 @contextmanager
-def copy_config(config='circuit_config.json'):
+def copy_config(config="circuit_config.json"):
     """Copies config to a temp directory.
 
     Returns:
@@ -66,12 +64,12 @@ def edit_config(config_path):
     Returns:
         Yields a json dict instance of the config_path. This instance will be saved as the config.
     """
-    with config_path.open('r') as f:
+    with config_path.open("r") as f:
         config = json.load(f)
     try:
         yield config
     finally:
-        with config_path.open('w') as f:
+        with config_path.open("w") as f:
             f.write(json.dumps(config))
 
 
@@ -86,12 +84,12 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None, pop
         NodePopulation: return a node population.
     """
     config = {
-        'nodes_file': filepath,
-        'node_types_file': None,
-        'populations': {},
+        "nodes_file": filepath,
+        "node_types_file": None,
+        "populations": {},
     }
     if pop_type is not None:
-        config['populations'][pop_name] = {'type': pop_type}
+        config["populations"][pop_name] = {"type": pop_type}
     if circuit is None:
         circuit = mock.Mock()
         circuit.config = {}

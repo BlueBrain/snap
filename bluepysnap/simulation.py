@@ -18,9 +18,9 @@
 
 from cached_property import cached_property
 
-from bluepysnap.node_sets import NodeSets
 from bluepysnap.config import Config
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.node_sets import NodeSets
 
 
 def _resolve_config(config):
@@ -49,9 +49,11 @@ def _collect_frame_reports(sim):
         report_type = report.get("sections", "soma")
         if report_type == "soma":
             from bluepysnap.frame_report import SomaReport
+
             cls = SomaReport
         elif report_type == "all":
             from bluepysnap.frame_report import CompartmentReport
+
             cls = CompartmentReport
         else:
             raise BluepySnapError(f"Report {name}: format {report_type} not yet supported.")
@@ -82,6 +84,7 @@ class Simulation:
     def circuit(self):
         """Access to the circuit used for the simulation."""
         from bluepysnap.circuit import Circuit
+
         if "network" not in self._config:
             raise BluepySnapError("No 'network' set in the simulation/global config file.")
         return Circuit(self._config["network"])
@@ -133,6 +136,7 @@ class Simulation:
     def spikes(self):
         """Access to the SpikeReport."""
         from bluepysnap.spike_report import SpikeReport
+
         return SpikeReport(self)
 
     @cached_property

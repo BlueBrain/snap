@@ -1,23 +1,22 @@
-import pytest
-from pathlib import Path
 import json
+from pathlib import Path
+
+import pytest
 
 import bluepysnap.config as test_module
 from bluepysnap.exceptions import BluepySnapError
 
-from utils import TEST_DATA_DIR, edit_config, copy_config
+from utils import TEST_DATA_DIR, copy_config, edit_config
 
 
 def test_parse():
-    actual = test_module.Config.parse(
-        str(TEST_DATA_DIR / 'circuit_config.json')
-    )
+    actual = test_module.Config.parse(str(TEST_DATA_DIR / "circuit_config.json"))
 
     # check double resolution and '.' works: $COMPONENT_DIR -> $BASE_DIR -> '.'
-    assert actual['components']['morphologies_dir'] == str(TEST_DATA_DIR / 'morphologies')
+    assert actual["components"]["morphologies_dir"] == str(TEST_DATA_DIR / "morphologies")
 
     # check resolution and './' works: $NETWORK_DIR -> './'
-    assert actual['networks']['nodes'][0]['nodes_file'] == str(TEST_DATA_DIR / 'nodes.h5')
+    assert actual["networks"]["nodes"][0]["nodes_file"] == str(TEST_DATA_DIR / "nodes.h5")
 
     # check resolution of '../' works: $PARENT --> '../'
     with copy_config() as config_path:
@@ -26,10 +25,7 @@ def test_parse():
             config["components"]["other"] = "$PARENT/other"
 
         actual = test_module.Config.parse(config_path)
-        assert (
-                actual['components']['other'] ==
-                str(Path(config_path.parent / "../other").resolve())
-        )
+        assert actual["components"]["other"] == str(Path(config_path.parent / "../other").resolve())
 
     # check resolution of '../' works in a path outside manifest
     with copy_config() as config_path:
@@ -37,16 +33,14 @@ def test_parse():
             config["components"]["other"] = "../other"
 
         actual = test_module.Config.parse(config_path)
-        assert (
-                actual['components']['other'] ==
-                str(Path(config_path.parent / "../other").resolve())
-        )
+        assert actual["components"]["other"] == str(Path(config_path.parent / "../other").resolve())
 
     # check resolution without manifest of '../' works in a path outside
     # i.e. : self.manifest contains the configdir even if manifest is not here
     with copy_config() as config_path:
         with edit_config(config_path) as config:
-            for k in list(config): config.pop(k)
+            for k in list(config):
+                config.pop(k)
             config["something"] = "../other"
         actual = test_module.Config.parse(config_path)
         assert actual["something"] == str(Path(config_path.parent / "../other").resolve())
@@ -56,14 +50,14 @@ def test_parse():
         with edit_config(config_path) as config:
             config["something"] = "$COMPONENT_DIR/something////else"
         actual = test_module.Config.parse(config_path)
-        assert actual["something"] == str(Path(config_path.parent) / 'something' / 'else')
+        assert actual["something"] == str(Path(config_path.parent) / "something" / "else")
 
     # check resolution with $ in a middle of the words
     with copy_config() as config_path:
         with edit_config(config_path) as config:
             config["something"] = "$COMPONENT_DIR/somet$hing/else"
         actual = test_module.Config.parse(config_path)
-        assert actual["something"] == str(Path(config_path.parent) / 'somet$hing' / 'else')
+        assert actual["something"] == str(Path(config_path.parent) / "somet$hing" / "else")
 
     # check resolution with relative path without "." in the manifest
     with copy_config() as config_path:
@@ -71,17 +65,18 @@ def test_parse():
             config["manifest"]["$NOPOINT"] = "nopoint"
             config["components"]["other"] = "$NOPOINT/other"
         actual = test_module.Config.parse(config_path)
-        assert actual["components"]["other"] == str(Path(config_path.parent) / 'nopoint' / 'other')
+        assert actual["components"]["other"] == str(Path(config_path.parent) / "nopoint" / "other")
 
     # check resolution for non path objects
     with copy_config() as config_path:
         with edit_config(config_path) as config:
-            for k in list(config): config.pop(k)
+            for k in list(config):
+                config.pop(k)
             config["string"] = "string"
             config["int"] = 1
             config["double"] = 0.2
             # just to check because we use starting with '.' as a special case
-            config["tricky_double"] = .2
+            config["tricky_double"] = 0.2
             config["path"] = "./path"
 
         actual = test_module.Config.parse(config_path)
@@ -136,18 +131,18 @@ def test_bad_manifest():
 
 
 def test_simulation_config():
-    actual = test_module.Config.parse(
-        str(TEST_DATA_DIR / 'simulation_config.json')
-    )
+    actual = test_module.Config.parse(str(TEST_DATA_DIR / "simulation_config.json"))
     assert actual["target_simulator"] == "my_simulator"
     assert actual["network"] == str(Path(TEST_DATA_DIR / "circuit_config.json").resolve())
-    assert actual["mechanisms_dir"] == str(Path(TEST_DATA_DIR / "../shared_components_mechanisms").resolve())
+    assert actual["mechanisms_dir"] == str(
+        Path(TEST_DATA_DIR / "../shared_components_mechanisms").resolve()
+    )
     assert actual["conditions"]["celsius"] == 34.0
     assert actual["conditions"]["v_init"] == -80
 
 
 def test_dict_config():
-    config = json.load(open(str(TEST_DATA_DIR / 'circuit_config.json'), "r"))
+    config = json.load(open(str(TEST_DATA_DIR / "circuit_config.json"), "r"))
     # there are relative paths in the manifest you cannot resolve if you are using a dict
     with pytest.raises(BluepySnapError):
         test_module.Config(config)
@@ -155,10 +150,10 @@ def test_dict_config():
     config["manifest"]["$NETWORK_DIR"] = str(TEST_DATA_DIR)
     config["manifest"]["$BASE_DIR"] = str(TEST_DATA_DIR)
 
-    expected = test_module.Config.parse(str(TEST_DATA_DIR / 'circuit_config.json'))
+    expected = test_module.Config.parse(str(TEST_DATA_DIR / "circuit_config.json"))
     assert test_module.Config(config).resolve() == expected
 
-    config = json.load(open(str(TEST_DATA_DIR / 'simulation_config.json'), "r"))
+    config = json.load(open(str(TEST_DATA_DIR / "simulation_config.json"), "r"))
     # there are relative paths in the manifest you cannot resolve if you are using a dict and
     # the field "mechanisms_dir" is using a relative path
     with pytest.raises(BluepySnapError):
@@ -173,7 +168,7 @@ def test_dict_config():
 
     # does not allow Paths as values
     with pytest.raises(BluepySnapError):
-        config = json.load(open(str(TEST_DATA_DIR / 'circuit_config.json'), "r"))
+        config = json.load(open(str(TEST_DATA_DIR / "circuit_config.json"), "r"))
         config["manifest"]["$NETWORK_DIR"] = TEST_DATA_DIR
         config["manifest"]["$BASE_DIR"] = TEST_DATA_DIR
         test_module.Config.parse(config)

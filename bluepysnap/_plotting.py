@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Plotting module for the different snap objects."""
 import logging
+
 import numpy as np
 import pandas as pd
 from more_itertools import roundrobin
@@ -64,18 +65,19 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     spike_report = filtered_report.spike_report
 
     times = filtered_report.report.index
-    node_count = filtered_report.report[['ids', 'population']].drop_duplicates().shape[0]
+    node_count = filtered_report.report[["ids", "population"]].drop_duplicates().shape[0]
 
     if len(times) == 0:
-        raise BluepySnapError("No data to display. You should check your "
-                              f"'group' query: {spike_report.group}.")
+        raise BluepySnapError(
+            "No data to display. You should check your " f"'group' query: {spike_report.group}."
+        )
 
     time_start = np.min(times)
     time_stop = np.max(times)
 
     if time_binsize is None:
         # heuristic for a nice bin size (~100 spikes per bin on average)
-        time_binsize = min(50.0, (time_stop - time_start) / ((len(times) / 100.) + 1.))
+        time_binsize = min(50.0, (time_stop - time_start) / ((len(times) / 100.0) + 1.0))
 
     bins = np.append(np.arange(time_start, time_stop, time_binsize), time_stop)
     hist, bin_edges = np.histogram(times, bins=bins)
@@ -83,11 +85,11 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
 
     if ax is None:
         ax = plt.gca()
-        ax.set_xlabel('Time [ms]')
-        ax.set_ylabel('PSTH [Hz]')
+        ax.set_xlabel("Time [ms]")
+        ax.set_ylabel("PSTH [Hz]")
 
     # use the middle of the bins instead of the start of the bin
-    ax.plot(0.5 * (bin_edges[1:] + bin_edges[:-1]), freq, label="PSTH", drawstyle='steps-mid')
+    ax.plot(0.5 * (bin_edges[1:] + bin_edges[:-1]), freq, label="PSTH", drawstyle="steps-mid")
     return ax
 
 
@@ -114,12 +116,13 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
     spike_report = filtered_report.spike_report
     population_names = filtered_report.spike_report.population_names
 
-    props = {"node_id_offset": 0,
-             "pop_separators": [],
-             "categorical_values": set(),
-             "ymin": np.inf,
-             "ymax": -np.inf
-             }
+    props = {
+        "node_id_offset": 0,
+        "pop_separators": [],
+        "categorical_values": set(),
+        "ymin": np.inf,
+        "ymax": -np.inf,
+    }
 
     def _update_raster_properties():
         if y_axis is None:
@@ -159,7 +162,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
         ax = plt.gca()
         ax.xaxis.grid()
         ax.set_xlabel("Time [ms]")
-        ax.tick_params(axis='y', which='both', length=0)
+        ax.tick_params(axis="y", which="both", length=0)
         ax.set_xlim(spike_report.time_start, spike_report.time_stop)
         if y_axis is None:
             ax.set_ylim(0, props["node_id_offset"])
@@ -176,10 +179,10 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
                     ax.set_ylim(-0.5, len(labels) - 0.5)
             ax.set_ylabel(y_axis)
 
-    ax.scatter(data.index.to_numpy(), data.to_numpy(), s=10, marker='|')
+    ax.scatter(data.index.to_numpy(), data.to_numpy(), s=10, marker="|")
     if len(props["pop_separators"]) > 1:
         for separator in props["pop_separators"]:
-            ax.axhline(y=separator, color='black', lw=2)
+            ax.axhline(y=separator, color="black", lw=2)
     return ax
 
 
@@ -210,31 +213,34 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
     values = np.concatenate([np.diff(node_spikes.index.to_numpy()) for _, node_spikes in gb])
 
     if len(values) == 0:
-        raise BluepySnapError("No data to display. You should check your "
-                              f"'group' query: {filtered_report.spike_report.group}.")
+        raise BluepySnapError(
+            "No data to display. You should check your "
+            f"'group' query: {filtered_report.spike_report.group}."
+        )
     if use_frequency:
         values = values[values > 0]  # filter out zero intervals
         values = 1000.0 / values
 
     if binsize is None:
-        bins = 'auto'
+        bins = "auto"
     else:
         bins = np.arange(0, np.max(values), binsize)
 
     if ax is None:
         ax = plt.gca()
         if use_frequency:
-            ax.set_xlabel('Frequency [Hz]')
+            ax.set_xlabel("Frequency [Hz]")
         else:
-            ax.set_xlabel('Interspike interval [ms]')
-        ax.set_ylabel('Bin weight')
+            ax.set_xlabel("Interspike interval [ms]")
+        ax.set_ylabel("Bin weight")
 
-    ax.hist(values, bins=bins, edgecolor='black', density=True)
+    ax.hist(values, bins=bins, edgecolor="black", density=True)
     return ax
 
 
-def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
-                            dt=20, ax=None):  # pragma: no cover
+def spikes_firing_animation(
+    filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20, ax=None
+):  # pragma: no cover
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
     """Simple animation of simulation spikes.
 
@@ -275,7 +281,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
         """Verifies axes values."""
         axes = {Node.X, Node.Y, Node.Z}
         if axis not in axes:
-            raise BluepySnapError(f'{axis} is not a valid axis')
+            raise BluepySnapError(f"{axis} is not a valid axis")
 
     _check_axis(x_axis)
     _check_axis(y_axis)
@@ -302,22 +308,22 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     if ax is None:
         fig = plt.figure()
         ax = plt.gca()
-        ax.set_title(f'time = {np.min(data.index)}ms')
+        ax.set_title(f"time = {np.min(data.index)}ms")
         x_limits = [data[x_axis].min(), data[x_axis].max()]
         y_limits = [data[y_axis].min(), data[y_axis].max()]
         ax.set_xlim(*x_limits)
         ax.set_ylim(*y_limits)
-        ax.set_xlabel(rf'{x_axis} $\mu$m')  # noqa
-        ax.set_ylabel(rf'{y_axis} $\mu$m')  # noqa
+        ax.set_xlabel(rf"{x_axis} $\mu$m")  # noqa
+        ax.set_ylabel(rf"{y_axis} $\mu$m")  # noqa
 
     else:
         fig = ax.figure
 
-    dots = ax.plot([], [], '.k')
+    dots = ax.plot([], [], ".k")
 
     def update_animation(frame):
         """Update the animation plots and axes."""
-        ax.set_title('time = ' + str(frame * dt) + ' ms')
+        ax.set_title("time = " + str(frame * dt) + " ms")
         mask = (data.index >= frame * dt) & (data.index <= (frame + 1) * dt)
         positions = data.loc[mask, [x_axis, y_axis]].values
         x = positions[:, 0]
@@ -330,7 +336,7 @@ def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y,
     return anim, ax
 
 
-def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
+def frame_trace(filtered_report, plot_type="mean", ax=None):  # pragma: no cover
     """Returns a plot displaying the voltage of a node or a compartment as a function of time.
 
     Args:
@@ -349,9 +355,9 @@ def frame_trace(filtered_report, plot_type='mean', ax=None):  # pragma: no cover
         ax = plt.gca()
         data_units = filtered_report.frame_report.data_units
         if plot_type == "mean":
-            ax.set_ylabel(f'Avg volt. [{data_units}]')
+            ax.set_ylabel(f"Avg volt. [{data_units}]")
         elif plot_type == "all":
-            ax.set_ylabel(f'Voltage [{data_units}]')
+            ax.set_ylabel(f"Voltage [{data_units}]")
         ax.set_xlabel(f"Time [{filtered_report.frame_report.time_units}]")
         ax.set_xlim([filtered_report.report.index.min(), filtered_report.report.index.max()])
 

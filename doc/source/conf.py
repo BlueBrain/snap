@@ -10,10 +10,10 @@ from pkg_resources import get_distribution
 
 # -- Project information -----------------------------------------------------
 
-project = 'Blue Brain SNAP'
-author = 'Blue Brain Project, EPFL'
+project = "Blue Brain SNAP"
+author = "Blue Brain Project, EPFL"
 
-release = get_distribution('bluepysnap').version
+release = get_distribution("bluepysnap").version
 version = release
 
 # -- General configuration ---------------------------------------------------
@@ -28,7 +28,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -39,7 +39,7 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx-bluebrain-theme'
+html_theme = "sphinx-bluebrain-theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -55,7 +55,7 @@ html_show_sourcelink = False
 # set the theme settings
 html_theme_options = {
     "repo_url": "https://github.com/BlueBrain/snap/",
-    "repo_name": "BlueBrain/snap"
+    "repo_name": "BlueBrain/snap",
 }
 
 # autodoc settings

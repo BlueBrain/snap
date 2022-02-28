@@ -25,11 +25,21 @@ class TestClass:
         pass
 
 
-class TestClassA(TestClass, metaclass=test_module.DocSubstitutionMeta, source_word="TestClass", target_word="TestClassA"):
+class TestClassA(
+    TestClass,
+    metaclass=test_module.DocSubstitutionMeta,
+    source_word="TestClass",
+    target_word="TestClassA",
+):
     """New class with changed docstrings."""
 
 
-class TestClassB(TestClass, metaclass=test_module.DocSubstitutionMeta, source_word="TestClass", target_word="TestClassB"):
+class TestClassB(
+    TestClass,
+    metaclass=test_module.DocSubstitutionMeta,
+    source_word="TestClass",
+    target_word="TestClassB",
+):
     """New class with changed docstrings."""
 
 

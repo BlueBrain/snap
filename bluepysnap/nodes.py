@@ -20,24 +20,26 @@ import inspect
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
 
-from more_itertools import first
 import libsonata
 import numpy as np
 import pandas as pd
-
 from cached_property import cached_property
+from more_itertools import first
 
-from bluepysnap import query
-from bluepysnap.network import NetworkObject
-from bluepysnap import utils
-from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import (DEFAULT_NODE_TYPE, DYNAMICS_PREFIX, Node, ConstContainer)
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap import query, utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
+from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.network import NetworkObject
+from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, DYNAMICS_PREFIX, ConstContainer, Node
 
 
-class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
-            source_word="NetworkObject", target_word="Node"):
+class Nodes(
+    NetworkObject,
+    metaclass=AbstractDocSubstitutionMeta,
+    source_word="NetworkObject",
+    target_word="Node",
+):
     """The top level Nodes accessor."""
 
     def __init__(self, circuit):  # pylint: disable=useless-super-delegation
@@ -45,12 +47,16 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         super().__init__(circuit)
 
     def _collect_populations(self):
-        return self._get_populations(NodeStorage, self._config['networks']['nodes'])
+        return self._get_populations(NodeStorage, self._config["networks"]["nodes"])
 
     def property_values(self, prop):
         """Returns all the values for a given Nodes property."""
-        return set(value for pop in self.values() if prop in pop.property_names for value in
-                   pop.property_values(prop))
+        return set(
+            value
+            for pop in self.values()
+            if prop in pop.property_names
+            for value in pop.property_values(prop)
+        )
 
     def ids(self, group=None, sample=None, limit=None):
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
@@ -117,7 +123,7 @@ class Nodes(NetworkObject, metaclass=AbstractDocSubstitutionMeta,
         fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
-    def get(self, group=None, properties=None):   # pylint: disable=arguments-differ
+    def get(self, group=None, properties=None):  # pylint: disable=arguments-differ
         """Node properties as a pandas DataFrame.
 
         Args:
@@ -155,9 +161,9 @@ class NodeStorage:
         Returns:
             NodeStorage: A NodeStorage object.
         """
-        self._h5_filepath = config['nodes_file']
-        self._csv_filepath = config.get('node_types_file')
-        self._populations_config = config.get('populations', {})
+        self._h5_filepath = config["nodes_file"]
+        self._csv_filepath = config.get("node_types_file")
+        self._populations_config = config.get("populations", {})
         self._circuit = circuit
         self._populations = {}
 
@@ -191,7 +197,8 @@ class NodeStorage:
         if population_name not in self._populations:
             population_config = self._populations_config.get(population_name)
             self._populations[population_name] = NodePopulation(
-                self, population_name, population_config=population_config)
+                self, population_name, population_config=population_config
+            )
 
         return self._populations[population_name]
 
@@ -268,14 +275,14 @@ class NodePopulation:
     @cached_property
     def config(self):
         """Population config dictionary combined with the components dictionary."""
-        components = deepcopy(self._node_storage.circuit.config.get('components', {}))
+        components = deepcopy(self._node_storage.circuit.config.get("components", {}))
         components.update(self._config)
         return components
 
     @property
     def type(self):
         """Population type."""
-        return self.config.get('type', DEFAULT_NODE_TYPE)
+        return self.config.get("type", DEFAULT_NODE_TYPE)
 
     @cached_property
     def _property_names(self):
@@ -292,8 +299,11 @@ class NodePopulation:
             set: a set containing the names of edge populations using this NodePopulation as
             source.
         """
-        return set(edge.name for edge in self._node_storage.circuit.edges.values() if
-                   self.name == edge.source.name)
+        return set(
+            edge.name
+            for edge in self._node_storage.circuit.edges.values()
+            if self.name == edge.source.name
+        )
 
     def target_in_edges(self):
         """Set of edge population names that use this node population as target.
@@ -302,8 +312,11 @@ class NodePopulation:
             set: a set containing the names of edge populations using this NodePopulation as
             target.
         """
-        return set(edge.name for edge in self._node_storage.circuit.edges.values() if
-                   self.name == edge.target.name)
+        return set(
+            edge.name
+            for edge in self._node_storage.circuit.edges.values()
+            if self.name == edge.target.name
+        )
 
     @property
     def property_names(self):
@@ -384,8 +397,10 @@ class NodePopulation:
             max_id = max(node_ids)
             min_id = min(node_ids)
         if min_id < 0 or max_id >= self._data.index.shape[0]:
-            raise BluepySnapError(f"All node IDs must be >= 0 and < {self._data.index.shape[0]} "
-                                  f"for population '{self.name}'")
+            raise BluepySnapError(
+                f"All node IDs must be >= 0 and < {self._data.index.shape[0]} "
+                f"for population '{self.name}'"
+            )
 
     def _check_property(self, prop):
         """Check if a property exists inside the dataset."""
@@ -500,8 +515,9 @@ class NodePopulation:
         if group is None:
             result = self._data.index.values
         elif isinstance(group, Mapping):
-            result = self._node_ids_by_filter(queries=group,
-                                              raise_missing_prop=raise_missing_property)
+            result = self._node_ids_by_filter(
+                queries=group, raise_missing_prop=raise_missing_property
+            )
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)
@@ -513,8 +529,9 @@ class NodePopulation:
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
                 except AttributeError as e:
-                    raise BluepySnapError("All values from a list must be of type int or "
-                                          "CircuitNodeId.") from e
+                    raise BluepySnapError(
+                        "All values from a list must be of type int or " "CircuitNodeId."
+                    ) from e
             self._check_ids(result)
             preserve_order = isinstance(group, Sequence)
 
@@ -669,26 +686,26 @@ class NodePopulation:
                 Otherwise a pandas Series with rotation matrices indexed by node IDs.
         """
         # need to keep this quaternion ordering for quaternion2mat (expects w, x, y , z)
-        props = np.array([
-            Node.ORIENTATION_W,
-            Node.ORIENTATION_X,
-            Node.ORIENTATION_Y,
-            Node.ORIENTATION_Z
-        ])
+        props = np.array(
+            [Node.ORIENTATION_W, Node.ORIENTATION_X, Node.ORIENTATION_Y, Node.ORIENTATION_Z]
+        )
         props_mask = np.isin(props, list(self.property_names))
         orientation_count = np.count_nonzero(props_mask)
         if orientation_count == 4:
             trans = utils.quaternion2mat
         elif orientation_count in [1, 2, 3]:
             raise BluepySnapError(
-                "Missing orientation fields. Should be 4 quaternions or euler angles or nothing")
+                "Missing orientation fields. Should be 4 quaternions or euler angles or nothing"
+            )
         else:
             # need to keep this rotation_angle ordering for euler2mat (expects z, y, x)
-            props = np.array([
-                Node.ROTATION_ANGLE_Z,
-                Node.ROTATION_ANGLE_Y,
-                Node.ROTATION_ANGLE_X,
-            ])
+            props = np.array(
+                [
+                    Node.ROTATION_ANGLE_Z,
+                    Node.ROTATION_ANGLE_Y,
+                    Node.ROTATION_ANGLE_X,
+                ]
+            )
             props_mask = np.isin(props, list(self.property_names))
             trans = utils.euler2mat
 
@@ -703,7 +720,7 @@ class NodePopulation:
         args = [_get_values(prop) for prop in props]
         if utils.is_node_id(group):
             return trans(*args)[0]
-        return pd.Series(trans(*args), index=result.index, name='orientation')
+        return pd.Series(trans(*args), index=result.index, name="orientation")
 
     def count(self, group=None):
         """Total number of nodes for a given node group.
@@ -729,12 +746,15 @@ class NodePopulation:
         """Access to node morphologies."""
         from bluepysnap.morph import MorphHelper
 
-        return MorphHelper(self.config.get('morphologies_dir'),
-                           self,
-                           alternate_morphologies=self.config.get('alternate_morphologies'))
+        return MorphHelper(
+            self.config.get("morphologies_dir"),
+            self,
+            alternate_morphologies=self.config.get("alternate_morphologies"),
+        )
 
     @cached_property
     def models(self):
         """Access to node neuron models."""
         from bluepysnap.neuron_models import NeuronModelsHelper
+
         return NeuronModelsHelper(self.config, self)

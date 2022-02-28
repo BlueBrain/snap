@@ -28,15 +28,15 @@ def str2bool(value):
     if value is None:
         return False
     else:
-        return value.lower() in ('y', 'yes', 'true', '1')
+        return value.lower() in ("y", "yes", "true", "1")
 
 
 def load_env():
     """Load settings from environment variables."""
     # pylint: disable=global-statement
-    if 'BLUESNAP_STRICT_MODE' in os.environ:
+    if "BLUESNAP_STRICT_MODE" in os.environ:
         global STRICT_MODE
-        STRICT_MODE = str2bool(os.environ['BLUESNAP_STRICT_MODE'])
+        STRICT_MODE = str2bool(os.environ["BLUESNAP_STRICT_MODE"])
 
 
 load_env()

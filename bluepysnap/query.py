@@ -3,8 +3,9 @@ from collections.abc import Mapping
 from copy import deepcopy
 
 import numpy as np
-from bluepysnap.exceptions import BluepySnapError
+
 from bluepysnap import utils
+from bluepysnap.exceptions import BluepySnapError
 
 # this constant is not part of the sonata standard
 NODE_ID_KEY = "node_id"
@@ -151,7 +152,8 @@ def resolve_ids(data, population_name, queries):
             queries[queries_key] = np.logical_and.reduce(children_mask)
         else:
             queries[queries_key] = _properties_mask(
-                data, population_name, {queries_key: queries[queries_key]})
+                data, population_name, {queries_key: queries[queries_key]}
+            )
 
     queries = deepcopy(queries)
     traverse_queries_bottom_up(queries, _collect)

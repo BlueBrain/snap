@@ -24,8 +24,9 @@ from collections.abc import Mapping
 from copy import deepcopy
 
 import numpy as np
-from bluepysnap.exceptions import BluepySnapError
+
 from bluepysnap import utils
+from bluepysnap.exceptions import BluepySnapError
 
 
 def _sanitize(node_set):

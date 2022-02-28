@@ -17,16 +17,16 @@
 """Spike report access."""
 
 from contextlib import contextmanager
-
 from pathlib import Path
-from cached_property import cached_property
-import pandas as pd
-import numpy as np
-from libsonata import SpikeReader, SonataError
 
+import numpy as np
+import pandas as pd
+from cached_property import cached_property
+from libsonata import SonataError, SpikeReader
+
+import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import IDS_DTYPE
-import bluepysnap._plotting
 
 
 def _get_reader(spike_report):
@@ -35,8 +35,10 @@ def _get_reader(spike_report):
 
 
 def _collect_spikes(spike_report):
-    return {population: PopulationSpikeReport(spike_report, population) for population in
-            spike_report.population_names}
+    return {
+        population: PopulationSpikeReport(spike_report, population)
+        for population in spike_report.population_names
+    }
 
 
 class PopulationSpikeReport:
@@ -105,8 +107,9 @@ class PopulationSpikeReport:
             raise BluepySnapError(e) from e
 
         if not res:
-            return pd.Series(data=[], index=pd.Index([], name="times"),
-                             name=series_name, dtype=IDS_DTYPE)
+            return pd.Series(
+                data=[], index=pd.Index([], name="times"), name=series_name, dtype=IDS_DTYPE
+            )
 
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
@@ -225,7 +228,7 @@ class SpikeReport:
         path = Path(self.config["output_dir"]) / self.config["log_file"]
         if not path.exists():
             raise BluepySnapError("Cannot find the log file for the spike report.")
-        yield path.open("r", encoding='utf-8')
+        yield path.open("r", encoding="utf-8")
 
     @cached_property
     def _spike_reader(self):

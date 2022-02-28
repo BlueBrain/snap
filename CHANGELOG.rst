@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version v0.13.2
+---------------
+
+Improvements
+~~~~~~~~~~~~
+- Add black & isort to handle formatting
+
 Version v0.13.1
 ---------------
 

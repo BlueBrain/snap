@@ -17,25 +17,27 @@
 
 """SONATA network config parsing."""
 
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from collections.abc import Mapping, Iterable
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 # List of keys which are expected to have paths
-EXPECTED_PATH_KEYS = {'morphologies_dir',
-                      'biophysical_neuron_models_dir',
-                      'vasculature_file',
-                      'vasculature_mesh',
-                      'end_feet_area',
-                      'neurolucida-asc',
-                      'h5v1',
-                      'edges_file',
-                      'nodes_file',
-                      'edges_type_file',
-                      'nodes_type_file',
-                      'node_sets_file'}
+EXPECTED_PATH_KEYS = {
+    "morphologies_dir",
+    "biophysical_neuron_models_dir",
+    "vasculature_file",
+    "vasculature_mesh",
+    "end_feet_area",
+    "neurolucida-asc",
+    "h5v1",
+    "edges_file",
+    "nodes_file",
+    "edges_type_file",
+    "nodes_type_file",
+    "node_sets_file",
+}
 
 
 class Config:
@@ -60,7 +62,7 @@ class Config:
         else:
             configdir = str(Path(config).parent.resolve())
             content = utils.load_json(str(config))
-        self.manifest = Config._resolve_manifest(content.pop('manifest', {}), configdir)
+        self.manifest = Config._resolve_manifest(content.pop("manifest", {}), configdir)
         self.content = content
 
     @staticmethod
@@ -69,7 +71,7 @@ class Config:
 
         for k, v in result.items():
             if not isinstance(v, str):
-                raise BluepySnapError(f'{v} should be a string value.')
+                raise BluepySnapError(f"{v} should be a string value.")
             if not Path(v).is_absolute() and not v.startswith("$"):
                 if configdir is None:
                     raise BluepySnapError("Dictionary config with relative paths is not allowed.")
@@ -78,39 +80,38 @@ class Config:
         while True:
             update = False
             for k, v in result.items():
-                if v.count('$') > 1:
+                if v.count("$") > 1:
                     raise BluepySnapError(
-                        f'{k} is not a valid anchor : contains more than one sub anchor.')
-                if v.startswith('$'):
-                    tokens = v.split('/', 1)
+                        f"{k} is not a valid anchor : contains more than one sub anchor."
+                    )
+                if v.startswith("$"):
+                    tokens = v.split("/", 1)
                     resolved = result[tokens[0]]
-                    if '$' not in resolved:
+                    if "$" not in resolved:
                         result[k] = str(Path(resolved, *tokens[1:]))
                         update = True
             if not update:
                 break
 
-        assert '${configdir}' not in result
-        result['${configdir}'] = configdir
+        assert "${configdir}" not in result
+        result["${configdir}"] = configdir
 
         return result
 
     def _resolve_string(self, value, key):
         # not a startswith to detect the badly placed anchors
-        if '$' in value:
-            vs = [
-                self.manifest[v] if v.startswith('$') else v
-                for v in value.split('/')
-            ]
-            abs_paths = [v for v in vs[1:] if v.startswith('/')]
+        if "$" in value:
+            vs = [self.manifest[v] if v.startswith("$") else v for v in value.split("/")]
+            abs_paths = [v for v in vs[1:] if v.startswith("/")]
             if len(abs_paths) != 0:
                 raise BluepySnapError(
-                    f"Misplaced anchors in : {value}. Please verify your '$' usage.")
+                    f"Misplaced anchors in : {value}. Please verify your '$' usage."
+                )
             return str(Path(*vs))
         # only way to know if value is a relative path or a normal string
-        elif value.startswith('.') or key in EXPECTED_PATH_KEYS:
-            if self.manifest['${configdir}'] is not None:
-                return str(Path(self.manifest['${configdir}'], value).resolve())
+        elif value.startswith(".") or key in EXPECTED_PATH_KEYS:
+            if self.manifest["${configdir}"] is not None:
+                return str(Path(self.manifest["${configdir}"], value).resolve())
             raise BluepySnapError("Dictionary config with relative paths is not allowed.")
         else:
             # we cannot know if a string is a path or not if it does not contain anchor or .
@@ -118,9 +119,7 @@ class Config:
 
     def _resolve(self, value, key=None):
         if isinstance(value, Mapping):
-            return {
-                k: self._resolve(v, k) for k, v in value.items()
-            }
+            return {k: self._resolve(v, k) for k, v in value.items()}
         elif isinstance(value, str):
             return self._resolve_string(value, key)
         elif isinstance(value, Iterable):

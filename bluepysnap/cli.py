@@ -9,8 +9,8 @@ def cli():
     """The CLI object."""
 
 
-@cli.command('validate', short_help='Validate Sonata circuit')
-@click.argument('config_file', type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@cli.command("validate", short_help="Validate Sonata circuit")
+@click.argument("config_file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
 def validate_cli(config_file):
     """Cli command for validating of Sonata circuit.
 
