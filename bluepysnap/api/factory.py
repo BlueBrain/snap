@@ -4,11 +4,13 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
-from bluepysnap.api.entity import DOWNLOADED_CONTENT_PATH, Entity
+from bluepysnap.api.entity import Entity
 from kgforge.core import Resource
 from more_itertools import all_equal, always_iterable, first
 
+
 L = logging.getLogger(__name__)
+DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute() # user defined or tmp would be better
 
 
 def _get_path(p):
@@ -48,6 +50,7 @@ class EntityFactory:
             "voxcell",
             open_atlas_voxcell,
         )
+        self.register("EModelConfiguration", "custom-wrapper", open_emodelconfiguration)
 
     def register(self, resource_types, tool, func):
         """Register a tool to open the given resource type.
@@ -99,7 +102,12 @@ class EntityFactory:
             L.info("Using the specified tool %s to open %s", tool, types)
         else:
             raise RuntimeError(f"Tool {tool} not found for {types}")
+
         try:
+            if func == open_emodelconfiguration:
+                #TODO: EModelConfiguration in nexus demo/emodel_pipeline
+                #      only have the morphology.name, and can't be auto downloaded
+                return func(entity, self._connector)
             return func(entity)
         except Exception as ex:
             raise RuntimeError(f"Unable to open {types}") from ex
@@ -160,6 +168,32 @@ def open_morphology_release(entity):
 
     config_path = _get_path(entity.morphologyIndex.distribution.url)
     return MorphDB.from_neurondb(config_path)
+
+
+def open_emodelconfiguration(resource, connector):
+    from bluepysnap.api.wrappers import EModelConfiguration
+
+    #TODO: we need the connector here, since the
+    #      morphology/SubCellularModelScript (mod file) only exists as text;
+    #      it's not 'connected'/'linked' to anything in nexus
+
+    def _get_named_entity(type_, name):
+        resources = connector.get_resources(type_, {'name': name})
+        assert len(resources) == 1, f"Wanted 1 entity, got {len(resources)}"
+        ret = resources[0]
+
+        def download(path):
+            connector.download_resource(ret.distribution, path)
+            return Path(path) / ret.distribution.name
+
+        ret.download = download
+
+        return ret
+
+    morphology = _get_named_entity('NeuronMorphology', name=resource.morphology.name)
+    mod_file = _get_named_entity('SubCellularModelScript', name=resource.mechanisms.name)
+
+    return EModelConfiguration(resource.parameters, resource.mechanisms, morphology, mod_file)
 
 
 def open_morphology_neurom(entity):
