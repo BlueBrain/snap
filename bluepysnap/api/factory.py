@@ -1,15 +1,14 @@
 import logging
+import os
 from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
+from bluepysnap.api.entity import DOWNLOADED_CONTENT_PATH, Entity
 from kgforge.core import Resource
 from more_itertools import all_equal, always_iterable, first
 
-from bluepysnap.api.entity import Entity
-
 L = logging.getLogger(__name__)
-DOWNLOADED_CONTENT_PATH = Path(".downloaded_content")  # user defined or tmp would be better
 
 
 def _get_path(p):
@@ -84,13 +83,13 @@ class EntityFactory:
         return Entity(
             resource,
             retriever=self._connector.get_resource_by_id,
-            opener=partial(self._open_resource, tool=tool),
-            downloader=self._connector.download
+            opener=partial(self._open_entity, tool=tool),
+            downloader=self._connector.download_resource,
         )
 
-    def _open_resource(self, resource, tool=None):
-        """Open the resource and return the associated instance."""
-        types = resource.type  # type or list of types
+    def _open_entity(self, entity, tool=None):
+        """Open the entity and return the associated instance."""
+        types = entity.type  # type or list of types
         tool_functions = self._get_tool_functions(types)
         if tool is None:
             tool, func = first(tool_functions.items())
@@ -101,11 +100,7 @@ class EntityFactory:
         else:
             raise RuntimeError(f"Tool {tool} not found for {types}")
         try:
-            if func == open_morphology_neurom:
-                # TODO: define functions that allow downloads, and those that don't.
-                # Eventually, everything would be downloadable?
-                return func(resource, self._connector.download)
-            return func(resource)
+            return func(entity)
         except Exception as ex:
             raise RuntimeError(f"Unable to open {types}") from ex
 
@@ -125,68 +120,73 @@ class EntityFactory:
         return first(available_tool_functions.values())
 
 
-def open_circuit_snap(resource):
+def open_circuit_snap(entity):
     import bluepysnap
 
-    config_path = _get_path(resource.circuitBase.url) / "sonata/circuit_config.json"
+    config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
     return bluepysnap.Circuit(str(config_path))
 
 
-def open_circuit_bluepy(resource):
+def open_circuit_bluepy(entity):
     import bluepy
 
-    config_path = _get_path(resource.circuitBase.url) / "CircuitConfig"
+    config_path = _get_path(entity.circuitBase.url) / "CircuitConfig"
     return bluepy.Circuit(str(config_path))
 
 
-def open_simulation_snap(resource):
+def open_simulation_snap(entity):
     import bluepysnap
 
-    config_path = _get_path(resource.path) / "sonata/simulation_config.json"
+    config_path = _get_path(entity.path) / "sonata/simulation_config.json"
     return bluepysnap.Simulation(str(config_path))
 
 
-def open_simulation_bluepy(resource):
+def open_simulation_bluepy(entity):
     import bluepy
 
-    config_path = _get_path(resource.path) / "BlueConfig"
+    config_path = _get_path(entity.path) / "BlueConfig"
     return bluepy.Simulation(str(config_path))
 
 
-def open_simulation_bglibpy(resource):
+def open_simulation_bglibpy(entity):
     from bglibpy import SSim
 
-    config_path = _get_path(resource.path) / "BlueConfig"
+    config_path = _get_path(entity.path) / "BlueConfig"
     return SSim(str(config_path))
 
 
-def open_morphology_release(resource):
+def open_morphology_release(entity):
     from morph_tool.morphdb import MorphDB
 
-    config_path = _get_path(resource.morphologyIndex.distribution.url)
+    config_path = _get_path(entity.morphologyIndex.distribution.url)
     return MorphDB.from_neurondb(config_path)
 
 
-def open_morphology_neurom(resource, downloader):
+def open_morphology_neurom(entity):
     import neurom
-    # TODO: have a possibility to also read the file atLocation, if found and accessible?
 
+    # TODO: have a possibility to also read the file atLocation, if found and accessible?
     supported_formats = {"text/plain", "application/swc", "application/h5"}
     unsupported_formats = set()
-    for item in always_iterable(resource.distribution):
-        if item.type == "DataDownload" and hasattr(item, "contentUrl"):
+
+    for item in always_iterable(entity.distribution):
+        if item.type == "DataDownload":
             encoding_format = getattr(item, "encodingFormat", "").lower()
             if encoding_format in supported_formats:
-                path = _get_downloaded_path(item.name)
-                if not path.exists():
-                    downloader(item, DOWNLOADED_CONTENT_PATH)
-
-                L.debug("Opening morphology at %s", path)
-                return neurom.io.utils.load_morphology(path)
+                if hasattr(item, "atLocation"):
+                    path = _get_path(item.atLocation.location)
+                    if os.access(path, os.R_OK):
+                        return neurom.io.utils.load_morphology(path)
+                if hasattr(item, "contentUrl"):
+                    entity.download(items=item, path=DOWNLOADED_CONTENT_PATH)
+                    path = _get_downloaded_path(item.name)
+                    return neurom.io.utils.load_morphology(path)
             if encoding_format:
                 unsupported_formats.add(encoding_format)
+
     if unsupported_formats:
         raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
+
     raise RuntimeError("Missing morphology location")
 
 
