@@ -36,7 +36,9 @@ class ResolvingResource:
         # TODO: In some cases 'distribution' contains list, in some cases 'DataDownload'
         # Figure out how to handle this in a cleaner way.
         # if isinstance(result, Resource):
-        if isinstance(result, Resource) and (not hasattr(result, 'type') or result.type != 'DataDownload'):
+        if isinstance(result, Resource) and (
+            not hasattr(result, "type") or result.type != "DataDownload"
+        ):
             # Wrap the Resource to resolve nested attributes.
             # The retrieved resource is not saved to avoid modifying the wrapped resource.
             result = ResolvingResource(result, retriever=self._retriever)
@@ -86,7 +88,7 @@ class Entity:
 
     # TODO: need to apply this to neuron too and build the logic of finding the distribution here
     def download(self, path):
-        if hasattr(self.resource, 'distribution'):
+        if hasattr(self.resource, "distribution"):
             self._downloader(self.resource.distribution, path)
 
     def __repr__(self):
