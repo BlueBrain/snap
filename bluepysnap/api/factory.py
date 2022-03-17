@@ -4,13 +4,12 @@ from collections import defaultdict
 from functools import partial
 from pathlib import Path
 
-from bluepysnap.api.entity import Entity
 from kgforge.core import Resource
 from more_itertools import all_equal, always_iterable, first
 
+from bluepysnap.api.entity import DOWNLOADED_CONTENT_PATH, Entity
 
 L = logging.getLogger(__name__)
-DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute() # user defined or tmp would be better
 
 
 def _get_path(p):
@@ -131,7 +130,10 @@ class EntityFactory:
 def open_circuit_snap(entity):
     import bluepysnap
 
-    config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
+    if hasattr(entity, 'circuitConfigPath'):
+        config_path = _get_path(entity.circuitConfigPath.url)
+    else:
+        config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
     return bluepysnap.Circuit(str(config_path))
 
 
@@ -208,9 +210,10 @@ def open_morphology_neurom(entity):
             encoding_format = getattr(item, "encodingFormat", "").lower()
             if encoding_format in supported_formats:
                 if hasattr(item, "atLocation"):
-                    path = _get_path(item.atLocation.location)
-                    if os.access(path, os.R_OK):
-                        return neurom.io.utils.load_morphology(path)
+                    if hasattr(item.atLocation, 'location'):
+                        path = _get_path(item.atLocation.location)
+                        if os.access(path, os.R_OK):
+                            return neurom.io.utils.load_morphology(path)
                 if hasattr(item, "contentUrl"):
                     entity.download(items=item, path=DOWNLOADED_CONTENT_PATH)
                     path = _get_downloaded_path(item.name)

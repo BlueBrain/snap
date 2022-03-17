@@ -1,7 +1,11 @@
 from functools import partial
+from pathlib import Path
 
 from kgforge.core import Resource
 from lazy_object_proxy import Proxy
+from more_itertools import always_iterable
+
+DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute()  # user defined or tmp would be better
 
 
 class ResolvingResource:
@@ -61,9 +65,6 @@ class ResolvingResource:
     def __repr__(self):
         return self._wrapped.__repr__()
 
-    def _repr_json_(self):
-        return self._wrapped._repr_json_()
-
 
 class Entity:
     def __init__(self, resource: Resource, retriever=None, opener=None, downloader=None):
@@ -75,7 +76,7 @@ class Entity:
             opener: callable used to open the instance associated to the resource.
         """
         self._rr = ResolvingResource(resource, retriever=retriever)
-        self._instance = Proxy(partial(opener, self._rr)) if opener else None
+        self._instance = Proxy(partial(opener, self)) if opener else None
         self._downloader = downloader
 
     @property
@@ -86,10 +87,16 @@ class Entity:
     def instance(self):
         return self._instance
 
-    # TODO: need to apply this to neuron too and build the logic of finding the distribution here
-    def download(self, path):
+    def _instantiate(self, opener):
         if hasattr(self.resource, "distribution"):
-            self._downloader(self.resource.distribution, path)
+            self.resource.distribution
+
+    def download(self, items=None, path=None):
+        path = path or DOWNLOADED_CONTENT_PATH
+        items = always_iterable(items or self.resource.distribution)
+
+        for item in items:
+            self._downloader(item, path)
 
     def __repr__(self):
         resource_id = getattr(self._rr, "id", None)

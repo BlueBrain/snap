@@ -2,21 +2,19 @@ import logging
 from typing import Dict, List, Union
 
 import pandas as pd
+from kgforge.core import KnowledgeGraphForge, Resource
+from pandas import DataFrame
+
 from bluepysnap.api.connector import NexusConnector
 from bluepysnap.api.entity import Entity
 from bluepysnap.api.factory import EntityFactory
-from kgforge.core import KnowledgeGraphForge, Resource
-from pandas import DataFrame
 
 L = logging.getLogger(__name__)
 
 
 class Api:
     def __init__(self, *, bucket, token, nexus_config=None, debug=False, **kwargs):
-        nexus_config = (
-            nexus_config
-            or "https://raw.githubusercontent.com/BlueBrain/nexus-forge/master/examples/notebooks/use-cases/prod-forge-nexus.yml"
-        )
+        nexus_config = nexus_config or "https://raw.githubusercontent.com/BlueBrain/nexus-forge/master/examples/notebooks/use-cases/prod-forge-nexus.yml"
         self._forge = KnowledgeGraphForge(
             nexus_config, bucket=bucket, token=token, debug=debug, **kwargs
         )
