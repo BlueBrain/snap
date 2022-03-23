@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from libsonata import SonataError
 
 import bluepysnap.simulation as test_module
 from bluepysnap.exceptions import BluepySnapError
@@ -12,7 +13,7 @@ from bluepysnap.frame_report import (
 )
 from bluepysnap.spike_report import PopulationSpikeReport, SpikeReport
 
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def test_all():
@@ -54,59 +55,34 @@ def test_all():
 
 
 def test_unknown_report():
-    simulation = test_module.Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
-    simulation.config["reports"] = {
-        "soma_report": {"cells": "Layer23", "variable_name": "m", "sections": "unknown"}
-    }
+    with copy_test_data(config="simulation_config.json") as (_, config_path):
+        with edit_config(config_path) as config:
+            config["reports"]["soma_report"]["sections"] = "unknown"
 
-    with pytest.raises(BluepySnapError):
-        simulation.reports
+        simulation = test_module.Simulation(config_path)
+        simulation.config["reports"] = {
+            "soma_report": {"cells": "Layer23", "variable_name": "m", "sections": "unknown"}
+        }
 
-
-def test__resolve_config():
-    simulation = test_module.Simulation(str(TEST_DATA_DIR / "config.json"))
-    assert simulation.config["network"] == str(TEST_DATA_DIR / "circuit_config.json")
-    assert set(simulation.circuit.nodes) == {"default", "default2"}
-
-    simulation = test_module.Simulation(str(TEST_DATA_DIR / "config_sim_no_network.json"))
-    assert simulation.config["network"] == str(TEST_DATA_DIR / "circuit_config.json")
-    assert set(simulation.circuit.nodes) == {"default", "default2"}
+        with pytest.raises(BluepySnapError):
+            simulation.reports
 
 
 def test_no_network_config():
-    simulation = test_module.Simulation(str(TEST_DATA_DIR / "simulation_config_no_network.json"))
-    with pytest.raises(BluepySnapError):
-        simulation.circuit
+    with copy_test_data(config="simulation_config.json") as (_, config_path):
+        with edit_config(config_path) as config:
+            config.pop("network")
+
+        simulation = test_module.Simulation(config_path)
+
+        with pytest.raises(BluepySnapError, match="No 'network' set"):
+            simulation.circuit
 
 
 def test_no_node_set():
-    simulation = test_module.Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
-    # replace the _config dict with random one that does not contain "node_sets_file" key
-    simulation._config = {"key": "value"}
-    assert simulation.node_sets == {}
+    with copy_test_data(config="simulation_config.json") as (_, config_path):
+        with edit_config(config_path) as config:
+            config.pop("node_sets_file")
 
-
-def test__resolve_config_dict():
-    input_dict = {"network": "./circuit_config.json", "simulation": "./simulation_config.json"}
-    with pytest.raises(BluepySnapError):
-        test_module.Simulation(input_dict)
-
-    input_dict = {
-        "network": str(TEST_DATA_DIR / "./circuit_config.json"),
-        "simulation": str(TEST_DATA_DIR / "./simulation_config.json"),
-    }
-    simulation = test_module.Simulation(input_dict)
-    assert simulation.config["network"] == str(TEST_DATA_DIR / "circuit_config.json")
-    assert set(simulation.circuit.nodes) == {"default", "default2"}
-
-    input_dict = json.load(open(str(TEST_DATA_DIR / "./simulation_config.json"), "r"))
-    with pytest.raises(BluepySnapError):
-        test_module.Simulation(input_dict)
-
-    input_dict["mechanisms_dir"] = "/abspath"
-    input_dict["manifest"]["$OUTPUT_DIR"] = str(TEST_DATA_DIR / "reporting")
-    input_dict["manifest"]["$INPUT_DIR"] = str(TEST_DATA_DIR)
-
-    simulation = test_module.Simulation(input_dict)
-    assert simulation.config["network"] == str(TEST_DATA_DIR / "circuit_config.json")
-    assert set(simulation.circuit.nodes) == {"default", "default2"}
+        simulation = test_module.Simulation(config_path)
+        assert simulation.node_sets == {}

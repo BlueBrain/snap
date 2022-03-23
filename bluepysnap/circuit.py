@@ -32,23 +32,23 @@ class Circuit:
         """Initializes a circuit object from a SONATA config file.
 
         Args:
-            config (str/dict): Path to a SONATA config file or sonata config dict.
+            config (str): Path to a SONATA config file.
 
         Returns:
             Circuit: A Circuit object.
         """
-        self._config = Config(config).resolve()
+        self._config = Config.from_circuit_config(config)
 
     @property
     def config(self):
         """Network config dictionary."""
-        return self._config
+        return self._config.to_dict()
 
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the circuit."""
-        if "node_sets_file" in self._config:
-            return NodeSets(self._config["node_sets_file"])
+        if "node_sets_file" in self.config:
+            return NodeSets(self.config["node_sets_file"])
         return {}
 
     @cached_property

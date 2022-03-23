@@ -13,7 +13,6 @@
     "nodes": [
       {
         "nodes_file": "$NETWORK_DIR/nodes.h5",
-        "node_types_file": "$NETWORK_DIR/node_types.csv",
         "populations": {
             "default":{}
         }

@@ -11,7 +11,7 @@ from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 
-from utils import TEST_DATA_DIR, copy_circuit, create_node_population, edit_config
+from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 
 class TestMorphHelper:
@@ -21,7 +21,7 @@ class TestMorphHelper:
         self.test_obj = test_module.MorphHelper(str(self.morph_path), self.nodes)
 
     def test_biophysical_in_library(self):
-        with copy_circuit() as (circuit_copy_path, config_copy_path):
+        with copy_test_data() as (circuit_copy_path, config_copy_path):
             with edit_config(config_copy_path) as config:
                 config["networks"]["nodes"][0]["nodes_file"] = "$NETWORK_DIR/nodes_quaternions.h5"
             nodes_file = circuit_copy_path / "nodes_quaternions.h5"

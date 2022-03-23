@@ -10,13 +10,13 @@ from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 
-from utils import TEST_DATA_DIR, copy_circuit, copy_config, create_node_population, edit_config
+from utils import TEST_DATA_DIR, copy_config, copy_test_data, create_node_population, edit_config
 
 
 def test_invalid_model_type():
     """test that model type, other than 'biophysical' or 'point_neuron', throws an error"""
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
-        config = Config(config_copy_path).resolve()
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
+        config = Config.from_circuit_config(config_copy_path).to_dict()
         nodes_file = config["networks"]["nodes"][0]["nodes_file"]
         with h5py.File(nodes_file, "r+") as h5f:
             grp_name = "nodes/default/0/model_type"
@@ -33,7 +33,7 @@ def test_invalid_model_type():
 
 def test_get_invalid_node_id():
     nodes = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
-    config = Config(TEST_DATA_DIR / "circuit_config.json").resolve()
+    config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
     test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
 
     with pytest.raises(BluepySnapError) as e:
@@ -43,7 +43,7 @@ def test_get_invalid_node_id():
 
 def test_get_filepath_biophysical():
     nodes = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
-    config = Config(TEST_DATA_DIR / "circuit_config.json").resolve()
+    config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
     test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
 
     node_id = 0
@@ -75,7 +75,7 @@ def test_get_filepath_biophysical():
 
 def test_no_biophysical_dir():
     nodes = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
-    config = Config(TEST_DATA_DIR / "circuit_config.json").resolve()
+    config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
     del config["components"]["biophysical_neuron_models_dir"]
     test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
 
@@ -85,7 +85,7 @@ def test_no_biophysical_dir():
 
 
 def test_get_filepath_point():
-    with copy_config() as config_copy_path:
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["components"]["point_neuron_models_dir"] = "$COMPONENT_DIR/point_neuron_models"
 
@@ -108,7 +108,7 @@ def test_get_filepath_point():
 
 def test_no_point_dir():
     nodes = create_node_population(str(TEST_DATA_DIR / "nodes_points.h5"), "default")
-    config = Config(TEST_DATA_DIR / "circuit_config.json").resolve()
+    config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
     test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
 
     with pytest.raises(BluepySnapError) as e:

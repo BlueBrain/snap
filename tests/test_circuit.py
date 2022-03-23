@@ -1,21 +1,21 @@
 import json
 
 import pytest
+from libsonata import SonataError
 
 import bluepysnap.circuit as test_module
 from bluepysnap.edges import EdgePopulation, Edges
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.nodes import NodePopulation, Nodes
 
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def test_all():
     circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
     assert circuit.config["networks"]["nodes"][0] == {
         "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
-        "node_types_file": str(TEST_DATA_DIR / "node_types.csv"),
-        "populations": {"default": {}},
+        "populations": {"default": None},
     }
     assert isinstance(circuit.nodes, Nodes)
     assert isinstance(circuit.edges, Edges)
@@ -31,22 +31,29 @@ def test_all():
 
 
 def test_duplicate_node_populations():
-    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config_duplicate.json"))
-    with pytest.raises(BluepySnapError):
-        list(circuit.nodes)
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as config:
+            config["networks"]["nodes"].append(config["networks"]["nodes"][0])
+
+        with pytest.raises(SonataError, match="Duplicate population"):
+            test_module.Circuit(config_path)
 
 
 def test_duplicate_edge_populations():
-    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config_duplicate.json"))
-    with pytest.raises(BluepySnapError):
-        list(circuit.edges)
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as config:
+            config["networks"]["edges"].append(config["networks"]["edges"][0])
+
+        with pytest.raises(SonataError, match="Duplicate population"):
+            test_module.Circuit(config_path)
 
 
 def test_no_node_set():
-    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config_duplicate.json"))
-    # replace the _config dict with random one that does not contain "node_sets_file" key
-    circuit._config = {"key": "value"}
-    assert circuit.node_sets == {}
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as config:
+            config.pop("node_sets_file")
+        circuit = test_module.Circuit(config_path)
+        assert circuit.node_sets == {}
 
 
 def test_integration():

@@ -11,7 +11,7 @@ import bluepysnap.circuit_validation as test_module
 from bluepysnap.circuit_validation import BbpError, Error
 from bluepysnap.exceptions import BluepySnapError
 
-from utils import TEST_DATA_DIR, copy_circuit, edit_config
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def validate(s, bbp_check=False):
@@ -24,7 +24,7 @@ def test_error_comparison():
 
 
 def test_empty_group_size():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             grp = h5f["nodes/default/"].create_group("3")
@@ -36,15 +36,24 @@ def test_ok_circuit():
     errors = validate(str(TEST_DATA_DIR / "circuit_config.json"))
     assert errors == set()
 
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["node_types_file"] = None
         errors = validate(str(config_copy_path))
         assert errors == set()
 
 
+def test_node_types_file():
+    # TODO: can be removed if / when libsonata starts supporting node types file (add into config)
+    with copy_test_data() as (data_path, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            config["networks"]["nodes"][0]["node_types_file"] = str(data_path / "node_types.csv")
+        errors = test_module.validate(str(config_copy_path))
+        assert errors == set()
+
+
 def test_no_config_components():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["components"]
         errors = validate(str(config_copy_path))
@@ -52,7 +61,7 @@ def test_no_config_components():
 
 
 def test_print_error(capsys):
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["components"]
         test_module.validate(str(config_copy_path))
@@ -60,7 +69,7 @@ def test_print_error(capsys):
 
 
 def test_no_config_networks():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]
         errors = validate(str(config_copy_path))
@@ -68,7 +77,7 @@ def test_no_config_networks():
 
 
 def test_no_config_nodes():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]["nodes"]
         errors = validate(str(config_copy_path))
@@ -76,7 +85,7 @@ def test_no_config_nodes():
 
 
 def test_no_config_edges():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]["edges"]
         errors = validate(str(config_copy_path))
@@ -84,7 +93,7 @@ def test_no_config_edges():
 
 
 def test_no_config_nodes_population():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         expected = {Error(Error.FATAL, 'No "populations" defined in config "nodes"')}
         with edit_config(config_copy_path) as config:
             del config["networks"]["nodes"][0]["populations"]["default"]
@@ -98,7 +107,7 @@ def test_no_config_nodes_population():
 
 
 def test_no_config_edges_population():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         expected = {Error(Error.FATAL, 'No "populations" defined in config "edges"')}
         with edit_config(config_copy_path) as config:
             del config["networks"]["edges"][0]["populations"]["default"]
@@ -112,7 +121,7 @@ def test_no_config_edges_population():
 
 
 def test_nodes_population_not_found_in_h5():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["fake_population"] = {}
@@ -126,7 +135,7 @@ def test_nodes_population_not_found_in_h5():
 
 
 def test_edges_population_not_found_in_h5():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["populations"]["fake_population"] = {}
@@ -140,7 +149,7 @@ def test_edges_population_not_found_in_h5():
 
 
 def test_ok_node_population_type():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = "virtual"
         errors = validate(str(config_copy_path), bbp_check=True)
@@ -148,7 +157,7 @@ def test_ok_node_population_type():
 
 
 def test_invalid_node_population_type():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         fake_type = "fake_type"
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = fake_type
@@ -157,7 +166,7 @@ def test_invalid_node_population_type():
 
 
 def test_ok_edge_population_type():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["populations"]["default"]["type"] = "chemical"
         errors = validate(str(config_copy_path), bbp_check=True)
@@ -165,7 +174,7 @@ def test_ok_edge_population_type():
 
 
 def test_invalid_edge_population_type():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         fake_type = "fake_type"
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["populations"]["default"]["type"] = fake_type
@@ -174,7 +183,7 @@ def test_invalid_edge_population_type():
 
 
 def test_invalid_config_nodes_file():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]["nodes"][0]["nodes_file"]
         errors = validate(str(config_copy_path))
@@ -187,7 +196,7 @@ def test_invalid_config_nodes_file():
 
 
 def test_invalid_config_nodes_type_file():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["node_types_file"] = "/"
         errors = validate(str(config_copy_path))
@@ -195,7 +204,7 @@ def test_invalid_config_nodes_type_file():
 
 
 def test_invalid_config_edges_file():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]["edges"][0]["edges_file"]
         errors = validate(str(config_copy_path))
@@ -208,7 +217,7 @@ def test_invalid_config_edges_file():
 
 
 def test_invalid_config_edge_types_file():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["edge_types_file"] = "/"
         errors = validate(str(config_copy_path))
@@ -216,7 +225,7 @@ def test_invalid_config_edge_types_file():
 
 
 def test_no_nodes_h5():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             del h5f["nodes"]
@@ -231,7 +240,7 @@ def test_no_nodes_h5():
 
 
 def test_ok_node_ids_dataset():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/node_id"] = list(range(len(h5f["nodes/default/node_type_id"])))
@@ -240,7 +249,7 @@ def test_ok_node_ids_dataset():
 
 
 def test_no_required_node_single_population_datasets():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             del h5f["nodes/default2/"]
@@ -262,7 +271,7 @@ def test_no_required_node_single_population_datasets():
 def test_no_required_node_multi_group_datasets():
     required_datasets = ["node_group_id", "node_group_index"]
     for ds in required_datasets:
-        with copy_circuit() as (circuit_copy_path, config_copy_path):
+        with copy_test_data() as (circuit_copy_path, config_copy_path):
             nodes_file = circuit_copy_path / "nodes.h5"
             with h5py.File(nodes_file, "r+") as h5f:
                 del h5f["nodes/default/" + ds]
@@ -277,7 +286,7 @@ def test_no_required_node_multi_group_datasets():
 
 
 def test_nodes_multi_group_wrong_group_id():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f.copy("nodes/default/0", "nodes/default/1")
@@ -294,7 +303,7 @@ def test_nodes_multi_group_wrong_group_id():
 def test_no_required_node_group_datasets():
     required_datasets = ["model_template", "model_type"]
     for ds in required_datasets:
-        with copy_circuit() as (circuit_copy_path, config_copy_path):
+        with copy_test_data() as (circuit_copy_path, config_copy_path):
             nodes_file = circuit_copy_path / "nodes.h5"
             with h5py.File(nodes_file, "r+") as h5f:
                 del h5f["nodes/default/0/" + ds]
@@ -305,7 +314,7 @@ def test_no_required_node_group_datasets():
 
 
 def test_ok_virtual_node_group_datasets():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/model_type"][:] = "virtual"
@@ -315,7 +324,7 @@ def test_ok_virtual_node_group_datasets():
 
 
 def test_ok_nonbio_node_group_datasets():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/model_type"][:] = ""
@@ -325,7 +334,7 @@ def test_ok_nonbio_node_group_datasets():
 
 def test_no_required_bio_node_group_datasets():
     required_datasets = sorted(["morphology", "x", "y", "z"])
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             for ds in required_datasets:
@@ -342,7 +351,7 @@ def test_no_required_bio_node_group_datasets():
 
 
 def test_ok_bio_model_type_in_library():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             data = h5f["nodes/default/0/model_type"][:]
@@ -363,7 +372,7 @@ def test_ok_bio_model_type_in_library():
 
 def test_no_rotation_bio_node_group_datasets():
     angle_datasets = ["rotation_angle_xaxis", "rotation_angle_yaxis", "rotation_angle_zaxis"]
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             for ds in angle_datasets:
@@ -376,7 +385,7 @@ def test_no_rotation_bio_node_group_datasets():
 
 def test_no_rotation_bbp_node_group_datasets():
     angle_datasets = ["rotation_angle_xaxis", "rotation_angle_yaxis", "rotation_angle_zaxis"]
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             for ds in angle_datasets:
@@ -395,7 +404,7 @@ def test_no_rotation_bbp_node_group_datasets():
 def test_no_bio_component_dirs():
     dirs = ["morphologies_dir", "biophysical_neuron_models_dir"]
     for dir_ in dirs:
-        with copy_circuit() as (_, config_copy_path):
+        with copy_test_data() as (_, config_copy_path):
             with edit_config(config_copy_path) as config:
                 del config["components"][dir_]
             errors = validate(str(config_copy_path), True)
@@ -406,7 +415,7 @@ def test_no_bio_component_dirs():
 
 
 def test_invalid_bio_alternate_morphology_dir():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         component = "neurolucida-asc"
         fake_path = str(circuit_copy_path / "fake/path")
         with edit_config(config_copy_path) as config:
@@ -421,7 +430,7 @@ def test_invalid_bio_alternate_morphology_dir():
 
 @patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 1)
 def test_no_morph_files():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/morphology"][0] = "noname"
@@ -450,7 +459,7 @@ def test_no_morph_files():
 
 
 def test_no_alternate_morph_files():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = str(circuit_copy_path / "nodes.h5")
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["default"]["alternate_morphologies"] = {
@@ -469,7 +478,7 @@ def test_no_alternate_morph_files():
 
 @patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 1)
 def test_no_morph_library_files():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             grp = h5f["nodes/default/0"]
@@ -491,7 +500,7 @@ def test_no_morph_library_files():
 
 
 def test_no_template_files():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/0/model_template"][0] = "hoc:noname"
@@ -508,7 +517,7 @@ def test_no_template_files():
 
 @patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 1)
 def test_no_template_library_files():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             grp = h5f["nodes/default/0"]
@@ -530,7 +539,7 @@ def test_no_template_library_files():
 
 
 def test_no_edges_h5():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges"]
@@ -539,7 +548,7 @@ def test_no_edges_h5():
 
 
 def test_no_edge_group():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/0"]
@@ -548,7 +557,7 @@ def test_no_edge_group():
 
 
 def test_no_edge_group_missing_requiered_datasets():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         required_datasets = sorted(["edge_type_id", "source_node_id", "target_node_id"])
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
@@ -565,7 +574,7 @@ def test_no_edge_group_missing_requiered_datasets():
 
 
 def test_no_edge_group_no_optional_datasets():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         optional_datasets = sorted(["edge_group_id", "edge_group_index"])
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
@@ -578,7 +587,7 @@ def test_no_edge_group_no_optional_datasets():
 
 def test_no_required_edge_population_datasets_one_group():
     required_datasets = sorted(["edge_type_id", "source_node_id", "target_node_id"])
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             for ds in required_datasets:
@@ -594,7 +603,7 @@ def test_no_required_edge_population_datasets_one_group():
 
 def test_missing_optional_edge_population_datasets_one_group():
     optional_datasets = sorted(["edge_group_id", "edge_group_index"])
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             for ds in optional_datasets:
@@ -607,7 +616,7 @@ def test_no_required_edge_population_datasets_multiple_groups():
     required_datasets = sorted(
         ["edge_type_id", "source_node_id", "target_node_id", "edge_group_id", "edge_group_index"]
     )
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             for ds in required_datasets:
@@ -623,7 +632,7 @@ def test_no_required_edge_population_datasets_multiple_groups():
 
 
 def test_edge_population_multiple_groups():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             h5f.create_group("edges/default/1")
@@ -639,7 +648,7 @@ def test_edge_population_multiple_groups():
 
 
 def test_edge_population_missing_edge_group_id_one_group():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_id"]
@@ -653,7 +662,7 @@ def test_edge_population_missing_edge_group_id_one_group():
 
 
 def test_edge_population_missing_edge_group_index_one_group():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_index"]
@@ -669,7 +678,7 @@ def test_edge_population_missing_edge_group_index_one_group():
 
 
 def test_edge_population_missing_edge_group_id_index_one_group():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_index"]
@@ -679,7 +688,7 @@ def test_edge_population_missing_edge_group_id_index_one_group():
 
 
 def test_edge_population_edge_group_different_length():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_index"]
@@ -696,7 +705,7 @@ def test_edge_population_edge_group_different_length():
 
 
 def test_edge_population_wrong_group_id():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_id"]
@@ -711,7 +720,7 @@ def test_edge_population_wrong_group_id():
 
 
 def test_edge_population_ok_group_index():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_id"]
@@ -725,7 +734,7 @@ def test_edge_population_ok_group_index():
 
 
 def test_edge_population_wrong_group_index():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_index"]
@@ -740,7 +749,7 @@ def test_edge_population_wrong_group_index():
 
 
 def test_edge_population_wrong_group_index_multi_group():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_id"]
@@ -759,7 +768,7 @@ def test_edge_population_wrong_group_index_multi_group():
 
 
 def test_no_required_bbp_edge_group_datasets():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/0/syn_weight"]
@@ -773,7 +782,7 @@ def test_no_required_bbp_edge_group_datasets():
 
 
 def test_no_edge_source_to_target():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/indices/source_to_target"]
@@ -786,7 +795,7 @@ def test_no_edge_source_to_target():
 
 
 def test_no_edge_all_node_ids():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             del h5f["nodes/default/0"]
@@ -812,7 +821,7 @@ def test_no_edge_all_node_ids():
 
 
 def test_invalid_edge_node_ids():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             h5f["edges/default/source_node_id"][0] = 99999
@@ -841,7 +850,7 @@ def test_invalid_edge_node_ids():
 
 
 def test_explicit_edges_no_node_population_attr():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/source_node_id"].attrs["node_population"]
@@ -855,7 +864,7 @@ def test_explicit_edges_no_node_population_attr():
 
 
 def test_implicit_edges_no_node_population_attr():
-    with copy_circuit() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/edge_group_id"]
@@ -871,7 +880,7 @@ def test_implicit_edges_no_node_population_attr():
 
 
 def test_no_duplicate_population_names():
-    with copy_circuit() as (_, config_copy_path):
+    with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
         errors = validate(str(config_copy_path))

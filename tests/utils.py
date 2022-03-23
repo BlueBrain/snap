@@ -26,18 +26,17 @@ def setup_tempdir(cleanup=True):
 
 
 @contextmanager
-def copy_circuit(config="circuit_config.json"):
+def copy_test_data(config="circuit_config.json"):
     """Copies test/data circuit to a temp directory.
 
-    We don't need the whole circuit every time but considering this is a copy into a temp dir,
-    it should be fine.
+    We don't all data every time but considering this is a copy into a temp dir, it should be fine.
     Returns:
         yields a path to the copy of the config file
     """
     with setup_tempdir() as tmp_dir:
         copy_tree(str(TEST_DATA_DIR), tmp_dir)
-        circuit_copy_path = Path(tmp_dir)
-        yield circuit_copy_path, circuit_copy_path / config
+        copied_path = Path(tmp_dir)
+        yield copied_path, copied_path / config
 
 
 @contextmanager
