@@ -104,7 +104,7 @@ class EntityFactory:
 
         try:
             if func == open_emodelconfiguration:
-                #TODO: EModelConfiguration in nexus demo/emodel_pipeline
+                # TODO: EModelConfiguration in nexus demo/emodel_pipeline
                 #      only have the morphology.name, and can't be auto downloaded
                 return func(entity, self._connector)
             return func(entity)
@@ -130,7 +130,7 @@ class EntityFactory:
 def open_circuit_snap(entity):
     import bluepysnap
 
-    if hasattr(entity, 'circuitConfigPath'):
+    if hasattr(entity, "circuitConfigPath"):
         config_path = _get_path(entity.circuitConfigPath.url)
     else:
         config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
@@ -175,12 +175,12 @@ def open_morphology_release(entity):
 def open_emodelconfiguration(resource, connector):
     from bluepysnap.api.wrappers import EModelConfiguration
 
-    #TODO: we need the connector here, since the
+    # TODO: we need the connector here, since the
     #      morphology/SubCellularModelScript (mod file) only exists as text;
     #      it's not 'connected'/'linked' to anything in nexus
 
-    def _get_named_entity(type_, name):
-        resources = connector.get_resources(type_, {'name': name})
+    def _get_entity_by_filter(type_, filter_):
+        resources = connector.get_resources(type_, filter_)
         assert len(resources) == 1, f"Wanted 1 entity, got {len(resources)}"
         ret = resources[0]
 
@@ -192,10 +192,28 @@ def open_emodelconfiguration(resource, connector):
 
         return ret
 
-    morphology = _get_named_entity('NeuronMorphology', name=resource.morphology.name)
-    mod_file = _get_named_entity('SubCellularModelScript', name=resource.mechanisms.name)
+    def _get_named_entity(type_, name):
+        return _get_entity_by_filter(type_, {"name": name})
 
-    return EModelConfiguration(resource.parameters, resource.mechanisms, morphology, mod_file)
+    def _get_distribution(type_, name):
+        return _get_entity_by_filter(type_, {"channelDistribution": name})
+
+    def _get_distribution_for_parameter(param):
+        if param.location.startswith("distribution_"):
+            return _get_distribution(
+                "ElectrophysiologyFeatureOptimisationChannelDistribution",
+                param.location.split("distribution_")[1],
+            )
+
+        return None
+
+    morphology = _get_named_entity("NeuronMorphology", name=resource.morphology.name)
+    mod_file = _get_named_entity("SubCellularModelScript", name=resource.mechanisms.name)
+    distributions = {p.name: _get_distribution_for_parameter(p) for p in resource.parameters}
+
+    return EModelConfiguration(
+        resource.parameters, resource.mechanisms, distributions, morphology, mod_file
+    )
 
 
 def open_morphology_neurom(entity):
@@ -210,7 +228,7 @@ def open_morphology_neurom(entity):
             encoding_format = getattr(item, "encodingFormat", "").lower()
             if encoding_format in supported_formats:
                 if hasattr(item, "atLocation"):
-                    if hasattr(item.atLocation, 'location'):
+                    if hasattr(item.atLocation, "location"):
                         path = _get_path(item.atLocation.location)
                         if os.access(path, os.R_OK):
                             return neurom.io.utils.load_morphology(path)
