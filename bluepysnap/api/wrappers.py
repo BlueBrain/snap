@@ -1,7 +1,6 @@
-'''some wrappers to simplify using external packages'''
+"""some wrappers to simplify using external packages"""
 import logging
 import subprocess
-
 from pathlib import Path
 
 from bluepysnap.api.factory import DOWNLOADED_CONTENT_PATH
@@ -14,77 +13,88 @@ try:
 except:
     L.warning("Need to have bluepyopt installed")
 
+try:
+    from bluepyemodel.model.model import (
+        define_distributions,
+        define_mechanisms,
+        define_morphology,
+        define_parameters,
+    )
+except:
+    L.warning("Need to have bluepyemodel installed")
+
+# TODO: this is very tailored to the mechanims we're are storing in the example;
+#   need more of the logic from bluepyemodel/model/model.py, but for that we
+#   need a config, which gets added then deprcated in Nexus, according to Tanguy
+#   once it's not PoC, then we can integrate it
+
+
+class DistrWrapper:
+    def __init__(self, parameter, distribution):
+        self.parameters = parameter if isinstance(parameter, list) else [parameter]
+
+        if distribution is None:
+            self.name = "uniform"
+            self.function = None
+            self.soma_ref_location = None
+        else:
+            self.name = distribution.channelDistribution
+            self.function = distribution.function
+            self.soma_ref_location = distribution.somaReferenceLocation
+
+
+class ParamWrapper:
+    def __init__(self, parameter):
+        self.param = parameter
+
+    def __getattr__(self, name):
+        if name == "distribution" and not hasattr(self.param, "distribution"):
+            if self.param.location.startswith("distribution_"):
+                return self.param.location.split("distribution_")[1]
+            return "uniform"
+        return getattr(self.param, name)
+
+
+class MorphWrapper:
+    MORPHOLOGY_PATH = DOWNLOADED_CONTENT_PATH / "morphologies"
+
+    class DummyMorph:
+        def __init__(self, path):
+            self.path = path
+
+    def __init__(self, morphology):
+        self.path = morphology.download(self.MORPHOLOGY_PATH)
+        self.morphology = self.DummyMorph(str(self.path))
+
 
 class EModelConfiguration:
-    MECHANISM_PATH = DOWNLOADED_CONTENT_PATH / 'mechanisms_source'
-    MORPHOLOGY_PATH = DOWNLOADED_CONTENT_PATH / 'morphologies'
+    MECHANISM_PATH = DOWNLOADED_CONTENT_PATH / "mechanisms_source"
 
-    def __init__(self, parameters, mechanisms, morphology, mod_file):
-        self._parameters = parameters
-        self._mechanisms = mechanisms
-        self._morphology = morphology
+    def __init__(self, parameters, mechanisms, distributions, morphology, mod_file):
+        self._parameters = [ParamWrapper(p) for p in parameters]
+        self._mechanisms = mechanisms if isinstance(mechanisms, list) else [mechanisms]
+        self._distributions = [DistrWrapper(p, d) for p, d in distributions.items()]
+        self._morphology = MorphWrapper(morphology)
         self._mod_file = mod_file
 
     def _compile_mod_file(self):
-        '''get the mod file, and compile it'''
+        """get the mod file, and compile it"""
         path = self._mod_file.download(self.MECHANISM_PATH)
-        subprocess.check_call(['nrnivmodl', str(self.MECHANISM_PATH)])
+        subprocess.check_call(["nrnivmodl", str(self.MECHANISM_PATH)])
         return path
 
     def build_cell_model(self):
-        morphology_path = self._morphology.download(self.MORPHOLOGY_PATH)
-
-        nrn_morph = NrnFileMorphology(str(morphology_path), do_replace_axon=True)
-
-        # setup mechanisms {
-        mechanism_name = self._mechanisms.name
-        mechanism_location = self._mechanisms.location
-        mod_path = self._compile_mod_file()
-        mechanisms_locations = [ephys.locations.NrnSeclistLocation(
-            f"{mechanism_name}.{mechanism_location}",
-            seclist_name=mechanism_location
-        )]
-
-        natg_mech_instance = ephys.mechanisms.NrnMODMechanism(
-            f"{mechanism_name}.{mechanism_location}",
-            suffix=mechanism_name,
-            mod_path=str(mod_path),
-            locations=mechanisms_locations,
-            deterministic=not self._mechanisms.stochastic)
-        # }
-
-        # TODO: this is very tailored to the mechanims we're are storing in the example;
-        #   need more of the logic from bluepyemodel/model/model.py, but for that we
-        #   need a config, which gets added then deprcated in Nexus, according to Tanguy
-        #   once it's not PoC, then we can integrate it
-        decay_param, natg_param = self._parameters
-
-        scaler = ephys.parameterscalers.NrnSegmentSomaDistanceScaler(
-            name=decay_param.location,
-            distribution="math.exp({distance}*{constant})*{value}", # from bluepyemodel tests
-            dist_param_names=[decay_param.name],
-            soma_ref_location=0
-        )
-        decay_param_instance = ephys.parameters.MetaParameter(
-            name=f'{decay_param.name}.{decay_param.location}',
-            obj=scaler,
-            attr_name=decay_param.name,
-            frozen=False,
-            bounds=decay_param.value
-        )
-
-        natg_param_instance = ephys.parameters.NrnSectionParameter(
-            f"{natg_param.name}.{natg_param.location}",
-            param_name=natg_param.name,
-            locations=mechanisms_locations,
-            frozen=False,
-            bounds=natg_param.value
-        )
+        self._compile_mod_file()
+        morphology = define_morphology(self._morphology)
+        mechanisms = define_mechanisms(self._mechanisms, None)
+        distributions = define_distributions(self._distributions)
+        parameters = define_parameters(self._parameters, distributions, None)
 
         cell_model = ephys.models.CellModel(
-            name=morphology_path.stem,
-            morph=nrn_morph,
-            mechs=[natg_mech_instance],
-            params=[natg_param_instance, decay_param_instance])
+            name=self._morphology.path.stem,
+            morph=morphology,
+            mechs=mechanisms,
+            params=parameters,
+        )
 
         return cell_model
