@@ -86,7 +86,7 @@ unless noted otherwise, for example, external dependencies.
 Refer to `COPYING.LESSER <https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER>`__ and
 `COPYING <https://github.com/BlueBrain/snap/blob/master/COPYING>`__ for details.
 
-Copyright (c) 2019-2021 Blue Brain Project/EPFL
+Copyright (c) 2019-2022 Blue Brain Project/EPFL
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License version 3
