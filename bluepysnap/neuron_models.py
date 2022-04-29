@@ -27,21 +27,21 @@ from bluepysnap.utils import is_node_id
 class NeuronModelsHelper:
     """Collection of neuron models related methods."""
 
-    def __init__(self, config_components, population):
+    def __init__(self, properties, population):
         """Constructor.
 
         Args:
-            config_components (dict): 'components' part of circuit's config
+            properties (libsonata.PopulationProperties): properties of the population
             population (NodePopulation): NodePopulation object used to query the nodes.
 
         Returns:
             NeuronModelsHelper: A NeuronModelsHelper object.
         """
         # all nodes from a population must have the same model type
-        if population.get(0, Node.MODEL_TYPE) != "biophysical":
+        if properties.type != "biophysical":
             raise BluepySnapError("Neuron models can be only in biophysical node population.")
 
-        self._config_components = config_components
+        self._properties = properties
         self._population = population
 
     def get_filepath(self, node_id):
@@ -56,8 +56,10 @@ class NeuronModelsHelper:
         if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         node = self._population.get(node_id, [Node.MODEL_TYPE, Node.MODEL_TEMPLATE])
-        models_dir = self._config_components.get("biophysical_neuron_models_dir")
-        if models_dir is None:
+        models_dir = self._properties.biophysical_neuron_models_dir
+        if not models_dir:
+            # NOTE by herttuai on 01/04/2022:
+            # Can be removed when libsonata checks for this
             raise BluepySnapError("Missing 'biophysical_neuron_models_dir' in Sonata config")
 
         template = node[Node.MODEL_TEMPLATE]

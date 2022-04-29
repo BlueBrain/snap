@@ -46,8 +46,13 @@ class Nodes(
         """Initialize the top level Nodes accessor."""
         super().__init__(circuit)
 
-    def _collect_populations(self):
-        return self._get_populations(NodeStorage, self._config["networks"]["nodes"])
+    @property
+    def _population_class(_):
+        return NodePopulation
+
+    @cached_property
+    def population_names(self):
+        return sorted(self._circuit._config._libsonata.node_populations)
 
     def property_values(self, prop):
         """Returns all the values for a given Nodes property."""
@@ -147,77 +152,36 @@ class Nodes(
         return super().get(group, properties)
 
 
-class NodeStorage:
-    """Node storage access."""
+class NodePopulation:
+    """Node population access."""
 
-    def __init__(self, config, circuit):
-        """Initializes a NodeStorage object from a node config and a Circuit.
+    def __init__(self, circuit, population_name):
+        """Initializes a NodePopulation object.
 
         Args:
-            config (dict): a node config from the global circuit config
-            circuit (bluepysnap.Circuit): the circuit object that contains the NodePopulation
-            from this storage.
+            circuit (bluepysnap.Circuit): the circuit object containing the node population
+            population_name (str): the name of the node population
 
         Returns:
-            NodeStorage: A NodeStorage object.
+            NodePopulation: A NodePopulation object.
         """
-        self._h5_filepath = config["nodes_file"]
-        self._csv_filepath = config.get("node_types_file")
-        self._populations_config = config.get("populations", {})
-        self._circuit = circuit
-        self._populations = {}
+        self.circuit = circuit
+        self.name = population_name
 
     @property
-    def storage(self):
-        """Access to the libsonata node storage."""
-        return libsonata.NodeStorage(self._h5_filepath)
+    def _node_sets(self):
+        """Node sets defined for this node population."""
+        return self.circuit.node_sets
 
     @cached_property
-    def population_names(self):
-        """Returns all population names inside this file."""
-        return self.storage.population_names
-
-    @property
-    def h5_filepath(self):
-        """Returns the filepath of the Storage."""
-        return self._h5_filepath
-
-    @property
-    def csv_filepath(self):
-        """Returns the csv filepath of the Storage."""
-        return self._csv_filepath
-
-    @property
-    def circuit(self):
-        """Returns the circuit object containing this storage."""
-        return self._circuit
-
-    def population(self, population_name):
-        """Access the different populations from the storage."""
-        if population_name not in self._populations:
-            population_config = self._populations_config.get(population_name)
-            self._populations[population_name] = NodePopulation(
-                self, population_name, population_config=population_config
-            )
-
-        return self._populations[population_name]
-
-    def load_population_data(self, population):
-        """Load node properties from SONATA Nodes.
-
-        Args:
-            population (str): a population name .
-
-        Returns:
-            pandas.DataFrame with node properties (zero-based index).
-        """
-        nodes = self.storage.open_population(population)
+    def _data(self):
+        """Collect data for the node population as a pandas.DataFrame."""
+        nodes = self._population
         categoricals = nodes.enumeration_names
 
-        node_count = nodes.size
-        result = pd.DataFrame(index=np.arange(node_count))
+        _all = nodes.select_all()
+        result = pd.DataFrame(index=np.arange(_all.flat_size))
 
-        _all = libsonata.Selection([(0, node_count)])
         for attr in sorted(nodes.attribute_names):
             if attr in categoricals:
                 enumeration = np.asarray(nodes.get_enumeration(attr, _all))
@@ -234,55 +198,23 @@ class NodeStorage:
             result[attr] = nodes.get_dynamics_attribute(attr.split(DYNAMICS_PREFIX)[1], _all)
         return result
 
-
-class NodePopulation:
-    """Node population access."""
-
-    def __init__(self, node_storage, population_name, population_config=None):
-        """Initializes a NodePopulation object from a NodeStorage and population name.
-
-        Args:
-            node_storage (NodeStorage): the node storage containing the node population
-            population_name (str): the name of the node population
-            population_config (dict): the config for the population
-
-        Returns:
-            NodePopulation: A NodePopulation object.
-        """
-        self._config = population_config or {}
-        self._node_storage = node_storage
-        self.name = population_name
-
-    @property
-    def _node_sets(self):
-        """Node sets defined for this node population."""
-        return self._node_storage.circuit.node_sets
-
     @cached_property
-    def _data(self):
-        """Collected data for the node population as a pandas.DataFrame."""
-        return self._node_storage.load_population_data(self.name)
+    def _properties(self):
+        return self.circuit._config._libsonata.node_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self._node_storage.storage.open_population(self.name)
+        return self.circuit._config._libsonata.node_population(self.name)
 
     @cached_property
     def size(self):
         """Node population size."""
         return self._population.size
 
-    @cached_property
-    def config(self):
-        """Population config dictionary combined with the components dictionary."""
-        components = deepcopy(self._node_storage.circuit.config.get("components", {}))
-        components.update(self._config)
-        return components
-
     @property
     def type(self):
         """Population type."""
-        return self.config.get("type", DEFAULT_NODE_TYPE)
+        return self._properties.type
 
     @cached_property
     def _property_names(self):
@@ -300,9 +232,7 @@ class NodePopulation:
             source.
         """
         return set(
-            edge.name
-            for edge in self._node_storage.circuit.edges.values()
-            if self.name == edge.source.name
+            edge.name for edge in self.circuit.edges.values() if self.name == edge.source.name
         )
 
     def target_in_edges(self):
@@ -313,9 +243,7 @@ class NodePopulation:
             target.
         """
         return set(
-            edge.name
-            for edge in self._node_storage.circuit.edges.values()
-            if self.name == edge.target.name
+            edge.name for edge in self.circuit.edges.values() if self.name == edge.target.name
         )
 
     @property
@@ -747,9 +675,9 @@ class NodePopulation:
         from bluepysnap.morph import MorphHelper
 
         return MorphHelper(
-            self.config.get("morphologies_dir"),
+            self._properties.morphologies_dir,
             self,
-            alternate_morphologies=self.config.get("alternate_morphologies"),
+            alternate_morphologies=self._properties.alternate_morphology_formats,
         )
 
     @cached_property

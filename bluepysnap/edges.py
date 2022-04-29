@@ -47,8 +47,13 @@ class Edges(
         """Initialize the top level Edges accessor."""
         super().__init__(circuit)
 
-    def _collect_populations(self):
-        return self._get_populations(EdgeStorage, self._config["networks"]["edges"])
+    @property
+    def _population_class(_):
+        return EdgePopulation
+
+    @cached_property
+    def population_names(self):
+        return sorted(self._circuit._config._libsonata.edge_populations)
 
     def ids(self, group=None, sample=None, limit=None):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
@@ -311,63 +316,6 @@ class Edges(
                 yield from self._omit_edge_count(it, source_pop, target_pop)
 
 
-class EdgeStorage:
-    """Edge storage access."""
-
-    def __init__(self, config, circuit):
-        """Initializes a EdgeStorage object from a edge config and a Circuit.
-
-        Args:
-            config (dict): a edge config from the global circuit config
-            circuit (bluepysnap.Circuit): the circuit object that contains the EdgePopulations
-            from this storage.
-
-        Returns:
-            EdgeStorage: A EdgeStorage object.
-        """
-        self._h5_filepath = config["edges_file"]
-        self._csv_filepath = config.get("edge_types_file")
-        self._populations_config = config.get("populations", {})
-        self._circuit = circuit
-        self._populations = {}
-
-    @property
-    def storage(self):
-        """Access to the libsonata edge storage."""
-        return libsonata.EdgeStorage(self._h5_filepath)
-
-    @cached_property
-    def population_names(self):
-        """Returns all population names inside this file."""
-        return self.storage.population_names
-
-    @property
-    def h5_filepath(self):
-        """Returns the filepath of the Storage."""
-        return self._h5_filepath
-
-    @property
-    def csv_filepath(self):
-        """Returns the csv filepath of the Storage."""
-        return self._csv_filepath
-
-    @property
-    def circuit(self):
-        """Returns the circuit object containing this storage."""
-        return self._circuit
-
-    def population(self, population_name):
-        """Access the different populations from the storage."""
-        if population_name not in self._populations:
-            population_config = self._populations_config.get(population_name, {})
-
-            self._populations[population_name] = EdgePopulation(
-                self, population_name, population_config
-            )
-
-        return self._populations[population_name]
-
-
 def _is_empty(xs):
     return (xs is not None) and (len(xs) == 0)
 
@@ -383,24 +331,26 @@ def _estimate_range_size(func, node_ids, n=3):
 class EdgePopulation:
     """Edge population access."""
 
-    def __init__(self, edge_storage, population_name, population_config=None):
+    def __init__(self, circuit, population_name):
         """Initializes a EdgePopulation object from a EdgeStorage and a population name.
 
         Args:
-            edge_storage (EdgeStorage): the edge storage containing the edge population
+            circuit (bluepysnap.Circuit): the circuit object containing the edge population
             population_name (str): the name of the edge population
-            population_config (dict): the config for the population
 
         Returns:
             EdgePopulation: An EdgePopulation object.
         """
-        self._config = population_config or {}
-        self._edge_storage = edge_storage
+        self.circuit = circuit
         self.name = population_name
 
     @cached_property
+    def _properties(self):
+        return self.circuit._config._libsonata.edge_population_properties(self.name)
+
+    @cached_property
     def _population(self):
-        return self._edge_storage.storage.open_population(self.name)
+        return self.circuit._config._libsonata.edge_population(self.name)
 
     @staticmethod
     def _resolve_node_ids(nodes, group):
@@ -416,20 +366,13 @@ class EdgePopulation:
 
     def _nodes(self, population_name):
         """Returns the NodePopulation corresponding to population."""
-        result = self._edge_storage.circuit.nodes[population_name]
+        result = self.circuit.nodes[population_name]
         return result
-
-    @cached_property
-    def config(self):
-        """Population config dictionary combined with the components dictionary."""
-        components = deepcopy(self._edge_storage.circuit.config.get("components", {}))
-        components.update(self._config)
-        return components
 
     @property
     def type(self):
         """Population type."""
-        return self.config.get("type", DEFAULT_EDGE_TYPE)
+        return self._properties.type
 
     @cached_property
     def source(self):

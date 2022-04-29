@@ -32,18 +32,13 @@ class NetworkObject(abc.ABC):
         """Initialize the top level NetworkObjects accessor."""
         self._circuit = circuit
 
-    def _get_populations(self, cls, config):
+    def _get_populations(self, cls):
         """Collects the different NetworkObjectPopulation and returns them as a dict."""
-        res = {}
-        for file_config in config:
-            storage = cls(file_config, self._circuit)
-            for population in storage.population_names:  # pylint: disable=not-an-iterable
-                res[population] = storage.population(population)
-        return res
+        return {name: cls(self._circuit, name) for name in self.population_names}
 
-    @abc.abstractmethod
-    def _collect_populations(self):
-        """Should specify the self._get_populations arguments."""
+    @abc.abstractproperty
+    def _population_class(self):
+        """Should define the NetworkObject population class."""
 
     @cached_property
     def _config(self):
@@ -52,7 +47,7 @@ class NetworkObject(abc.ABC):
     @cached_property
     def _populations(self):
         """Cached population dictionary."""
-        return self._collect_populations()
+        return self._get_populations(self._population_class)
 
     @cached_property
     def population_names(self):
@@ -66,7 +61,7 @@ class NetworkObject(abc.ABC):
         def _update(d, index, value):
             if d.setdefault(index, value) != value:
                 raise BluepySnapError(
-                    "Same property with different " f"dtype. {index}: {value}!= {d[index]}"
+                    f"Same property with different dtype. {index}: {value}!= {d[index]}"
                 )
 
         res = {}
