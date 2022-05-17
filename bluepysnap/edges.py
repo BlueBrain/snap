@@ -18,7 +18,6 @@
 """Edge population access."""
 import inspect
 from collections.abc import Mapping
-from copy import deepcopy
 
 import libsonata
 import numpy as np
@@ -31,7 +30,7 @@ from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
-from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DYNAMICS_PREFIX, ConstContainer, Edge
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
 from bluepysnap.utils import IDS_DTYPE, Deprecate
 
 
@@ -48,12 +47,13 @@ class Edges(
         super().__init__(circuit)
 
     @property
-    def _population_class(_):
+    def _population_class(self):
         return EdgePopulation
 
     @cached_property
     def population_names(self):
-        return sorted(self._circuit._config._libsonata.edge_populations)
+        """Defines all sorted edge population names from the Circuit."""
+        return sorted(self._circuit.libsonata.edge_populations)
 
     def ids(self, group=None, sample=None, limit=None):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
@@ -346,11 +346,11 @@ class EdgePopulation:
 
     @cached_property
     def _properties(self):
-        return self.circuit._config._libsonata.edge_population_properties(self.name)
+        return self.circuit.libsonata.edge_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self.circuit._config._libsonata.edge_population(self.name)
+        return self.circuit.libsonata.edge_population(self.name)
 
     @staticmethod
     def _resolve_node_ids(nodes, group):
@@ -848,4 +848,7 @@ class EdgePopulation:
     @property
     def h5_filepath(self):
         """Get the H5 edges file associated with population."""
-        return self._edge_storage.h5_filepath
+        for edge_conf in self.circuit.config["networks"]["edges"]:
+            h5_filepath = edge_conf["edges_file"]
+            if self.name in libsonata.EdgeStorage(h5_filepath).population_names:
+                return h5_filepath

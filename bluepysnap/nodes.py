@@ -31,7 +31,7 @@ from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
-from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, DYNAMICS_PREFIX, ConstContainer, Node
+from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Node
 
 
 class Nodes(
@@ -47,12 +47,13 @@ class Nodes(
         super().__init__(circuit)
 
     @property
-    def _population_class(_):
+    def _population_class(self):
         return NodePopulation
 
     @cached_property
     def population_names(self):
-        return sorted(self._circuit._config._libsonata.node_populations)
+        """Defines all sorted node population names from the Circuit."""
+        return sorted(self._circuit.libsonata.node_populations)
 
     def property_values(self, prop):
         """Returns all the values for a given Nodes property."""
@@ -200,11 +201,11 @@ class NodePopulation:
 
     @cached_property
     def _properties(self):
-        return self.circuit._config._libsonata.node_population_properties(self.name)
+        return self.circuit.libsonata.node_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self.circuit._config._libsonata.node_population(self.name)
+        return self.circuit.libsonata.node_population(self.name)
 
     @cached_property
     def size(self):
@@ -685,9 +686,12 @@ class NodePopulation:
         """Access to node neuron models."""
         from bluepysnap.neuron_models import NeuronModelsHelper
 
-        return NeuronModelsHelper(self.config, self)
+        return NeuronModelsHelper(self._properties, self)
 
     @property
     def h5_filepath(self):
         """Get the H5 nodes file associated with population."""
-        return self._node_storage.h5_filepath
+        for node_conf in self.circuit.config["networks"]["nodes"]:
+            h5_filepath = node_conf["nodes_file"]
+            if self.name in libsonata.NodeStorage(h5_filepath).population_names:
+                return h5_filepath

@@ -341,66 +341,16 @@ class TestNodes:
         assert self.test_obj["default"].h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
 
 
-class TestNodeStorage:
-    def setup(self):
-        config = {"nodes_file": str(TEST_DATA_DIR / "nodes.h5"), "node_types_file": None}
-        self.circuit = Mock()
-        self.test_obj = test_module.NodeStorage(config, self.circuit)
-
-    def test_storage(self):
-        assert isinstance(self.test_obj.storage, libsonata.NodeStorage)
-
-    def test_population_names(self):
-        assert sorted(list(self.test_obj.population_names)) == ["default", "default2"]
-
-    def test_h5_filepath(self):
-        assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
-
-    def test_csv_filepath(self):
-        assert self.test_obj.csv_filepath is None
-
-    def test_circuit(self):
-        assert self.test_obj.circuit is self.circuit
-
-    def test_population(self):
-        pop = self.test_obj.population("default")
-        assert isinstance(pop, test_module.NodePopulation)
-        assert pop.name == "default"
-        pop2 = self.test_obj.population("default")
-        assert pop is pop2
-
-    def test_load_population_data(self):
-        data = self.test_obj.load_population_data("default")
-        assert isinstance(data, pd.DataFrame)
-        assert sorted(list(data)) == sorted(
-            [
-                "layer",
-                "morphology",
-                "mtype",
-                "rotation_angle_xaxis",
-                "rotation_angle_yaxis",
-                "rotation_angle_zaxis",
-                "x",
-                "y",
-                "z",
-                "model_template",
-                "model_type",
-                "@dynamics:holding_current",
-            ]
-        )
-        assert len(data) == 3
-
-
 class TestNodePopulation:
     def setup(self):
-        self.test_obj = create_node_population(
-            str(TEST_DATA_DIR / "nodes.h5"),
-            "default",
-            node_sets=NodeSets(str(TEST_DATA_DIR / "node_sets.json")),
-        )
+        self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes["default"]
+        # self.test_obj = create_node_population(
+        # str(TEST_DATA_DIR / "nodes.h5"),
+        # "default",
+        # node_sets=NodeSets(str(TEST_DATA_DIR / "node_sets.json")),
+        # )
 
     def test_basic(self):
-        assert self.test_obj._node_storage._h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
         assert self.test_obj.name == "default"
         assert self.test_obj.size == 3
         assert self.test_obj.type == DEFAULT_NODE_TYPE
@@ -431,6 +381,9 @@ class TestNodePopulation:
         )
         assert test_obj.type == "fake_type"
 
+    # NOTE by herttuai on 29/04/2022:
+    # Need to change create_node_population so that it makes the changes in the config that is read
+    # as most the values now comes from libsonata
     def test_property_values(self):
         assert self.test_obj.property_values(Cell.LAYER) == {2, 6}
         assert self.test_obj.property_values(Cell.MORPHOLOGY) == {"morph-A", "morph-B", "morph-C"}
@@ -519,25 +472,25 @@ class TestNodePopulation:
         assert circuit.nodes["default"].source_in_edges() == {"default", "default2"}
         assert circuit.nodes["default"].target_in_edges() == {"default", "default2"}
 
-    def test_as_edge_source_target_mock(self):
-        def _mock_edge(name, source, target):
-            edges = Mock()
-            edges.source.name = source
-            edges.target.name = target
-            edges.name = name
-            return edges
+    # def test_as_edge_source_target_mock(self):
+    # def _mock_edge(name, source, target):
+    # edges = Mock()
+    # edges.source.name = source
+    # edges.target.name = target
+    # edges.name = name
+    # return edges
 
-        circuit = Mock()
-        circuit.config = {}
-        circuit.edges = {
-            "edge1": _mock_edge("edge1", "default", "nodeother"),
-            "edge2": _mock_edge("edge2", "nodeother", "default"),
-            "edge3": _mock_edge("edge3", "default", "nodeother"),
-        }
-        create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default", circuit=circuit)
+    # circuit = Mock()
+    # circuit.config = {}
+    # circuit.edges = {
+    # "edge1": _mock_edge("edge1", "default", "nodeother"),
+    # "edge2": _mock_edge("edge2", "nodeother", "default"),
+    # "edge3": _mock_edge("edge3", "default", "nodeother"),
+    # }
+    # create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default", circuit=circuit)
 
-        assert circuit.nodes["default"].source_in_edges() == {"edge1", "edge3"}
-        assert circuit.nodes["default"].target_in_edges() == {"edge2"}
+    # assert circuit.nodes["default"].source_in_edges() == {"edge1", "edge3"}
+    # assert circuit.nodes["default"].target_in_edges() == {"edge2"}
 
     def test_ids(self):
         _call = self.test_obj.ids
@@ -984,11 +937,9 @@ class TestNodePopulation:
     def test_morph(self):
         from bluepysnap.morph import MorphHelper
 
-        self.test_obj._node_storage.circuit.config = {"components": {"morphologies_dir": "test"}}
         assert isinstance(self.test_obj.morph, MorphHelper)
 
     def test_models(self):
         from bluepysnap.neuron_models import NeuronModelsHelper
 
-        self.test_obj._node_storage.circuit.config = {"components": {}}
         assert isinstance(self.test_obj.models, NeuronModelsHelper)

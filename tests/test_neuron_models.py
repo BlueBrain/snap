@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import Mock
 
 import h5py
 import numpy as np
@@ -27,14 +28,14 @@ def test_invalid_model_type():
             )
         nodes = create_node_population(nodes_file, "default")
         with pytest.raises(BluepySnapError) as e:
-            test_module.NeuronModelsHelper({}, nodes)
+            test_module.NeuronModelsHelper(Mock(), nodes)
         assert "biophysical node population" in e.value.args[0]
 
 
 def test_get_invalid_node_id():
     nodes = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
     config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
-    test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
+    test_obj = test_module.NeuronModelsHelper(nodes._properties, nodes)
 
     with pytest.raises(BluepySnapError) as e:
         test_obj.get_filepath("1")
@@ -44,12 +45,12 @@ def test_get_invalid_node_id():
 def test_get_filepath_biophysical():
     nodes = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
     config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
-    test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
+    test_obj = test_module.NeuronModelsHelper(nodes._properties, nodes)
 
     node_id = 0
     assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio-A"
     actual = test_obj.get_filepath(node_id)
-    expected = Path(config["components"]["biophysical_neuron_models_dir"], "small_bio-A.hoc")
+    expected = Path(nodes._properties.biophysical_neuron_models_dir, "small_bio-A.hoc")
     assert actual == expected
 
     actual = test_obj.get_filepath(np.int64(node_id))
@@ -69,16 +70,33 @@ def test_get_filepath_biophysical():
     node_id = CircuitNodeId("default", 2)
     assert nodes.get(node_id, properties=Node.MODEL_TEMPLATE) == "hoc:small_bio-C"
     actual = test_obj.get_filepath(node_id)
-    expected = Path(config["components"]["biophysical_neuron_models_dir"], "small_bio-C.hoc")
+    expected = Path(nodes._properties.biophysical_neuron_models_dir, "small_bio-C.hoc")
     assert actual == expected
 
 
-def test_no_biophysical_dir():
-    nodes = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
-    config = Config.from_circuit_config(TEST_DATA_DIR / "circuit_config.json").to_dict()
-    del config["components"]["biophysical_neuron_models_dir"]
-    test_obj = test_module.NeuronModelsHelper(config["components"], nodes)
+def test_absolute_biophysical_dir():
+    with copy_test_data() as (circuit_dir, circuit_config):
+        neuron_dir = circuit_dir / "biophysical_neuron_models"
+        with h5py.File(str(circuit_dir / "nodes.h5"), "r+") as h5:
+            template = [t.decode().split(":") for t in h5["nodes/default/0/model_template"]]
+            template = [t[0] + ":" + str(neuron_dir / t[1]) for t in template]
+            h5["nodes/default/0/model_template"][...] = template
 
-    with pytest.raises(BluepySnapError) as e:
-        test_obj.get_filepath(0)
-    assert "Missing 'biophysical_neuron_models_dir'" in e.value.args[0]
+        nodes = Circuit(circuit_config).nodes["default"]
+        test_obj = test_module.NeuronModelsHelper(nodes._properties, nodes)
+
+        for i, t in enumerate(template):
+            assert str(test_obj.get_filepath(i)) == ".".join(t.split(":")[::-1])
+
+
+def test_no_biophysical_dir():
+    with copy_test_data() as (data_dir, circuit_config):
+        with edit_config(circuit_config) as config:
+            del config["components"]["biophysical_neuron_models_dir"]
+
+        nodes = Circuit(circuit_config).nodes["default"]
+        test_obj = test_module.NeuronModelsHelper(nodes._properties, nodes)
+
+        with pytest.raises(BluepySnapError) as e:
+            test_obj.get_filepath(0)
+        assert "Missing 'biophysical_neuron_models_dir'" in e.value.args[0]

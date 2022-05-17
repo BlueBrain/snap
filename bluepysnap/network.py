@@ -36,13 +36,10 @@ class NetworkObject(abc.ABC):
         """Collects the different NetworkObjectPopulation and returns them as a dict."""
         return {name: cls(self._circuit, name) for name in self.population_names}
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def _population_class(self):
         """Should define the NetworkObject population class."""
-
-    @cached_property
-    def _config(self):
-        return self._circuit.config
 
     @cached_property
     def _populations(self):
@@ -50,9 +47,9 @@ class NetworkObject(abc.ABC):
         return self._get_populations(self._population_class)
 
     @cached_property
+    @abc.abstractmethod
     def population_names(self):
-        """Returns all the sorted NetworkObjects population names from the Circuit."""
-        return sorted(self._populations)
+        """Should define all sorted NetworkObjects population names from the Circuit."""
 
     @cached_property
     def property_dtypes(self):

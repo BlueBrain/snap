@@ -9,7 +9,8 @@ from pathlib import Path
 
 import mock
 
-from bluepysnap.nodes import Nodes, NodeStorage
+from bluepysnap.circuit import Circuit
+from bluepysnap.nodes import NodePopulation, Nodes
 
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / "data"
@@ -82,19 +83,25 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None, pop
     Returns:
         NodePopulation: return a node population.
     """
-    config = {
+    node_pop_config = {
         "nodes_file": filepath,
         "node_types_file": None,
         "populations": {},
     }
+
     if pop_type is not None:
-        config["populations"][pop_name] = {"type": pop_type}
-    if circuit is None:
-        circuit = mock.Mock()
-        circuit.config = {}
-    circuit.config.update({"networks": {"nodes": [config]}})
+        node_pop_config["populations"][pop_name] = {"type": pop_type}
+
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as config:
+            config["networks"]["nodes"] = [node_pop_config]
+
+        if circuit is None:
+            circuit = Circuit(config_path)
+
     if node_sets is not None:
         circuit.node_sets = node_sets
-    node_pop = NodeStorage(config, circuit).population(pop_name)
+
+    node_pop = NodePopulation(circuit, pop_name)
     circuit.nodes = Nodes(circuit)
     return node_pop

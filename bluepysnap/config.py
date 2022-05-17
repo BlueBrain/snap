@@ -147,8 +147,13 @@ class Config:
             config_class (class): libsonata class corresponding to the configuration file, either
                 libsonata.CircuitConfig or libsonata.SimulationConfig
         """
-        self._configdir = str(Path(config).parent.absolute())
+        self._config_dir = str(Path(config).parent.absolute())
         self._libsonata = config_class.from_file(config)
+
+    @property
+    def instance(self):
+        """Return the libsonata instance of the config."""
+        return self._libsonata
 
     @classmethod
     def from_circuit_config(cls, config_path):
@@ -167,4 +172,4 @@ class Config:
         else:
             config = json.loads(self._libsonata.json)
 
-        return Parser.parse(config, self._configdir)
+        return Parser.parse(config, self._config_dir)
