@@ -344,11 +344,6 @@ class TestNodes:
 class TestNodePopulation:
     def setup(self):
         self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes["default"]
-        # self.test_obj = create_node_population(
-        # str(TEST_DATA_DIR / "nodes.h5"),
-        # "default",
-        # node_sets=NodeSets(str(TEST_DATA_DIR / "node_sets.json")),
-        # )
 
     def test_basic(self):
         assert self.test_obj.name == "default"
@@ -472,25 +467,6 @@ class TestNodePopulation:
         assert circuit.nodes["default"].source_in_edges() == {"default", "default2"}
         assert circuit.nodes["default"].target_in_edges() == {"default", "default2"}
 
-    # def test_as_edge_source_target_mock(self):
-    # def _mock_edge(name, source, target):
-    # edges = Mock()
-    # edges.source.name = source
-    # edges.target.name = target
-    # edges.name = name
-    # return edges
-
-    # circuit = Mock()
-    # circuit.config = {}
-    # circuit.edges = {
-    # "edge1": _mock_edge("edge1", "default", "nodeother"),
-    # "edge2": _mock_edge("edge2", "nodeother", "default"),
-    # "edge3": _mock_edge("edge3", "default", "nodeother"),
-    # }
-    # create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default", circuit=circuit)
-
-    # assert circuit.nodes["default"].source_in_edges() == {"edge1", "edge3"}
-    # assert circuit.nodes["default"].target_in_edges() == {"edge2"}
 
     def test_ids(self):
         _call = self.test_obj.ids
