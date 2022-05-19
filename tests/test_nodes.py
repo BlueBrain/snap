@@ -467,7 +467,6 @@ class TestNodePopulation:
         assert circuit.nodes["default"].source_in_edges() == {"default", "default2"}
         assert circuit.nodes["default"].target_in_edges() == {"default", "default2"}
 
-
     def test_ids(self):
         _call = self.test_obj.ids
         npt.assert_equal(_call(), [0, 1, 2])
