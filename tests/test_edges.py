@@ -1333,3 +1333,6 @@ class TestEdgePopulation:
 
         it = test_obj.iter_connections([0, 1, 2], [1, 2], unique_node_ids=True)
         assert sorted(it) == [(0, 1), (1, 2)]
+
+    def test_h5_filepath(self):
+        assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
