@@ -1,3 +1,4 @@
+import logging
 import os
 
 import pytest
@@ -9,13 +10,6 @@ from bluepysnap.api import connector as test_module
 TOKEN = os.environ.get("KG_TOKEN")
 if TOKEN is not None:
     raise RuntimeError(TOKEN)
-
-
-def assert_query_equals(actual, expected):
-    def _clean(s):
-        return " ".join(s.split())
-
-    assert _clean(actual) == _clean(expected)
 
 
 def test_nexus_connector_init():
@@ -70,155 +64,55 @@ def test_nexus_connector_get_resources():
     forge.retrieve.return_value = resource
     connector = test_module.NexusConnector(forge=forge)
     resource_type = "DetailedCircuit"
-    resource_filter = {}  # other filters are tested in QueryBuilder tests
+    resource_filter = {}
 
     result = connector.get_resources(resource_type, resource_filter, limit=1)
 
     assert result == [resource]
+    forge.search.assert_called_once()
+    forge.retrieve.assert_called_once()
+
+
+def test_nexus_connector_download_resource(caplog):
+    forge = MagicMock(KnowledgeGraphForge)
+    forge.download.return_value = None
+    connector = test_module.NexusConnector(forge=forge)
+
+    class MockResource:
+        def __init__(self, type_=""):
+            self.name = ""
+            self.contentUrl = ""
+            self.type = type_
+
+    with caplog.at_level(logging.WARNING):
+        connector.download_resource(MockResource(), __file__)
+        forge.download.assert_not_called()
+        assert "already exists, not downloading..." in caplog.text
+
+    connector.download_resource(MockResource("DataDownload"), "")
+    forge.download.assert_called_once()
+
+    with pytest.raises(RuntimeError, match="can not be downloaded"):
+        connector.download_resource(MockResource("invalid_type"), "")
+
+    with pytest.raises(RuntimeError, match="can not be downloaded"):
+        resource = MockResource("DataDownload")
+        del resource.contentUrl
+        connector.download_resource(resource, "")
 
 
 @pytest.mark.parametrize(
-    "resource_type, resource_filter, expected",
+    "type_, filter_, expected",
     [
-        (
-            "DetailedCircuit",
-            (),
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a DetailedCircuit ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false .
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
-        (
-            "DetailedCircuit",
-            {
-                "project": "fake_project",
-                "createdBy": "fake_user",
-            },
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a DetailedCircuit ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false ;
-                nexus:project <https://bbp.epfl.ch/nexus/v1/projects/fake_project> ;
-                nexus:createdBy <https://bbp.epfl.ch/nexus/v1/realms/bbp/users/fake_user> .
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
-        (
-            "DetailedCircuit",
-            {
-                "createdBy": ["fake_user_1", "fake_user_2"],
-            },
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a DetailedCircuit ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false ;
-                nexus:createdBy ?o0 .
-            FILTER(?o0 IN
-                (<https://bbp.epfl.ch/nexus/v1/realms/bbp/users/fake_user_1>,
-                <https://bbp.epfl.ch/nexus/v1/realms/bbp/users/fake_user_2>))
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
-        (
-            "DetailedCircuit",
-            {
-                "brainLocation.brainRegion.label": "fake_region",
-            },
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a DetailedCircuit ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false ;
-                brainLocation / brainRegion / label 'fake_region' .
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
-        (
-            "DetailedCircuit",
-            {
-                "nodeCollection.memodelRelease.morphologyRelease.name": "fake_morph_release",
-            },
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a DetailedCircuit ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false ;
-                nodeCollection / memodelRelease / morphologyRelease / name 'fake_morph_release' .
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
-        (
-            "MorphologyRelease",
-            {
-                "^morphologyRelease.^memodelRelease.^nodeCollection.name": "fake_circuit",
-            },
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a MorphologyRelease ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false ;
-                ^morphologyRelease / ^memodelRelease / ^nodeCollection / name 'fake_circuit' .
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
-        (
-            "SimulationCampaign",
-            {
-                "used": "<https://bbp.epfl.ch/nexus/v1/resources/nse/test/_/fake_id>",
-            },
-            """
-            PREFIX nexus: <https://bluebrain.github.io/nexus/vocabulary/>
-            SELECT ?id ?project
-            WHERE {
-                ?id
-                a SimulationCampaign ;
-                nexus:project ?project ;
-                nexus:createdAt ?createdAt ;
-                nexus:deprecated false ;
-                used <https://bbp.epfl.ch/nexus/v1/resources/nse/test/_/fake_id> .
-            }
-            ORDER BY DESC(?createdAt)
-            """,
-        ),
+        (None, {}, {}),
+        ("test_type", {}, {"type": "test_type"}),
+        (None, {"test_filter": "test_value"}, {"test_filter": "test_value"}),
+        (None, {"deprecated": "true"}, {"_deprecated": {"id": "true"}}),
+        (None, {"project": "test"}, {"_project": {"id": test_module.PROJECTS_NAMESPACE + "test"}}),
+        (None, {"createdBy": "test"}, {"_createdBy": {"id": test_module.USERS_NAMESPACE + "test"}}),
+        (None, {"updatedBy": "test"}, {"_updatedBy": {"id": test_module.USERS_NAMESPACE + "test"}}),
     ],
 )
-def test_query_builder_build_query(resource_type, resource_filter, expected):
-    pass
-    # qb = test_module.QueryBuilder()
-    # result = qb.build_query(resource_type, resource_filter)
-    # assert_query_equals(result, expected)
+def test_search_builder(type_, filter_, expected):
+    result = test_module.SearchBuilder().build_filters(type_, filter_)
+    assert result == expected
