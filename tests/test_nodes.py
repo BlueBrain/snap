@@ -337,6 +337,9 @@ class TestNodes:
         with pytest.raises(BluepySnapError):
             self.test_obj.get(properties="unknown")
 
+    def test_h5_filepath(self):
+        assert self.test_obj["default"].h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
+
 
 class TestNodeStorage:
     def setup(self):

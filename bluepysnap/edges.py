@@ -901,3 +901,8 @@ class EdgePopulation:
         else:
             omit_edge_count = lambda x: x[:2]
             return map(omit_edge_count, it)
+
+    @property
+    def h5_filepath(self):
+        """Get the H5 edges file associated with population."""
+        return self._edge_storage.h5_filepath

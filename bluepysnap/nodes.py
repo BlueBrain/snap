@@ -758,3 +758,8 @@ class NodePopulation:
         from bluepysnap.neuron_models import NeuronModelsHelper
 
         return NeuronModelsHelper(self.config, self)
+
+    @property
+    def h5_filepath(self):
+        """Get the H5 nodes file associated with population."""
+        return self._node_storage.h5_filepath
