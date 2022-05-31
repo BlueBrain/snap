@@ -22,10 +22,12 @@ def test_entity_factory_get_registered_types():
         "MorphologyRelease",
         "DummyMorphology",
         "NeuronMorphology",
+        "ReconstructedCell",
         "ReconstructedPatchedCell",
         "ReconstructedWholeBrainCell",
         "BrainAtlasRelease",
         "AtlasRelease",
+        "EModelConfiguration",
     }
 
 
@@ -72,7 +74,7 @@ def test_entity_factory_open_instance():
 
         assert isinstance(result.instance, Proxy)
         assert result.instance == mocked_instance
-        mocked_opener.assert_called_once_with(result._rr)
+        mocked_opener.assert_called_once_with(result)
 
 
 def test_entity_factory_open_instance_with_default_tool():
@@ -87,4 +89,4 @@ def test_entity_factory_open_instance_with_default_tool():
 
         assert isinstance(result.instance, Proxy)
         assert result.instance == mocked_instance
-        mocked_opener.assert_called_once_with(result._rr)
+        mocked_opener.assert_called_once_with(result)

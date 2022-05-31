@@ -8,14 +8,14 @@ import pandas as pd
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
 def test_api_init(mocked_forge):
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
     assert isinstance(api, test_module.Api)
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
 def test_api_get_entity_by_id(mocked_forge):
     mocked_forge.return_value.retrieve.return_value = Resource(id="id1", type="DetailedCircuit")
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
 
     result = api.get_entity_by_id("id1")
 
@@ -28,7 +28,7 @@ def test_api_get_entity_by_id(mocked_forge):
 def test_api_get_entities_by_query(mocked_forge):
     mocked_forge.return_value.sparql.return_value = [Resource(id="id1")]
     mocked_forge.return_value.retrieve.return_value = Resource(id="id1", type="DetailedCircuit")
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
 
     result = api.get_entities_by_query("FAKE QUERY")
 
@@ -41,9 +41,9 @@ def test_api_get_entities_by_query(mocked_forge):
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
 def test_api_get_entities(mocked_forge):
-    mocked_forge.return_value.sparql.return_value = [Resource(id="id1")]
+    mocked_forge.return_value.search.return_value = [Resource(id="id1")]
     mocked_forge.return_value.retrieve.return_value = Resource(id="id1", type="DetailedCircuit")
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
 
     result = api.get_entities("DetailedCircuit")
 
@@ -65,7 +65,7 @@ def test_api_as_dataframe(mocked_forge):
         }
     )
     mocked_forge.return_value.as_dataframe.return_value = df
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
     resources = [
         Resource(id="id1", type="DetailedCircuit", name="fake_name_1"),
         Resource(id="id2", type="DetailedCircuit", name="fake_name_2"),
@@ -87,7 +87,7 @@ def test_api_as_json(mocked_forge):
         "name": "fake_name",
     }
     mocked_forge.return_value.as_json.return_value = resource_dict
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
     entity = Entity(resource)
 
@@ -99,7 +99,7 @@ def test_api_as_json(mocked_forge):
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
 def test_api_reopen(mocked_forge):
-    api = test_module.Api("fake_config.yml", bucket="fake/project", token="fake_token")
+    api = test_module.Api(bucket="fake/project", token="fake_token")
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
     entity = Entity(resource)
 
