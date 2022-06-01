@@ -5,7 +5,8 @@ from kgforge.core import Resource
 from lazy_object_proxy import Proxy
 from more_itertools import always_iterable
 
-DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute()  # user defined or tmp would be better
+# user defined or tmp would be better
+DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute()
 
 
 class ResolvingResource:
@@ -86,10 +87,6 @@ class Entity:
     @property
     def instance(self):
         return self._instance
-
-    def _instantiate(self, opener):
-        if hasattr(self.resource, "distribution"):
-            self.resource.distribution
 
     def download(self, items=None, path=None):
         path = path or DOWNLOADED_CONTENT_PATH
