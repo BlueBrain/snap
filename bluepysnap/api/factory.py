@@ -16,8 +16,15 @@ def _get_path(p):
     return Path(p.replace("file://", ""))
 
 
-def _get_downloaded_path(name):
-    return DOWNLOADED_CONTENT_PATH / name
+def _get_path_for_item(item, entity):
+    if hasattr(item, "atLocation") and hasattr(item.atLocation, "location"):
+        path = _get_path(item.atLocation.location)
+        if os.access(path, os.R_OK):
+            return path
+    if hasattr(item, "contentUrl"):
+        entity.download(items=item, path=DOWNLOADED_CONTENT_PATH)
+        path = DOWNLOADED_CONTENT_PATH / item.name
+        return path
 
 
 class EntityFactory:
@@ -57,7 +64,7 @@ class EntityFactory:
         Args:
             resource_type (str or list): type(s) of resources handled by tool.
             tool (str): name of the tool.
-            func (callable): any callable accepting a resource as parameter.
+            func (callable): any callable accepting an entity as parameter.
         """
         for resource_type in always_iterable(resource_types):
             L.info("Registering tool %s for resource type %s", tool, resource_type)
@@ -133,11 +140,12 @@ def open_circuit_snap(entity):
     if hasattr(entity, "circuitConfigPath"):
         config_path = _get_path(entity.circuitConfigPath.url)
     else:
+        # we should abstain from any hard coded paths (even if partial), this was used for a demo
         config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
     return bluepysnap.Circuit(str(config_path))
 
 
-def open_circuit_bluepy(entity):
+def open_circuit_bluepy(entity):  # pragma: no cover
     import bluepy
 
     config_path = _get_path(entity.circuitBase.url) / "CircuitConfig"
@@ -147,18 +155,19 @@ def open_circuit_bluepy(entity):
 def open_simulation_snap(entity):
     import bluepysnap
 
+    # we should abstain from any hard coded paths (even if partial), this was used for a demo
     config_path = _get_path(entity.path) / "sonata/simulation_config.json"
     return bluepysnap.Simulation(str(config_path))
 
 
-def open_simulation_bluepy(entity):
+def open_simulation_bluepy(entity):  # pragma: no cover
     import bluepy
 
     config_path = _get_path(entity.path) / "BlueConfig"
     return bluepy.Simulation(str(config_path))
 
 
-def open_simulation_bglibpy(entity):
+def open_simulation_bglibpy(entity):  # pragma: no cover
     from bglibpy import SSim
 
     config_path = _get_path(entity.path) / "BlueConfig"
@@ -169,10 +178,10 @@ def open_morphology_release(entity):
     from morph_tool.morphdb import MorphDB
 
     config_path = _get_path(entity.morphologyIndex.distribution.url)
-    return MorphDB.from_neurondb(config_path)
+    return MorphDB.from_neurondb(str(config_path))
 
 
-def open_emodelconfiguration(resource, connector):
+def open_emodelconfiguration(entity, connector):  # pragma: no cover
     from bluepysnap.api.wrappers import EModelConfiguration
 
     # TODO: we need the connector here, since the
@@ -207,12 +216,12 @@ def open_emodelconfiguration(resource, connector):
 
         return None
 
-    morphology = _get_named_entity("NeuronMorphology", name=resource.morphology.name)
-    mod_file = _get_named_entity("SubCellularModelScript", name=resource.mechanisms.name)
-    distributions = {p.name: _get_distribution_for_parameter(p) for p in resource.parameters}
+    morphology = _get_named_entity("NeuronMorphology", name=entity.morphology.name)
+    mod_file = _get_named_entity("SubCellularModelScript", name=entity.mechanisms.name)
+    distributions = {p.name: _get_distribution_for_parameter(p) for p in entity.parameters}
 
     return EModelConfiguration(
-        resource.parameters, resource.mechanisms, distributions, morphology, mod_file
+        entity.parameters, entity.mechanisms, distributions, morphology, mod_file
     )
 
 
@@ -227,14 +236,8 @@ def open_morphology_neurom(entity):
         if item.type == "DataDownload":
             encoding_format = getattr(item, "encodingFormat", "").lower()
             if encoding_format in supported_formats:
-                if hasattr(item, "atLocation"):
-                    if hasattr(item.atLocation, "location"):
-                        path = _get_path(item.atLocation.location)
-                        if os.access(path, os.R_OK):
-                            return neurom.io.utils.load_morphology(path)
-                if hasattr(item, "contentUrl"):
-                    entity.download(items=item, path=DOWNLOADED_CONTENT_PATH)
-                    path = _get_downloaded_path(item.name)
+                path = _get_path_for_item(item, entity.download)
+                if path:
                     return neurom.io.utils.load_morphology(path)
             if encoding_format:
                 unsupported_formats.add(encoding_format)
@@ -245,8 +248,8 @@ def open_morphology_neurom(entity):
     raise RuntimeError("Missing morphology location")
 
 
-def open_atlas_voxcell(resource):
+def open_atlas_voxcell(entity):  # pragma: no cover
     from voxcell.nexus.voxelbrain import Atlas
 
-    path = _get_path(resource.distribution.url)
+    path = _get_path(entity.distribution.url)
     return Atlas.open(str(path))
