@@ -607,7 +607,7 @@ class EdgePopulation:
                     result = [cid.id for cid in result if cid.population == self.name]
                 except AttributeError as e:
                     raise BluepySnapError(
-                        "All values from a list must be of type int or " "CircuitEdgeId."
+                        "All values from a list must be of type int or CircuitEdgeId."
                     ) from e
         if sample is not None:
             if len(result) > 0:
