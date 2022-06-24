@@ -846,9 +846,10 @@ class EdgePopulation:
             return map(omit_edge_count, it)
 
     @property
-    def h5_filepath(self):
+    def h5_filepath(self):  # pylint: disable=inconsistent-return-statements
         """Get the H5 edges file associated with population."""
         for edge_conf in self.circuit.config["networks"]["edges"]:
             h5_filepath = edge_conf["edges_file"]
-            if self.name in libsonata.EdgeStorage(h5_filepath).population_names:
+            # set(...) as pylint seems to think {}.population_names doesn't return a set
+            if self.name in set(libsonata.EdgeStorage(h5_filepath).population_names):
                 return h5_filepath

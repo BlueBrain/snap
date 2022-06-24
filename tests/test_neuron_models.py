@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import h5py
+import libsonata
 import numpy as np
 import pytest
 
@@ -94,9 +95,8 @@ def test_no_biophysical_dir():
         with edit_config(circuit_config) as config:
             del config["components"]["biophysical_neuron_models_dir"]
 
-        nodes = Circuit(circuit_config).nodes["default"]
-        test_obj = test_module.NeuronModelsHelper(nodes._properties, nodes)
-
-        with pytest.raises(BluepySnapError) as e:
-            test_obj.get_filepath(0)
-        assert "Missing 'biophysical_neuron_models_dir'" in e.value.args[0]
+        with pytest.raises(
+            libsonata.SonataError,
+            match="Node population .* is defined as 'biophysical' but does not define 'biophysical_neuron_models_dir'",
+        ):
+            Circuit(circuit_config).nodes["default"]

@@ -376,9 +376,6 @@ class TestNodePopulation:
         )
         assert test_obj.type == "fake_type"
 
-    # NOTE by herttuai on 29/04/2022:
-    # Need to change create_node_population so that it makes the changes in the config that is read
-    # as most the values now comes from libsonata
     def test_property_values(self):
         assert self.test_obj.property_values(Cell.LAYER) == {2, 6}
         assert self.test_obj.property_values(Cell.MORPHOLOGY) == {"morph-A", "morph-B", "morph-C"}

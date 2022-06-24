@@ -57,10 +57,6 @@ class NeuronModelsHelper:
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         node = self._population.get(node_id, [Node.MODEL_TYPE, Node.MODEL_TEMPLATE])
         models_dir = self._properties.biophysical_neuron_models_dir
-        if not models_dir:
-            # NOTE by herttuai on 01/04/2022:
-            # Can be removed when libsonata checks for this
-            raise BluepySnapError("Missing 'biophysical_neuron_models_dir' in Sonata config")
 
         template = node[Node.MODEL_TEMPLATE]
         assert ":" in template, "Format of 'model_template' must be <schema>:<resource>."

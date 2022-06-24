@@ -36,7 +36,7 @@ class TestSpikeReport:
             "output_dir": str(TEST_DATA_DIR / "reporting"),
             "log_file": "log_spikes.log",
             "spikes_file": "spikes.h5",
-            "spikes_sort_order": "time",
+            "spikes_sort_order": "by_time",
         }
 
     def test_time_start(self):

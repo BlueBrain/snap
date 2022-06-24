@@ -149,7 +149,7 @@ def test_simulation_config():
     actual = test_module.Config.from_simulation_config(
         str(TEST_DATA_DIR / "simulation_config.json")
     ).to_dict()
-    assert actual["target_simulator"] == "my_simulator"
+    assert actual["target_simulator"] == "CORENEURON"
     assert actual["network"] == str(Path(TEST_DATA_DIR / "circuit_config.json").resolve())
     assert actual["mechanisms_dir"] == str(
         Path(TEST_DATA_DIR / "../shared_components_mechanisms").resolve()

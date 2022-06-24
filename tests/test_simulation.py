@@ -1,5 +1,6 @@
 import json
 
+import libsonata
 import pytest
 from libsonata import SonataError
 
@@ -27,14 +28,14 @@ def test_all():
         "dt": 0.01,
         "spike_threshold": -15,
         "nsteps_block": 10000,
-        "seed": 42,
+        "random_seed": 42,
     }
     assert simulation.time_start == 0.0
     assert simulation.time_stop == 1000.0
     assert simulation.dt == 0.01
     assert simulation.time_units == "ms"
 
-    assert simulation.simulator == "my_simulator"
+    assert simulation.simulator == "CORENEURON"
     assert simulation.conditions == {"celsius": 34.0, "v_init": -80, "other": "something"}
 
     assert simulation.node_sets.resolved == {"Layer23": {"layer": [2, 3]}}
@@ -59,13 +60,8 @@ def test_unknown_report():
         with edit_config(config_path) as config:
             config["reports"]["soma_report"]["sections"] = "unknown"
 
-        simulation = test_module.Simulation(config_path)
-        simulation.config["reports"] = {
-            "soma_report": {"cells": "Layer23", "variable_name": "m", "sections": "unknown"}
-        }
-
-        with pytest.raises(BluepySnapError):
-            simulation.reports
+        with pytest.raises(libsonata.SonataError):
+            test_module.Simulation(config_path)
 
 
 def test_no_network_config():
