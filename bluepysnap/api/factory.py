@@ -236,7 +236,7 @@ def open_morphology_neurom(entity):
         if item.type == "DataDownload":
             encoding_format = getattr(item, "encodingFormat", "").lower()
             if encoding_format in supported_formats:
-                path = _get_path_for_item(item, entity.download)
+                path = _get_path_for_item(item, entity)
                 if path:
                     return neurom.io.utils.load_morphology(path)
             if encoding_format:
