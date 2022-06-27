@@ -120,6 +120,21 @@ def _print_errors(errors):
         print(click.style(error.level + ": ", fg=colors[error.level]) + str(error))
 
 
+def _check_duplicate_populations(networks, key):
+    """Check that that for key = nodes|edges, no duplicate populations names exists"""
+    seen = set()
+    errors = []
+    for network in networks[key]:
+        for population in network.get("populations", {}).keys():
+            if population in seen:
+                errors.append(
+                    fatal(f'Already have population "{population}" in config for type "{key}"')
+                )
+            seen.add(population)
+
+    return errors
+
+
 def _check_required_datasets(config):
     """Validates required datasets of "nodes" and "edges" in config.
 
@@ -148,6 +163,9 @@ def _check_required_datasets(config):
 
     if not nodes or not edges:
         return errors
+
+    errors += _check_duplicate_populations(config["networks"], "nodes")
+    errors += _check_duplicate_populations(config["networks"], "edges")
 
     for nodes_dict in nodes:
         nodes_file = nodes_dict.get("nodes_file")
@@ -828,7 +846,7 @@ def _check_populations(config):
     return errors
 
 
-def validate(config_file, bbp_check=False):
+def validate(config_file, bbp_check=False, print_errors=True):
     """Validates Sonata circuit.
 
     Args:
@@ -841,9 +859,14 @@ def validate(config_file, bbp_check=False):
     """
     config = Config(config_file).resolve()
     errors = _check_required_datasets(config)
+
     if not errors:
         errors = _check_populations(config)
+
     if not bbp_check:
         errors = [e for e in errors if not isinstance(e, BbpError)]
-    _print_errors(errors)
+
+    if print_errors:
+        _print_errors(errors)
+
     return set(errors)
