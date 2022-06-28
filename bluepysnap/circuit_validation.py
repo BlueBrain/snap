@@ -121,7 +121,7 @@ def _print_errors(errors):
 
 
 def _check_duplicate_populations(networks, key):
-    """Check that that for key = nodes|edges, no duplicate populations names exists"""
+    """Check that that for key = nodes|edges, no duplicate populations names exists."""
     seen = set()
     errors = []
     for network in networks[key]:
