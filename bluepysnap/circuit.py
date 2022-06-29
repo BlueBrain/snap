@@ -40,9 +40,9 @@ class Circuit:
         self._config = Config.from_circuit_config(config)
 
     @property
-    def libsonata(self):
+    def to_libsonata(self):
         """Libsonata instance of the circuit."""
-        return self._config.instance
+        return self._config.to_libsonata
 
     @property
     def config(self):

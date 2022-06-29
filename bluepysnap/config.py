@@ -54,18 +54,19 @@ class Parser:
 
     # TODO: Can be simplified by a great deal after libsonata SimulationConfig parses the manifest
 
-    def __init__(self, config, configdir):
+    def __init__(self, config, config_dir):
         """Initializes a Resolver object.
 
         Args:
             config (dict): Dict containing the config.
+            config_dir(str):  Path to the directory containing the config file.
 
         Returns:
              Parser: A Parser object.
         """
         content = config.copy()
 
-        self.manifest = Parser._resolve_manifest(content.pop("manifest", {}), configdir)
+        self.manifest = Parser._resolve_manifest(content.pop("manifest", {}), config_dir)
         self.content = content
 
     @staticmethod
@@ -151,7 +152,7 @@ class Config:
         self._libsonata = config_class.from_file(config)
 
     @property
-    def instance(self):
+    def to_libsonata(self):
         """Return the libsonata instance of the config."""
         return self._libsonata
 

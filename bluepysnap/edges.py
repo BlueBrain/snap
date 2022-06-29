@@ -53,7 +53,7 @@ class Edges(
     @cached_property
     def population_names(self):
         """Defines all sorted edge population names from the Circuit."""
-        return sorted(self._circuit.libsonata.edge_populations)
+        return sorted(self._circuit.to_libsonata.edge_populations)
 
     def ids(self, group=None, sample=None, limit=None):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
@@ -346,11 +346,11 @@ class EdgePopulation:
 
     @cached_property
     def _properties(self):
-        return self.circuit.libsonata.edge_population_properties(self.name)
+        return self.circuit.to_libsonata.edge_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self.circuit.libsonata.edge_population(self.name)
+        return self.circuit.to_libsonata.edge_population(self.name)
 
     @staticmethod
     def _resolve_node_ids(nodes, group):
@@ -850,6 +850,6 @@ class EdgePopulation:
         """Get the H5 edges file associated with population."""
         for edge_conf in self.circuit.config["networks"]["edges"]:
             h5_filepath = edge_conf["edges_file"]
-            # set(...) as pylint seems to think {}.population_names doesn't return a set
-            if self.name in set(libsonata.EdgeStorage(h5_filepath).population_names):
+            storage = libsonata.EdgeStorage(h5_filepath)
+            if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
                 return h5_filepath

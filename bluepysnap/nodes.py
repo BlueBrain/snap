@@ -53,7 +53,7 @@ class Nodes(
     @cached_property
     def population_names(self):
         """Defines all sorted node population names from the Circuit."""
-        return sorted(self._circuit.libsonata.node_populations)
+        return sorted(self._circuit.to_libsonata.node_populations)
 
     def property_values(self, prop):
         """Returns all the values for a given Nodes property."""
@@ -201,11 +201,11 @@ class NodePopulation:
 
     @cached_property
     def _properties(self):
-        return self.circuit.libsonata.node_population_properties(self.name)
+        return self.circuit.to_libsonata.node_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self.circuit.libsonata.node_population(self.name)
+        return self.circuit.to_libsonata.node_population(self.name)
 
     @cached_property
     def size(self):
@@ -693,6 +693,6 @@ class NodePopulation:
         """Get the H5 nodes file associated with population."""
         for node_conf in self.circuit.config["networks"]["nodes"]:
             h5_filepath = node_conf["nodes_file"]
-            # set(...) as pylint seems to think {}.population_names doesn't return a set
-            if self.name in set(libsonata.NodeStorage(h5_filepath).population_names):
+            storage = libsonata.NodeStorage(h5_filepath)
+            if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
                 return h5_filepath
