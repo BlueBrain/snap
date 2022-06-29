@@ -14,9 +14,7 @@
       {
         "nodes_file": "$NETWORK_DIR/nodes.h5",
         "populations": {
-            "default":{
-                "type": "biophysical"
-            }
+            "default": {}
         }
       }
     ],
