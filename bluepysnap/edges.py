@@ -341,16 +341,16 @@ class EdgePopulation:
         Returns:
             EdgePopulation: An EdgePopulation object.
         """
-        self.circuit = circuit
+        self._circuit = circuit
         self.name = population_name
 
     @cached_property
     def _properties(self):
-        return self.circuit.to_libsonata.edge_population_properties(self.name)
+        return self._circuit.to_libsonata.edge_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self.circuit.to_libsonata.edge_population(self.name)
+        return self._circuit.to_libsonata.edge_population(self.name)
 
     @staticmethod
     def _resolve_node_ids(nodes, group):
@@ -366,7 +366,7 @@ class EdgePopulation:
 
     def _nodes(self, population_name):
         """Returns the NodePopulation corresponding to population."""
-        result = self.circuit.nodes[population_name]
+        result = self._circuit.nodes[population_name]
         return result
 
     @property
@@ -848,7 +848,7 @@ class EdgePopulation:
     @property
     def h5_filepath(self):  # pylint: disable=inconsistent-return-statements
         """Get the H5 edges file associated with population."""
-        for edge_conf in self.circuit.config["networks"]["edges"]:
+        for edge_conf in self._circuit.config["networks"]["edges"]:
             h5_filepath = edge_conf["edges_file"]
             storage = libsonata.EdgeStorage(h5_filepath)
             if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test

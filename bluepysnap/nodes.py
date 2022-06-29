@@ -166,13 +166,13 @@ class NodePopulation:
         Returns:
             NodePopulation: A NodePopulation object.
         """
-        self.circuit = circuit
+        self._circuit = circuit
         self.name = population_name
 
     @property
     def _node_sets(self):
         """Node sets defined for this node population."""
-        return self.circuit.node_sets
+        return self._circuit.node_sets
 
     @cached_property
     def _data(self):
@@ -201,11 +201,11 @@ class NodePopulation:
 
     @cached_property
     def _properties(self):
-        return self.circuit.to_libsonata.node_population_properties(self.name)
+        return self._circuit.to_libsonata.node_population_properties(self.name)
 
     @cached_property
     def _population(self):
-        return self.circuit.to_libsonata.node_population(self.name)
+        return self._circuit.to_libsonata.node_population(self.name)
 
     @cached_property
     def size(self):
@@ -233,7 +233,7 @@ class NodePopulation:
             source.
         """
         return set(
-            edge.name for edge in self.circuit.edges.values() if self.name == edge.source.name
+            edge.name for edge in self._circuit.edges.values() if self.name == edge.source.name
         )
 
     def target_in_edges(self):
@@ -244,7 +244,7 @@ class NodePopulation:
             target.
         """
         return set(
-            edge.name for edge in self.circuit.edges.values() if self.name == edge.target.name
+            edge.name for edge in self._circuit.edges.values() if self.name == edge.target.name
         )
 
     @property
@@ -691,7 +691,7 @@ class NodePopulation:
     @property
     def h5_filepath(self):  # pylint: disable=inconsistent-return-statements
         """Get the H5 nodes file associated with population."""
-        for node_conf in self.circuit.config["networks"]["nodes"]:
+        for node_conf in self._circuit.config["networks"]["nodes"]:
             h5_filepath = node_conf["nodes_file"]
             storage = libsonata.NodeStorage(h5_filepath)
             if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
