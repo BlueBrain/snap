@@ -31,7 +31,8 @@ EXPECTED_PATH_KEYS = {
     "biophysical_neuron_models_dir",
     "vasculature_file",
     "vasculature_mesh",
-    "end_feet_area",
+    "endfeet_meshes_file",
+    "microdomains_file",
     "neurolucida-asc",
     "h5v1",
     "edges_file",
@@ -168,9 +169,4 @@ class Config:
 
     def to_dict(self):
         """Return the configuration as a dict with absolute paths."""
-        if hasattr(self._libsonata, "expanded_json"):
-            config = json.loads(self._libsonata.expanded_json)
-        else:
-            config = json.loads(self._libsonata.json)
-
-        return Parser.parse(config, self._config_dir)
+        return Parser.parse(json.loads(self._libsonata.expanded_json), self._config_dir)
