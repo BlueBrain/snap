@@ -845,11 +845,12 @@ class EdgePopulation:
             omit_edge_count = lambda x: x[:2]
             return map(omit_edge_count, it)
 
-    @property
-    def h5_filepath(self):  # pylint: disable=inconsistent-return-statements
+    @cached_property
+    def h5_filepath(self):
         """Get the H5 edges file associated with population."""
         for edge_conf in self._circuit.config["networks"]["edges"]:
             h5_filepath = edge_conf["edges_file"]
             storage = libsonata.EdgeStorage(h5_filepath)
             if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
                 return h5_filepath
+        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")

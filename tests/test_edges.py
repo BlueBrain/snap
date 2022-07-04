@@ -1304,3 +1304,10 @@ class TestEdgePopulation:
 
     def test_h5_filepath(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
+
+    def test_no_h5_filepath(self):
+        test_obj = test_module.Edges(Circuit(str(TEST_DATA_DIR / "circuit_config.json")))
+        with patch("libsonata.EdgeStorage.population_names") as patched:
+            patched.return_value = []
+            with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
+                test_obj["default"].h5_filepath

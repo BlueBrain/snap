@@ -32,10 +32,12 @@ def _collect_frame_reports(sim):
             from bluepysnap.frame_report import SomaReport
 
             cls = SomaReport
-        else:
+        elif report_type == "all":
             from bluepysnap.frame_report import CompartmentReport
 
             cls = CompartmentReport
+        else:
+            raise BluepySnapError(f"Report {name}: format {report_type} not yet supported.")
 
         res[name] = cls(sim, name)
     return res

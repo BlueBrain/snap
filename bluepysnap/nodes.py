@@ -688,11 +688,12 @@ class NodePopulation:
 
         return NeuronModelsHelper(self._properties, self)
 
-    @property
-    def h5_filepath(self):  # pylint: disable=inconsistent-return-statements
+    @cached_property
+    def h5_filepath(self):
         """Get the H5 nodes file associated with population."""
         for node_conf in self._circuit.config["networks"]["nodes"]:
             h5_filepath = node_conf["nodes_file"]
             storage = libsonata.NodeStorage(h5_filepath)
             if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
                 return h5_filepath
+        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")

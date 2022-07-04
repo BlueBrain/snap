@@ -340,6 +340,13 @@ class TestNodes:
     def test_h5_filepath(self):
         assert self.test_obj["default"].h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
 
+    def test_no_h5_filepath(self):
+        test_obj = test_module.Nodes(Circuit(str(TEST_DATA_DIR / "circuit_config.json")))
+        with patch("libsonata.NodeStorage.population_names") as patched:
+            patched.return_value = []
+            with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
+                test_obj["default"].h5_filepath
+
 
 class TestNodePopulation:
     def setup(self):

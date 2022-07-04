@@ -60,8 +60,19 @@ def test_unknown_report():
         with edit_config(config_path) as config:
             config["reports"]["soma_report"]["sections"] = "unknown"
 
-        with pytest.raises(libsonata.SonataError):
+        with pytest.raises(libsonata.SonataError, match="Invalid value.*for key 'sections'"):
             test_module.Simulation(config_path)
+
+
+def test_nonimplemented_report():
+    with copy_test_data(config="simulation_config.json") as (_, config_path):
+        with edit_config(config_path) as config:
+            config["reports"]["soma_report"]["sections"] = "axon"
+
+        with pytest.raises(
+            BluepySnapError, match="Report soma_report: format axon not yet supported"
+        ):
+            test_module.Simulation(config_path).reports
 
 
 def test_no_network_config():
