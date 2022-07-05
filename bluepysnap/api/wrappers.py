@@ -10,7 +10,7 @@ L = logging.getLogger(__name__)
 try:
     from bluepyopt import ephys
     from bluepyopt.ephys.morphologies import NrnFileMorphology
-except:
+except ImportError:
     L.warning("Need to have bluepyopt installed")
 
 try:
@@ -20,8 +20,36 @@ try:
         define_morphology,
         define_parameters,
     )
-except:
+except ImportError:
     L.warning("Need to have bluepyemodel installed")
+
+
+def wrap_morphology_dataframe_as_entities(df, api, tool=None):
+    from kgforge.core import Resource
+
+    from bluepysnap.api.entity import Entity
+
+    df = df[["name", "path"]]
+    return tuple(
+        api.reopen(
+            Entity(
+                Resource(
+                    type="NeuronMorphology",
+                    distribution=[
+                        Resource(
+                            type="DataDownload",
+                            name=name,
+                            atLocation=Resource(location=str(path)),
+                            encodingFormat=f"application/{path.suffix.lstrip('.')}",
+                        )
+                    ],
+                )
+            ),
+            tool=tool,
+        )
+        for name, path in df.values
+    )
+
 
 # TODO: this is very tailored to the mechanims we're are storing in the example;
 #   need more of the logic from bluepyemodel/model/model.py, but for that we
@@ -55,7 +83,7 @@ class ParamWrapper:
         return getattr(self.param, name)
 
 
-class MorphWrapper:
+class EmodelMorphWrapper:
     MORPHOLOGY_PATH = DOWNLOADED_CONTENT_PATH / "morphologies"
 
     class DummyMorph:
@@ -74,7 +102,7 @@ class EModelConfiguration:
         self._parameters = [ParamWrapper(p) for p in parameters]
         self._mechanisms = mechanisms if isinstance(mechanisms, list) else [mechanisms]
         self._distributions = [DistrWrapper(p, d) for p, d in distributions.items()]
-        self._morphology = MorphWrapper(morphology)
+        self._morphology = EmodelMorphWrapper(morphology)
         self._mod_file = mod_file
 
     def _compile_mod_file(self):
@@ -97,4 +125,4 @@ class EModelConfiguration:
             params=parameters,
         )
 
-        return cell_model
+        return cell_mode

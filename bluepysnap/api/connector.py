@@ -38,16 +38,33 @@ NAMESPACE_MAPPING = {
 }
 
 
+def build_search_filters(type_, filters):
+    search_filters = {}
+
+    def add_namespace(key, value):
+        return NAMESPACE_MAPPING.get(key, "") + value
+
+    if type_:
+        search_filters["type"] = type_
+
+    for k, v in filters.items():
+        if k in _NEXUS_KEYS:
+            search_filters[f"_{k}"] = {"id": add_namespace(k, v)}
+        else:
+            search_filters[k] = v
+
+    return search_filters
+
+
 class NexusConnector:
     def __init__(self, forge, debug=False):
         self._forge = forge
-        self._search_builder = SearchBuilder()
         self._debug = debug
 
     def search(
         self, type_, filters, limit=None, offset=None, search_in_graph=False, **kwargs
     ) -> List[Resource]:
-        search_filters = self._search_builder.build_filters(type_, filters)
+        search_filters = build_search_filters(type_, filters)
 
         return self._forge.search(
             search_filters,
@@ -90,23 +107,3 @@ class NexusConnector:
             self._forge.download(resource, "contentUrl", path)
         else:
             raise RuntimeError(f"resource {resource.type} can not be downloaded.")
-
-
-class SearchBuilder:
-    @staticmethod
-    def build_filters(type_, filters):
-        search_filters = {}
-
-        def add_namespace(key, value):
-            return NAMESPACE_MAPPING.get(key, "") + value
-
-        if type_:
-            search_filters["type"] = type_
-
-        for k, v in filters.items():
-            if k in _NEXUS_KEYS:
-                search_filters[f"_{k}"] = {"id": add_namespace(k, v)}
-            else:
-                search_filters[k] = v
-
-        return search_filters

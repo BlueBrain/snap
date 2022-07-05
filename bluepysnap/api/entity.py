@@ -14,6 +14,22 @@ class ResolvingResource:
         self._wrapped = resource
         self._retriever = retriever
 
+    @property
+    def wrapped(self):
+        return self._wrapped
+
+    def _sync_resource(self):
+        """Retrieve the resource if it's not synchronized."""
+        if (
+            self._retriever
+            and getattr(self._wrapped, "_synchronized", None) is False
+            and hasattr(self._wrapped, "id")
+        ):
+            self._wrapped = self._retriever(self._wrapped.id)
+            assert self._wrapped._synchronized is True
+            return True
+        return False
+
     def __getattr__(self, name):
         """Get an attribute from the metadata or from the wrapped resource.
 
@@ -50,19 +66,6 @@ class ResolvingResource:
 
         return result
 
-    def _sync_resource(self):
-        """Retrieve the resource if it's not synchronized."""
-        if (
-            self._retriever
-            and getattr(self._wrapped, "_synchronized", None) is False
-            and hasattr(self._wrapped, "id")
-        ):
-            # FIXME: is it fine to always retrieve the latest version? if not, which one?
-            self._wrapped = self._retriever(self._wrapped.id)
-            assert self._wrapped._synchronized is True
-            return True
-        return False
-
     def __repr__(self):
         return self._wrapped.__repr__()
 
@@ -76,13 +79,13 @@ class Entity:
             retriever: callable used to retrieve nested resources by id.
             opener: callable used to open the instance associated to the resource.
         """
-        self._rr = ResolvingResource(resource, retriever=retriever)
+        self._resolving_resource = ResolvingResource(resource, retriever=retriever)
         self._instance = Proxy(partial(opener, self)) if opener else None
         self._downloader = downloader
 
     @property
     def resource(self):
-        return self._rr._wrapped
+        return self._resolving_resource.wrapped
 
     @property
     def instance(self):
@@ -96,8 +99,8 @@ class Entity:
             self._downloader(item, path)
 
     def __repr__(self):
-        resource_id = getattr(self._rr, "id", None)
-        resource_type = getattr(self._rr, "type", None)
+        resource_id = getattr(self._resolving_resource, "id", None)
+        resource_type = getattr(self._resolving_resource, "type", None)
         instance_type = type(self._instance).__name__
         return (
             f"Entity(resource_id=<{resource_id}>,"
@@ -107,6 +110,6 @@ class Entity:
 
     def __getattr__(self, name):
         try:
-            return getattr(self._rr, name)
+            return getattr(self._resolving_resource, name)
         except AttributeError:
             raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")

@@ -7,10 +7,6 @@ from mock import MagicMock
 
 from bluepysnap.api import connector as test_module
 
-TOKEN = os.environ.get("KG_TOKEN")
-if TOKEN is not None:
-    raise RuntimeError(TOKEN)
-
 
 def test_nexus_connector_init():
     forge = MagicMock()
@@ -114,5 +110,5 @@ def test_nexus_connector_download_resource(caplog):
     ],
 )
 def test_search_builder(type_, filter_, expected):
-    result = test_module.SearchBuilder().build_filters(type_, filter_)
+    result = test_module.build_search_filters(type_, filter_)
     assert result == expected

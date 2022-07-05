@@ -1,9 +1,9 @@
+import pandas as pd
 from kgforge.core import Resource
 from mock import patch
 
 from bluepysnap.api import core as test_module
 from bluepysnap.api.entity import Entity
-import pandas as pd
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")

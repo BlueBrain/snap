@@ -39,7 +39,6 @@ class EntityFactory:
         self.register("MorphologyRelease", "morph-tool", open_morphology_release)
         self.register(
             [
-                "DummyMorphology",
                 "NeuronMorphology",
                 "ReconstructedCell",
                 "ReconstructedPatchedCell",
@@ -112,7 +111,7 @@ class EntityFactory:
         try:
             if func == open_emodelconfiguration:
                 # TODO: EModelConfiguration in nexus demo/emodel_pipeline
-                #      only have the morphology.name, and can't be auto downloaded
+                # only have the morphology.name, and can't be auto downloaded
                 return func(entity, self._connector)
             return func(entity)
         except Exception as ex:
@@ -140,7 +139,9 @@ def open_circuit_snap(entity):
     if hasattr(entity, "circuitConfigPath"):
         config_path = _get_path(entity.circuitConfigPath.url)
     else:
-        # we should abstain from any hard coded paths (even if partial), this was used for a demo
+        # TODO: we should abstain from any hard coded paths (even if partial).
+        # This was used for a demo (can also be seen elsewhere). The config path should be a
+        # property of the resource.
         config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
     return bluepysnap.Circuit(str(config_path))
 
@@ -155,7 +156,7 @@ def open_circuit_bluepy(entity):  # pragma: no cover
 def open_simulation_snap(entity):
     import bluepysnap
 
-    # we should abstain from any hard coded paths (even if partial), this was used for a demo
+    # TODO: Same as with open_circuit_snap: should abstain from hard coded paths
     config_path = _get_path(entity.path) / "sonata/simulation_config.json"
     return bluepysnap.Simulation(str(config_path))
 
@@ -185,8 +186,8 @@ def open_emodelconfiguration(entity, connector):  # pragma: no cover
     from bluepysnap.api.wrappers import EModelConfiguration
 
     # TODO: we need the connector here, since the
-    #      morphology/SubCellularModelScript (mod file) only exists as text;
-    #      it's not 'connected'/'linked' to anything in nexus
+    # morphology/SubCellularModelScript (mod file) only exists as text;
+    # it's not 'connected'/'linked' to anything in nexus
 
     def _get_entity_by_filter(type_, filter_):
         resources = connector.get_resources(type_, filter_)
@@ -228,7 +229,6 @@ def open_emodelconfiguration(entity, connector):  # pragma: no cover
 def open_morphology_neurom(entity):
     import neurom
 
-    # TODO: have a possibility to also read the file atLocation, if found and accessible?
     supported_formats = {"text/plain", "application/swc", "application/h5"}
     unsupported_formats = set()
 
