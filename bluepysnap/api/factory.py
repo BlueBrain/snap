@@ -1,3 +1,4 @@
+"""Functions and classes used for instantiating Nexus resources."""
 import logging
 import os
 from collections import defaultdict
@@ -26,9 +27,18 @@ def _get_path_for_item(item, entity):
         path = DOWNLOADED_CONTENT_PATH / item.name
         return path
 
+    return None
+
 
 class EntityFactory:
+    """Factory class for instantiating Nexus resources."""
+
     def __init__(self, connector):
+        """Initializes EntityFactory.
+
+        Args:
+            connector (bluepysnap.api.connector.Connector): connector instance
+        """
         self._connector = connector
         self._function_registry = defaultdict(dict)
         self.register("DetailedCircuit", "snap", open_circuit_snap)
@@ -61,7 +71,7 @@ class EntityFactory:
         """Register a tool to open the given resource type.
 
         Args:
-            resource_type (str or list): type(s) of resources handled by tool.
+            resource_types (str or list): type(s) of resources handled by tool.
             tool (str): name of the tool.
             func (callable): any callable accepting an entity as parameter.
         """
@@ -109,7 +119,7 @@ class EntityFactory:
             raise RuntimeError(f"Tool {tool} not found for {types}")
 
         try:
-            if func == open_emodelconfiguration:
+            if func is open_emodelconfiguration:
                 # TODO: EModelConfiguration in nexus demo/emodel_pipeline
                 # only have the morphology.name, and can't be auto downloaded
                 return func(entity, self._connector)
@@ -134,6 +144,7 @@ class EntityFactory:
 
 
 def open_circuit_snap(entity):
+    """Open SNAP circuit."""
     import bluepysnap
 
     if hasattr(entity, "circuitConfigPath"):
@@ -147,13 +158,15 @@ def open_circuit_snap(entity):
 
 
 def open_circuit_bluepy(entity):  # pragma: no cover
-    import bluepy
+    """Open bluepy circuit."""
+    import bluepy  # pylint: disable=import-error
 
     config_path = _get_path(entity.circuitBase.url) / "CircuitConfig"
     return bluepy.Circuit(str(config_path))
 
 
 def open_simulation_snap(entity):
+    """Open SNAP simulation."""
     import bluepysnap
 
     # TODO: Same as with open_circuit_snap: should abstain from hard coded paths
@@ -162,20 +175,23 @@ def open_simulation_snap(entity):
 
 
 def open_simulation_bluepy(entity):  # pragma: no cover
-    import bluepy
+    """Open bluepy simulation."""
+    import bluepy  # pylint: disable=import-error
 
     config_path = _get_path(entity.path) / "BlueConfig"
     return bluepy.Simulation(str(config_path))
 
 
 def open_simulation_bglibpy(entity):  # pragma: no cover
-    from bglibpy import SSim
+    """Open bluepy simulation with bglibpy."""
+    from bglibpy import SSim  # pylint: disable=import-error
 
     config_path = _get_path(entity.path) / "BlueConfig"
     return SSim(str(config_path))
 
 
 def open_morphology_release(entity):
+    """Open morphology release with morph-tool."""
     from morph_tool.morphdb import MorphDB
 
     config_path = _get_path(entity.morphologyIndex.distribution.url)
@@ -183,6 +199,7 @@ def open_morphology_release(entity):
 
 
 def open_emodelconfiguration(entity, connector):  # pragma: no cover
+    """Open emodel configuration."""
     from bluepysnap.api.wrappers import EModelConfiguration
 
     # TODO: we need the connector here, since the
@@ -227,6 +244,7 @@ def open_emodelconfiguration(entity, connector):  # pragma: no cover
 
 
 def open_morphology_neurom(entity):
+    """Open morphology with NeuroM."""
     import neurom
 
     supported_formats = {"text/plain", "application/swc", "application/h5"}
@@ -249,7 +267,8 @@ def open_morphology_neurom(entity):
 
 
 def open_atlas_voxcell(entity):  # pragma: no cover
-    from voxcell.nexus.voxelbrain import Atlas
+    """Open atlas with voxcell."""
+    from voxcell.nexus.voxelbrain import Atlas  # pylint: disable=import-error
 
     path = _get_path(entity.distribution.url)
     return Atlas.open(str(path))

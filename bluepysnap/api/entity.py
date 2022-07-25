@@ -1,3 +1,4 @@
+"""Classes that implement the resource and entity handling."""
 from functools import partial
 from pathlib import Path
 
@@ -10,12 +11,20 @@ DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute()
 
 
 class ResolvingResource:
+    """Class implementing traversing the resources attributes."""
+
     def __init__(self, resource: Resource, retriever=None):
+        """Initializes the wrapper class.
+
+        resorce (kgforge.core.Resource): wrapped resource
+        retriever (callable): function implementing the communication with Nexus
+        """
         self._wrapped = resource
         self._retriever = retriever
 
     @property
     def wrapped(self):
+        """The wrapped resource."""
         return self._wrapped
 
     def _sync_resource(self):
@@ -26,7 +35,7 @@ class ResolvingResource:
             and hasattr(self._wrapped, "id")
         ):
             self._wrapped = self._retriever(self._wrapped.id)
-            assert self._wrapped._synchronized is True
+            assert self._wrapped._synchronized is True  # pylint:disable = protected-access
             return True
         return False
 
@@ -35,7 +44,6 @@ class ResolvingResource:
 
         It could call the retriever if the resource is not synchronized.
         """
-
         # ignore private attributes to avoid unnecessary lookups (for example using notebooks)
         if name.startswith("_"):
             raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
@@ -51,8 +59,10 @@ class ResolvingResource:
 
         try:
             result = getattr(self._wrapped, name)
-        except AttributeError:
-            raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+        except AttributeError as error:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute {name!r}"
+            ) from error
 
         # TODO: In some cases 'distribution' contains list, in some cases 'DataDownload'
         # Figure out how to handle this in a cleaner way.
@@ -67,17 +77,21 @@ class ResolvingResource:
         return result
 
     def __repr__(self):
+        """Proxies the __repr__ call to the wrapped resource."""
         return self._wrapped.__repr__()
 
 
 class Entity:
+    """Implements the instantiation and downloading of a resource."""
+
     def __init__(self, resource: Resource, retriever=None, opener=None, downloader=None):
-        """Return a new entity.
+        """Instantiate a new entity.
 
         Args:
-            resource: resource to be wrapped.
-            retriever: callable used to retrieve nested resources by id.
-            opener: callable used to open the instance associated to the resource.
+            resource (kgforge.core.Resource): resource to be wrapped.
+            retriever (callable): function used to retrieve nested resources by id.
+            opener (callable): function used to open the instance associated to the resource.
+            downloader (callable): function used to download the resource.
         """
         self._resolving_resource = ResolvingResource(resource, retriever=retriever)
         self._instance = Proxy(partial(opener, self)) if opener else None
@@ -85,13 +99,21 @@ class Entity:
 
     @property
     def resource(self):
+        """The wrapped resource."""
         return self._resolving_resource.wrapped
 
     @property
     def instance(self):
+        """The instantiated object."""
         return self._instance
 
     def download(self, items=None, path=None):
+        """Downloads the wrapped resource.
+
+        Args:
+            items (list, kgforge.core.Resource): item(s) to download
+            path (str): path to the directory into which the data is downloaded
+        """
         path = path or DOWNLOADED_CONTENT_PATH
         items = always_iterable(items or self.resource.distribution)
 
@@ -99,6 +121,7 @@ class Entity:
             self._downloader(item, path)
 
     def __repr__(self):
+        """Overwrite the default __repr__ implementation."""
         resource_id = getattr(self._resolving_resource, "id", None)
         resource_type = getattr(self._resolving_resource, "type", None)
         instance_type = type(self._instance).__name__
@@ -109,7 +132,10 @@ class Entity:
         )
 
     def __getattr__(self, name):
+        """Proxy getter requests to the wrapped resource."""
         try:
             return getattr(self._resolving_resource, name)
-        except AttributeError:
-            raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+        except AttributeError as error:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute {name!r}"
+            ) from error

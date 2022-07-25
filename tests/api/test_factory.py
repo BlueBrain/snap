@@ -190,10 +190,15 @@ def test__get_path_for_item():
 
     item = MockItem()
     entity = MagicMock()
+
     del item.atLocation
     res = test_module._get_path_for_item(item, entity)
     assert str(res) == str(test_module.DOWNLOADED_CONTENT_PATH / "fake_name")
     entity.download.assert_called_once_with(items=item, path=test_module.DOWNLOADED_CONTENT_PATH)
+
+    del item.contentUrl
+    res = test_module._get_path_for_item(item, entity)
+    assert res is None
 
 
 def test_open_morphology_neurom():
