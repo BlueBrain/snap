@@ -125,4 +125,4 @@ class EModelConfiguration:
             params=parameters,
         )
 
-        return cell_mode
+        return cell_model
