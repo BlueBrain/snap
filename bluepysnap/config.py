@@ -53,8 +53,6 @@ class Parser:
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
 
-    # TODO: Can be simplified by a great deal after libsonata SimulationConfig parses the manifest
-
     def __init__(self, config, config_dir):
         """Initializes a Resolver object.
 

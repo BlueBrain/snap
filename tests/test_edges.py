@@ -1302,12 +1302,24 @@ class TestEdgePopulation:
             it = test_obj.iter_connections([0, 1, 2], [1, 2], unique_node_ids=True)
             assert sorted(it) == [(0, 1), (1, 2)]
 
-    def test_h5_filepath(self):
+    def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
 
+    def test_h5_filepath_from_libsonata(self):
+        with copy_test_data() as (config_dir, config_path):
+            edge_path = str(Path(config_dir) / "edges.h5")
+            with edit_config(config_path) as config:
+                config["networks"]["edges"] = [
+                    {
+                        "edge_types_file": None,
+                        "edges_file": edge_path,
+                        "populations": {"fake": {}},
+                    }
+                ]
+            test_obj = test_module.Edges(Circuit(config_path))
+            assert test_obj["default"].h5_filepath == edge_path
+
     def test_no_h5_filepath(self):
-        test_obj = test_module.Edges(Circuit(str(TEST_DATA_DIR / "circuit_config.json")))
-        with patch("libsonata.EdgeStorage.population_names") as patched:
-            patched.return_value = []
-            with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
-                test_obj["default"].h5_filepath
+        with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
+            self.test_obj.name = "fake"
+            self.test_obj.h5_filepath

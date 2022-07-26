@@ -28,6 +28,8 @@ from bluepysnap.exceptions import BluepySnapError
 class NetworkObject(abc.ABC):
     """Abstract class for the top level NetworkObjects accessor."""
 
+    _population_class = None
+
     def __init__(self, circuit):
         """Initialize the top level NetworkObjects accessor."""
         self._circuit = circuit
@@ -35,11 +37,6 @@ class NetworkObject(abc.ABC):
     def _get_populations(self, cls):
         """Collects the different NetworkObjectPopulation and returns them as a dict."""
         return {name: cls(self._circuit, name) for name in self.population_names}
-
-    @property
-    @abc.abstractmethod
-    def _population_class(self):
-        """Should define the NetworkObject population class."""
 
     @cached_property
     def _populations(self):

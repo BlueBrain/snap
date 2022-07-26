@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import libsonata
 import numpy as np
@@ -19,7 +20,7 @@ from bluepysnap.node_sets import NodeSets
 from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Node
 from bluepysnap.utils import IDS_DTYPE
 
-from utils import TEST_DATA_DIR, create_node_population
+from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 
 class TestNodes:
@@ -336,16 +337,6 @@ class TestNodes:
 
         with pytest.raises(BluepySnapError):
             self.test_obj.get(properties="unknown")
-
-    def test_h5_filepath(self):
-        assert self.test_obj["default"].h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
-
-    def test_no_h5_filepath(self):
-        test_obj = test_module.Nodes(Circuit(str(TEST_DATA_DIR / "circuit_config.json")))
-        with patch("libsonata.NodeStorage.population_names") as patched:
-            patched.return_value = []
-            with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
-                test_obj["default"].h5_filepath
 
 
 class TestNodePopulation:
@@ -922,3 +913,25 @@ class TestNodePopulation:
         from bluepysnap.neuron_models import NeuronModelsHelper
 
         assert isinstance(self.test_obj.models, NeuronModelsHelper)
+
+    def test_h5_filepath_from_config(self):
+        assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
+
+    def test_h5_filepath_from_libsonata(self):
+        with copy_test_data() as (config_dir, config_path):
+            node_path = str(Path(config_dir) / "nodes.h5")
+            with edit_config(config_path) as config:
+                config["networks"]["nodes"] = [
+                    {
+                        "node_types_file": None,
+                        "nodes_file": node_path,
+                        "populations": {"fake": {}},
+                    }
+                ]
+            test_obj = test_module.Nodes(Circuit(config_path))
+            assert test_obj["default"].h5_filepath == node_path
+
+    def test_no_h5_filepath(self):
+        with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
+            self.test_obj.name = "fake"
+            self.test_obj.h5_filepath
