@@ -1,13 +1,16 @@
 import logging
+from itertools import chain
+from pathlib import Path
 from typing import Dict, List, Union
 
 import pandas as pd
 from kgforge.core import KnowledgeGraphForge, Resource
 from pandas import DataFrame
 
+from bluepysnap import BluepySnapError
 from bluepysnap.api.connector import NexusConnector
 from bluepysnap.api.entity import Entity
-from bluepysnap.api.factory import EntityFactory
+from bluepysnap.api.factory import EntityFactory, _get_path
 
 L = logging.getLogger(__name__)
 
@@ -24,10 +27,9 @@ class Api:
         self._connector = NexusConnector(forge=self._forge, debug=debug)
         self._factory = EntityFactory(connector=self._connector)
         # children APIs
-        self.circuit = CircuitApi(self)
-        self.simulation = SimulationApi(self)
-        self.morphology = MorphologyApi(self)
-        self.examples = ExamplesApi(self)
+        self._children = {}
+        self.add_child_api(CircuitApi(self))
+        self.add_child_api(SimulationApi(self))
 
     def get_entity_by_id(self, *args, tool=None, **kwargs) -> Entity:
         """Retrieve and return a single entity based on the id."""
@@ -68,36 +70,134 @@ class Api:
         """Return a new entity to be opened with a different tool."""
         return self._factory.open(entity.resource, tool=tool)
 
+    def add_child_api(self, child):
+        if child.name in self._children:
+            raise BluepySnapError(f"api already has child api named '{child}'")
 
-class ChildApi:
+        self._children[child.name] = child
+
+    def get_child_api(self, name):
+        return self._children.get(name)
+
+    def get_child_api_by_nexus_type(self, nexus_type):
+        """Would return (if found) a child api based on nexus type.
+
+        -> No need for the users to know the "names" of the APIs."""
+
+
+def _get_path(p):
+    return Path(p.replace("file://", ""))
+
+
+# ChildApi could perhaps be merged with API and the "children" should inherit that
+# However, the issue is then how to share the forge instance.
+class ChildApi:  # should be abstract
+    name = None
+    nexus_type = None
+    default_tool = None
+
     def __init__(self, api):
         self.api = api
+        api.add_child_api(self)
+
+    def open(self, entity, tool=None):
+        """Opening an entity directly w/ a Child Api.
+
+        This would imply that entity.instance would be gone."""
+        tool = tool or self.default_tool
+        self.tools[tool](entity)
+
+    def get(self, filters=None):
+        filters = filters or {}
+        return self.api.get_entities(self.nexus_type)
+
+    def download(self, entity):
+        """Specific instructions on how to download a certain type of entities, e.g., NeuronMorphology
+
+        Would imply this is passed when the Entity is created:
+            Entity(*args, downloader=<child_api>.download, **kwargs)
+
+        And the entity.download would be something like:
+            def download(self):
+                self._downloader(self)
+        """
+        pass
+
+
+"""
+EXAMPLE:
+    api = API(....)
+    circuit_api = self.api.get_child_api('circuit')
+    circuit = circuit_api.get()[0]
+    simulations = circuit_api.get_simulations_by_circuit(circuit)
+"""
 
 
 class CircuitApi(ChildApi):
-    def get_last_circuit(self, tool=None):
-        """Retrieve the last created circuit."""
-        entities = self.api.get_entities("DetailedCircuit", limit=1, tool=tool)
-        return entities[0] if entities else None
+    """A mock up of an idea how Child APIs could work."""
+
+    name = "circuit"
+    nexus_type = "DetailedCircuit"
+    default_tool = "snap"
+
+    def __init__(self, api):
+        super().__init__(api)
+        self.tools = {"bluepy": self.open_bluepy, "snap": self.open_snap}
+
+    def open_bluepy(self):
+        pass
+
+    def open_snap(self, entity):
+        import bluepysnap
+
+        if hasattr(entity, "circuitConfigPath"):
+            config_path = _get_path(entity.circuitConfigPath.url)
+        else:
+            # we should abstain from any hard coded paths (even if partial), this was used for a demo
+            config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
+        return bluepysnap.Circuit(str(config_path))
+
+    def get_simulations_by_circuit(self, circuit):
+        """Get simulations that used a circuit.
+
+        Args:
+            circuit (Entity): circuit
+
+        Returns:
+            (list): array of simulations (Entity)
+
+        """
+        self.api.get_child_api("simulation").get_simulations_by_circuit(circuit)
 
 
 class SimulationApi(ChildApi):
-    def get_simulations_by_circuit(self, circuit, tool=None):
+    name = "simulation"
+    nexus_type = "Simulation"
+    default_tool = None
+
+    def __init__(self, api):
+        super().__init__(api)
+        self.tools = {}
+
+    def get_simulations_by_circuit(self, circuit):
         """Retrieve all simulations that use this circuit either directly or in a campaign."""
-        query = f"""
-            SELECT DISTINCT ?id
-            WHERE {{
-                {{
-                    ?id a Simulation ; wasStartedBy ?scid .
-                    ?scid a SimulationCampaign ; used <{circuit.id}> .
-                }}
-            UNION
-                {{
-                    ?id a Simulation ; used <{circuit.id}> .
-                }}
-            }}
-            """
-        return self.api.get_entities_by_query(query, tool=tool)
+        sim1 = self.get({"used": {"id": circuit.id}})
+
+        # get simulation campaigns that used the circuit
+        simulation_campaigns = self.api.get_entities(
+            "SimulationCampaign", {"used": {"id": circuit.id}}
+        )
+
+        # get simulations started by the simulation campaigns
+        ids = [r.id for r in simulation_campaigns]
+        sim2 = list(
+            chain.from_iterable(self.get({"wasStartedBy": {"id": id_}}) for id_ in ids)
+        )  # Have to loop as "OR" is not supported by KnowledgeGraphForge.search.
+
+        # merge simulations and remove possible duplicates
+        simulations = {s.id: s for s in sim1 + sim2}
+
+        return list(simulations.values())
 
 
 class MorphologyApi(ChildApi):
