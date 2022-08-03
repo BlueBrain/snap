@@ -155,16 +155,24 @@ class Config:
         """Return the libsonata instance of the config."""
         return self._libsonata
 
-    @classmethod
-    def from_circuit_config(cls, config_path):
-        """Instantiate the config class from circuit configuration."""
-        return cls(config_path, libsonata.CircuitConfig)
-
-    @classmethod
-    def from_simulation_config(cls, config_path):
-        """Instantiate the config class from simulation configuration."""
-        return cls(config_path, libsonata.SimulationConfig)
-
     def to_dict(self):
         """Return the configuration as a dict with absolute paths."""
         return Parser.parse(json.loads(self._libsonata.expanded_json), self._config_dir)
+
+
+class CircuitConfig(Config):
+    """Handle CircuitConfig."""
+
+    @classmethod
+    def from_config(cls, config_path):
+        """Instantiate the config class from circuit configuration."""
+        return cls(config_path, libsonata.CircuitConfig)
+
+
+class SimulationConfig(Config):
+    """Handle SimulationConfig."""
+
+    @classmethod
+    def from_config(cls, config_path):
+        """Instantiate the config class from simulation configuration."""
+        return cls(config_path, libsonata.SimulationConfig)

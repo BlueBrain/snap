@@ -18,7 +18,7 @@
 
 from cached_property import cached_property
 
-from bluepysnap.config import Config
+from bluepysnap.config import SimulationConfig
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 
@@ -55,7 +55,7 @@ class Simulation:
         Returns:
             Simulation: A Simulation object.
         """
-        self._config = Config.from_simulation_config(config)
+        self._config = SimulationConfig.from_config(config)
 
     @property
     def config(self):

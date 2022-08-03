@@ -42,6 +42,8 @@ class Error:
         """Returns only message by default."""
         return str(self.message)
 
+    __repr__ = __str__
+
     def __eq__(self, other):
         """Two errors are equal if inherit from Error and their level, message are equal."""
         if not isinstance(other, Error):

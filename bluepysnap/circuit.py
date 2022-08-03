@@ -19,7 +19,7 @@
 
 from cached_property import cached_property
 
-from bluepysnap.config import Config
+from bluepysnap.config import CircuitConfig
 from bluepysnap.edges import Edges
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.nodes import Nodes
@@ -37,7 +37,7 @@ class Circuit:
         Returns:
             Circuit: A Circuit object.
         """
-        self._config = Config.from_circuit_config(config)
+        self._config = CircuitConfig.from_config(config)
 
     @property
     def to_libsonata(self):
