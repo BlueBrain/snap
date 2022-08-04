@@ -99,7 +99,6 @@ def test_parse():
         assert actual["path"] == str(Path(config_path.parent / "./path").resolve())
 
 
-# TODO: remove this when SimulationConfig has manifest parsing
 def test_bad_manifest():
     # 2 anchors would result in the absolute path of the last one : misleading
     with copy_config() as config_path:
