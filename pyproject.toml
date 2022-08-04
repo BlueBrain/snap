@@ -85,5 +85,5 @@ ignored-modules = [
 
 [tool.coverage.run]
 omit = [
-    'bluepysnap/api/wrappers.py',
+    'bluepysnap/nexus/wrappers.py',
 ]

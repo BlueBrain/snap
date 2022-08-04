@@ -5,7 +5,7 @@ import pytest
 from kgforge.core import KnowledgeGraphForge, Resource
 from mock import MagicMock
 
-from bluepysnap.api import connector as test_module
+from bluepysnap.nexus import connector as test_module
 
 
 def test_nexus_connector_init():

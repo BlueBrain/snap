@@ -2,29 +2,29 @@ import pandas as pd
 from kgforge.core import Resource
 from mock import patch
 
-from bluepysnap.api import core as test_module
-from bluepysnap.api.entity import Entity
-from bluepysnap.api.factory import EntityFactory
+from bluepysnap.nexus import core as test_module
+from bluepysnap.nexus.entity import Entity
+from bluepysnap.nexus.factory import EntityFactory
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_init(mocked_forge):
-    api = test_module.Api(bucket="fake/project", token="fake_token")
-    assert isinstance(api, test_module.Api)
+def test_nexushelper_init(mocked_forge):
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
+    assert isinstance(helper, test_module.NexusHelper)
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
 def test__factory(mocked_forge):
-    api = test_module.Api(bucket="fake/project", token="fake_token")
-    assert isinstance(api.factory, EntityFactory)
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
+    assert isinstance(helper.factory, EntityFactory)
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_get_entity_by_id(mocked_forge):
+def test_nexushelper_get_entity_by_id(mocked_forge):
     mocked_forge.return_value.retrieve.return_value = Resource(id="id1", type="DetailedCircuit")
-    api = test_module.Api(bucket="fake/project", token="fake_token")
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
 
-    result = api.get_entity_by_id("id1")
+    result = helper.get_entity_by_id("id1")
 
     assert isinstance(result, Entity)
     assert result.id == "id1"
@@ -32,12 +32,12 @@ def test_api_get_entity_by_id(mocked_forge):
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_get_entities_by_query(mocked_forge):
+def test_nexushelper_get_entities_by_query(mocked_forge):
     mocked_forge.return_value.sparql.return_value = [Resource(id="id1")]
     mocked_forge.return_value.retrieve.return_value = Resource(id="id1", type="DetailedCircuit")
-    api = test_module.Api(bucket="fake/project", token="fake_token")
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
 
-    result = api.get_entities_by_query("FAKE QUERY")
+    result = helper.get_entities_by_query("FAKE QUERY")
 
     assert isinstance(result, list)
     assert len(result) == 1
@@ -47,12 +47,12 @@ def test_api_get_entities_by_query(mocked_forge):
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_get_entities(mocked_forge):
+def test_nexushelper_get_entities(mocked_forge):
     mocked_forge.return_value.search.return_value = [Resource(id="id1")]
     mocked_forge.return_value.retrieve.return_value = Resource(id="id1", type="DetailedCircuit")
-    api = test_module.Api(bucket="fake/project", token="fake_token")
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
 
-    result = api.get_entities("DetailedCircuit")
+    result = helper.get_entities("DetailedCircuit")
 
     assert isinstance(result, list)
     assert len(result) == 1
@@ -62,7 +62,7 @@ def test_api_get_entities(mocked_forge):
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_as_dataframe(mocked_forge):
+def test_nexushelper_as_dataframe(mocked_forge):
     # KnowledgeGraphForge.as_dataframe is patched so we can only mock the result
     df = pd.DataFrame(
         {
@@ -72,21 +72,21 @@ def test_api_as_dataframe(mocked_forge):
         }
     )
     mocked_forge.return_value.as_dataframe.return_value = df
-    api = test_module.Api(bucket="fake/project", token="fake_token")
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
     resources = [
         Resource(id="id1", type="DetailedCircuit", name="fake_name_1"),
         Resource(id="id2", type="DetailedCircuit", name="fake_name_2"),
     ]
     entities = [Entity(res) for res in resources]
 
-    result = api.as_dataframe(entities)
+    result = helper.as_dataframe(entities)
 
     assert result is df
     mocked_forge.return_value.as_dataframe.assert_called_once_with(resources, store_metadata=True)
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_to_dict(mocked_forge):
+def test_nexushelper_to_dict(mocked_forge):
     # KnowledgeGraphForge.as_json is patched so we can only mock the result
     resource_dict = {
         "id": "id1",
@@ -94,23 +94,23 @@ def test_api_to_dict(mocked_forge):
         "name": "fake_name",
     }
     mocked_forge.return_value.as_json.return_value = resource_dict
-    api = test_module.Api(bucket="fake/project", token="fake_token")
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
     entity = Entity(resource)
 
-    result = api.to_dict(entity)
+    result = helper.to_dict(entity)
 
     assert result is resource_dict
     mocked_forge.return_value.as_json.assert_called_once_with(resource, store_metadata=True)
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_reopen(mocked_forge):
-    api = test_module.Api(bucket="fake/project", token="fake_token")
+def test_nexushelper_reopen(mocked_forge):
+    helper = test_module.NexusHelper(bucket="fake/project", token="fake_token")
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
     entity = Entity(resource)
 
-    result = api.reopen(entity)
+    result = helper.reopen(entity)
     assert isinstance(result, Entity)
     # only the wrapped resource is the same
     assert result.resource is entity.resource

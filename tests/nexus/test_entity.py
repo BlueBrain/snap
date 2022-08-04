@@ -2,7 +2,7 @@ import pytest
 from kgforge.core import Resource
 from mock import MagicMock, call
 
-from bluepysnap.api import entity as test_module
+from bluepysnap.nexus import entity as test_module
 
 
 def test_resolving_resource_simple():
@@ -105,8 +105,8 @@ def test_entity_download():
 def test_entity_to_dict():
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name", distribution=None)
     to_dict_mock = MagicMock()
-    api = MagicMock(to_dict=to_dict_mock)
-    entity = test_module.Entity(resource, api=api)
+    helper = MagicMock(to_dict=to_dict_mock)
+    entity = test_module.Entity(resource, helper=helper)
 
     entity.to_dict()
     entity.to_dict(store_metadata=False)

@@ -3,8 +3,8 @@ import logging
 
 from kgforge.core import KnowledgeGraphForge
 
-from bluepysnap.api.connector import NexusConnector
-from bluepysnap.api.factory import EntityFactory
+from bluepysnap.nexus.connector import NexusConnector
+from bluepysnap.nexus.factory import EntityFactory
 
 L = logging.getLogger(__name__)
 NEXUS_CONFIG_DEFAULT = (
@@ -13,11 +13,11 @@ NEXUS_CONFIG_DEFAULT = (
 )
 
 
-class Api:
+class NexusHelper:
     """The "main" class for the nexus-forge integration."""
 
     def __init__(self, bucket, token, nexus_config=None, debug=False, **kwargs):
-        """Initializes the Api class.
+        """Initializes the NexusHelper class.
 
         Args:
             bucket (str): name of the bucket to use (as: "ORGANIZATON/PROJECT")
@@ -34,7 +34,7 @@ class Api:
             **kwargs,
         )
         self._connector = NexusConnector(forge=self._forge, debug=debug)
-        self._factory = EntityFactory(api=self, connector=self._connector)
+        self._factory = EntityFactory(helper=self, connector=self._connector)
 
     @property
     def factory(self):
@@ -55,7 +55,7 @@ class Api:
         """Retrieve and return a list of entities based on the resource type and a filter.
 
         Example:
-            api.get_entities(
+            helper.get_entities(
                 "DetailedCircuit",
                 {"brainLocation": {"brainRegion": {"label": "Thalamus"}}},
                 limit=10,

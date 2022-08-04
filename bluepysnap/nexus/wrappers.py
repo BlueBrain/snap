@@ -7,7 +7,7 @@
 import logging
 import subprocess
 
-from bluepysnap.api.factory import DOWNLOADED_CONTENT_PATH
+from bluepysnap.nexus.factory import DOWNLOADED_CONTENT_PATH
 
 L = logging.getLogger(__name__)
 
@@ -27,24 +27,24 @@ except ImportError:
     L.warning("Need to have bluepyemodel installed")
 
 
-def wrap_morphology_dataframe_as_entities(df, api, tool=None):
+def wrap_morphology_dataframe_as_entities(df, helper, tool=None):
     """Wraps morphology dataframe as entities.
 
     Args:
         df (pd.DataFrame): morphology dataframe
-        api (bluepysnap.api.core.Api): API instance
+        helper (bluepysnap.nexus.NexusHelper): NexusHelper instance
         tool (callable): function used to open the morphologies
 
     Returns:
-        (tuple): array of entities (bluepysnap.api.entity.Entity)
+        (tuple): array of entities (bluepysnap.nexus.entity.Entity)
     """
     from kgforge.core import Resource
 
-    from bluepysnap.api.entity import Entity
+    from bluepysnap.nexus.entity import Entity
 
     df = df[["name", "path"]]
     return tuple(
-        api.reopen(
+        helper.reopen(
             Entity(
                 Resource(
                     type="NeuronMorphology",

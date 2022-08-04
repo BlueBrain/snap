@@ -8,7 +8,7 @@ from pathlib import Path
 from kgforge.core import Resource
 from more_itertools import all_equal, always_iterable, first
 
-from bluepysnap.api.entity import DOWNLOADED_CONTENT_PATH, Entity
+from bluepysnap.nexus.entity import DOWNLOADED_CONTENT_PATH, Entity
 
 L = logging.getLogger(__name__)
 
@@ -33,14 +33,14 @@ def _get_path_for_item(item, entity):
 class EntityFactory:
     """Factory class for instantiating Nexus resources."""
 
-    def __init__(self, api, connector):
+    def __init__(self, helper, connector):
         """Initializes EntityFactory.
 
         Args:
-            api (bluepysnap.api.Api): Api instance
-            connector (bluepysnap.api.connector.Connector): connector instance
+            helper (bluepysnap.nexus.NexusHelper): NexusHelper instance
+            connector (bluepysnap.nexus.connector.Connector): connector instance
         """
-        self._api = api
+        self._helper = helper
         self._connector = connector
         self._function_registry = defaultdict(dict)
         self.register("DetailedCircuit", "snap", open_circuit_snap)
@@ -102,7 +102,7 @@ class EntityFactory:
         """
         return Entity(
             resource,
-            api=self._api,
+            helper=self._helper,
             connector=self._connector,
             opener=partial(self._open_entity, tool=tool),
         )
@@ -202,7 +202,7 @@ def open_morphology_release(entity):
 
 def open_emodelconfiguration(entity, connector):  # pragma: no cover
     """Open emodel configuration."""
-    from bluepysnap.api.wrappers import EModelConfiguration
+    from bluepysnap.nexus.wrappers import EModelConfiguration
 
     # TODO: we need the connector here, since the
     # morphology/SubCellularModelScript (mod file) only exists as text;
