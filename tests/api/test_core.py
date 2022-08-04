@@ -4,12 +4,19 @@ from mock import patch
 
 from bluepysnap.api import core as test_module
 from bluepysnap.api.entity import Entity
+from bluepysnap.api.factory import EntityFactory
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
 def test_api_init(mocked_forge):
     api = test_module.Api(bucket="fake/project", token="fake_token")
     assert isinstance(api, test_module.Api)
+
+
+@patch(test_module.__name__ + ".KnowledgeGraphForge")
+def test__factory(mocked_forge):
+    api = test_module.Api(bucket="fake/project", token="fake_token")
+    assert isinstance(api.factory, EntityFactory)
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
@@ -79,7 +86,7 @@ def test_api_as_dataframe(mocked_forge):
 
 
 @patch(test_module.__name__ + ".KnowledgeGraphForge")
-def test_api_as_json(mocked_forge):
+def test_api_to_dict(mocked_forge):
     # KnowledgeGraphForge.as_json is patched so we can only mock the result
     resource_dict = {
         "id": "id1",
@@ -91,7 +98,7 @@ def test_api_as_json(mocked_forge):
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name")
     entity = Entity(resource)
 
-    result = api.as_json(entity)
+    result = api.to_dict(entity)
 
     assert result is resource_dict
     mocked_forge.return_value.as_json.assert_called_once_with(resource, store_metadata=True)

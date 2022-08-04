@@ -34,7 +34,12 @@ class Api:
             **kwargs,
         )
         self._connector = NexusConnector(forge=self._forge, debug=debug)
-        self._factory = EntityFactory(connector=self._connector)
+        self._factory = EntityFactory(api=self, connector=self._connector)
+
+    @property
+    def factory(self):
+        """Object responsible for creating the entities."""
+        return self._factory
 
     def get_entity_by_id(self, *args, tool=None, **kwargs):
         """Retrieve and return a single entity based on the id."""
@@ -65,7 +70,7 @@ class Api:
         data = [e.resource for e in data]
         return self._forge.as_dataframe(data, store_metadata=store_metadata, **kwargs)
 
-    def as_json(self, data, store_metadata=True, **kwargs):
+    def to_dict(self, data, store_metadata=True, **kwargs):
         """Return a dictionary or a list of dictionaries representing the entities."""
         return self._forge.as_json(data.resource, store_metadata=store_metadata, **kwargs)
 

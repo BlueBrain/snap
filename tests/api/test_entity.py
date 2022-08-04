@@ -58,7 +58,7 @@ def test_entity():
     def opener(res):
         return f"Instance of {res.id}"
 
-    entity = test_module.Entity(resource, retriever=None, opener=opener)
+    entity = test_module.Entity(resource, opener=opener)
 
     assert isinstance(entity, test_module.Entity)
     assert entity.resource == resource
@@ -81,21 +81,38 @@ def test_entity():
 
 def test_entity_download():
     # Can't download
-    downloader = MagicMock()
+    download_resource_mock = MagicMock()
+    connector = MagicMock(download_resource=download_resource_mock)
     resource = Resource(id="id1", type="DetailedCircuit", name="fake_name", distribution=None)
-    entity = test_module.Entity(resource, downloader=downloader)
+    entity = test_module.Entity(resource, connector=connector)
     entity.download()
-    downloader.assert_not_called()
+    connector.assert_not_called()
 
     # downloadable item in resource.distribution, default path
     resource = Resource(
         id="id1", type="DetailedCircuit", name="fake_name", distribution=["fake_item"]
     )
-    entity = test_module.Entity(resource, downloader=downloader)
+    entity = test_module.Entity(resource, connector=connector)
     entity.download()
-    downloader.assert_called_once_with("fake_item", test_module.DOWNLOADED_CONTENT_PATH)
+    download_resource_mock.assert_called_once_with("fake_item", test_module.DOWNLOADED_CONTENT_PATH)
 
     # specify path and item to download
-    downloader.reset_mock()
+    download_resource_mock.reset_mock()
     entity.download(items=[1, 2], path="fake_path")
-    downloader.has_calls((call(1, "fake_path"), call(2, "fake_path")))
+    download_resource_mock.has_calls((call(1, "fake_path"), call(2, "fake_path")))
+
+
+def test_entity_to_dict():
+    resource = Resource(id="id1", type="DetailedCircuit", name="fake_name", distribution=None)
+    to_dict_mock = MagicMock()
+    api = MagicMock(to_dict=to_dict_mock)
+    entity = test_module.Entity(resource, api=api)
+
+    entity.to_dict()
+    entity.to_dict(store_metadata=False)
+    to_dict_mock.has_calls(
+        (
+            call(entity, store_metadata=True),
+            call(entity, store_metadata=False),
+        )
+    )

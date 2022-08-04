@@ -33,12 +33,14 @@ def _get_path_for_item(item, entity):
 class EntityFactory:
     """Factory class for instantiating Nexus resources."""
 
-    def __init__(self, connector):
+    def __init__(self, api, connector):
         """Initializes EntityFactory.
 
         Args:
+            api (bluepysnap.api.Api): Api instance
             connector (bluepysnap.api.connector.Connector): connector instance
         """
+        self._api = api
         self._connector = connector
         self._function_registry = defaultdict(dict)
         self.register("DetailedCircuit", "snap", open_circuit_snap)
@@ -88,7 +90,7 @@ class EntityFactory:
         """Return the available tools for a given resource type."""
         return list(self._function_registry.get(resource_type, {}))
 
-    def open(self, resource: Resource, tool=None) -> Entity:
+    def open(self, resource: Resource, tool=None):
         """Open the resource and return an entity (resource, proxy).
 
         Args:
@@ -100,9 +102,9 @@ class EntityFactory:
         """
         return Entity(
             resource,
-            retriever=self._connector.get_resource_by_id,
+            api=self._api,
+            connector=self._connector,
             opener=partial(self._open_entity, tool=tool),
-            downloader=self._connector.download_resource,
         )
 
     def _open_entity(self, entity, tool=None):

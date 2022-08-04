@@ -7,13 +7,13 @@ from bluepysnap.api import factory as test_module
 
 
 def test_entity_factory_init():
-    factory = test_module.EntityFactory(connector=MagicMock())
+    factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
 
     assert isinstance(factory, test_module.EntityFactory)
 
 
 def test_entity_factory_get_registered_types():
-    factory = test_module.EntityFactory(connector=MagicMock())
+    factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
 
     result = factory.get_registered_types()
 
@@ -32,7 +32,7 @@ def test_entity_factory_get_registered_types():
 
 
 def test_entity_factory_get_available_tools():
-    factory = test_module.EntityFactory(connector=MagicMock())
+    factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
     tools_by_type = {
         "DetailedCircuit": ["snap", "bluepy"],
         "Simulation": ["snap", "bluepy", "bglibpy"],
@@ -50,7 +50,7 @@ def test_entity_factory_get_available_tools():
 
 
 def test_entity_factory_open():
-    factory = test_module.EntityFactory(connector=MagicMock())
+    factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
     resource = Resource()
 
     result = factory.open(resource)
@@ -66,7 +66,7 @@ def test_entity_factory_open_instance():
     with patch(
         test_module.__name__ + ".open_circuit_snap", return_value=mocked_instance
     ) as mocked_opener:
-        factory = test_module.EntityFactory(connector=MagicMock())
+        factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
         resource = Resource(type="DetailedCircuit")
 
         result = factory.open(resource, tool="snap")
@@ -81,7 +81,7 @@ def test_entity_factory_open_instance_with_default_tool():
     with patch(
         test_module.__name__ + ".open_circuit_snap", return_value=mocked_instance
     ) as mocked_opener:
-        factory = test_module.EntityFactory(connector=MagicMock())
+        factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
         resource = Resource(type="DetailedCircuit")
 
         result = factory.open(resource)
@@ -95,7 +95,7 @@ def test_entity_factory_open_instance_with_default_tool():
     ) as mocked_opener:
         connector = MagicMock()
         resource = Resource(type="EModelConfiguration")
-        factory = test_module.EntityFactory(connector=connector)
+        factory = test_module.EntityFactory(api=MagicMock(), connector=connector)
         result = factory.open(resource)
         assert result.instance == mocked_instance
         mocked_opener.assert_called_once_with(result, connector)
@@ -103,7 +103,7 @@ def test_entity_factory_open_instance_with_default_tool():
 
 def test_entity_factory_open_instance_with_non_default_tool():
     mocked_instance = MagicMock()
-    factory = test_module.EntityFactory(connector=MagicMock())
+    factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
     tool = MagicMock()
     tool.return_value = mocked_instance
 
@@ -125,7 +125,7 @@ def test_entity_factory_fail_to_open_instance():
     with patch(
         test_module.__name__ + ".open_circuit_snap", side_effect=Exception("error")
     ) as mocked_opener:
-        factory = test_module.EntityFactory(connector=MagicMock())
+        factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
         resource = Resource(type="DetailedCircuit")
 
         with pytest.raises(RuntimeError, match="Unable to open"):
@@ -136,7 +136,7 @@ def test_entity_factory_fail_to_open_instance():
 
 
 def test__get_tool_functions_errors():
-    factory = test_module.EntityFactory(connector=MagicMock())
+    factory = test_module.EntityFactory(api=MagicMock(), connector=MagicMock())
     with pytest.raises(RuntimeError, match="No available tools to open"):
         factory._get_tool_functions(("fake_type"))
 

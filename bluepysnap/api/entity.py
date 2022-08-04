@@ -84,15 +84,23 @@ class ResolvingResource:
 class Entity:
     """Implements the instantiation and downloading of a resource."""
 
-    def __init__(self, resource: Resource, retriever=None, opener=None, downloader=None):
+    def __init__(self, resource: Resource, api=None, connector=None, opener=None):
         """Instantiate a new entity.
 
         Args:
-            resource (kgforge.core.Resource): resource to be wrapped.
-            retriever (callable): function used to retrieve nested resources by id.
-            opener (callable): function used to open the instance associated to the resource.
-            downloader (callable): function used to download the resource.
+            resource (kgforge.core.Resource): resource to be wrapped
+            api (bluepysnap.api.Api): Api instance
+            connector (bluepysnap.api.connector.Connector): Connector instance
+            opener (callable): function used to open the instance associated to the resource
         """
+        if connector is None:
+            retriever = downloader = None
+        else:
+            retriever = connector.get_resource_by_id
+            downloader = connector.download_resource
+
+        self._api = api
+        self._connector = connector
         self._resolving_resource = ResolvingResource(resource, retriever=retriever)
         self._instance = Proxy(partial(opener, self)) if opener else None
         self._downloader = downloader
@@ -119,6 +127,10 @@ class Entity:
 
         for item in items:
             self._downloader(item, path)
+
+    def to_dict(self, store_metadata=True):
+        """Returns the entity as a dictionary."""
+        return self._api.to_dict(self, store_metadata=store_metadata)
 
     def __repr__(self):
         """Overwrite the default __repr__ implementation."""
