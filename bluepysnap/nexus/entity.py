@@ -7,7 +7,7 @@ from lazy_object_proxy import Proxy
 from more_itertools import always_iterable
 
 # user defined or tmp would be better
-DOWNLOADED_CONTENT_PATH = Path(".downloaded_content").absolute()
+DOWNLOADED_CONTENT_PATH = Path(".downloaded_content")
 
 
 class ResolvingResource:
