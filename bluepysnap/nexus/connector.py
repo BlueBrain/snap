@@ -57,7 +57,7 @@ def build_search_filters(type_, filters):
         filters (dict): search filters
 
     Returns:
-        (dict): search filters in the format expected by nexusforge
+        dict: search filters in the format expected by nexusforge
     """
     search_filters = {}
 
@@ -83,7 +83,7 @@ class NexusConnector:
         """Initializes NexusConnector.
 
         Args:
-            forge (kgforge.core.KnowledgeGraphForge): KG Forge instance
+            forge (KnowledgeGraphForge): KnowledgeGraphForge instance
             debug (bool): enable more verbose output
         """
         self._forge = forge
@@ -95,10 +95,10 @@ class NexusConnector:
         Args:
             type_ (str): resource type (e.g., 'DetailedCircuit')
             filters (dict): search filters
-            **kwargs: See KnowledgeGraphForge.search
+            kwargs (dict): See KnowledgeGraphForge.search
 
         Returns:
-            (list): an array of found (kgforge.core.Resource) resources
+            list: an array of found (kgforge.core.Resource) resources
         """
         search_filters = build_search_filters(type_, filters)
         kwargs["debug"] = kwargs.get("debug", self._debug)
@@ -107,14 +107,14 @@ class NexusConnector:
         return self._forge.search(search_filters, **kwargs)
 
     def query(self, query, **kwargs):
-        """Query resources using SparQL as defined in kgforge.core.KnowledgeGraphForge.
+        """Query resources using SparQL as defined in KnowledgeGraphForge.
 
         Args:
             query (str): Query string to be passed to KnowledgeGraphForge.sparql
-            **kwargs: See KnowledgeGraphForge.sparql
+            kwargs (dict): See KnowledgeGraphForge.sparql
 
         Returns:
-            (list): an array of found (kgforge.core.Resource) resources
+            list: an array of found (kgforge.core.Resource) resources
         """
         kwargs["debug"] = kwargs.get("debug", self._debug)
         return self._forge.sparql(query, **kwargs)
@@ -124,10 +124,10 @@ class NexusConnector:
 
         Args:
             resource_id (str): ID of a resource
-            **kwargs: See KnowledgeGraphForge.retrieve
+            kwargs (dict): See KnowledgeGraphForge.retrieve
 
         Returns:
-            (kgforge.core.Resource): desired resource (synchronized)
+            kgforge.core.Resource: desired resource
         """
         kwargs["cross_bucket"] = kwargs.get("cross_bucket", True)
         return self._forge.retrieve(resource_id, **kwargs)
@@ -137,10 +137,10 @@ class NexusConnector:
 
         Args:
             query (str): SparQL query string
-            **kwargs: See KnowledgeGraphForge.sparql
+            kwargs (dict): See KnowledgeGraphForge.sparql
 
         Returns:
-            (list): an array of found (kgforge.core.Resource) resources (synchronized)
+            list: an array of found (kgforge.core.Resource) resources
         """
         result = self.query(query, **kwargs)
         # TODO: execute requests concurrently, or pass a list of ids if possible,
@@ -153,10 +153,10 @@ class NexusConnector:
         Args:
             resource_type (str): resource type (e.g., 'DetailedCircuit')
             resource_filter (dict): search filters
-            **kwargs: See KnowledgeGraphForge.search
+            kwargs (dict): See KnowledgeGraphForge.search
 
         Returns:
-            (list): an array of found (kgforge.core.Resource) resources (synchronized)
+            list: an array of found (kgforge.core.Resource) resources
         """
         resource_filter = resource_filter or {}
         kwargs["limit"] = kwargs.get("limit", 100)

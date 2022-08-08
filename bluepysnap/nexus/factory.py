@@ -54,8 +54,8 @@ class EntityFactory:
         """Initializes EntityFactory.
 
         Args:
-            helper (bluepysnap.nexus.NexusHelper): NexusHelper instance
-            connector (bluepysnap.nexus.connector.Connector): connector instance
+            helper (NexusHelper): NexusHelper instance
+            connector (NexusConnector): NexusConnector instance
         """
         self._helper = helper
         self._connector = connector
@@ -104,7 +104,14 @@ class EntityFactory:
         return set(self._function_registry.keys())
 
     def get_available_tools(self, resource_type):
-        """Return the available tools for a given resource type."""
+        """Return the available tools for a given resource type.
+
+        Args:
+            resource_type (str): type of a nexus resource
+
+        Returns:
+            list: list of tool names
+        """
         return list(self._function_registry.get(resource_type, {}))
 
     def open(self, resource: Resource, tool=None):
@@ -112,7 +119,7 @@ class EntityFactory:
 
         Args:
             resource: resource to be opened.
-            tool (str): tool name to be used to open the resource, or None to use the default.
+            tool (str): name of the tool to open the resource with, or None to use the default tool
 
         Returns:
             Entity: entity binding the resource and the opener.

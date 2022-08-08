@@ -48,12 +48,12 @@ def wrap_morphology_dataframe_as_entities(df, helper, tool=None):
     """Wraps morphology dataframe as entities.
 
     Args:
-        df (pd.DataFrame): morphology dataframe
-        helper (bluepysnap.nexus.NexusHelper): NexusHelper instance
+        df (pandas.DataFrame): morphology dataframe
+        helper (NexusHelper): NexusHelper instance
         tool (callable): function used to open the morphologies
 
     Returns:
-        (tuple): array of entities (bluepysnap.nexus.entity.Entity)
+        tuple: array of entities (Entity)
     """
     from kgforge.core import Resource
 
@@ -85,7 +85,12 @@ class DistrWrapper:
     """Wrapper for distributions."""
 
     def __init__(self, parameter, distribution):
-        """Initializes the DistrWrapper."""
+        """Initializes the DistrWrapper.
+
+        Args:
+            parameter(kgforge.core.Resource): parameter resource
+            distribution(kgforge.core.Resource): distribution resource
+        """
         self.parameters = parameter if isinstance(parameter, list) else [parameter]
 
         if distribution is None:
@@ -99,7 +104,11 @@ class DistrWrapper:
 
 
 class ParamWrapper:
-    """Wrapper for parameters."""
+    """Wrapper for parameters.
+
+    Args:
+        parameter(kgforge.core.Resource): parameter resource
+    """
 
     def __init__(self, parameter):
         """Initializes the ParamWrapper."""
@@ -124,11 +133,19 @@ class EmodelMorphWrapper:
         """Dummy Morphology class."""
 
         def __init__(self, path):
-            """Initializes the DummyMorph."""
+            """Initializes the DummyMorph.
+
+            Args:
+                path(str): path to the morphology file
+            """
             self.path = path
 
     def __init__(self, morphology):
-        """Initializes the EmodelMorphWrapper."""
+        """Initializes the EmodelMorphWrapper.
+
+        Args:
+            morphology (Entity): morphology entity
+        """
         self.path = morphology.download(self.MORPHOLOGY_PATH)
         self.morphology = self.DummyMorph(str(self.path))
 
@@ -155,7 +172,11 @@ class EModelConfiguration:
         self._mod_file = mod_file
 
     def _compile_mod_file(self):
-        """Get the mod file, and compile it."""
+        """Get the mod file, and compile it.
+
+        Returns:
+            str: path to the downloaded mod file
+        """
         path = self._mod_file.download(self.MECHANISM_PATH)
         subprocess.check_call(["nrnivmodl", str(self.MECHANISM_PATH)])
         return path
@@ -164,7 +185,7 @@ class EModelConfiguration:
         """Build the cell model.
 
         Returns:
-            (bluepyopt.ephys.models.CellModel): Cell model
+            bluepyopt.ephys.models.CellModel: Cell model
         """
         self._compile_mod_file()
         morphology = define_morphology(self._morphology)

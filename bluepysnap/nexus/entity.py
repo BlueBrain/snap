@@ -30,11 +30,12 @@ DOWNLOADED_CONTENT_PATH = Path(".downloaded_content")
 class ResolvingResource:
     """Class implementing traversing the resources attributes."""
 
-    def __init__(self, resource: Resource, retriever=None):
+    def __init__(self, resource, retriever=None):
         """Initializes the wrapper class.
 
-        resorce (kgforge.core.Resource): wrapped resource
-        retriever (callable): function implementing the communication with Nexus
+        Args:
+            resource (kgforge.core.Resource): wrapped resource
+            retriever (callable): function implementing the communication with Nexus
         """
         self._wrapped = resource
         self._retriever = retriever
@@ -106,8 +107,8 @@ class Entity:
 
         Args:
             resource (kgforge.core.Resource): resource to be wrapped
-            helper (bluepysnap.nexus.NexusHelper): NexusHelper instance
-            connector (bluepysnap.nexus.connector.Connector): Connector instance
+            helper (NexusHelper): NexusHelper instance
+            connector (NexusConnector): Connector instance
             opener (callable): function used to open the instance associated to the resource
         """
         if connector is None:
@@ -146,7 +147,14 @@ class Entity:
             self._downloader(item, path)
 
     def to_dict(self, store_metadata=True):
-        """Returns the entity as a dictionary."""
+        """Returns the entity as a dictionary.
+
+        Args:
+            store_metadata(bool): flag indicating whether or not to include metadata in the output
+
+        Returns:
+            dict: a dictionary containing the data of the entity
+        """
         return self._helper.to_dict(self, store_metadata=store_metadata)
 
     def __repr__(self):
