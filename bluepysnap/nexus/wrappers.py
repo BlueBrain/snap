@@ -178,7 +178,11 @@ class EModelConfiguration:
             str: path to the downloaded mod file
         """
         path = self._mod_file.download(self.MECHANISM_PATH)
-        subprocess.check_call(["nrnivmodl", str(self.MECHANISM_PATH)])
+        subprocess.check_call(
+            ["nrnivmodl", str(self.MECHANISM_PATH)],
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
         return path
 
     def build_cell_model(self):
