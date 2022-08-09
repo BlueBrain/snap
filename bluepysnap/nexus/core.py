@@ -88,7 +88,7 @@ class NexusHelper:
         resources = self._connector.get_resources_by_query(query, tool=tool, **kwargs)
         return [self._factory.open(r, tool=tool) for r in resources]
 
-    def get_entities(self, type_, filters, tool=None, **kwargs):
+    def get_entities(self, type_, filters=None, tool=None, **kwargs):
         """Retrieve and return a list of entities based on the resource type and a filter.
 
         Args:
@@ -108,7 +108,7 @@ class NexusHelper:
             ...     tool="snap",
             ...     limit=10)
         """
-        resources = self._connector.get_resources(type_, filters, **kwargs)
+        resources = self._connector.get_resources(type_, resource_filter=filters, **kwargs)
         return [self._factory.open(r, tool=tool) for r in resources]
 
     def as_dataframe(self, data, store_metadata=True, **kwargs):
