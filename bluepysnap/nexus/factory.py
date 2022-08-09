@@ -51,11 +51,11 @@ class EntityFactory:
     """Factory class for instantiating Nexus resources."""
 
     def __init__(self, helper, connector):
-        """Initializes EntityFactory.
+        """Instantiate a new EntityFactory.
 
         Args:
-            helper (NexusHelper): NexusHelper instance
-            connector (NexusConnector): NexusConnector instance
+            helper (NexusHelper): NexusHelper instance.
+            connector (NexusConnector): NexusConnector instance.
         """
         self._helper = helper
         self._connector = connector
@@ -90,9 +90,9 @@ class EntityFactory:
         """Register a tool to open the given resource type.
 
         Args:
-            resource_types (str or list): type(s) of resources handled by tool.
-            tool (str): name of the tool.
-            func (callable): any callable accepting an entity as parameter.
+            resource_types (str, list): Type(s) of resources handled by tool.
+            tool (str): Name of the tool to register.
+            func (callable): Any callable accepting an entity as parameter.
         """
         for resource_type in always_iterable(resource_types):
             L.info("Registering tool %s for resource type %s", tool, resource_type)
@@ -100,17 +100,21 @@ class EntityFactory:
             self._function_registry[resource_type][tool] = func
 
     def get_registered_types(self):
-        """Return the registered resource types."""
+        """Return the registered resource types.
+
+        Returns:
+            set: Registered resource types.
+        """
         return set(self._function_registry.keys())
 
     def get_available_tools(self, resource_type):
         """Return the available tools for a given resource type.
 
         Args:
-            resource_type (str): type of a nexus resource
+            resource_type (str): Type of a nexus resource.
 
         Returns:
-            list: list of tool names
+            list: Available tool names.
         """
         return list(self._function_registry.get(resource_type, {}))
 
@@ -118,11 +122,11 @@ class EntityFactory:
         """Open the resource and return an entity (resource, proxy).
 
         Args:
-            resource: resource to be opened.
-            tool (str): name of the tool to open the resource with, or None to use the default tool
+            resource (kgforge.core.Resource): The resource to be opened.
+            tool (str): Name of the tool to open the resource with, or None to use the default tool.
 
         Returns:
-            Entity: entity binding the resource and the opener.
+            Entity: An entity binding the resource and the opener.
         """
         return Entity(
             resource,
@@ -170,7 +174,14 @@ class EntityFactory:
 
 
 def open_circuit_snap(entity):
-    """Open SNAP circuit."""
+    """Open SNAP circuit.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        Circuit: A SNAP Circuit instance.
+    """
     import bluepysnap
 
     if hasattr(entity, "circuitConfigPath"):
@@ -184,7 +195,14 @@ def open_circuit_snap(entity):
 
 
 def open_circuit_bluepy(entity):  # pragma: no cover
-    """Open bluepy circuit."""
+    """Open bluepy circuit.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        bluepy.Circuit: A bluepy circuit instance.
+    """
     import bluepy  # pylint: disable=import-error
 
     config_path = _get_path(entity.circuitBase.url) / "CircuitConfig"
@@ -192,7 +210,14 @@ def open_circuit_bluepy(entity):  # pragma: no cover
 
 
 def open_simulation_snap(entity):
-    """Open SNAP simulation."""
+    """Open SNAP simulation.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        Simulation: A SNAP simulation instance.
+    """
     import bluepysnap
 
     # TODO: Same as with open_circuit_snap: should abstain from hard coded paths
@@ -201,7 +226,14 @@ def open_simulation_snap(entity):
 
 
 def open_simulation_bluepy(entity):  # pragma: no cover
-    """Open bluepy simulation."""
+    """Open bluepy simulation.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        bluepy.Simulation: A bluepy simulation instance.
+    """
     import bluepy  # pylint: disable=import-error
 
     config_path = _get_path(entity.path) / "BlueConfig"
@@ -209,7 +241,14 @@ def open_simulation_bluepy(entity):  # pragma: no cover
 
 
 def open_simulation_bglibpy(entity):  # pragma: no cover
-    """Open bluepy simulation with bglibpy."""
+    """Open bluepy simulation with bglibpy.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        bglibpy.SSim: A bglibpy SSim instance.
+    """
     from bglibpy import SSim  # pylint: disable=import-error
 
     config_path = _get_path(entity.path) / "BlueConfig"
@@ -217,7 +256,14 @@ def open_simulation_bglibpy(entity):  # pragma: no cover
 
 
 def open_morphology_release(entity):
-    """Open morphology release with morph-tool."""
+    """Open morphology release with morph-tool.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        morph_tool.morphdb.MorphDB: A morphology release as a MorpDB instance.
+    """
     from morph_tool.morphdb import MorphDB
 
     config_path = _get_path(entity.morphologyIndex.distribution.url)
@@ -225,7 +271,15 @@ def open_morphology_release(entity):
 
 
 def open_emodelconfiguration(entity, connector):  # pragma: no cover
-    """Open emodel configuration."""
+    """Open emodel configuration.
+
+    Args:
+        entity (Entity): Entity to open.
+        connector (NexusConnector): Nexus connector instance.
+
+    Returns:
+        EModelConfiguration: EModel configuration wrapper.
+    """
     from bluepysnap.nexus.wrappers import EModelConfiguration
 
     # TODO: we need the connector here, since the
@@ -270,7 +324,14 @@ def open_emodelconfiguration(entity, connector):  # pragma: no cover
 
 
 def open_morphology_neurom(entity):
-    """Open morphology with NeuroM."""
+    """Open morphology with NeuroM.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        neurom.core.morphology.Morphology: A neurom Morphology instance.
+    """
     import neurom
 
     supported_formats = {"text/plain", "application/swc", "application/h5"}
@@ -293,7 +354,14 @@ def open_morphology_neurom(entity):
 
 
 def open_atlas_voxcell(entity):  # pragma: no cover
-    """Open atlas with voxcell."""
+    """Open atlas with voxcell.
+
+    Args:
+        entity (Entity): Entity to open.
+
+    Returns:
+        voxcell.nexus.voxcelbrain.Atlas: A voxcell Atlas instance.
+    """
     from voxcell.nexus.voxelbrain import Atlas  # pylint: disable=import-error
 
     path = _get_path(entity.distribution.url)

@@ -34,14 +34,14 @@ class NexusHelper:
     """The "main" class for the nexus-forge integration."""
 
     def __init__(self, bucket, token, nexus_config=None, debug=False, **kwargs):
-        """Initializes the NexusHelper class.
+        """Instantiate a new NexusHelper class.
 
         Args:
-            bucket (str): name of the bucket to use (as: "ORGANIZATON/PROJECT")
-            token (str): base64 encoded Nexus access token
-            nexus_config (str): Path to the nexus config to use
-            debug (bool): enables more verbose output
-            kwargs (dict): see KnowledgeGraphForge
+            bucket (str): Name of the bucket to use (as: ``"ORGANIZATON/PROJECT"``).
+            token (str): A base64 encoded Nexus access token.
+            nexus_config (str): Path to the nexus config to use.
+            debug (bool): A flag that enables more verbose output.
+            kwargs (dict): See KnowledgeGraphForge.
         """
         self._forge = KnowledgeGraphForge(
             nexus_config or NEXUS_CONFIG_DEFAULT,
@@ -55,20 +55,20 @@ class NexusHelper:
 
     @property
     def factory(self):
-        """Object responsible for creating the entities."""
+        """:py:class:`~bluepysnap.nexus.factory.EntityFactory` instance creating the entities."""
         return self._factory
 
     def get_entity_by_id(self, resource_id, tool=None, **kwargs):
         """Retrieve and return a single entity based on the id.
 
         Args:
-            resource_id (str): ID of a Nexus resource
-            tool (str): name of the tool to open the resource with, or None to use the default tool
-                        (see Factory.open)
-            kwargs (dict): See KnowledgeGraphForge.retrieve
+            resource_id (str): ID of a Nexus resource.
+            tool (str): Name of the tool to open the resource with, or None to use the default tool
+                        (see :py:class:`~bluepysnap.nexus.factory.EntityFactory.open`).
+            kwargs (dict): See KnowledgeGraphForge.retrieve.
 
         Returns:
-            Entity: desired entity
+            Entity: Desired resource wrapped as an entity.
         """
         resource = self._connector.get_resource_by_id(resource_id, tool=tool, **kwargs)
         return self._factory.open(resource, tool=tool)
@@ -78,12 +78,12 @@ class NexusHelper:
 
         Args:
             query (str): Query string to be passed to KnowledgeGraphForge.sparql
-            tool (str): name of the tool to open the resource with, or None to use the default tool
-                        (see Factory.open)
-            kwargs (dict): See KnowledgeGraphForge.sparql
+            tool (str): Name of the tool to open the resource with, or None to use the default tool
+                        (see :py:class:`~bluepysnap.nexus.factory.EntityFactory.open`).
+            kwargs (dict): See KnowledgeGraphForge.sparql.
 
         Returns:
-            list: an array of found (Entity) entities
+            list: An array of found entities (py:class:~bluepysnap.nexus.entity.Entity`).
         """
         resources = self._connector.get_resources_by_query(query, tool=tool, **kwargs)
         return [self._factory.open(r, tool=tool) for r in resources]
@@ -92,21 +92,21 @@ class NexusHelper:
         """Retrieve and return a list of entities based on the resource type and a filter.
 
         Args:
-            type_ (str): resource type (e.g., 'DetailedCircuit')
-            filters (dict): search filters
-            tool (str): name of the tool to open the resource with, or None to use the default tool
-                        (see Factory.open)
-            kwargs (dict): See KnowledgeGraphForge.search
+            type_ (str): Resource type (e.g., ``"DetailedCircuit"``).
+            filters (dict): Search filters to use.
+            tool (str): Name of the tool to open the resource with, or None to use the default tool
+                        (see :py:class:`~bluepysnap.nexus.factory.EntityFactory.open`).
+            kwargs (dict): See KnowledgeGraphForge.search.
 
         Returns:
-            list: an array of found (kgforge.core.Resource) resources
+            list: An array of found (kgforge.core.Resource) resources.
 
         Examples:
-            helper.get_entities(
-                "DetailedCircuit",
-                {"brainLocation": {"brainRegion": {"label": "Thalamus"}}},
-                tool="snap",
-                limit=10)
+            >>> helper.get_entities(
+            ...     "DetailedCircuit",
+            ...     {"brainLocation": {"brainRegion": {"label": "Thalamus"}}},
+            ...     tool="snap",
+            ...     limit=10)
         """
         resources = self._connector.get_resources(type_, filters, **kwargs)
         return [self._factory.open(r, tool=tool) for r in resources]
@@ -115,12 +115,13 @@ class NexusHelper:
         """Return a pandas dataframe representing the list of entities.
 
         Args:
-            data (list): list of Entity objects
-            store_metadata(bool): flag indicating whether or not to include metadata in the output
-            kwargs (dict): See KnowledgeGraphForge.as_dataframe
+            data (list): List of :py:class:`~bluepysnap.nexus.entity.Entity` objects.
+            store_metadata(bool): A flag indicating whether or not to include metadata in the
+                                  output.
+            kwargs (dict): See KnowledgeGraphForge.as_dataframe.
 
         Returns:
-            pandas.DataFrame: a dataframe containing the data of the entity list
+            pandas.DataFrame: A dataframe containing the data of the entity list.
         """
         data = [e.resource for e in data]
         return self._forge.as_dataframe(data, store_metadata=store_metadata, **kwargs)
@@ -129,12 +130,13 @@ class NexusHelper:
         """Return a dictionary or a list of dictionaries representing the entities.
 
         Args:
-            entity (Entity): single entity
-            store_metadata(bool): flag indicating whether or not to include metadata in the output
-            kwargs (dict): See KnowledgeGraphForge.as_json
+            entity (Entity): A single entity.
+            store_metadata(bool): A flag indicating whether or not to include metadata in the
+                                  output.
+            kwargs (dict): See KnowledgeGraphForge.as_json.
 
         Returns:
-            dict: a dictionary containing the data of the entity
+            dict: A dictionary containing the data of the entity.
         """
         return self._forge.as_json(entity.resource, store_metadata=store_metadata, **kwargs)
 
@@ -143,10 +145,10 @@ class NexusHelper:
 
         Args:
             entity (Entity): Entity to be opened.
-            tool (str): name of the tool to open the resource with, or None to use the default tool
-                        (see Factory.open)
+            tool (str): Name of the tool to open the resource with, or None to use the default tool
+                        (see :py:class:`~bluepysnap.nexus.factory.EntityFactory.open`).
 
         Returns:
-            Entity: entity binding the resource and the opener.
+            Entity: An entity binding the resource and the opener.
         """
         return self._factory.open(entity.resource, tool=tool)

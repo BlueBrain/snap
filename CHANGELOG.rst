@@ -2,7 +2,11 @@ Changelog
 =========
 
 Version v1.0.0
----------------
+--------------
+
+New Features
+~~~~~~~~~~~~
+- First version of the Nexus Forge integration
 
 New Features
 ~~~~~~~~~~~~

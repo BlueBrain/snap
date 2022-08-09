@@ -48,12 +48,12 @@ def wrap_morphology_dataframe_as_entities(df, helper, tool=None):
     """Wraps morphology dataframe as entities.
 
     Args:
-        df (pandas.DataFrame): morphology dataframe
-        helper (NexusHelper): NexusHelper instance
-        tool (callable): function used to open the morphologies
+        df (pandas.DataFrame): A morphology dataframe.
+        helper (NexusHelper): NexusHelper instance.
+        tool (callable): The function to use to open the morphologies.
 
     Returns:
-        tuple: array of entities (Entity)
+        tuple: An array of entities (:py:class:`~bluepysnap.nexus.entity.Entity`).
     """
     from kgforge.core import Resource
 
@@ -85,11 +85,11 @@ class DistrWrapper:
     """Wrapper for distributions."""
 
     def __init__(self, parameter, distribution):
-        """Initializes the DistrWrapper.
+        """Instantiate a new DistrWrapper.
 
         Args:
-            parameter(kgforge.core.Resource): parameter resource
-            distribution(kgforge.core.Resource): distribution resource
+            parameter (kgforge.core.Resource): A parameter resource.
+            distribution (kgforge.core.Resource): A distribution resource.
         """
         self.parameters = parameter if isinstance(parameter, list) else [parameter]
 
@@ -104,14 +104,14 @@ class DistrWrapper:
 
 
 class ParamWrapper:
-    """Wrapper for parameters.
-
-    Args:
-        parameter(kgforge.core.Resource): parameter resource
-    """
+    """Wrapper for parameters."""
 
     def __init__(self, parameter):
-        """Initializes the ParamWrapper."""
+        """Instantiate a new ParamWrapper.
+
+        Args:
+            parameter (kgforge.core.Resource): A parameter resource.
+        """
         self.param = parameter
 
     def __getattr__(self, name):
@@ -133,18 +133,18 @@ class EmodelMorphWrapper:
         """Dummy Morphology class."""
 
         def __init__(self, path):
-            """Initializes the DummyMorph.
+            """Instantiate a new DummyMorph.
 
             Args:
-                path(str): path to the morphology file
+                path (str): The path to the morphology file.
             """
             self.path = path
 
     def __init__(self, morphology):
-        """Initializes the EmodelMorphWrapper.
+        """Instantiate a new EmodelMorphWrapper.
 
         Args:
-            morphology (Entity): morphology entity
+            morphology (Entity): A morphology entity.
         """
         self.path = morphology.download(self.MORPHOLOGY_PATH)
         self.morphology = self.DummyMorph(str(self.path))
@@ -156,13 +156,13 @@ class EModelConfiguration:
     MECHANISM_PATH = DOWNLOADED_CONTENT_PATH / "mechanisms_source"
 
     def __init__(self, parameters, mechanisms, distributions, morphology, mod_file):
-        """Initializes EModelConfiguration.
+        """Instantiate a new EModelConfiguration.
 
         Args:
-            parameters (list): array of parameters
-            mechanisms (list): array of mechanisms
-            distributions (list): array of distributions
-            morphology (Entity): morphology entity
+            parameters (list): An array of parameters.
+            mechanisms (list): An array of mechanisms.
+            distributions (list): An array of distributions.
+            morphology (Entity): A morphology entity.
             mod_file (object): Entity-like downloadable resource
         """
         self._parameters = [ParamWrapper(p) for p in parameters]

@@ -53,11 +53,11 @@ def build_search_filters(type_, filters):
     """Build search filters in the format expected by nexusforge.
 
     Args:
-        type_ (str): resource type (e.g., 'DetailedCircuit')
-        filters (dict): search filters
+        type_ (str): Resource type (e.g., ``"DetailedCircuit"``).
+        filters (dict): Search filters to use.
 
     Returns:
-        dict: search filters in the format expected by nexusforge
+        dict: Search filters in the format expected by nexusforge.
     """
     search_filters = {}
 
@@ -80,11 +80,11 @@ class NexusConnector:
     """Handles communication with Nexus."""
 
     def __init__(self, forge, debug=False):
-        """Initializes NexusConnector.
+        """Instantiate a new NexusConnector.
 
         Args:
-            forge (KnowledgeGraphForge): KnowledgeGraphForge instance
-            debug (bool): enable more verbose output
+            forge (KnowledgeGraphForge): A KnowledgeGraphForge instance.
+            debug (bool): A flag that enables more verbose output.
         """
         self._forge = forge
         self._debug = debug
@@ -93,12 +93,12 @@ class NexusConnector:
         """Search for resources in Nexus.
 
         Args:
-            type_ (str): resource type (e.g., 'DetailedCircuit')
-            filters (dict): search filters
-            kwargs (dict): See KnowledgeGraphForge.search
+            type_ (str): Resource type (e.g., ``"DetailedCircuit"``).
+            filters (dict): Search filters to use.
+            kwargs (dict): See KnowledgeGraphForge.search.
 
         Returns:
-            list: an array of found (kgforge.core.Resource) resources
+            list: An array of found (kgforge.core.Resource) resources.
         """
         search_filters = build_search_filters(type_, filters)
         kwargs["debug"] = kwargs.get("debug", self._debug)
@@ -110,11 +110,11 @@ class NexusConnector:
         """Query resources using SparQL as defined in KnowledgeGraphForge.
 
         Args:
-            query (str): Query string to be passed to KnowledgeGraphForge.sparql
-            kwargs (dict): See KnowledgeGraphForge.sparql
+            query (str): Query string to be passed to KnowledgeGraphForge.sparql.
+            kwargs (dict): See KnowledgeGraphForge.sparql.
 
         Returns:
-            list: an array of found (kgforge.core.Resource) resources
+            list: An array of found (kgforge.core.Resource) resources.
         """
         kwargs["debug"] = kwargs.get("debug", self._debug)
         return self._forge.sparql(query, **kwargs)
@@ -123,11 +123,11 @@ class NexusConnector:
         """Fetch a resource based on its ID.
 
         Args:
-            resource_id (str): ID of a resource
-            kwargs (dict): See KnowledgeGraphForge.retrieve
+            resource_id (str): ID of a Nexus resource.
+            kwargs (dict): See KnowledgeGraphForge.retrieve.
 
         Returns:
-            kgforge.core.Resource: desired resource
+            kgforge.core.Resource: Desired resource.
         """
         kwargs["cross_bucket"] = kwargs.get("cross_bucket", True)
         return self._forge.retrieve(resource_id, **kwargs)
@@ -136,11 +136,11 @@ class NexusConnector:
         """Query for resources and fetch them.
 
         Args:
-            query (str): SparQL query string
-            kwargs (dict): See KnowledgeGraphForge.sparql
+            query (str): SparQL query string.
+            kwargs (dict): See KnowledgeGraphForge.sparql.
 
         Returns:
-            list: an array of found (kgforge.core.Resource) resources
+            list: An array of found (kgforge.core.Resource) resources.
         """
         result = self.query(query, **kwargs)
         # TODO: execute requests concurrently, or pass a list of ids if possible,
@@ -151,12 +151,12 @@ class NexusConnector:
         """Search for resources and fetch them.
 
         Args:
-            resource_type (str): resource type (e.g., 'DetailedCircuit')
-            resource_filter (dict): search filters
-            kwargs (dict): See KnowledgeGraphForge.search
+            resource_type (str): Resource type (e.g., ``"DetailedCircuit"``).
+            resource_filter (dict): Search filters to use.
+            kwargs (dict): See KnowledgeGraphForge.search.
 
         Returns:
-            list: an array of found (kgforge.core.Resource) resources
+            list: An array of found (kgforge.core.Resource) resources.
         """
         resource_filter = resource_filter or {}
         kwargs["limit"] = kwargs.get("limit", 100)
@@ -168,8 +168,8 @@ class NexusConnector:
         """Download a resource.
 
         Args:
-            resource (kgforge.core.Resource): downloadable resource
-            path (str): path to the directory into which the data is downloaded
+            resource (kgforge.core.Resource): A downloadable resource.
+            path (str): The path to the directory into which the data is downloaded.
         """
         file_path = Path(path, resource.name)
         if file_path.is_file():

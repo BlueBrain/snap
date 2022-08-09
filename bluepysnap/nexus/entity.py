@@ -31,11 +31,11 @@ class ResolvingResource:
     """Class implementing traversing the resources attributes."""
 
     def __init__(self, resource, retriever=None):
-        """Initializes the wrapper class.
+        """Instantiate a new wrapper class.
 
         Args:
-            resource (kgforge.core.Resource): wrapped resource
-            retriever (callable): function implementing the communication with Nexus
+            resource (kgforge.core.Resource): The wrapped resource.
+            retriever (callable): A function implementing the communication with Nexus.
         """
         self._wrapped = resource
         self._retriever = retriever
@@ -106,10 +106,10 @@ class Entity:
         """Instantiate a new entity.
 
         Args:
-            resource (kgforge.core.Resource): resource to be wrapped
-            helper (NexusHelper): NexusHelper instance
-            connector (NexusConnector): Connector instance
-            opener (callable): function used to open the instance associated to the resource
+            resource (kgforge.core.Resource): The resource to be wrapped.
+            helper (NexusHelper): NexusHelper instance.
+            connector (NexusConnector): Connector instance.
+            opener (callable): A function used to open the instance associated to the resource.
         """
         if connector is None:
             retriever = downloader = None
@@ -137,8 +137,8 @@ class Entity:
         """Downloads the wrapped resource.
 
         Args:
-            items (list, kgforge.core.Resource): item(s) to download
-            path (str): path to the directory into which the data is downloaded
+            items (list, kgforge.core.Resource): Item(s) to download.
+            path (str): The path to the directory into which the data is downloaded.
         """
         path = path or DOWNLOADED_CONTENT_PATH
         items = always_iterable(items or self.resource.distribution)
@@ -150,10 +150,11 @@ class Entity:
         """Returns the entity as a dictionary.
 
         Args:
-            store_metadata(bool): flag indicating whether or not to include metadata in the output
+            store_metadata(bool): A flag indicating whether or not to include metadata in the
+                                  output.
 
         Returns:
-            dict: a dictionary containing the data of the entity
+            dict: A dictionary containing the data of the entity.
         """
         return self._helper.to_dict(self, store_metadata=store_metadata)
 
