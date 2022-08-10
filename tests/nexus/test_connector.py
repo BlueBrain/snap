@@ -103,10 +103,21 @@ def test_nexus_connector_download_resource(caplog):
         (None, {}, {}),
         ("test_type", {}, {"type": "test_type"}),
         (None, {"test_filter": "test_value"}, {"test_filter": "test_value"}),
-        (None, {"deprecated": "true"}, {"_deprecated": {"id": "true"}}),
-        (None, {"project": "test"}, {"_project": {"id": test_module.PROJECTS_NAMESPACE + "test"}}),
-        (None, {"createdBy": "test"}, {"_createdBy": {"id": test_module.USERS_NAMESPACE + "test"}}),
-        (None, {"updatedBy": "test"}, {"_updatedBy": {"id": test_module.USERS_NAMESPACE + "test"}}),
+        (None, {"deprecated": True}, {"_deprecated": True}),
+        (None, {"project": "test"}, {"_project": test_module.PROJECTS_NAMESPACE + "test"}),
+        (None, {"createdBy": "test"}, {"_createdBy": test_module.USERS_NAMESPACE + "test"}),
+        (None, {"updatedBy": "test"}, {"_updatedBy": test_module.USERS_NAMESPACE + "test"}),
+        (None, {"createdAt": "test"}, {"_createdAt": "test" + test_module.DATETIME_SUFFIX}),
+        (
+            None,
+            {"updatedBy": test_module.USERS_NAMESPACE + "test"},
+            {"_updatedBy": test_module.USERS_NAMESPACE + "test"},
+        ),
+        (
+            None,
+            {"createdAt": "test" + test_module.DATETIME_SUFFIX},
+            {"_createdAt": "test" + test_module.DATETIME_SUFFIX},
+        ),
     ],
 )
 def test_search_builder(type_, filter_, expected):

@@ -42,11 +42,18 @@ _NEXUS_KEYS = {
     "updatedBy",
 }
 
+_DATE_KEYS = {
+    "createdAt",
+    "updatedAt",
+}
+
 NAMESPACE_MAPPING = {
     "createdBy": USERS_NAMESPACE,
     "updatedBy": USERS_NAMESPACE,
     "project": PROJECTS_NAMESPACE,
 }
+
+DATETIME_SUFFIX = "^^xsd:dateTime"
 
 
 def build_search_filters(type_, filters):
@@ -61,15 +68,27 @@ def build_search_filters(type_, filters):
     """
     search_filters = {}
 
-    def add_namespace(key, value):
-        return NAMESPACE_MAPPING.get(key, "") + value
+    def add_prefix_suffix(key, value):
+        if not isinstance(value, str):
+            return value
+
+        fixed_value = value
+        namespace = NAMESPACE_MAPPING.get(key, "")
+
+        if not fixed_value.startswith(namespace):
+            fixed_value = namespace + fixed_value
+
+        if key in _DATE_KEYS and not fixed_value.endswith(DATETIME_SUFFIX):
+            fixed_value += DATETIME_SUFFIX
+
+        return fixed_value
 
     if type_:
         search_filters["type"] = type_
 
     for k, v in filters.items():
         if k in _NEXUS_KEYS:
-            search_filters[f"_{k}"] = {"id": add_namespace(k, v)}
+            search_filters[f"_{k}"] = add_prefix_suffix(k, v)
         else:
             search_filters[k] = v
 
