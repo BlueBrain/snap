@@ -27,23 +27,21 @@ from bluepysnap.utils import is_node_id
 class NeuronModelsHelper:
     """Collection of neuron models related methods."""
 
-    def __init__(self, config_components, population):
+    def __init__(self, properties, population):
         """Constructor.
 
         Args:
-            config_components (dict): 'components' part of circuit's config
+            properties (libsonata.PopulationProperties): properties of the population
             population (NodePopulation): NodePopulation object used to query the nodes.
 
         Returns:
             NeuronModelsHelper: A NeuronModelsHelper object.
         """
         # all nodes from a population must have the same model type
-        if population.get(0, Node.MODEL_TYPE) not in {"biophysical", "point_neuron"}:
-            raise BluepySnapError(
-                "Neuron models can be only in biophysical or point node population."
-            )
+        if properties.type != "biophysical":
+            raise BluepySnapError("Neuron models can be only in biophysical node population.")
 
-        self._config_components = config_components
+        self._properties = properties
         self._population = population
 
     def get_filepath(self, node_id):
@@ -58,14 +56,7 @@ class NeuronModelsHelper:
         if not is_node_id(node_id):
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         node = self._population.get(node_id, [Node.MODEL_TYPE, Node.MODEL_TEMPLATE])
-        if node[Node.MODEL_TYPE] == "biophysical":
-            models_dir = self._config_components.get("biophysical_neuron_models_dir")
-            if models_dir is None:
-                raise BluepySnapError("Missing 'biophysical_neuron_models_dir' in Sonata config")
-        else:
-            models_dir = self._config_components.get("point_neuron_models_dir")
-            if models_dir is None:
-                raise BluepySnapError("Missing 'point_neuron_models_dir' in Sonata config")
+        models_dir = self._properties.biophysical_neuron_models_dir
 
         template = node[Node.MODEL_TEMPLATE]
         assert ":" in template, "Format of 'model_template' must be <schema>:<resource>."

@@ -18,28 +18,9 @@
 
 from cached_property import cached_property
 
-from bluepysnap.config import Config
+from bluepysnap.config import SimulationConfig
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
-
-
-def _resolve_config(config):
-    """Resolve the config file if global ('network' and 'simulation' keys).
-
-    Args:
-        config (str/dict): the path to the configuration file or a dict containing the config.
-
-    Returns:
-        dict: the complete simulation config file.
-    """
-    content = Config(config).resolve()
-    if "simulation" in content and "network" in content:
-        simulation_path = content["simulation"]
-        res = Config(str(simulation_path)).resolve()
-        if "network" not in res:
-            res["network"] = str(content["network"])
-        return res
-    return content
 
 
 def _collect_frame_reports(sim):
@@ -57,6 +38,7 @@ def _collect_frame_reports(sim):
             cls = CompartmentReport
         else:
             raise BluepySnapError(f"Report {name}: format {report_type} not yet supported.")
+
         res[name] = cls(sim, name)
     return res
 
@@ -73,26 +55,26 @@ class Simulation:
         Returns:
             Simulation: A Simulation object.
         """
-        self._config = _resolve_config(config)
+        self._config = SimulationConfig.from_config(config)
 
     @property
     def config(self):
         """Simulation config dictionary."""
-        return self._config
+        return self._config.to_dict()
 
     @cached_property
     def circuit(self):
         """Access to the circuit used for the simulation."""
         from bluepysnap.circuit import Circuit
 
-        if "network" not in self._config:
+        if "network" not in self.config:
             raise BluepySnapError("No 'network' set in the simulation/global config file.")
-        return Circuit(self._config["network"])
+        return Circuit(self.config["network"])
 
     @property
     def run(self):
         """Access to the complete run dictionary for this simulation."""
-        return self._config["run"]
+        return self.config["run"]
 
     @property
     def time_start(self):
@@ -118,18 +100,18 @@ class Simulation:
     @property
     def conditions(self):
         """Access to the conditions dictionary for this simulation."""
-        return self._config.get("conditions", {})
+        return self.config.get("conditions", {})
 
     @property
     def simulator(self):
         """Returns the targeted simulator."""
-        return self._config["target_simulator"]
+        return self.config.get("target_simulator")
 
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the simulation."""
-        if "node_sets_file" in self._config:
-            return NodeSets(self._config["node_sets_file"])
+        if "node_sets_file" in self.config:
+            return NodeSets(self.config["node_sets_file"])
         return {}
 
     @cached_property

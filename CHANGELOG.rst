@@ -1,12 +1,21 @@
 Changelog
 =========
 
-Version v0.13.2
+Version v1.0.0
 ---------------
 
 Improvements
 ~~~~~~~~~~~~
 - Add black & isort to handle formatting
+- Use libsonata to provide more of the functionality
+  - parsing config files
+  - accessing data
+
+Removed
+~~~~~~~
+- NodeStorage & EdgeStorage classes
+- point_neuron support
+
 
 Version v0.13.1
 ---------------

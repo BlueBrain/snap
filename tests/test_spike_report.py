@@ -13,7 +13,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
 from bluepysnap.utils import IDS_DTYPE
 
-from utils import TEST_DATA_DIR
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def _create_series(node_ids, index, name="ids"):
@@ -36,7 +36,7 @@ class TestSpikeReport:
             "output_dir": str(TEST_DATA_DIR / "reporting"),
             "log_file": "log_spikes.log",
             "spikes_file": "spikes.h5",
-            "spikes_sort_order": "time",
+            "spikes_sort_order": "by_time",
         }
 
     def test_time_start(self):
@@ -62,12 +62,15 @@ class TestSpikeReport:
                 assert lines[l] in line
 
     def test_log2(self):
-        simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
-        simulation._config["output"]["log_file"] = "unknown"
-        test_obj = test_module.SpikeReport(simulation)
-        with pytest.raises(BluepySnapError):
-            with test_obj.log() as log:
-                log.readlines()
+        with copy_test_data(config="simulation_config.json") as (_, config_path):
+            with edit_config(config_path) as config:
+                config["output"]["log_file"] = "unknown"
+
+            simulation = Simulation(config_path)
+            test_obj = test_module.SpikeReport(simulation)
+            with pytest.raises(BluepySnapError):
+                with test_obj.log() as log:
+                    log.readlines()
 
     def test___spike_reader(self):
         assert isinstance(self.test_obj._spike_reader, SpikeReader)

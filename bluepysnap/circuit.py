@@ -19,7 +19,7 @@
 
 from cached_property import cached_property
 
-from bluepysnap.config import Config
+from bluepysnap.config import CircuitConfig
 from bluepysnap.edges import Edges
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.nodes import Nodes
@@ -32,23 +32,28 @@ class Circuit:
         """Initializes a circuit object from a SONATA config file.
 
         Args:
-            config (str/dict): Path to a SONATA config file or sonata config dict.
+            config (str): Path to a SONATA config file.
 
         Returns:
             Circuit: A Circuit object.
         """
-        self._config = Config(config).resolve()
+        self._config = CircuitConfig.from_config(config)
+
+    @property
+    def to_libsonata(self):
+        """Libsonata instance of the circuit."""
+        return self._config.to_libsonata
 
     @property
     def config(self):
         """Network config dictionary."""
-        return self._config
+        return self._config.to_dict()
 
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the circuit."""
-        if "node_sets_file" in self._config:
-            return NodeSets(self._config["node_sets_file"])
+        if "node_sets_file" in self.config:
+            return NodeSets(self.config["node_sets_file"])
         return {}
 
     @cached_property

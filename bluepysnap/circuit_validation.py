@@ -13,8 +13,9 @@ import pandas as pd
 
 from bluepysnap import BluepySnapError
 from bluepysnap.bbp import EDGE_TYPES, NODE_TYPES
-from bluepysnap.config import Config
+from bluepysnap.config import Parser
 from bluepysnap.morph import EXTENSIONS_MAPPING
+from bluepysnap.utils import load_json
 
 L = logging.getLogger("brainbuilder")
 MAX_MISSING_FILES_DISPLAY = 10
@@ -40,6 +41,8 @@ class Error:
     def __str__(self):
         """Returns only message by default."""
         return str(self.message)
+
+    __repr__ = __str__
 
     def __eq__(self, other):
         """Two errors are equal if inherit from Error and their level, message are equal."""
@@ -857,7 +860,7 @@ def validate(config_file, bbp_check=False, print_errors=True):
     Returns:
         list: List of errors, empty if no errors
     """
-    config = Config(config_file).resolve()
+    config = Parser.parse(load_json(config_file), str(Path(config_file).parent))
     errors = _check_required_datasets(config)
 
     if not errors:

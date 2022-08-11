@@ -17,10 +17,12 @@
 
 """SONATA network config parsing."""
 
+import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 
-from bluepysnap import utils
+import libsonata
+
 from bluepysnap.exceptions import BluepySnapError
 
 # List of keys which are expected to have paths
@@ -29,7 +31,8 @@ EXPECTED_PATH_KEYS = {
     "biophysical_neuron_models_dir",
     "vasculature_file",
     "vasculature_mesh",
-    "end_feet_area",
+    "endfeet_meshes_file",
+    "microdomains_file",
     "neurolucida-asc",
     "h5v1",
     "edges_file",
@@ -37,32 +40,32 @@ EXPECTED_PATH_KEYS = {
     "edges_type_file",
     "nodes_type_file",
     "node_sets_file",
+    "output_dir",
+    "network",
+    "mechanisms_dir",
 }
 
 
-class Config:
+class Parser:
     """SONATA network config parser.
 
     See Also:
         https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#network_config
     """
 
-    def __init__(self, config):
-        """Initializes a Config object from a path to the actual config.
+    def __init__(self, config, config_dir):
+        """Initializes a Resolver object.
 
         Args:
-            config (str/dict): Path to the SONATA configuration file or dict containing the config.
+            config (dict): Dict containing the config.
+            config_dir(str):  Path to the directory containing the config file.
 
         Returns:
-             Config: A Config object.
+             Parser: A Parser object.
         """
-        if isinstance(config, dict):
-            content = config.copy()
-            configdir = None
-        else:
-            configdir = str(Path(config).parent.resolve())
-            content = utils.load_json(str(config))
-        self.manifest = Config._resolve_manifest(content.pop("manifest", {}), configdir)
+        content = config.copy()
+
+        self.manifest = Parser._resolve_manifest(content.pop("manifest", {}), config_dir)
         self.content = content
 
     @staticmethod
@@ -73,8 +76,6 @@ class Config:
             if not isinstance(v, str):
                 raise BluepySnapError(f"{v} should be a string value.")
             if not Path(v).is_absolute() and not v.startswith("$"):
-                if configdir is None:
-                    raise BluepySnapError("Dictionary config with relative paths is not allowed.")
                 result[k] = str(Path(configdir, v).resolve())
 
         while True:
@@ -110,9 +111,7 @@ class Config:
             return str(Path(*vs))
         # only way to know if value is a relative path or a normal string
         elif value.startswith(".") or key in EXPECTED_PATH_KEYS:
-            if self.manifest["${configdir}"] is not None:
-                return str(Path(self.manifest["${configdir}"], value).resolve())
-            raise BluepySnapError("Dictionary config with relative paths is not allowed.")
+            return str(Path(self.manifest["${configdir}"], value).resolve())
         else:
             # we cannot know if a string is a path or not if it does not contain anchor or .
             return value
@@ -132,6 +131,48 @@ class Config:
         return self._resolve(self.content)
 
     @staticmethod
-    def parse(filepath):
+    def parse(config, configdir):
         """Parse SONATA network config."""
-        return Config(filepath).resolve()
+        return Parser(config, configdir).resolve()
+
+
+class Config:
+    """Common config class."""
+
+    def __init__(self, config, config_class):
+        """Initializes the Config class.
+
+        Args:
+            config (str): Path to the configuration file
+            config_class (class): libsonata class corresponding to the configuration file, either
+                libsonata.CircuitConfig or libsonata.SimulationConfig
+        """
+        self._config_dir = str(Path(config).parent.absolute())
+        self._libsonata = config_class.from_file(config)
+
+    @property
+    def to_libsonata(self):
+        """Return the libsonata instance of the config."""
+        return self._libsonata
+
+    def to_dict(self):
+        """Return the configuration as a dict with absolute paths."""
+        return Parser.parse(json.loads(self._libsonata.expanded_json), self._config_dir)
+
+
+class CircuitConfig(Config):
+    """Handle CircuitConfig."""
+
+    @classmethod
+    def from_config(cls, config_path):
+        """Instantiate the config class from circuit configuration."""
+        return cls(config_path, libsonata.CircuitConfig)
+
+
+class SimulationConfig(Config):
+    """Handle SimulationConfig."""
+
+    @classmethod
+    def from_config(cls, config_path):
+        """Instantiate the config class from simulation configuration."""
+        return cls(config_path, libsonata.SimulationConfig)

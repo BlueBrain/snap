@@ -9,7 +9,8 @@ from pathlib import Path
 
 import mock
 
-from bluepysnap.nodes import Nodes, NodeStorage
+from bluepysnap.circuit import Circuit
+from bluepysnap.nodes import NodePopulation, Nodes
 
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / "data"
@@ -26,18 +27,17 @@ def setup_tempdir(cleanup=True):
 
 
 @contextmanager
-def copy_circuit(config="circuit_config.json"):
+def copy_test_data(config="circuit_config.json"):
     """Copies test/data circuit to a temp directory.
 
-    We don't need the whole circuit every time but considering this is a copy into a temp dir,
-    it should be fine.
+    We don't all data every time but considering this is a copy into a temp dir, it should be fine.
     Returns:
         yields a path to the copy of the config file
     """
     with setup_tempdir() as tmp_dir:
         copy_tree(str(TEST_DATA_DIR), tmp_dir)
-        circuit_copy_path = Path(tmp_dir)
-        yield circuit_copy_path, circuit_copy_path / config
+        copied_path = Path(tmp_dir)
+        yield copied_path, copied_path / config
 
 
 @contextmanager
@@ -83,19 +83,25 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None, pop
     Returns:
         NodePopulation: return a node population.
     """
-    config = {
+    node_pop_config = {
         "nodes_file": filepath,
         "node_types_file": None,
         "populations": {},
     }
+
     if pop_type is not None:
-        config["populations"][pop_name] = {"type": pop_type}
-    if circuit is None:
-        circuit = mock.Mock()
-        circuit.config = {}
-    circuit.config.update({"networks": {"nodes": [config]}})
+        node_pop_config["populations"][pop_name] = {"type": pop_type}
+
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as config:
+            config["networks"]["nodes"] = [node_pop_config]
+
+        if circuit is None:
+            circuit = Circuit(config_path)
+
     if node_sets is not None:
         circuit.node_sets = node_sets
-    node_pop = NodeStorage(config, circuit).population(pop_name)
+
+    node_pop = NodePopulation(circuit, pop_name)
     circuit.nodes = Nodes(circuit)
     return node_pop

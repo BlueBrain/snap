@@ -26,6 +26,10 @@ class TestFrameReport:
             "cells": "Layer23",
             "variable_name": "m",
             "sections": "soma",
+            "type": "compartment",
+            "start_time": 0,
+            "end_time": 1000.0,
+            "dt": 0.01,
             "enabled": True,
         }
 

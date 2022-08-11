@@ -19,7 +19,7 @@
 
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
 
-NODE_TYPES = {"biophysical", "virtual", "astrocyte", "single_compartment", "point_neuron"}
+NODE_TYPES = {"biophysical", "virtual", "astrocyte", "single_compartment"}
 EDGE_TYPES = {"chemical", "electrical", "synapse_astrocyte", "endfoot"}
 
 

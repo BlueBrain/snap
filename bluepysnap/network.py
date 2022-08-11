@@ -28,40 +28,25 @@ from bluepysnap.exceptions import BluepySnapError
 class NetworkObject(abc.ABC):
     """Abstract class for the top level NetworkObjects accessor."""
 
+    _population_class = None
+
     def __init__(self, circuit):
         """Initialize the top level NetworkObjects accessor."""
         self._circuit = circuit
 
-    def _get_populations(self, cls, config):
+    def _get_populations(self, cls):
         """Collects the different NetworkObjectPopulation and returns them as a dict."""
-        res = {}
-        for file_config in config:
-            storage = cls(file_config, self._circuit)
-            for population in storage.population_names:  # pylint: disable=not-an-iterable
-                if population in res:
-                    raise BluepySnapError(
-                        f"Duplicated {self.__class__.__name__} population: '{population}'"
-                    )
-                res[population] = storage.population(population)
-        return res
-
-    @abc.abstractmethod
-    def _collect_populations(self):
-        """Should specify the self._get_populations arguments."""
-
-    @cached_property
-    def _config(self):
-        return self._circuit.config
+        return {name: cls(self._circuit, name) for name in self.population_names}
 
     @cached_property
     def _populations(self):
         """Cached population dictionary."""
-        return self._collect_populations()
+        return self._get_populations(self._population_class)
 
     @cached_property
+    @abc.abstractmethod
     def population_names(self):
-        """Returns all the sorted NetworkObjects population names from the Circuit."""
-        return sorted(self._populations)
+        """Should define all sorted NetworkObjects population names from the Circuit."""
 
     @cached_property
     def property_dtypes(self):
@@ -70,7 +55,7 @@ class NetworkObject(abc.ABC):
         def _update(d, index, value):
             if d.setdefault(index, value) != value:
                 raise BluepySnapError(
-                    "Same property with different " f"dtype. {index}: {value}!= {d[index]}"
+                    f"Same property with different dtype. {index}: {value}!= {d[index]}"
                 )
 
         res = {}

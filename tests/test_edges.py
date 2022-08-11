@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import libsonata
 import mock
 import numpy as np
@@ -17,7 +19,7 @@ from bluepysnap.node_sets import NodeSets
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
 from bluepysnap.utils import IDS_DTYPE
 
-from utils import TEST_DATA_DIR, create_node_population
+from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 
 
 def index_as_ids_dtypes(values):
@@ -710,71 +712,18 @@ class TestEdges:
             )
 
 
-class TestEdgeStorage:
-    def setup(self):
-        config = {
-            "edges_file": str(TEST_DATA_DIR / "edges.h5"),
-            "edge_types_file": None,
-        }
-        self.circuit = Mock()
-        self.test_obj = test_module.EdgeStorage(config, self.circuit)
-
-    def test_storage(self):
-        assert isinstance(self.test_obj.storage, libsonata.EdgeStorage)
-
-    def test_h5_filepath(self):
-        assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
-
-    def test_csv_filepath(self):
-        assert self.test_obj.csv_filepath is None
-
-    def test_population_names(self):
-        assert sorted(list(self.test_obj.population_names)) == ["default", "default2"]
-
-    def test_circuit(self):
-        assert self.test_obj.circuit is self.circuit
-
-    def test_population(self):
-        pop = self.test_obj.population("default")
-        assert isinstance(pop, test_module.EdgePopulation)
-        assert pop.name == "default"
-        pop2 = self.test_obj.population("default")
-        assert pop is pop2
-
-
 class TestEdgePopulation:
     @staticmethod
-    def create_edge_population(filepath, pop_name, pop_type=None):
-        config = {
-            "edges_file": filepath,
-            "edge_types_file": None,
-            "populations": {},
-        }
-        if pop_type is not None:
-            config["populations"][pop_name] = {"type": pop_type}
-        circuit = Mock()
-        circuit.config = {}
-        create_node_population(
-            str(TEST_DATA_DIR / "nodes.h5"),
-            "default",
-            circuit=circuit,
-            node_sets=NodeSets(str(TEST_DATA_DIR / "node_sets.json")),
-        )
-        storage = test_module.EdgeStorage(config, circuit)
-        pop = storage.population(pop_name)
-
-        # check if the source and target populations are in the circuit nodes
-        assert pop.source.name in pop._edge_storage.circuit.nodes
-        assert pop.target.name in pop._edge_storage.circuit.nodes
-        return pop
+    def get_edge_population(circuit_path, pop_name):
+        circuit = Circuit(circuit_path)
+        return test_module.EdgePopulation(circuit, pop_name)
 
     def setup(self):
-        self.test_obj = TestEdgePopulation.create_edge_population(
-            str(TEST_DATA_DIR / "edges.h5"), "default"
+        self.test_obj = TestEdgePopulation.get_edge_population(
+            str(TEST_DATA_DIR / "circuit_config.json"), "default"
         )
 
     def test_basic(self):
-        assert self.test_obj._edge_storage._h5_filepath == str(TEST_DATA_DIR / "edges.h5")
         assert self.test_obj.name == "default"
         assert self.test_obj.source.name == "default"
         assert self.test_obj.target.name == "default"
@@ -805,13 +754,23 @@ class TestEdgePopulation:
                 test_module.DYNAMICS_PREFIX + "param1",
             ]
         )
-        assert self.test_obj.type == DEFAULT_EDGE_TYPE
+        # TODO: change to DEFAULT_EDGE_TYPE when fixed in libsonata (= "chemical")
+        assert self.test_obj.type == DEFAULT_EDGE_TYPE + "_synapse"
 
     def test_population_type(self):
-        test_obj = TestEdgePopulation.create_edge_population(
-            str(TEST_DATA_DIR / "edges.h5"), "default", pop_type="fake_type"
-        )
-        assert test_obj.type == "fake_type"
+        with copy_test_data() as (config_dir, config_path):
+            with edit_config(config_path) as config:
+                config["networks"]["edges"] = [
+                    {
+                        "edge_types_file": None,
+                        "edges_file": str(Path(config_dir) / "edges_complete_graph.h5"),
+                        "populations": {"default": {"type": "fake_type"}},
+                    }
+                ]
+
+            test_obj = TestEdgePopulation.get_edge_population(config_path, "default")
+
+            assert test_obj.type == "fake_type"
 
     def test_container_properties(self):
         expected = sorted(
@@ -1310,29 +1269,57 @@ class TestEdgePopulation:
             )
 
     def test_iter_connection_unique(self):
-        test_obj = TestEdgePopulation.create_edge_population(
-            str(TEST_DATA_DIR / "edges_complete_graph.h5"), "default"
-        )
-        it = test_obj.iter_connections([0, 1, 2], [0, 1, 2])
-        assert sorted(it) == [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
+        with copy_test_data() as (config_dir, config_path):
+            with edit_config(config_path) as config:
+                config["networks"]["edges"] = [
+                    {
+                        "edge_types_file": None,
+                        "edges_file": str(Path(config_dir) / "edges_complete_graph.h5"),
+                        "populations": {},
+                    }
+                ]
 
-        it = test_obj.iter_connections([0, 1, 2], [0, 1, 2], unique_node_ids=True)
-        assert sorted(it) == [(0, 1), (1, 0)]
+            test_obj = TestEdgePopulation.get_edge_population(config_path, "default")
 
-        it = test_obj.iter_connections([0, 1, 2], [0, 2], unique_node_ids=True)
-        assert sorted(it) == [(0, 2), (1, 0)]
+            it = test_obj.iter_connections([0, 1, 2], [0, 1, 2])
+            assert sorted(it) == [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
 
-        it = test_obj.iter_connections([0, 2], [0, 2], unique_node_ids=True)
-        assert sorted(it) == [(0, 2), (2, 0)]
+            it = test_obj.iter_connections([0, 1, 2], [0, 1, 2], unique_node_ids=True)
+            assert sorted(it) == [(0, 1), (1, 0)]
 
-        it = test_obj.iter_connections([0, 1, 2], [0, 2, 1], unique_node_ids=True)
-        assert sorted(it) == [(0, 1), (1, 0)]
+            it = test_obj.iter_connections([0, 1, 2], [0, 2], unique_node_ids=True)
+            assert sorted(it) == [(0, 2), (1, 0)]
 
-        it = test_obj.iter_connections([1, 2], [0, 1, 2], unique_node_ids=True)
-        assert sorted(it) == [(1, 0), (2, 1)]
+            it = test_obj.iter_connections([0, 2], [0, 2], unique_node_ids=True)
+            assert sorted(it) == [(0, 2), (2, 0)]
 
-        it = test_obj.iter_connections([0, 1, 2], [1, 2], unique_node_ids=True)
-        assert sorted(it) == [(0, 1), (1, 2)]
+            it = test_obj.iter_connections([0, 1, 2], [0, 2, 1], unique_node_ids=True)
+            assert sorted(it) == [(0, 1), (1, 0)]
 
-    def test_h5_filepath(self):
+            it = test_obj.iter_connections([1, 2], [0, 1, 2], unique_node_ids=True)
+            assert sorted(it) == [(1, 0), (2, 1)]
+
+            it = test_obj.iter_connections([0, 1, 2], [1, 2], unique_node_ids=True)
+            assert sorted(it) == [(0, 1), (1, 2)]
+
+    def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
+
+    def test_h5_filepath_from_libsonata(self):
+        with copy_test_data() as (config_dir, config_path):
+            edge_path = str(Path(config_dir) / "edges.h5")
+            with edit_config(config_path) as config:
+                config["networks"]["edges"] = [
+                    {
+                        "edge_types_file": None,
+                        "edges_file": edge_path,
+                        "populations": {"fake": {}},
+                    }
+                ]
+            test_obj = test_module.Edges(Circuit(config_path))
+            assert test_obj["default"].h5_filepath == edge_path
+
+    def test_no_h5_filepath(self):
+        with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
+            self.test_obj.name = "fake"
+            self.test_obj.h5_filepath
