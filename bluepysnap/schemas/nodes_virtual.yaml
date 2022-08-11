@@ -1,0 +1,32 @@
+title: Nodes - virtual
+description: schema for virtual node types
+properties:
+  nodes:
+    maxProperties: 1
+    type: object
+    patternProperties:
+      "":
+        type: object
+        required:
+          - "0"
+          - node_type_id
+        additionalProperties: false
+        properties:
+          node_type_id:
+            $ref: "#/$typedefs/int64"
+          "0":
+            additionalProperties: false
+            type: object
+            required:
+              - model_template
+              - model_type
+            properties:
+              model_template:
+                $ref: "#/$typedefs/index_or_utf8"
+              model_type:
+                $ref: "#/$typedefs/index_or_utf8"
+              "@library":
+                type: object
+                patternProperties:
+                  "":
+                    $ref: "#/$typedefs/utf8"
