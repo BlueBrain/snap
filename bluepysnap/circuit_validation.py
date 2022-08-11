@@ -961,7 +961,8 @@ def validate_schemas(config):
 
     typedefs = _load_schema("types.yaml")
     bio_node_schema = _load_schema("nodes_biophysical.yaml")
-    chem_edge_schema = _load_schema("edges_chemical.yaml")
+    # chem_edge_schema = _load_schema("edges_chemical.yaml")
+    chem_edge_schema = _load_schema("edges_chemical_virtual.yaml")
     bio_node_schema.update(typedefs)
     chem_edge_schema.update(typedefs)
 
