@@ -951,6 +951,23 @@ def validate_schemas(config):
         pop = next(iter(entry["populations"].values()))
         return pop.get("type")
 
+    def _get_source_node_population_type(edges_dict, nodes):
+        if "edges_file" not in edges_dict:
+            return None
+
+        with h5py.File(edges_dict["edges_file"], "r") as h5:
+            pop = h5[f'edges/{list(h5["edges"])[0]}']
+            source = pop.get("source_node_id")
+            source_population = source.attrs.get("node_population") if source else None
+
+        if source_population:
+            for node in nodes:
+                populations = node.get("populations", {})
+                if source_population in populations:
+                    return populations.get(source_population, {}).get("type")
+
+        return None
+
     for node in nodes:
         pop_type = _get_file_type(node) or "biophysical"
         if pop_type not in ("biophysical", "virtual"):
@@ -964,5 +981,6 @@ def validate_schemas(config):
         if pop_type != "chemical":
             continue
 
-        schema = parse_schema("edge", pop_type)
+        virtual = _get_source_node_population_type(edge, nodes) == "virtual"
+        schema = parse_schema("edge", pop_type, virtual)
         _validate(schema, _h5_to_dict(edge["edges_file"]))
