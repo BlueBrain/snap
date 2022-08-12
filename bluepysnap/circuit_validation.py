@@ -15,6 +15,7 @@ from bluepysnap import BluepySnapError
 from bluepysnap.bbp import EDGE_TYPES, NODE_TYPES
 from bluepysnap.config import Parser
 from bluepysnap.morph import EXTENSIONS_MAPPING
+from bluepysnap.schemas import parse_schema
 from bluepysnap.utils import load_json
 
 L = logging.getLogger("brainbuilder")
@@ -959,13 +960,6 @@ def validate_schemas(config):
     nodes = [n for n in config.get("networks", {}).get("nodes", ()) if "nodes_file" in n]
     edges = [e for e in config.get("networks", {}).get("edges", ()) if "edges_file" in e]
 
-    typedefs = _load_schema("types.yaml")
-    bio_node_schema = _load_schema("nodes_biophysical.yaml")
-    # chem_edge_schema = _load_schema("edges_chemical.yaml")
-    chem_edge_schema = _load_schema("edges_chemical_virtual.yaml")
-    bio_node_schema.update(typedefs)
-    chem_edge_schema.update(typedefs)
-
     def _get_file_type(entry):
         if not entry.get("populations"):
             return None
@@ -973,11 +967,17 @@ def validate_schemas(config):
         return pop.get("type")
 
     for node in nodes:
-        if _get_file_type(node) == "biophysical":
-            _validate(bio_node_schema, _h5_to_dict(node["nodes_file"]))
+        pop_type = _get_file_type(node) or "biophysical"
+        if pop_type not in ("biophysical", "virtual"):
+            continue
+        schema = parse_schema("node", pop_type)
+        _validate(schema, _h5_to_dict(node["nodes_file"]))
 
     for edge in edges:
-        # Should we have projections as other type than chemical?
-        # They will never have all the data.
-        if _get_file_type(edge) == "chemical":
-            _validate(chem_edge_schema, _h5_to_dict(edge["edges_file"]))
+        pop_type = _get_file_type(edge) or "chemical"
+
+        if pop_type != "chemical":
+            continue
+
+        schema = parse_schema("edge", pop_type)
+        _validate(schema, _h5_to_dict(edge["edges_file"]))
