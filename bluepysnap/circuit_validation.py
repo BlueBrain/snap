@@ -921,21 +921,6 @@ def get_h5_structure_as_dict(h5):
 
 
 def validate_schemas(config):
-    def _load_schema(filename):
-        import pkg_resources
-        import yaml
-
-        resource_path = Path(pkg_resources.resource_filename(__name__, "schemas"))
-
-        with open(resource_path / filename) as fd:
-            return yaml.safe_load(fd)
-
-    def _load_json(path):
-        import json
-
-        with open(path) as fd:
-            return json.load(fd)
-
     def _validate(schema, dict_):
         import jsonschema
 
@@ -954,7 +939,7 @@ def validate_schemas(config):
         with h5py.File(path) as h5:
             return get_h5_structure_as_dict(h5)
 
-    schema = _load_schema("circuit_config.yaml")
+    schema = parse_schema("circuit")
     _validate(schema, config)
 
     nodes = [n for n in config.get("networks", {}).get("nodes", ()) if "nodes_file" in n]

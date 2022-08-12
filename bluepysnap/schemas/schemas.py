@@ -3,22 +3,12 @@ from pathlib import Path
 import pkg_resources
 import yaml
 
-SCHEMAS = {
-    "definitions": {
-        "edge": "edge_file_definitions.yaml",
-        "node": "node_file_definitions.yaml",
-        "type": "types.yaml",
-    },
-    "edge": {
-        "chemical": "edges_chemical.yaml",
-    },
-    "node": {"biophysical": "nodes_biophysical.yaml", "virtual": "nodes_virtual.yaml"},
-    "circuit": "circuit_config.yaml",
-}
+DEFINITIONS = "definitions"
 
 
-def _load_schema_file(filename):
+def _load_schema_file(*args):
     """Load one of the predefined YAML schema files."""
+    filename = str(Path(*args).with_suffix(".yaml"))
     with open(pkg_resources.resource_filename(__name__, filename)) as fd:
         return yaml.safe_load(fd)
 
@@ -40,11 +30,11 @@ def parse_schema(object_type, sub_type=None, virtual=False):
     if object_type == "circuit":
         return _load_schema_file(object_type)
 
-    schema = _load_schema_file(SCHEMAS["definitions"]["type"])
-    schema.update(_load_schema_file(SCHEMAS["definitions"][object_type]))
+    schema = _load_schema_file(DEFINITIONS, "datatypes")
+    schema.update(_load_schema_file(DEFINITIONS, object_type))
 
     if sub_type == "chemical" and virtual:
         sub_type = "chemical_virtual"
 
-    schema.update(_load_schema_file(SCHEMAS[object_type][sub_type]))
+    schema.update(_load_schema_file(object_type, sub_type))
     return schema
