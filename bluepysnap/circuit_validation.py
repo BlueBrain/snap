@@ -11,11 +11,11 @@ import h5py
 import numpy as np
 import pandas as pd
 
+import bluepysnap.schemas as schemas
 from bluepysnap import BluepySnapError
 from bluepysnap.bbp import EDGE_TYPES, NODE_TYPES
 from bluepysnap.config import Parser
 from bluepysnap.morph import EXTENSIONS_MAPPING
-from bluepysnap.schemas import parse_schema
 from bluepysnap.utils import load_json
 
 L = logging.getLogger("brainbuilder")
@@ -863,7 +863,10 @@ def validate(config_file, bbp_check=False, print_errors=True):
     """
     config = Parser.parse(load_json(config_file), str(Path(config_file).parent))
     if bbp_check:
-        validate_schemas(config)
+        # tested with /gpfs/bbp.cscs.ch/project/proj12/NSE/bluepysnap-functional-tests/sonata/circuit_sonata.json
+        errors = test_validate_schemas(config_file, config)
+        _print_errors(errors)
+        # could now technically continue on the normal checks
         return
 
     config = config.resolve()
@@ -881,66 +884,9 @@ def validate(config_file, bbp_check=False, print_errors=True):
     return set(errors)
 
 
-def get_h5_structure_as_dict(h5):
-    """Recursively translates h5 file into a dictionary.
+def test_validate_schemas(config_path, config):
 
-    For groups, the subgroups/datasets are translated as a subdictionary.
-    Datatype of datasets is resolved and returned as {'datatype': <dtype>}.
-    Attributes of either groups or datasets are returned as {'attributes': {<key>: <value>}}.
-
-    Args:
-        h5 (h5.File instance): h5 file to translate
-
-    Returns:
-        dict: dictionary of the file structure
-    """
-    properties = {}
-
-    def get_dataset_dtype(item):
-        if item.dtype.hasobject:
-            return h5py.check_string_dtype(item.dtype).encoding
-
-        return item.dtype.name
-
-    for key, value in h5.items():
-        if isinstance(value, h5py.Group):
-            properties[key] = get_h5_structure_as_dict(value)
-        elif isinstance(value, h5py.Dataset):
-            properties[key] = {"datatype": get_dataset_dtype(value)}
-        else:
-            properties[key] = {}
-
-        attrs = {k: v for k, v in value.attrs.items()}
-        if attrs:
-            properties[key]["attributes"] = attrs
-
-    # Maybe check for the existence of @library and do the translation to actual values here?
-    # Would make the schemas a bit simpler.
-
-    return properties
-
-
-def validate_schemas(config):
-    def _validate(schema, dict_):
-        import jsonschema
-
-        validator = jsonschema.validators.Draft202012Validator(schema)
-        # currently just printing the errors but the idea would be to have something like
-        # [heavily pseudo code]
-        # errors[field] = e.type
-        # if e.type != 'warning':
-        #   failed_fields.append(e.absolute_path)
-        # ... later ...
-        # validate_data(data_file, file_structure - failed_fields)
-        for e in validator.iter_errors(dict_):
-            print(f"ERROR: {'/'.join(map(str, e.absolute_path))}: {e.message}")
-
-    def _h5_to_dict(path):
-        with h5py.File(path) as h5:
-            return get_h5_structure_as_dict(h5)
-
-    schema = parse_schema("circuit")
-    _validate(schema, config)
+    errors = schemas.validate_circuit_schema(config_path, config)
 
     nodes = [n for n in config.get("networks", {}).get("nodes", ()) if "nodes_file" in n]
     edges = [e for e in config.get("networks", {}).get("edges", ()) if "edges_file" in e]
@@ -972,15 +918,12 @@ def validate_schemas(config):
         pop_type = _get_file_type(node) or "biophysical"
         if pop_type not in ("biophysical", "virtual"):
             continue
-        schema = parse_schema("node", pop_type)
-        _validate(schema, _h5_to_dict(node["nodes_file"]))
+        errors += schemas.validate_nodes_schema(node["nodes_file"], pop_type)
 
     for edge in edges:
         pop_type = _get_file_type(edge) or "chemical"
 
-        if pop_type != "chemical":
-            continue
-
         virtual = _get_source_node_population_type(edge, nodes) == "virtual"
-        schema = parse_schema("edge", pop_type, virtual)
-        _validate(schema, _h5_to_dict(edge["edges_file"]))
+        errors += schemas.validate_edges_schema(edge["edges_file"], pop_type, virtual)
+
+    return errors

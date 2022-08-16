@@ -62,7 +62,7 @@ $edge_file_defs:
               # to keep stuff cleaner as they will be reused anyhow.
               ^(a|e)fferent_(center|surface)_(x|y|z)$:
                 $ref: "#/$typedefs/float32"
-              ^(a|e)fferent_(section|segment)_(id|type)$:
+              ^(a|e)fferent_(section|segment|junction)_(id|type)$:
                 $ref: "#/$typedefs/uint32"
               ^(a|e)fferent_(section|segment)_(pos|offset)$:
                 $ref: "#/$typedefs/float32"
