@@ -253,6 +253,7 @@ def _check_bio_nodes_group(group_df, group, population):
                 (Path(morph_path, m + "." + extension) for m in group_df["morphology"]),
                 Error.WARNING,
             )
+
     if "biophysical_neuron_models_dir" in population:
         errors += _check_components_dir("biophysical_neuron_models_dir", population)
 
@@ -263,6 +264,7 @@ def _check_bio_nodes_group(group_df, group, population):
             (bio_path / _get_model_template_file(m) for m in group_df["model_template"]),
             Error.WARNING,
         )
+
     return errors
 
 
@@ -281,6 +283,12 @@ def _check_nodes_group(group_df, group, population, population_name):
     L.debug("Check nodes group: %s", group.name)
 
     errors = []
+    if "model_type" not in group_df:
+        message = (
+            f"Population '{population_name}' missing `model_type` attribute "
+        )
+        errors.append(Error(Error.WARNING, message))
+        return errors
 
     if group_df["model_type"][0] != population["type"]:
         message = (
@@ -477,12 +485,13 @@ def validate_edge_population(edges_file, name, nodes):
     return []
 
 
-def validate_edges_dict(edges_dict, nodes):
+def validate_edges_dict(edges_dict, nodes, skip_slow):
     """Validate an item in the "edges" list.
 
     Args:
         edges_dict (dict): edges population, represented by an item of "edges" in ``config``
         nodes (list): "nodes" part of the resolved bluepysnap config
+        skip_slow(bool): skip slow tests
 
     Returns:
         list: List of errors, empty if no errors
@@ -514,7 +523,8 @@ def validate_edges_dict(edges_dict, nodes):
             if pop_type == "chemical":
                 virtual = _is_source_node_virtual(edges_dict, nodes, pop_name)
             errors += schemas.validate_edges_schema(edges_file, pop_type, virtual)
-            errors += validate_edge_population(edges_file, pop_name, nodes)
+            if not skip_slow:
+                errors += validate_edge_population(edges_file, pop_name, nodes)
         else:
             errors.append(fatal(f'Invalid "edges_file": {edges_file}'))
 
@@ -546,7 +556,7 @@ def validate_nodes_dict(nodes_dict, components):
     return errors
 
 
-def validate_networks(config):
+def validate_networks(config, skip_slow):
     """Validate "networks" part of the config.
 
     Acts as a starting point of validation."""
@@ -562,17 +572,17 @@ def validate_networks(config):
             errors += validate_nodes_dict(nodes_dict, components)
     for edges_dict in config["networks"].get("edges", []):
         if "edges_file" in edges_dict:
-            errors += validate_edges_dict(edges_dict, nodes)
+            errors += validate_edges_dict(edges_dict, nodes, skip_slow)
 
     return errors
 
 
-def validate(config_file, print_errors=True):
+def validate(config_file, skip_slow, print_errors=True):
     """Validates Sonata circuit.
 
     Args:
-        config_file (str): path to Sonata circuit config file
-        official checks.
+        config_file (str): path to Sonata circuit config file official checks.
+        skip_slow(bool): skip slow tests
 
     Returns:
         list: List of errors, empty if no errors
@@ -581,7 +591,7 @@ def validate(config_file, print_errors=True):
     errors = schemas.validate_circuit_schema(config_file, config)
 
     if "networks" in config:
-        errors += validate_networks(config)
+        errors += validate_networks(config, skip_slow)
 
     if print_errors:
         _print_errors(errors)
