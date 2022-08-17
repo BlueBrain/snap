@@ -86,6 +86,9 @@ To use it, all that is needed, is to instantiate the Nexus Helper class:
     from bluepysnap.nexus import NexusHelper
     nexus = NexusHelper(nexus_access_token, bucket)
 
+
+For further guidance, there are several `notebooks <https://github.com/BlueBrain/snap/tree/master/doc/source/notebooks>`__ available that depict the usage and capabilities of the integration.
+
 Acknowledgements
 ----------------
 
