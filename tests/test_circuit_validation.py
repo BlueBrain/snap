@@ -49,6 +49,7 @@ def test_ok_circuit():
         errors = validate(str(config_copy_path))
         assert errors == set()
 
+
 def test_print_errors(capsys):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
@@ -56,39 +57,19 @@ def test_print_errors(capsys):
         validate(str(config_copy_path), print_errors=True)
     assert 'No node population for' in capsys.readouterr().out
 
+
 @pytest.mark.parametrize(
-    'to_remove,expected',
+    'to_remove',
     (
-        (['components'], set()),
-        (['networks'], set()),
-        (
-            ['networks', 'nodes'],
-            {
-                Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
-                Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
-            }
-        ),
-        (['networks', 'nodes', 0, 'nodes_file'], set()),
-        (
-            ['networks', 'nodes', 0, 'populations'],
-            {
-                Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
-                Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
-            }
-        ),
-        (
-            ['networks', 'nodes', 0, 'populations', 'default'],
-            {
-                Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
-                Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
-            }
-        ),
-        (['networks', 'edges'], set()),
-        (['networks', 'edges', 0, 'edges_file'], set()),
-        (['networks', 'edges', 0, 'populations'], set()),
-        (['networks', 'edges', 0, 'populations', 'default'], set()),
+        ['components'],
+        ['networks'],
+        ['networks', 'nodes', 0, 'nodes_file'],
+        ['networks', 'edges'],
+        ['networks', 'edges', 0, 'edges_file'],
+        ['networks', 'edges', 0, 'populations'],
+        ['networks', 'edges', 0, 'populations', 'default'],
     ))
-def test_missing_data(to_remove, expected):
+def test_missing_data_config_no_error(to_remove):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             c = config
@@ -96,7 +77,29 @@ def test_missing_data(to_remove, expected):
                 c = c[key]
             del c[to_remove[-1]]
         errors = validate(str(config_copy_path))
-        assert errors == expected
+        assert errors == set()
+
+
+@pytest.mark.parametrize(
+    'to_remove',
+    (
+        ['networks', 'nodes'],
+        ['networks', 'nodes', 0, 'populations'],
+        ['networks', 'nodes', 0, 'populations', 'default'],
+    ))
+def test_missing_data_config_no_population_for_edge(to_remove):
+    with copy_test_data() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            c = config
+            for key in to_remove[:-1]:
+                c = c[key]
+            del c[to_remove[-1]]
+        errors = validate(str(config_copy_path))
+        assert errors == {
+            Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
+        }
+
 
 
 def test_nodes_population_not_found_in_h5():
@@ -133,6 +136,7 @@ def test_ok_node_population_type():
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = "biophysical"
         errors = validate(str(config_copy_path))
         assert errors == set()
+
 
 @pytest.mark.parametrize('model_type', ('virtual', 'electrical', 'fake_type'))
 def test_ok_nonbio_type(model_type):
@@ -192,11 +196,28 @@ def test_invalid_config_edges_file():
         assert errors == {Error(Error.FATAL, 'Invalid "edges_file": /')}
 
 
-def test_no_nodes_h5():
+@pytest.mark.parametrize(
+    'to_remove',
+    (
+        'nodes',
+        'nodes/default/0/mtype',
+        'nodes/default/0/morphology',
+        'nodes/default/0/model_template',
+        'nodes/default/0/model_type',
+        'nodes/default/0/dynamics_params',
+        'nodes/default/0/layer',
+        'nodes/default/0/x',
+        'nodes/default/0/y',
+        'nodes/default/0/z',
+        'nodes/default/0/rotation_angle_xaxis',
+        'nodes/default/0/rotation_angle_yaxis',
+        'nodes/default/0/rotation_angle_zaxis',
+    ))
+def test_missing_data_nodes_h5_no_error(to_remove):
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
-            del h5f["nodes"]
+            del h5f[to_remove]
         errors = validate(str(config_copy_path))
         assert errors == set()
 
@@ -207,29 +228,6 @@ def test_ok_node_ids_dataset():
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default/node_id"] = list(range(len(h5f["nodes/default/node_type_id"])))
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_required_node_group_datasets():
-    required_datasets = ["model_template", "model_type"]
-    for ds in required_datasets:
-        with copy_test_data() as (circuit_copy_path, config_copy_path):
-            nodes_file = circuit_copy_path / "nodes.h5"
-            with h5py.File(nodes_file, "r+") as h5f:
-                del h5f["nodes/default/0/" + ds]
-            errors = validate(str(config_copy_path))
-            assert errors == set()
-
-
-def test_no_required_bio_node_group_datasets():
-    # TODO: check how to combine all these
-    required_datasets = sorted(["morphology", "x", "y", "z"])
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        nodes_file = circuit_copy_path / "nodes.h5"
-        with h5py.File(nodes_file, "r+") as h5f:
-            for ds in required_datasets:
-                del h5f["nodes/default/0/" + ds]
         errors = validate(str(config_copy_path))
         assert errors == set()
 
@@ -250,17 +248,6 @@ def test_ok_bio_model_type_in_library():
                     dtype=h5py.string_dtype(),
                 ),
             )
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_rotation_bio_node_group_datasets():
-    angle_datasets = ["rotation_angle_xaxis", "rotation_angle_yaxis", "rotation_angle_zaxis"]
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        nodes_file = circuit_copy_path / "nodes.h5"
-        with h5py.File(nodes_file, "r+") as h5f:
-            for ds in angle_datasets:
-                del h5f["nodes/default/0/" + ds]
         errors = validate(str(config_copy_path))
         assert errors == set()
 
@@ -389,135 +376,41 @@ def test_no_template_library_files():
         }
 
 
-def test_no_edges_h5():
+@pytest.mark.parametrize(
+    'to_remove',
+    (
+        '/edges',
+        '/edges/default/edge_type_id',
+        '/edges/default/source_node_id',
+        '/edges/default/target_node_id',
+        '/edges/default/0',
+        '/edges/default/0/afferent_center_x',
+        '/edges/default/0/afferent_center_y',
+        '/edges/default/0/afferent_center_z',
+        '/edges/default/0/afferent_section_id',
+        '/edges/default/0/afferent_section_pos',
+        '/edges/default/0/afferent_surface_x',
+        '/edges/default/0/afferent_surface_y',
+        '/edges/default/0/afferent_surface_z',
+        '/edges/default/0/conductance',
+        '/edges/default/0/delay',
+        '/edges/default/0/dynamics_params',
+        '/edges/default/0/dynamics_params/param1',
+        '/edges/default/0/efferent_center_x',
+        '/edges/default/0/efferent_center_y',
+        '/edges/default/0/efferent_center_z',
+        '/edges/default/0/efferent_section_id',
+        '/edges/default/0/efferent_section_pos',
+        '/edges/default/0/efferent_surface_x',
+        '/edges/default/0/efferent_surface_y',
+        '/edges/default/0/efferent_surface_z',
+        '/edges/default/0/syn_weight',
+    ))
+def test_missing_data_edges_h5_no_error(to_remove):
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
         with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges"]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_edge_group():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/0"]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_edge_group_missing_requiered_datasets():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        required_datasets = sorted(["edge_type_id", "source_node_id", "target_node_id"])
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/0"]
-            for ds in required_datasets:
-                del h5f["edges/default/" + ds]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_edge_group_no_optional_datasets():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        optional_datasets = sorted(["edge_group_id", "edge_group_index"])
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/0"]
-            for ds in optional_datasets:
-                del h5f["edges/default/" + ds]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_required_edge_population_datasets_one_group():
-    required_datasets = sorted(["edge_type_id", "source_node_id", "target_node_id"])
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            for ds in required_datasets:
-                del h5f["edges/default/" + ds]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_missing_optional_edge_population_datasets_one_group():
-    optional_datasets = sorted(["edge_group_id", "edge_group_index"])
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            for ds in optional_datasets:
-                del h5f["edges/default/" + ds]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_required_edge_population_datasets_multiple_groups():
-    required_datasets = sorted(
-        ["edge_type_id", "source_node_id", "target_node_id", "edge_group_id", "edge_group_index"]
-    )
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            for ds in required_datasets:
-                del h5f["edges/default/" + ds]
-            h5f.create_group("edges/default/1")
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_edge_population_multiple_groups():
-    # TODO: decide what to do with this
-    return
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            h5f.create_group("edges/default/1")
-        errors = validate(str(config_copy_path))
-        assert (
-            Error(
-                Error.WARNING,
-                f"Population default of {edges_file} have multiple groups. "
-                "Cannot be read via bluepysnap or libsonata",
-            )
-            in errors
-        )
-
-
-def test_edge_population_missing_edge_group_id_one_group():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/edge_group_id"]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_edge_population_missing_edge_group_index_one_group():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/edge_group_index"]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_edge_population_missing_edge_group_id_index_one_group():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/edge_group_index"]
-            del h5f["edges/default/edge_group_id"]
-        errors = validate(str(config_copy_path))
-        assert errors == set()
-
-
-def test_no_required_bbp_edge_group_datasets():
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        edges_file = circuit_copy_path / "edges.h5"
-        with h5py.File(edges_file, "r+") as h5f:
-            del h5f["edges/default/0/syn_weight"]
+            del h5f[to_remove]
         errors = validate(str(config_copy_path))
         assert errors == set()
 

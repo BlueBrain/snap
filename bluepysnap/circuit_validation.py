@@ -386,6 +386,8 @@ def _check_edges_node_ids(nodes_ds, nodes):
                 errors.append(
                     fatal((f"{nodes_ds.name} does not have node ids in its node population"))
                 )
+    else:
+        pass  # TODO: error for no node pop in h5???
 
     return errors
 
