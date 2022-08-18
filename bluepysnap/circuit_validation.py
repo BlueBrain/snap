@@ -11,8 +11,7 @@ import h5py
 import numpy as np
 import pandas as pd
 
-import bluepysnap.schemas as schemas
-from bluepysnap import BluepySnapError
+from bluepysnap import BluepySnapError, schemas
 from bluepysnap.bbp import EDGE_TYPES, NODE_TYPES
 from bluepysnap.config import Parser
 from bluepysnap.morph import EXTENSIONS_MAPPING
@@ -168,15 +167,6 @@ def _get_model_template_file(model_template):
     return parts[1] + "." + parts[0]
 
 
-def _get_population_groups(population_h5):
-    """Get groups from an edge or node population."""
-    return [
-        population_h5[name]
-        for name in population_h5
-        if isinstance(population_h5[name], h5py.Group) and name.isdigit()
-    ]
-
-
 def _nodes_group_to_dataframe(group, population):
     """Transforms hdf5 population group to pandas DataFrame.
 
@@ -261,7 +251,7 @@ def _check_bio_nodes_group(group_df, group, population):
         L.debug("Checking neuron model files: %s", bio_path)
         errors += _check_files(
             f"model_template: {group_name}[{group.file.filename}]",
-            (bio_path / _get_model_template_file(m) for m in group_df["model_template"]),
+            (bio_path / _get_model_template_file(m) for m in group_df.get("model_template", [])),
             Error.WARNING,
         )
 
@@ -282,6 +272,8 @@ def _check_nodes_group(group_df, group, population, population_name):
     """
     L.debug("Check nodes group: %s", group.name)
 
+    # TODO: check length
+
     errors = []
     if "model_type" not in group_df:
         message = (
@@ -290,15 +282,16 @@ def _check_nodes_group(group_df, group, population, population_name):
         errors.append(Error(Error.WARNING, message))
         return errors
 
-    if group_df["model_type"][0] != population["type"]:
-        message = (
-            f"Population '{population_name}' type mismatch: "
-            f"'{group_df['model_type'][0]}' (nodes_file), "
-            f"'{population['type']}' (config)'"
-        )
-        errors.append(Error(Error.WARNING, message))
+    if "model_type" in group_df:
+        if group_df["model_type"][0] != population["type"]:
+            message = (
+                f"Population '{population_name}' type mismatch: "
+                f"'{group_df['model_type'][0]}' (nodes_file), "
+                f"'{population['type']}' (config)"
+            )
+            errors.append(Error(Error.WARNING, message))
 
-    if group_df["model_type"][0] == "biophysical":
+    if population["type"] == "biophysical":
         return errors + _check_bio_nodes_group(group_df, group, population)
 
     return errors
@@ -334,26 +327,26 @@ def validate_node_population(nodes_file, population_dict, name):
     return []
 
 
-def _get_node_ids(node_population):
+def _get_node_ids(nodes_h5, population_name):
     """Gets node ids of node population.
 
     Args:
-        node_population (h5py.Group): node population h5 instance
+        nodes_h5: (h5py.File): nodes file h5 instance
+        population_name (str): node population name
 
     Returns:
         np.ndarray: Numpy array of node ids, empty if couldn't find any
     """
-    node_ids = np.empty(0)
-    if "node_id" in node_population:
-        node_ids = node_population["node_id"][:]
-    else:
-        grp = node_population.get("0")
-        if grp:
-            for attr in grp:
-                if isinstance(grp[attr], h5py.Dataset):
-                    node_ids = np.arange(len(grp[attr]))
-                    break
-    return node_ids
+    node_population = nodes_h5.get(f"nodes/{population_name}")
+    if node_population is not None:
+        if "node_id" in node_population:
+            return node_population["node_id"][:]
+        elif "0" in node_population:
+            for attr in node_population["0"].values():
+                if isinstance(attr, h5py.Dataset):
+                    return np.arange(len(attr))
+
+    return np.empty(0)
 
 
 def _check_edges_node_ids(nodes_ds, nodes):
@@ -378,16 +371,21 @@ def _check_edges_node_ids(nodes_ds, nodes):
         return [fatal(f'No node population for "{nodes_ds.name}"')]
 
     errors = []
-    with h5py.File(nodes_dict["nodes_file"], "r") as h5f:
-        node_ids = _get_node_ids(h5f["/nodes/" + node_population_name])
-        if node_ids.size > 0:
-            missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
-            if missing_ids:
+    if "nodes_file" in nodes_dict and Path(nodes_dict["nodes_file"]).is_file():
+        with h5py.File(nodes_dict["nodes_file"], "r") as h5f:
+            node_ids = _get_node_ids(h5f, node_population_name)
+            if node_ids.size > 0:
+                missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
+                if missing_ids:
+                    errors.append(
+                        fatal(
+                            f"{nodes_ds.name} misses node ids in its node population: {missing_ids}"
+                        )
+                    )
+            elif f"nodes/{node_population_name}" in h5f:
                 errors.append(
-                    fatal(f"{nodes_ds.name} misses node ids in its node population: {missing_ids}")
+                    fatal((f"{nodes_ds.name} does not have node ids in its node population"))
                 )
-        else:
-            errors.append(fatal(f"{nodes_ds.name} does not have node ids in its node population"))
 
     return errors
 
@@ -435,8 +433,10 @@ def _check_edges_indices(population):
         errors.append(Error(Error.WARNING, f'No "target_to_source" in {population.file.filename}'))
 
     if target_to_source and source_to_target:
-        _check(source_to_target, population["source_node_id"])
-        _check(target_to_source, population["target_node_id"])
+        if "source_node_id" in population:
+            _check(source_to_target, population["source_node_id"])
+        if "target_node_id" in population:
+            _check(target_to_source, population["target_node_id"])
 
     return errors
 
@@ -463,6 +463,8 @@ def _check_edge_population_data(population, nodes):
 
     if "indices" in population:
         errors += _check_edges_indices(population)
+    else:  # "optional" (not mentioned in our spec) but better to at least give a warning
+        errors.append(Error(Error.WARNING, f'No "indices" in {population.file.filename}'))
 
     return errors
 
