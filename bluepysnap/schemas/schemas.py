@@ -1,4 +1,4 @@
-import re
+"""Functions for schema based validation of circuit files."""
 from pathlib import Path
 
 import h5py
@@ -15,7 +15,7 @@ def _load_schema_file(*args):
     filepath = pkg_resources.resource_filename(__name__, filename)
     if not Path(filepath).is_file():
         raise FileNotFoundError(f"Schema file {filepath} not found")
-    with open(filepath) as fd:
+    with open(filepath, encoding="utf-8") as fd:
         return yaml.safe_load(fd)
 
 

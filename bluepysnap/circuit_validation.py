@@ -11,8 +11,7 @@ import h5py
 import numpy as np
 import pandas as pd
 
-from bluepysnap import BluepySnapError, schemas
-from bluepysnap.bbp import EDGE_TYPES, NODE_TYPES
+from bluepysnap import schemas
 from bluepysnap.config import Parser
 from bluepysnap.morph import EXTENSIONS_MAPPING
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DEFAULT_NODE_TYPE
@@ -474,6 +473,16 @@ def _check_edge_population_data(population, nodes):
 
 
 def validate_edge_population(edges_file, name, nodes):
+    """Validate an edge population.
+
+    Args:
+        edges_file (str): path to the edges file
+        name (str): name of the population
+        nodes (list): "nodes" listing of the config
+
+    Returns:
+        list: List of errors, empty if no errors
+    """
     with h5py.File(edges_file, "r") as h5f:
         edges_h5 = h5f.get("edges")
 
@@ -565,7 +574,8 @@ def validate_nodes_dict(nodes_dict, components):
 def validate_networks(config, skip_slow):
     """Validate "networks" part of the config.
 
-    Acts as a starting point of validation."""
+    Acts as a starting point of validation.
+    """
     errors = []
     errors += _check_duplicate_populations(config["networks"], "nodes")
     errors += _check_duplicate_populations(config["networks"], "edges")
