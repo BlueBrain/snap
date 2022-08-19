@@ -123,7 +123,7 @@ def _check_duplicate_populations(networks, key):
     seen = set()
     errors = []
     for network in networks.get(key, {}):
-        for population in network.get("populations", {}).keys():
+        for population in network.get("populations", {}):
             if population in seen:
                 errors.append(
                     fatal(f'Already have population "{population}" in config for type "{key}"')
@@ -234,6 +234,14 @@ def _check_bio_nodes_group(group_df, group, population):
                     if _type == morph_type:
                         morph_dirs |= {(morph_path, extension)}
 
+    if "morphologies_dir" not in population and "alternate_morphologies" not in population:
+        errors.append(
+            fatal(
+                "at least one of 'morphologies_dir' or 'alternate_morphologies' "
+                "must to be defined for 'biophysical' populations"
+            )
+        )
+
     if "morphology" in group_df.columns:
         for morph_path, extension in morph_dirs:
             L.debug("Checking morph files (%s): %s", extension, morph_path)
@@ -254,7 +262,8 @@ def _check_bio_nodes_group(group_df, group, population):
             (bio_path / _get_model_template_file(m) for m in group_df.get("model_template", [])),
             Error.WARNING,
         )
-
+    else:
+        errors.append(fatal("'biophysical_neuron_models_dir' not defined"))  # TODO: fix
     return errors
 
 
@@ -275,13 +284,6 @@ def _check_nodes_group(group_df, group, population, population_name):
     # TODO: check length
 
     errors = []
-    if "model_type" not in group_df:
-        message = (
-            f"Population '{population_name}' missing `model_type` attribute "
-        )
-        errors.append(Error(Error.WARNING, message))
-        return errors
-
     if "model_type" in group_df:
         if group_df["model_type"][0] != population["type"]:
             message = (

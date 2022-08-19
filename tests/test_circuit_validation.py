@@ -1,5 +1,5 @@
 try:
-    from unittest.mock import patch, Mock
+    from unittest.mock import Mock, patch
 except ImportError:
     from mock import patch, Mock
 
@@ -14,14 +14,14 @@ from bluepysnap.exceptions import BluepySnapError
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
-@patch('bluepysnap.schemas.validate_nodes_schema')
-@patch('bluepysnap.schemas.validate_edges_schema')
-@patch('bluepysnap.schemas.validate_circuit_schema')
+@patch("bluepysnap.schemas.validate_nodes_schema")
+@patch("bluepysnap.schemas.validate_edges_schema")
+@patch("bluepysnap.schemas.validate_circuit_schema")
 def validate(s, *mocks, print_errors=False):
     # reset the mock return value to empty list
     for m in mocks:
         m.return_value = []
-    return test_module.validate(s, print_errors=print_errors)
+    return test_module.validate(s, skip_slow=False, print_errors=print_errors)
 
 
 def test_error_comparison():
@@ -30,7 +30,7 @@ def test_error_comparison():
 
 
 def test_empty_group_size():
-    return # TODO: decide on what to do for this
+    return  # TODO: decide on what to do for this
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
@@ -50,25 +50,37 @@ def test_ok_circuit():
         assert errors == set()
 
 
+@patch("bluepysnap.schemas.validate_nodes_schema", Mock(return_value=[]))
+@patch("bluepysnap.schemas.validate_edges_schema", Mock(return_value=[]))
+@patch("bluepysnap.schemas.validate_circuit_schema", Mock(return_value=[]))
+def test_skip_slow():
+    with patch(f"{test_module.__name__}.validate_edge_population") as patched:
+        errors = test_module.validate(
+            str(TEST_DATA_DIR / "circuit_config.json"),
+            skip_slow=True,
+            print_errors=False)
+        assert errors == set()
+        patched.assert_not_called()
+
 def test_print_errors(capsys):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
             del config["networks"]["nodes"]
         validate(str(config_copy_path), print_errors=True)
-    assert 'No node population for' in capsys.readouterr().out
+    assert "No node population for" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(
-    'to_remove',
+    "to_remove",
     (
-        ['components'],
-        ['networks'],
-        ['networks', 'nodes', 0, 'nodes_file'],
-        ['networks', 'edges'],
-        ['networks', 'edges', 0, 'edges_file'],
-        ['networks', 'edges', 0, 'populations'],
-        ['networks', 'edges', 0, 'populations', 'default'],
-    ))
+        ["networks"],
+        ["networks", "nodes", 0, "nodes_file"],
+        ["networks", "edges"],
+        ["networks", "edges", 0, "edges_file"],
+        ["networks", "edges", 0, "populations"],
+        ["networks", "edges", 0, "populations", "default"],
+    ),
+)
 def test_missing_data_config_no_error(to_remove):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
@@ -81,12 +93,13 @@ def test_missing_data_config_no_error(to_remove):
 
 
 @pytest.mark.parametrize(
-    'to_remove',
+    "to_remove",
     (
-        ['networks', 'nodes'],
-        ['networks', 'nodes', 0, 'populations'],
-        ['networks', 'nodes', 0, 'populations', 'default'],
-    ))
+        ["networks", "nodes"],
+        ["networks", "nodes", 0, "populations"],
+        ["networks", "nodes", 0, "populations", "default"],
+    ),
+)
 def test_missing_data_config_no_population_for_edge(to_remove):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
@@ -99,7 +112,6 @@ def test_missing_data_config_no_population_for_edge(to_remove):
             Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
             Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
         }
-
 
 
 def test_nodes_population_not_found_in_h5():
@@ -138,7 +150,7 @@ def test_ok_node_population_type():
         assert errors == set()
 
 
-@pytest.mark.parametrize('model_type', ('virtual', 'electrical', 'fake_type'))
+@pytest.mark.parametrize("model_type", ("virtual", "electrical", "fake_type"))
 def test_ok_nonbio_type(model_type):
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         with edit_config(config_copy_path) as config:
@@ -150,17 +162,21 @@ def test_ok_nonbio_type(model_type):
         assert errors == set()
 
 
-
 def test_population_type_mismatch():
     with copy_test_data() as (_, config_copy_path):
         fake_type = "fake_type"
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = fake_type
         errors = validate(str(config_copy_path))
-        assert errors == {Error(
-            Error.WARNING,
-            ("Population 'default' type mismatch: "
-             f"'biophysical' (nodes_file), '{fake_type}' (config)"))}
+        assert errors == {
+            Error(
+                Error.WARNING,
+                (
+                    "Population 'default' type mismatch: "
+                    f"'biophysical' (nodes_file), '{fake_type}' (config)"
+                ),
+            )
+        }
 
 
 def test_ok_edge_population_type():
@@ -197,22 +213,23 @@ def test_invalid_config_edges_file():
 
 
 @pytest.mark.parametrize(
-    'to_remove',
+    "to_remove",
     (
-        'nodes',
-        'nodes/default/0/mtype',
-        'nodes/default/0/morphology',
-        'nodes/default/0/model_template',
-        'nodes/default/0/model_type',
-        'nodes/default/0/dynamics_params',
-        'nodes/default/0/layer',
-        'nodes/default/0/x',
-        'nodes/default/0/y',
-        'nodes/default/0/z',
-        'nodes/default/0/rotation_angle_xaxis',
-        'nodes/default/0/rotation_angle_yaxis',
-        'nodes/default/0/rotation_angle_zaxis',
-    ))
+        "nodes",
+        "nodes/default/0/mtype",
+        "nodes/default/0/morphology",
+        "nodes/default/0/model_template",
+        "nodes/default/0/model_type",
+        "nodes/default/0/dynamics_params",
+        "nodes/default/0/layer",
+        "nodes/default/0/x",
+        "nodes/default/0/y",
+        "nodes/default/0/z",
+        "nodes/default/0/rotation_angle_xaxis",
+        "nodes/default/0/rotation_angle_yaxis",
+        "nodes/default/0/rotation_angle_zaxis",
+    ),
+)
 def test_missing_data_nodes_h5_no_error(to_remove):
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
@@ -254,13 +271,21 @@ def test_ok_bio_model_type_in_library():
 
 def test_no_bio_component_dirs():
     dirs = ["morphologies_dir", "biophysical_neuron_models_dir"]
-    for dir_ in dirs:
-        with copy_test_data() as (_, config_copy_path):
-            with edit_config(config_copy_path) as config:
+    with copy_test_data() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            for dir_ in dirs:
                 del config["components"][dir_]
-            errors = validate(str(config_copy_path))
-            # multiplication by 2 because we have 2 populations, each produces the same error.
-            assert errors == set()
+        errors = validate(str(config_copy_path))
+        assert errors == {
+            Error(Error.FATAL, "'biophysical_neuron_models_dir' not defined"),
+            Error(
+                Error.FATAL,
+                (
+                    "at least one of 'morphologies_dir' or 'alternate_morphologies' "
+                    "must to be defined for 'biophysical' populations"
+                ),
+            ),
+        }
 
 
 def test_invalid_bio_alternate_morphology_dir():
@@ -272,9 +297,7 @@ def test_invalid_bio_alternate_morphology_dir():
                 component: fake_path
             }
         errors = validate(str(config_copy_path))
-        assert errors == {
-            Error(Error.FATAL, f'Invalid components "{component}": {fake_path}')
-        }
+        assert errors == {Error(Error.FATAL, f'Invalid components "{component}": {fake_path}')}
 
 
 @patch("bluepysnap.circuit_validation.MAX_MISSING_FILES_DISPLAY", 1)
@@ -377,35 +400,36 @@ def test_no_template_library_files():
 
 
 @pytest.mark.parametrize(
-    'to_remove',
+    "to_remove",
     (
-        '/edges',
-        '/edges/default/edge_type_id',
-        '/edges/default/source_node_id',
-        '/edges/default/target_node_id',
-        '/edges/default/0',
-        '/edges/default/0/afferent_center_x',
-        '/edges/default/0/afferent_center_y',
-        '/edges/default/0/afferent_center_z',
-        '/edges/default/0/afferent_section_id',
-        '/edges/default/0/afferent_section_pos',
-        '/edges/default/0/afferent_surface_x',
-        '/edges/default/0/afferent_surface_y',
-        '/edges/default/0/afferent_surface_z',
-        '/edges/default/0/conductance',
-        '/edges/default/0/delay',
-        '/edges/default/0/dynamics_params',
-        '/edges/default/0/dynamics_params/param1',
-        '/edges/default/0/efferent_center_x',
-        '/edges/default/0/efferent_center_y',
-        '/edges/default/0/efferent_center_z',
-        '/edges/default/0/efferent_section_id',
-        '/edges/default/0/efferent_section_pos',
-        '/edges/default/0/efferent_surface_x',
-        '/edges/default/0/efferent_surface_y',
-        '/edges/default/0/efferent_surface_z',
-        '/edges/default/0/syn_weight',
-    ))
+        "/edges",
+        "/edges/default/edge_type_id",
+        "/edges/default/source_node_id",
+        "/edges/default/target_node_id",
+        "/edges/default/0",
+        "/edges/default/0/afferent_center_x",
+        "/edges/default/0/afferent_center_y",
+        "/edges/default/0/afferent_center_z",
+        "/edges/default/0/afferent_section_id",
+        "/edges/default/0/afferent_section_pos",
+        "/edges/default/0/afferent_surface_x",
+        "/edges/default/0/afferent_surface_y",
+        "/edges/default/0/afferent_surface_z",
+        "/edges/default/0/conductance",
+        "/edges/default/0/delay",
+        "/edges/default/0/dynamics_params",
+        "/edges/default/0/dynamics_params/param1",
+        "/edges/default/0/efferent_center_x",
+        "/edges/default/0/efferent_center_y",
+        "/edges/default/0/efferent_center_z",
+        "/edges/default/0/efferent_section_id",
+        "/edges/default/0/efferent_section_pos",
+        "/edges/default/0/efferent_surface_x",
+        "/edges/default/0/efferent_surface_y",
+        "/edges/default/0/efferent_surface_z",
+        "/edges/default/0/syn_weight",
+    ),
+)
 def test_missing_data_edges_h5_no_error(to_remove):
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges.h5"
@@ -435,7 +459,7 @@ def test_no_edge_source_to_target():
         errors = validate(str(config_copy_path))
         assert errors == {
             Error(Error.WARNING, f'No "source_to_target" in {edges_file}'),
-            Error(Error.WARNING, f'No "target_to_source" in {edges_file}')
+            Error(Error.WARNING, f'No "target_to_source" in {edges_file}'),
         }
 
 

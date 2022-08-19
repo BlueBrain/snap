@@ -14,7 +14,9 @@
       {
         "nodes_file": "$NETWORK_DIR/nodes.h5",
         "populations": {
-            "default": {}
+            "default": {
+                "type": "biophysical"
+            }
         }
       }
     ],
@@ -22,7 +24,9 @@
       {
         "edges_file": "$NETWORK_DIR/edges.h5",
         "populations": {
-            "default":{}
+            "default":{
+                "type": "chemical"
+            }
         }
       }
     ]

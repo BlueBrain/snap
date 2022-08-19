@@ -1,8 +1,8 @@
-title: Edges - chemical
-description: schema for chemical edge types
+title: Edges - electrical
+description: schema for electrical edge types
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
 properties:
   edges:
-    allOf: [{ $ref: "#/$edge_file_defs/edges" }]
     patternProperties:
       "":
         properties:

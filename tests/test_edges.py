@@ -754,8 +754,7 @@ class TestEdgePopulation:
                 test_module.DYNAMICS_PREFIX + "param1",
             ]
         )
-        # TODO: change to DEFAULT_EDGE_TYPE when fixed in libsonata (= "chemical")
-        assert self.test_obj.type == DEFAULT_EDGE_TYPE + "_synapse"
+        assert self.test_obj.type == DEFAULT_EDGE_TYPE
 
     def test_population_type(self):
         with copy_test_data() as (config_dir, config_path):

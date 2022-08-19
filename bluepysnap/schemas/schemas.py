@@ -12,8 +12,24 @@ DEFINITIONS = "definitions"
 def _load_schema_file(*args):
     """Load one of the predefined YAML schema files."""
     filename = str(Path(*args).with_suffix(".yaml"))
-    with open(pkg_resources.resource_filename(__name__, filename)) as fd:
+    filepath = pkg_resources.resource_filename(__name__, filename)
+    if not Path(filepath).is_file():
+        raise FileNotFoundError(f"Schema file {filepath} not found")
+    with open(filepath) as fd:
         return yaml.safe_load(fd)
+
+
+def _parse_path(path, join_str):
+    error_path = []
+
+    for item in path:
+        # show list index in the [0] format
+        if isinstance(item, int):
+            error_path[-1] += f"[{item}]"
+        else:
+            error_path.append(item)
+
+    return join_str.join(error_path)
 
 
 def _wrap_errors(filepath, schema_errors, join_str):
@@ -34,25 +50,26 @@ def _wrap_errors(filepath, schema_errors, join_str):
     errors = []
 
     for e in schema_errors:
-        if e.path[-1] == "datatype":
-            path = join_str.join(list(e.path)[:-1])
-            message = f"Incorrect datatype '{e.instance}' for '{path}': {e.message}"
+        if not e.path:
+            errors.append(e.message)
+        elif e.path[-1] == "datatype":
+            path = _parse_path(list(e.path)[:-1], join_str)
+            message = f"incorrect datatype '{e.instance}' for '{path}': {e.message}"
             warnings.append(message)
+        elif e.schema_path[-1] in ("maxProperties", "minProperties"):
+            path = _parse_path(e.path, join_str)
+            message = f"{path}: too "
+            message += "many " if e.schema_path[-1] == "maxProperties" else "few "
+            message += "properties"
+            errors.append(message)
         else:
             path = []
-            for item in e.path:
-                # show list index in the [0] format
-                if isinstance(item, int):
-                    path[-1] += f"[{item}]"
-                else:
-                    path.append(item)
-
             # Add special message in case of attribute missing
-            if path[-1] == "attributes":
-                path = join_str.join(path[:-1])
+            if e.path[-1] == "attributes":
+                path = _parse_path(list(e.path)[:-1], join_str)
                 message = f"{path}: {e.message} (attribute)"
             else:
-                path = join_str.join(path)
+                path = _parse_path(e.path, join_str)
                 message = f"{path}: {e.message}"
             errors.append(message)
 
@@ -85,11 +102,10 @@ def _parse_schema(object_type, sub_type=None):
     Returns:
         dict: Schema parsed as a dictionary.
     """
-    if object_type not in ("edge", "node", "circuit"):
-        raise RuntimeError(f"Unknown type: {object_type}")  # refine
-
     if object_type == "circuit":
         return _load_schema_file(object_type)
+    elif object_type not in ("edge", "node"):
+        raise RuntimeError(f"Unknown object type: {object_type}")
 
     schema = _load_schema_file(DEFINITIONS, "datatypes")
     schema.update(_load_schema_file(DEFINITIONS, object_type))
@@ -106,10 +122,10 @@ def _get_h5_structure_as_dict(h5):
     Attributes of either groups or datasets are returned as {'attributes': {<key>: <value>}}.
 
     Args:
-        h5 (h5.File instance): h5 file to translate
+        h5 (h5.File, h5.Group): h5 file or group to translate
 
     Returns:
-        dict: dictionary of the file structure
+        dict: dictionary of the structure
     """
     properties = {}
 
@@ -122,10 +138,8 @@ def _get_h5_structure_as_dict(h5):
     for key, value in h5.items():
         if isinstance(value, h5py.Group):
             properties[key] = _get_h5_structure_as_dict(value)
-        elif isinstance(value, h5py.Dataset):
+        else:  # Dataset
             properties[key] = {"datatype": get_dataset_dtype(value)}
-        else:
-            properties[key] = {}
 
         attrs = dict(value.attrs.items())
         if attrs:

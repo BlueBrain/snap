@@ -1,8 +1,8 @@
 title: Nodes - virtual
 description: schema for virtual node types
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
 properties:
   nodes:
-    allOf: [{ $ref: "#/$node_file_defs/nodes" }]
     patternProperties:
       "":
         properties:

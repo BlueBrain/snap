@@ -1,8 +1,8 @@
 title: Nodes - biophysical
 description: schema for biophysical node types
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
 properties:
   nodes:
-    allOf: [{ $ref: "#/$node_file_defs/nodes" }]
     patternProperties:
       "":
         properties:

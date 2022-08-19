@@ -23,81 +23,86 @@ $edge_file_defs:
           node_population:
             type: string
 
-  edges:
-    maxProperties: 1
-    type: object
-    patternProperties:
-      "":
+  edges_file_root:
+    required:
+      - edges
+    properties:
+      edges:
+        maxProperties: 1
+        minProperties: 1
         type: object
-        required:
-          - "0"
-          - edge_type_id
-          - source_node_id
-          - target_node_id
-        additionalProperties: false
-        properties:
-          indices:  # Note that this is optional
+        patternProperties:
+          "":
             type: object
+            required:
+              - "0"
+              - edge_type_id
+              - source_node_id
+              - target_node_id
             additionalProperties: false
             properties:
-              target_to_source:
-                $ref: "#/$edge_file_defs/indices_id_mapping"
-              source_to_target:
-                $ref: "#/$edge_file_defs/indices_id_mapping"
-          source_node_id:
-            $ref: "#/$edge_file_defs/edge_node_ids"
-
-          target_node_id:
-            $ref: "#/$edge_file_defs/edge_node_ids"
-
-          edge_type_id:
-            $ref: "#/$typedefs/int64"
-
-          "0":
-            type: object
-            # additionalProperties: false
-            patternProperties:
-              # For docs, these would likely need to be changed actual property names.
-              # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
-              # to keep stuff cleaner as they will be reused anyhow.
-              ^(a|e)fferent_(center|surface)_(x|y|z)$:
-                $ref: "#/$typedefs/float32"
-              ^(a|e)fferent_(section|segment|junction)_(id|type)$:
-                $ref: "#/$typedefs/uint32"
-              ^(a|e)fferent_(section|segment)_(pos|offset)$:
-                $ref: "#/$typedefs/float32"
-            properties:
-              conductance:
-                $ref: "#/$typedefs/float32"
-              decay_time:
-                $ref: "#/$typedefs/float32"
-              depression_time:
-                $ref: "#/$typedefs/float32"
-              facilitation_time:
-                $ref: "#/$typedefs/float32"
-              u_syn:
-                $ref: "#/$typedefs/float32"
-              n_rrp_vesicles:
-                $ref: "#/$typedefs/uint32"
-              spine_length:
-                $ref: "#/$typedefs/float32"
-              syn_type_id:
-                $ref: "#/$typedefs/uint32"
-              delay:
-                $ref: "#/$typedefs/float32"
-              # Optional properties
-              spine_morphology:
-                $ref: "#/$typedefs/uint32"
-              spine_psd_id:
-                $ref: "#/$typedefs/int64"
-              spine_sharding_id:
-                $ref: "#/$typedefs/int64"
-              conductance_scale_factor:
-                $ref: "#/$typedefs/float32"
-              u_hill_coefficient:
-                $ref: "#/$typedefs/float32"
-              "@library":
+              indices:  # Note that this is optional
                 type: object
+                additionalProperties: false
                 properties:
+                  target_to_source:
+                    $ref: "#/$edge_file_defs/indices_id_mapping"
+                  source_to_target:
+                    $ref: "#/$edge_file_defs/indices_id_mapping"
+              source_node_id:
+                $ref: "#/$edge_file_defs/edge_node_ids"
+
+              target_node_id:
+                $ref: "#/$edge_file_defs/edge_node_ids"
+
+              edge_type_id:
+                $ref: "#/$typedefs/int64"
+
+              "0":
+                type: object
+                # additionalProperties: false
+                patternProperties:
+                  # For docs, these would likely need to be changed actual property names.
+                  # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
+                  # to keep stuff cleaner as they will be reused anyhow.
+                  ^(a|e)fferent_(center|surface)_(x|y|z)$:
+                    $ref: "#/$typedefs/float32"
+                  ^(a|e)fferent_(section|segment|junction)_(id|type)$:
+                    $ref: "#/$typedefs/uint32"
+                  ^(a|e)fferent_(section|segment)_(pos|offset)$:
+                    $ref: "#/$typedefs/float32"
+                properties:
+                  conductance:
+                    $ref: "#/$typedefs/float32"
+                  decay_time:
+                    $ref: "#/$typedefs/float32"
+                  depression_time:
+                    $ref: "#/$typedefs/float32"
+                  facilitation_time:
+                    $ref: "#/$typedefs/float32"
+                  u_syn:
+                    $ref: "#/$typedefs/float32"
+                  n_rrp_vesicles:
+                    $ref: "#/$typedefs/uint32"
+                  spine_length:
+                    $ref: "#/$typedefs/float32"
+                  syn_type_id:
+                    $ref: "#/$typedefs/uint32"
+                  delay:
+                    $ref: "#/$typedefs/float32"
+                  # Optional properties
                   spine_morphology:
-                    $ref: "#/$typedefs/utf8"
+                    $ref: "#/$typedefs/uint32"
+                  spine_psd_id:
+                    $ref: "#/$typedefs/int64"
+                  spine_sharding_id:
+                    $ref: "#/$typedefs/int64"
+                  conductance_scale_factor:
+                    $ref: "#/$typedefs/float32"
+                  u_hill_coefficient:
+                    $ref: "#/$typedefs/float32"
+                  "@library":
+                    type: object
+                    properties:
+                      spine_morphology:
+                        $ref: "#/$typedefs/utf8"

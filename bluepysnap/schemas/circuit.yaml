@@ -75,11 +75,3 @@ $defs:
               properties:
                 type:
                   type: string
-              # If type is defined and it's biophysical, require biophysical_neuron_models_dir:
-              anyOf:
-                - required:
-                    - biophysical_neuron_models_dir
-                - properties:
-                    type:
-                      not:
-                        const: biophysical
