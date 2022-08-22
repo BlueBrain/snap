@@ -70,6 +70,7 @@ $defs:
           type: object
           minProperties: 1
           patternProperties:
+            # "" is used as a wild card for population name
             "":
               $ref: "#/$defs/components"
               properties:

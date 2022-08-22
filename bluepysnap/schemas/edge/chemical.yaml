@@ -4,6 +4,7 @@ allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
 properties:
   edges:
     patternProperties:
+      # "" is used as a wild card for population name
       "":
         properties:
           "0":

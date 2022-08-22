@@ -4,6 +4,7 @@ allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
 properties:
   nodes:
     patternProperties:
+      # "" is used as a wild card for population name
       "":
         properties:
           "0":

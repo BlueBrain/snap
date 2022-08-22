@@ -32,6 +32,7 @@ $edge_file_defs:
         minProperties: 1
         type: object
         patternProperties:
+          # "" is used as a wild card for population name
           "":
             type: object
             required:

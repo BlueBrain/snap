@@ -10,6 +10,7 @@ $node_file_defs:
         minProperties: 1
         type: object
         patternProperties:
+          # "" is used as a wild card for population name
           "":
             type: object
             required:
@@ -65,6 +66,7 @@ $node_file_defs:
                   "@library":
                     type: object
                     patternProperties:
+                      # "" is used as a wild card for field name
                       "":
                         $ref: "#/$typedefs/utf8"
                 patternProperties:
