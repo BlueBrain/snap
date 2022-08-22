@@ -1,7 +1,4 @@
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import h5py
 import numpy as np

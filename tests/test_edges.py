@@ -1,13 +1,12 @@
 from pathlib import Path
+from unittest.mock import ANY, Mock, PropertyMock, patch
 
 import libsonata
-import mock
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from mock import Mock, PropertyMock, patch
 from numpy import dtype
 
 import bluepysnap.edges as test_module
@@ -47,7 +46,7 @@ def test_estimate_range_size_3():
 
 def test_estimate_range_size_4():
     with pytest.raises(AssertionError):
-        test_module._estimate_range_size(mock.ANY, [])
+        test_module._estimate_range_size(ANY, [])
 
 
 class TestEdges:

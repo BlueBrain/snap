@@ -1,7 +1,7 @@
 import json
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 import bluepysnap.node_sets as test_module
 from bluepysnap.exceptions import BluepySnapError

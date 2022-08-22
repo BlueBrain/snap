@@ -1,6 +1,5 @@
 import os
-
-from mock import patch
+from unittest.mock import patch
 
 import bluepysnap.settings as test_module
 

@@ -1,11 +1,11 @@
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from mock import patch
 
 import bluepysnap.circuit_ids as test_module
 from bluepysnap.exceptions import BluepySnapError

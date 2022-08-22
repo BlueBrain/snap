@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from unittest.mock import Mock, PropertyMock, patch
 
 import libsonata
 import numpy as np
@@ -7,7 +8,6 @@ import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from mock import Mock, PropertyMock, patch
 from numpy import dtype
 from pandas.api.types import is_categorical_dtype
 

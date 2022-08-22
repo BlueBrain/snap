@@ -1,6 +1,7 @@
+from unittest.mock import Mock, patch
+
 import click
 from click.testing import CliRunner
-from mock import Mock, patch
 
 from bluepysnap.cli import cli
 
