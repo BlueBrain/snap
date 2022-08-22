@@ -285,14 +285,13 @@ def _check_nodes_group(group_df, group, population, population_name):
     L.debug("Check nodes group: %s", group.name)
 
     errors = []
-    if "model_type" in group_df:
-        if group_df["model_type"][0] != population["type"]:
-            message = (
-                f"Population '{population_name}' type mismatch: "
-                f"'{group_df['model_type'][0]}' (nodes_file), "
-                f"'{population['type']}' (config)"
-            )
-            errors.append(Error(Error.WARNING, message))
+    if "model_type" in group_df and group_df["model_type"][0] != population["type"]:
+        message = (
+            f"Population '{population_name}' type mismatch: "
+            f"'{group_df['model_type'][0]}' (nodes_file), "
+            f"'{population['type']}' (config)"
+        )
+        errors.append(Error(Error.WARNING, message))
 
     if population["type"] == "biophysical":
         return errors + _check_bio_nodes_group(group_df, group, population, population_name)
@@ -340,8 +339,8 @@ def _get_node_ids(nodes_h5, population_name):
     Returns:
         np.ndarray: Numpy array of node ids, empty if couldn't find any
     """
-    node_population = nodes_h5.get(f"nodes/{population_name}")
-    if node_population is not None:
+    if "nodes" in nodes_h5 and population_name in nodes_h5["nodes"]:
+        node_population = nodes_h5["nodes"][population_name]
         if "node_id" in node_population:
             return node_population["node_id"][:]
         elif "0" in node_population:
@@ -423,8 +422,9 @@ def _check_edges_indices(population):
                     )
 
     errors = []
-    source_to_target = population["indices"].get("source_to_target")
-    target_to_source = population["indices"].get("target_to_source")
+    indices = population["indices"]
+    source_to_target = indices["source_to_target"] if "source_to_target" in indices else None
+    target_to_source = indices["target_to_source"] if "target_to_source" in indices else None
 
     # These are "optional" (not mentioned in our spec) but better to at least give a warning
     if not source_to_target:
