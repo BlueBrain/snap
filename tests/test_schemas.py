@@ -357,7 +357,7 @@ def test_virtual_node_population_error():
         assert "'model_type' is a required property" in errors[0].message
 
 
-def test_validate_edges_missing_attributes():
+def test_validate_edges_missing_attributes_field():
     # has no attributes at all
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
@@ -365,12 +365,11 @@ def test_validate_edges_missing_attributes():
             del h5f["edges/default/source_node_id"].attrs["node_population"]
         errors = test_module.validate_edges_schema(str(edges_file), "chemical", virtual=False)
         assert len(errors) == 1
-        # TODO: need to rework this to a better message
-        assert "'attributes' is a required property" in errors[0].message
+        assert "missing required attribute(s) ['node_population']" in errors[0].message
 
 
 def test_validate_edges_missing_attribute():
-    # has attributes but wrong name
+    # has attributes but not the required ones
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
         with h5py.File(edges_file, "r+") as h5f:
@@ -378,7 +377,7 @@ def test_validate_edges_missing_attribute():
             h5f["edges/default/source_node_id"].attrs.create("population", "some_val")
         errors = test_module.validate_edges_schema(str(edges_file), "chemical", virtual=False)
         assert len(errors) == 1
-        assert "'node_population' is a required property (attribute)" in errors[0].message
+        assert "missing required attribute(s) ['node_population']" in errors[0].message
 
 
 @pytest.mark.parametrize(

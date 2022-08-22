@@ -29,16 +29,6 @@ def test_error_comparison():
     assert err != "hello"
 
 
-def test_empty_group_size():
-    return  # TODO: decide on what to do for this
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
-        nodes_file = circuit_copy_path / "nodes.h5"
-        with h5py.File(nodes_file, "r+") as h5f:
-            grp = h5f["nodes/default/"].create_group("3")
-            with pytest.raises(BluepySnapError):
-                test_module._get_group_size(grp)
-
-
 def test_ok_circuit():
     errors = validate(str(TEST_DATA_DIR / "circuit_config.json"))
     assert errors == set()
@@ -56,11 +46,11 @@ def test_ok_circuit():
 def test_skip_slow():
     with patch(f"{test_module.__name__}.validate_edge_population") as patched:
         errors = test_module.validate(
-            str(TEST_DATA_DIR / "circuit_config.json"),
-            skip_slow=True,
-            print_errors=False)
+            str(TEST_DATA_DIR / "circuit_config.json"), skip_slow=True, print_errors=False
+        )
         assert errors == set()
         patched.assert_not_called()
+
 
 def test_print_errors(capsys):
     with copy_test_data() as (_, config_copy_path):
@@ -240,7 +230,6 @@ def test_missing_data_nodes_h5_no_error(to_remove):
 
 
 def test_ok_node_ids_dataset():
-    # TODO: check if can be removed
     with copy_test_data() as (circuit_copy_path, config_copy_path):
         nodes_file = circuit_copy_path / "nodes.h5"
         with h5py.File(nodes_file, "r+") as h5f:
@@ -277,12 +266,14 @@ def test_no_bio_component_dirs():
                 del config["components"][dir_]
         errors = validate(str(config_copy_path))
         assert errors == {
-            Error(Error.FATAL, "'biophysical_neuron_models_dir' not defined"),
+            Error(
+                Error.FATAL, "'biophysical_neuron_models_dir' not defined for population 'default'"
+            ),
             Error(
                 Error.FATAL,
                 (
                     "at least one of 'morphologies_dir' or 'alternate_morphologies' "
-                    "must to be defined for 'biophysical' populations"
+                    "must to be defined for 'biophysical' population 'default'"
                 ),
             ),
         }

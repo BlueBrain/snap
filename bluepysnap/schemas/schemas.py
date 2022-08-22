@@ -54,20 +54,21 @@ def _wrap_errors(filepath, schema_errors, join_str):
             errors.append(e.message)
         elif e.path[-1] == "datatype":
             path = _parse_path(list(e.path)[:-1], join_str)
-            message = f"incorrect datatype '{e.instance}' for '{path}': {e.message}"
-            warnings.append(message)
-        elif e.schema_path[-1] in ("maxProperties", "minProperties"):
-            path = _parse_path(e.path, join_str)
-            message = f"{path}: too "
-            message += "many " if e.schema_path[-1] == "maxProperties" else "few "
-            message += "properties"
-            errors.append(message)
+            warnings.append(f"incorrect datatype '{e.instance}' for '{path}': {e.message}")
         else:
-            path = []
-            # Add special message in case of attribute missing
-            if e.path[-1] == "attributes":
+            if e.schema_path[-1] in ("maxProperties", "minProperties"):
+                path = _parse_path(e.path, join_str)
+                many_or_few = "many" if e.schema_path[-1] == "maxProperties" else "few"
+                message = f"{path}: too {many_or_few} properties"
+            elif e.path[-1] == "attributes":
+                # Add special message in case of attribute missing
                 path = _parse_path(list(e.path)[:-1], join_str)
-                message = f"{path}: {e.message} (attribute)"
+                attributes = e.schema["required"]
+                message = f"{path}: missing required attribute(s) {attributes}"
+            elif "attributes" in e.schema.get("required", []):
+                path = _parse_path(e.path, join_str)
+                attributes = e.schema["properties"]["attributes"]["required"]
+                message = f"{path}: missing required attribute(s) {attributes}"
             else:
                 path = _parse_path(e.path, join_str)
                 message = f"{path}: {e.message}"

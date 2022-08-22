@@ -20,12 +20,19 @@ def cli(verbose):
 
 @cli.command()
 @click.argument("config_file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-@click.option('--skip-slow/--no-skip-slow', default=True,
-              help="Skip slow checks; checking all edges refer to existing node ids, edge indices are correct, etc")
+@click.option(
+    "--skip-slow/--no-skip-slow",
+    default=True,
+    help=(
+        "Skip slow checks; checking all edges refer to existing node ids, "
+        "edge indices are correct, etc"
+    ),
+)
 def validate(config_file, skip_slow):
     """Validate of Sonata circuit based on config file.
 
     Args:
         config_file (str): path to Sonata circuit config file
+        skip_slow(bool): skip slow tests
     """
     circuit_validation.validate(config_file, skip_slow)

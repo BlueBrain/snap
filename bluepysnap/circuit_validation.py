@@ -176,6 +176,7 @@ def _nodes_group_to_dataframe(group, population):
     Returns:
         pd.DataFrame: dataframe with all group attributes
     """
+    # TODO: remove multi-indexing (BBP only supports group '0')
     df = pd.DataFrame(population["node_type_id"], columns=["type_id"])
     size = df.size
     df["id"] = population["node_id"] if "node_id" in population else np.arange(size)
@@ -200,13 +201,14 @@ def _nodes_group_to_dataframe(group, population):
     return df
 
 
-def _check_bio_nodes_group(group_df, group, population):
+def _check_bio_nodes_group(group_df, group, population, population_name):
     """Checks biophysical nodes group for errors.
 
     Args:
         group_df (pd.DataFrame): nodes group as a dataframe
         group (h5py.Group): nodes group in nodes .h5 file
         population (dict): a merged dictionary (current population and 'components' in config)
+        population_name (str): name of the population
 
     Returns:
         list: List of errors, empty if no errors
@@ -237,7 +239,7 @@ def _check_bio_nodes_group(group_df, group, population):
         errors.append(
             fatal(
                 "at least one of 'morphologies_dir' or 'alternate_morphologies' "
-                "must to be defined for 'biophysical' populations"
+                f"must to be defined for 'biophysical' population '{population_name}'"
             )
         )
 
@@ -262,7 +264,9 @@ def _check_bio_nodes_group(group_df, group, population):
             Error.WARNING,
         )
     else:
-        errors.append(fatal("'biophysical_neuron_models_dir' not defined"))  # TODO: fix
+        errors.append(
+            fatal(f"'biophysical_neuron_models_dir' not defined for population '{population_name}'")
+        )
     return errors
 
 
@@ -280,8 +284,6 @@ def _check_nodes_group(group_df, group, population, population_name):
     """
     L.debug("Check nodes group: %s", group.name)
 
-    # TODO: check length
-
     errors = []
     if "model_type" in group_df:
         if group_df["model_type"][0] != population["type"]:
@@ -293,7 +295,7 @@ def _check_nodes_group(group_df, group, population, population_name):
             errors.append(Error(Error.WARNING, message))
 
     if population["type"] == "biophysical":
-        return errors + _check_bio_nodes_group(group_df, group, population)
+        return errors + _check_bio_nodes_group(group_df, group, population, population_name)
 
     return errors
 
@@ -310,20 +312,20 @@ def validate_node_population(nodes_file, population_dict, name):
         list: List of errors, empty if no errors
     """
     with h5py.File(nodes_file, "r") as h5f:
-        nodes_h5 = h5f.get("nodes")
-
-        if not nodes_h5 or len(nodes_h5) == 0:
+        if "nodes" not in h5f or len(h5f["nodes"]) == 0:
             return []
 
-        if name not in nodes_h5:
+        # special case in which there are populations but not the one expected
+        if name not in h5f["nodes"]:
             return [fatal(f"population '{name}' not found in {nodes_file}")]
 
-        population = nodes_h5[name]
-        group = population.get("0")
+        population = h5f[f"nodes/{name}"]
 
-        if group and population.get("node_type_id"):
+        if "0" in population and "node_type_id" in population:
+            group = population["0"]
             group_df = _nodes_group_to_dataframe(group, population)
-            return _check_nodes_group(group_df, group, population_dict, name)
+            if len(group_df) > 0:
+                return _check_nodes_group(group_df, group, population_dict, name)
 
     return []
 
@@ -371,24 +373,20 @@ def _check_edges_node_ids(nodes_ds, nodes):
     if not nodes_dict:
         return [fatal(f'No node population for "{nodes_ds.name}"')]
 
+    if "nodes_file" not in nodes_dict or not Path(nodes_dict["nodes_file"]).is_file():
+        return []
+
     errors = []
-    if "nodes_file" in nodes_dict and Path(nodes_dict["nodes_file"]).is_file():
-        with h5py.File(nodes_dict["nodes_file"], "r") as h5f:
-            node_ids = _get_node_ids(h5f, node_population_name)
-            if node_ids.size > 0:
-                missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
-                if missing_ids:
-                    errors.append(
-                        fatal(
-                            f"{nodes_ds.name} misses node ids in its node population: {missing_ids}"
-                        )
-                    )
-            elif f"nodes/{node_population_name}" in h5f:
+    with h5py.File(nodes_dict["nodes_file"], "r") as h5f:
+        node_ids = _get_node_ids(h5f, node_population_name)
+        if node_ids.size > 0:
+            missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
+            if missing_ids:
                 errors.append(
-                    fatal((f"{nodes_ds.name} does not have node ids in its node population"))
+                    fatal(f"{nodes_ds.name} misses node ids in its node population: {missing_ids}")
                 )
-    else:
-        pass  # TODO: error for no node pop in h5???
+        elif f"nodes/{node_population_name}" in h5f:
+            errors.append(fatal((f"{nodes_ds.name} does not have node ids in its node population")))
 
     return errors
 
@@ -484,18 +482,17 @@ def validate_edge_population(edges_file, name, nodes):
         list: List of errors, empty if no errors
     """
     with h5py.File(edges_file, "r") as h5f:
-        edges_h5 = h5f.get("edges")
-
-        if not edges_h5 or len(edges_h5) == 0:
+        if "edges" not in h5f or len(h5f["edges"]) == 0:
             return []
 
-        if name not in edges_h5:
+        # special case in which there are populations but not the one expected
+        if name not in h5f["edges"]:
             return [fatal(f"population '{name}' not found in {edges_file}")]
 
-        group = edges_h5[name].get("0")
+        population = h5f[f"edges/{name}"]
 
-        if group is not None:
-            return _check_edge_population_data(edges_h5[name], nodes)
+        if "0" in population:
+            return _check_edge_population_data(population, nodes)
 
     return []
 
@@ -513,13 +510,13 @@ def validate_edges_dict(edges_dict, nodes, skip_slow):
     """
     errors = []
 
-    def _is_source_node_virtual(edges_dict, nodes, pop_name):
+    def _is_source_node_virtual(edges_dict, edge_population, nodes):
         """Check if source node is virtual.
 
         The required attributes are different for edges with virtual source nodes.
         """
         with h5py.File(edges_dict["edges_file"], "r") as h5:
-            source = h5.get(f"edges/{pop_name}/source_node_id")
+            source = h5.get(f"edges/{edge_population}/source_node_id")
             source_population = source.attrs.get("node_population") if source else None
 
         if source_population:
@@ -529,17 +526,17 @@ def validate_edges_dict(edges_dict, nodes, skip_slow):
 
         return False
 
-    for pop_name, population in edges_dict.get("populations", {}).items():
+    for name, population in edges_dict.get("populations", {}).items():
         pop_type = population.get("type", DEFAULT_EDGE_TYPE)
         edges_file = edges_dict["edges_file"]
 
         if Path(edges_file).is_file():
             virtual = False
             if pop_type == "chemical":
-                virtual = _is_source_node_virtual(edges_dict, nodes, pop_name)
+                virtual = _is_source_node_virtual(edges_dict, name, nodes)
             errors += schemas.validate_edges_schema(edges_file, pop_type, virtual)
             if not skip_slow:
-                errors += validate_edge_population(edges_file, pop_name, nodes)
+                errors += validate_edge_population(edges_file, name, nodes)
         else:
             errors.append(fatal(f'Invalid "edges_file": {edges_file}'))
 
