@@ -1,0 +1,26 @@
+title: Nodes - biophysical
+description: schema for biophysical node types
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
+properties:
+  nodes:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - x
+              - y
+              - z
+              - orientation_w
+              - orientation_x
+              - orientation_y
+              - orientation_z
+              - morphology
+              - model_template
+              - model_type
+              - morph_class
+              - etype
+              - mtype
+              - synapse_class
+              - dynamics_params

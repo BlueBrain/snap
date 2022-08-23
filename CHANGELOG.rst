@@ -4,15 +4,23 @@ Changelog
 Version v1.0.0
 ---------------
 
+New Features
+~~~~~~~~~~~~
+- jsonschema based validation of h5 files and circuit configuration
+  - checks for required attributes and data types of attributes (in h5 files)
+
 Improvements
 ~~~~~~~~~~~~
 - Add black & isort to handle formatting
 - Use libsonata to provide more of the functionality
   - parsing config files
   - accessing data
+- Circuit validation changed to be more config-driven
+  - it now only validates objects defined in the circuit configuration file
 
 Removed
 ~~~~~~~
+- non-BBP Sonata circuit validation
 - NodeStorage & EdgeStorage classes
 - point_neuron support
 

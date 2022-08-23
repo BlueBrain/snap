@@ -1,0 +1,28 @@
+title: Edges - chemical (virtual)
+description: schema for virtual chemical edge types
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - afferent_center_x
+              - afferent_center_y
+              - afferent_center_z
+              - afferent_section_id
+              - afferent_section_pos
+              - afferent_section_type
+              - afferent_segment_id
+              - afferent_segment_offset
+              - efferent_section_type
+              - conductance
+              - decay_time
+              - depression_time
+              - facilitation_time
+              - u_syn
+              - n_rrp_vesicles
+              - syn_type_id
+              - delay

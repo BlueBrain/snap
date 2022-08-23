@@ -1,9 +1,10 @@
+from unittest.mock import patch
+
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from mock import patch
 
 import bluepysnap.frame_report as test_module
 from bluepysnap.bbp import Cell

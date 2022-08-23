@@ -11,10 +11,10 @@ import h5py
 import numpy as np
 import pandas as pd
 
-from bluepysnap import BluepySnapError
-from bluepysnap.bbp import EDGE_TYPES, NODE_TYPES
+from bluepysnap import schemas
 from bluepysnap.config import Parser
 from bluepysnap.morph import EXTENSIONS_MAPPING
+from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DEFAULT_NODE_TYPE
 from bluepysnap.utils import load_json
 
 L = logging.getLogger("brainbuilder")
@@ -55,10 +55,6 @@ class Error:
         return hash(self.level) ^ hash(self.message)
 
 
-class BbpError(Error):
-    """Special class of errors for BBP specification of Sonata."""
-
-
 def fatal(message):
     """Shortcut for a fatal error.
 
@@ -83,7 +79,7 @@ def _check_components_dir(name, components):
     """
     dirpath = components.get(name)
     if not dirpath or not Path(dirpath).is_dir():
-        return [BbpError(Error.FATAL, f'Invalid components "{name}": {dirpath}')]
+        return [fatal(f'Invalid components "{name}": {dirpath}')]
     return []
 
 
@@ -98,8 +94,6 @@ def _check_files(name, files, level):
     Returns:
         list: List of errors, empty if no errors
     """
-    L.debug("Checking for files: %s", files)
-
     missing = sorted({f for f in files if not f.is_file()})
     if missing:
         examples = [e.name for e in it.islice(missing, MAX_MISSING_FILES_DISPLAY)]
@@ -127,72 +121,13 @@ def _check_duplicate_populations(networks, key):
     """Check that that for key = nodes|edges, no duplicate populations names exists."""
     seen = set()
     errors = []
-    for network in networks[key]:
-        for population in network.get("populations", {}).keys():
+    for network in networks.get(key, {}):
+        for population in network.get("populations", {}):
             if population in seen:
                 errors.append(
                     fatal(f'Already have population "{population}" in config for type "{key}"')
                 )
             seen.add(population)
-
-    return errors
-
-
-def _check_required_datasets(config):
-    """Validates required datasets of "nodes" and "edges" in config.
-
-    Args:
-        config (dict): resolved bluepysnap config
-
-    Returns:
-        list: List of errors, empty if no errors
-    """
-    L.debug("Checking required datasets")
-
-    errors = []
-
-    networks = config.get("networks")
-    if not networks:
-        errors.append(fatal('No "networks" in config'))
-        return errors
-
-    nodes = networks.get("nodes")
-    if not nodes:
-        errors.append(fatal('No "nodes" in config "networks"'))
-
-    edges = networks.get("edges")
-    if not edges:
-        errors.append(fatal('No "edges" in config "networks"'))
-
-    if not nodes or not edges:
-        return errors
-
-    errors += _check_duplicate_populations(config["networks"], "nodes")
-    errors += _check_duplicate_populations(config["networks"], "edges")
-
-    for nodes_dict in nodes:
-        nodes_file = nodes_dict.get("nodes_file")
-        if nodes_file is None or not Path(nodes_file).is_file():
-            errors.append(fatal(f'Invalid "nodes_file": {nodes_file}'))
-
-        types_file = nodes_dict.get("node_types_file")
-        if types_file is not None and not Path(types_file).is_file():
-            errors.append(fatal(f'Invalid "node_types_file": {types_file}'))
-
-        if not nodes_dict.get("populations"):
-            errors.append(BbpError(Error.FATAL, 'No "populations" defined in config "nodes"'))
-
-    for edges_dict in edges:
-        edges_file = edges_dict.get("edges_file")
-        if edges_file is None or not Path(edges_file).is_file():
-            errors.append(fatal(f'Invalid "edges_file": {edges_file}'))
-
-        types_file = edges_dict.get("edge_types_file")
-        if types_file is not None and not Path(types_file).is_file():
-            errors.append(fatal(f'Invalid "edge_types_file": {types_file}'))
-
-        if not edges_dict.get("populations"):
-            errors.append(BbpError(Error.FATAL, 'No "populations" defined in config "edges"'))
 
     return errors
 
@@ -209,11 +144,9 @@ def _find_nodes_population(node_population_name, nodes):
         None if it finds nothing.
     """
     for nodes_dict in nodes:
-        nodes_file = nodes_dict.get("nodes_file")
-        if nodes_file:
-            with h5py.File(nodes_file, "r") as h5f:
-                if "/nodes/" + node_population_name in h5f:
-                    return nodes_dict
+        if node_population_name in nodes_dict.get("populations", {}):
+            return nodes_dict
+
     return None
 
 
@@ -227,45 +160,23 @@ def _get_group_name(group, parents=0):
     return Path(*Path(group.name).parts[-(parents + 1) :])
 
 
-def _get_h5_data(h5, path):
-    """Resolves and returns an h5 group/dataset by a path. Returns None if didn't find any.
-
-    Args:
-        h5: h5 file or group
-        path: path within ``h5``
-
-    Returns:
-        h5py.Group/h5py.Dataset/None: A resolved h5 group/dataset or None if it finds nothing.
-    """
-    return h5[path] if path in h5 else None
-
-
 def _get_model_template_file(model_template):
     """Resolves 'model_template' field of nodes group to a proper filename."""
     parts = model_template.split(":", 1)
     return parts[1] + "." + parts[0]
 
 
-def _get_population_groups(population_h5):
-    """Get groups from an edge or node population."""
-    return [
-        population_h5[name]
-        for name in population_h5
-        if isinstance(population_h5[name], h5py.Group) and name.isdigit()
-    ]
-
-
-def _nodes_group_to_dataframe(group, types_file, population):
+def _nodes_group_to_dataframe(group, population):
     """Transforms hdf5 population group to pandas DataFrame.
 
     Args:
         group: HDF5 nodes group
-        types_file: path to 'node_types_file' of Sonata config
         population: HDF5 nodes population
 
     Returns:
         pd.DataFrame: dataframe with all group attributes
     """
+    # TODO: remove multi-indexing (BBP only supports group '0')
     df = pd.DataFrame(population["node_type_id"], columns=["type_id"])
     size = df.size
     df["id"] = population["node_id"] if "node_id" in population else np.arange(size)
@@ -287,150 +198,86 @@ def _nodes_group_to_dataframe(group, types_file, population):
             if isinstance(v, h5py.Dataset):
                 df[k] = v.asstr()[:][df[k].to_numpy(dtype=int)]
 
-    if types_file is None:
-        return df
-
-    types = pd.read_csv(types_file, sep=r"\s+")
-    # pylint seems to think that types has no member columns
-    types.rename(columns={types.columns[0]: "type_id"}, inplace=True)  # pylint: disable=no-member
-    return pd.merge(df, types, on="type_id", how="left")
+    return df
 
 
-def _get_group_size(group_h5):
-    """Gets size of an edges or nodes group."""
-    for name in group_h5:
-        if isinstance(group_h5[name], h5py.Dataset):
-            return group_h5[name].shape[0]
-    raise BluepySnapError(f"Empty group {group_h5}")
-
-
-def _check_multi_groups(group_id_h5, group_index_h5, population):
-    """Checks multiple groups of nodes or edges population."""
-    group_id_h5 = group_id_h5[:]
-    group_index_h5 = group_index_h5[:]
-    if len(group_id_h5) != len(group_index_h5):
-        return [
-            fatal(
-                f"Population {population.name} of {population.file.filename} has "
-                'different sizes of "group_id" and "group_index"'
-            )
-        ]
-
-    group_ids = np.unique(group_id_h5)
-    group_names = [_get_group_name(group).name for group in _get_population_groups(population)]
-    missing_groups = set(group_ids) - set(np.array(group_names, dtype=int))
-    if missing_groups:
-        return [
-            fatal(
-                f"Population {population.name} of {population.file.filename} "
-                f"misses group(s): {missing_groups}"
-            )
-        ]
-
-    for group_id in group_ids:
-        group = population[str(group_id)]
-        max_id = group_index_h5[group_id_h5 == int(group_id)].max()
-        if _get_group_size(group) < max_id:
-            return [
-                fatal(
-                    f"Group {_get_group_name(group, parents=1)} in file "
-                    f"{population.file.filename} should have ids up to {max_id}"
-                )
-            ]
-
-    return []
-
-
-def _check_bio_nodes_group(group_df, group, population):
+def _check_bio_nodes_group(group_df, group, population, population_name):
     """Checks biophysical nodes group for errors.
 
     Args:
         group_df (pd.DataFrame): nodes group as a dataframe
         group (h5py.Group): nodes group in nodes .h5 file
         population (dict): a merged dictionary (current population and 'components' in config)
+        population_name (str): name of the population
 
     Returns:
         list: List of errors, empty if no errors
     """
     L.debug("Check biophysical nodes group")
 
-    def _check_rotations():
-        """Checks for proper rotation fields."""
-        angle_fields = {"rotation_angle_xaxis", "rotation_angle_yaxis", "rotation_angle_zaxis"}
-        has_angle_fields = len(angle_fields - group_attrs) < len(angle_fields)
-        has_rotation_fields = "orientation" in group_attrs or has_angle_fields
-        if not has_rotation_fields:
-            errors.append(
-                Error(
-                    Error.WARNING,
-                    f"Group {group_name} of {group.file.filename} has no rotation fields",
-                )
-            )
-        if not has_angle_fields:
-            bbp_orient_fields = {"orientation_w", "orientation_x", "orientation_y", "orientation_z"}
-            if 0 < len(bbp_orient_fields - group_attrs) < len(bbp_orient_fields):
-                errors.append(
-                    BbpError(
-                        Error.WARNING,
-                        f"Group {group_name} of {group.file.filename} has no rotation fields",
-                    )
-                )
-
     errors = []
 
-    group_attrs = set(group_df.columns)
     group_name = _get_group_name(group, parents=1)
-    missing_fields = sorted({"morphology", "x", "y", "z"} - group_attrs)
-    if missing_fields:
-        errors.append(
-            fatal(
-                f"Group {group_name} of {group.file.filename} misses "
-                f"biophysical fields: {missing_fields}"
-            )
-        )
-
-    errors += _check_components_dir("morphologies_dir", population)
-    errors += _check_components_dir("biophysical_neuron_models_dir", population)
 
     morph_dirs = set()
     if "morphologies_dir" in population:
-        morph_dirs = {(population["morphologies_dir"], "swc")}
+        dir_errors = _check_components_dir("morphologies_dir", population)
+        errors += dir_errors
+        if len(dir_errors) == 0:
+            morph_dirs = {(population["morphologies_dir"], "swc")}
 
     if "alternate_morphologies" in population:
         for morph_type, morph_path in population["alternate_morphologies"].items():
-            errors += _check_components_dir(morph_type, population["alternate_morphologies"])
-            for extension, _type in EXTENSIONS_MAPPING.items():
-                if _type == morph_type:
-                    morph_dirs |= {(morph_path, extension)}
+            dir_errors = _check_components_dir(morph_type, population["alternate_morphologies"])
+            errors += dir_errors
+            if len(dir_errors) == 0:
+                for extension, _type in EXTENSIONS_MAPPING.items():
+                    if _type == morph_type:
+                        morph_dirs |= {(morph_path, extension)}
 
-    if errors:
-        return errors
+    if "morphologies_dir" not in population and "alternate_morphologies" not in population:
+        errors.append(
+            fatal(
+                "at least one of 'morphologies_dir' or 'alternate_morphologies' "
+                f"must to be defined for 'biophysical' population '{population_name}'"
+            )
+        )
 
-    _check_rotations()
+    if "morphology" in group_df.columns:
+        for morph_path, extension in morph_dirs:
+            L.debug("Checking morph files (%s): %s", extension, morph_path)
 
-    for morph_path, extension in morph_dirs:
+            errors += _check_files(
+                f"morphology: {group_name}[{group.file.filename}]",
+                (Path(morph_path, m + "." + extension) for m in group_df["morphology"]),
+                Error.WARNING,
+            )
+
+    if "biophysical_neuron_models_dir" in population:
+        errors += _check_components_dir("biophysical_neuron_models_dir", population)
+
+        bio_path = Path(population["biophysical_neuron_models_dir"])
+        L.debug("Checking neuron model files: %s", bio_path)
         errors += _check_files(
-            f"morphology: {group_name}[{group.file.filename}]",
-            (Path(morph_path, m + "." + extension) for m in group_df["morphology"]),
+            f"model_template: {group_name}[{group.file.filename}]",
+            (bio_path / _get_model_template_file(m) for m in group_df.get("model_template", [])),
             Error.WARNING,
         )
-    bio_path = Path(population["biophysical_neuron_models_dir"])
-    errors += _check_files(
-        f"model_template: {group_name}[{group.file.filename}]",
-        (bio_path / _get_model_template_file(m) for m in group_df["model_template"]),
-        Error.WARNING,
-    )
+    else:
+        errors.append(
+            fatal(f"'biophysical_neuron_models_dir' not defined for population '{population_name}'")
+        )
     return errors
 
 
-def _check_nodes_group(group_df, group, config, population):
+def _check_nodes_group(group_df, group, population, population_name):
     """Validates nodes group in nodes population.
 
     Args:
         group_df (pd.DataFrame): nodes group in nodes .h5 file
         group (h5py.Group): nodes group in nodes .h5 file
-        config (dict): resolved bluepysnap config
-        population (dict): definition of current population in config
+        population (dict): the node population config merged with the components config
+        population_name (str): the name of the population
 
     Returns:
         list: List of errors, empty if no errors
@@ -438,194 +285,70 @@ def _check_nodes_group(group_df, group, config, population):
     L.debug("Check nodes group: %s", group.name)
 
     errors = []
-
-    if "type" in population and population["type"] not in NODE_TYPES:
-        errors.append(BbpError(Error.WARNING, f'Invalid node type: {population["type"]}'))
-
-    if "model_type" not in group_df.columns:
-        errors.append(
-            fatal(
-                f"Group {_get_group_name(group, parents=1)} of "
-                f'{group.file.filename} misses "model_type" field'
-            )
+    if "model_type" in group_df and group_df["model_type"][0] != population["type"]:
+        message = (
+            f"Population '{population_name}' type mismatch: "
+            f"'{group_df['model_type'][0]}' (nodes_file), "
+            f"'{population['type']}' (config)"
         )
-        return errors
+        errors.append(Error(Error.WARNING, message))
 
-    if group_df["model_type"][0] == "virtual":
-        return errors
-
-    if "model_template" not in group_df.columns:
-        errors.append(
-            fatal(
-                f"Group {_get_group_name(group, parents=1)} of "
-                f'{group.file.filename} misses "model_template" field'
-            )
-        )
-        return errors
-    elif group_df["model_type"][0] == "biophysical":
-        if "components" not in config:
-            errors.append(fatal('No "components" in config'))
-            return errors
-
-        population = {**config["components"], **population}
-        return errors + _check_bio_nodes_group(group_df, group, population)
+    if population["type"] == "biophysical":
+        return errors + _check_bio_nodes_group(group_df, group, population, population_name)
 
     return errors
 
 
-def _check_populations_config(populations_config, populations_h5, file_name):
-    """Validates the keys (population names) in populations dictionaries.
-
-    Args:
-        populations_config (dict): edge/node populations in config nodes/edges
-        populations_h5 (h5py.Group): nodes/edges group in the h5 file
-        file_name (str): the name of the h5 file
-
-    Returns:
-        list: List of errors, empty if no errors
-    """
-    populations = set(populations_config)
-    L.debug("Check population config: %s", populations)
-
-    not_found = populations - set(populations_h5)
-    if not_found:
-        not_found = "".join(f"\t{p}\n" for p in not_found)
-        return [fatal(f"populations not found in {file_name}:\n{not_found}")]
-
-    return []
-
-
-def _check_nodes_population(nodes_dict, config):
+def validate_node_population(nodes_file, population_dict, name):
     """Validates nodes population.
 
     Args:
-        nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
+        nodes_file (str): path to the nodes file (.h5)
+        population_dict (dict): the node population config merged with the components config
         config (dict): resolved bluepysnap config
 
     Returns:
         list: List of errors, empty if no errors
     """
-    populations_config = nodes_dict.get("populations", {})
-    L.debug("Check nodes population: %s", set(populations_config))
-
-    nodes_file = nodes_dict.get("nodes_file")
-    node_types_file = nodes_dict.get("node_types_file", None)
-    errors = []
     with h5py.File(nodes_file, "r") as h5f:
-        nodes = _get_h5_data(h5f, "nodes")
+        if "nodes" not in h5f or len(h5f["nodes"]) == 0:
+            return []
 
-        if not nodes or len(nodes) == 0:
-            return [fatal(f'No "nodes" in {nodes_file}.')]
+        # special case in which there are populations but not the one expected
+        if name not in h5f["nodes"]:
+            return [fatal(f"population '{name}' not found in {nodes_file}")]
 
-        errors += _check_populations_config(populations_config, nodes, nodes_file)
-        if len(errors) > 0:
-            return errors
+        population = h5f[f"nodes/{name}"]
 
-        required_datasets = {
-            "node_type_id",
-        }
-        for population_name in nodes:
-            population = nodes[population_name]
-            groups = _get_population_groups(population)
+        if "0" in population and "node_type_id" in population:
+            group = population["0"]
+            group_df = _nodes_group_to_dataframe(group, population)
+            if len(group_df) > 0:
+                return _check_nodes_group(group_df, group, population_dict, name)
 
-            if len(groups) > 1:
-                required_datasets.update(
-                    (
-                        "node_group_id",
-                        "node_group_index",
-                    )
-                )
-
-            missing_datasets = sorted(required_datasets - set(population))
-            if missing_datasets:
-                return [
-                    fatal(
-                        f"Population {population_name} of {nodes_file} misses datasets "
-                        f"{missing_datasets}"
-                    )
-                ]
-
-            if len(groups) > 1:
-                errors += _check_multi_groups(
-                    population["node_group_id"], population["node_group_index"], population
-                )
-                if len(errors) > 0:
-                    return errors
-
-            for group in groups:
-                group_df = _nodes_group_to_dataframe(group, node_types_file, population)
-                errors += _check_nodes_group(
-                    group_df, group, config, populations_config.get(population_name, {})
-                )
-
-    return errors
-
-
-def _check_edges_group_bbp(group):
-    """Validates edges group in edges population according to BBP spec.
-
-    Not used for now. BBP only.
-    Args:
-        group (h5py.Group): edges group in edges .h5 file
-
-    Returns:
-        list: List of errors, empty if no errors
-    """
-    L.debug("Check edges biophysical group")
-
-    GROUP_NAMES = {
-        "delay",
-        "syn_weight",
-        "dynamics_params",
-        "afferent_section_id",
-        "afferent_section_pos",
-        "efferent_section_id",
-        "efferent_section_pos",
-        "afferent_center_x",
-        "afferent_center_y",
-        "afferent_center_z",
-        "afferent_surface_x",
-        "afferent_surface_y",
-        "afferent_surface_z",
-        "efferent_center_x",
-        "efferent_center_y",
-        "efferent_center_z",
-        "efferent_surface_x",
-        "efferent_surface_y",
-        "efferent_surface_z",
-    }
-    missing_fields = sorted(GROUP_NAMES - set(group))
-    if missing_fields:
-        return [
-            BbpError(
-                Error.WARNING,
-                f"Group {_get_group_name(group, parents=1)} of {group.file.filename} "
-                f"misses fields: {missing_fields}",
-            )
-        ]
     return []
 
 
-def _get_node_ids(node_population):
+def _get_node_ids(nodes_h5, population_name):
     """Gets node ids of node population.
 
     Args:
-        node_population (h5py.Group): node population h5 instance
+        nodes_h5: (h5py.File): nodes file h5 instance
+        population_name (str): node population name
 
     Returns:
         np.ndarray: Numpy array of node ids, empty if couldn't find any
     """
-    node_ids = np.empty(0)
-    if "node_id" in node_population:
-        node_ids = node_population["node_id"][:]
-    else:
-        grp = _get_h5_data(node_population, "0")
-        if grp:
-            for attr in grp:
-                if isinstance(grp[attr], h5py.Dataset):
-                    node_ids = np.arange(len(grp[attr]))
-                    break
-    return node_ids
+    if f"nodes/{population_name}" in nodes_h5:
+        node_population = nodes_h5["nodes"][population_name]
+        if "node_id" in node_population:
+            return node_population["node_id"][:]
+        elif "0" in node_population:
+            for attr in node_population["0"].values():
+                if isinstance(attr, h5py.Dataset):
+                    return np.arange(len(attr))
+
+    return np.empty(0)
 
 
 def _check_edges_node_ids(nodes_ds, nodes):
@@ -641,7 +364,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
     L.debug("Check edges node ids: %s", nodes_ds.name)
 
     if "node_population" not in nodes_ds.attrs:
-        return [fatal(f'Missing "node_population" attribute for "{nodes_ds.name}"')]
+        return []
 
     node_population_name = nodes_ds.attrs["node_population"]
 
@@ -649,19 +372,20 @@ def _check_edges_node_ids(nodes_ds, nodes):
     if not nodes_dict:
         return [fatal(f'No node population for "{nodes_ds.name}"')]
 
+    if "nodes_file" not in nodes_dict or not Path(nodes_dict["nodes_file"]).is_file():
+        return []
+
     errors = []
     with h5py.File(nodes_dict["nodes_file"], "r") as h5f:
-        node_ids = _get_node_ids(h5f["/nodes/" + node_population_name])
+        node_ids = _get_node_ids(h5f, node_population_name)
         if node_ids.size > 0:
             missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
             if missing_ids:
                 errors.append(
-                    fatal(
-                        f"{nodes_ds.name} misses node ids in its node population: " f"{missing_ids}"
-                    )
+                    fatal(f"{nodes_ds.name} misses node ids in its node population: {missing_ids}")
                 )
-        else:
-            errors.append(fatal(f"{nodes_ds.name} does not have node ids in its node population"))
+        elif f"nodes/{node_population_name}" in h5f:
+            errors.append(fatal((f"{nodes_ds.name} does not have node ids in its node population")))
 
     return errors
 
@@ -698,18 +422,22 @@ def _check_edges_indices(population):
                     )
 
     errors = []
-    source_to_target = _get_h5_data(population["indices"], "source_to_target")
-    target_to_source = _get_h5_data(population["indices"], "target_to_source")
+    indices = population["indices"]
+    source_to_target = indices["source_to_target"] if "source_to_target" in indices else None
+    target_to_source = indices["target_to_source"] if "target_to_source" in indices else None
 
+    # These are "optional" (not mentioned in our spec) but better to at least give a warning
     if not source_to_target:
-        errors.append(fatal(f'No "source_to_target" in {population.file.filename}'))
+        errors.append(Error(Error.WARNING, f'No "source_to_target" in {population.file.filename}'))
 
     if not target_to_source:
-        errors.append(fatal(f'No "target_to_source" in {population.file.filename}'))
+        errors.append(Error(Error.WARNING, f'No "target_to_source" in {population.file.filename}'))
 
     if target_to_source and source_to_target:
-        _check(source_to_target, population["source_node_id"])
-        _check(target_to_source, population["target_node_id"])
+        if "source_node_id" in population:
+            _check(source_to_target, population["source_node_id"])
+        if "target_node_id" in population:
+            _check(target_to_source, population["target_node_id"])
 
     return errors
 
@@ -727,147 +455,156 @@ def _check_edge_population_data(population, nodes):
     L.debug("Check edges population data")
 
     errors = []
-    population_name = _get_group_name(population)
-    groups = _get_population_groups(population)
-    if len(groups) > 1:
-        errors.append(
-            BbpError(
-                Error.WARNING,
-                f"Population {population_name} of {population.file.filename} have "
-                "multiple groups. Cannot be read via bluepysnap or libsonata",
-            )
-        )
 
-    children_object_names = set(population)
-    group_datasets = ["edge_group_id", "edge_group_index"]
-    required_datasets = ["edge_type_id", "source_node_id", "target_node_id"]
-    if len(groups) > 1:
-        required_datasets += group_datasets
-
-    missing_datasets = sorted(set(required_datasets) - children_object_names)
-    if missing_datasets:
-        return errors + [
-            fatal(
-                f"Population {population_name} of {population.file.filename} "
-                f"misses datasets {missing_datasets}"
-            )
-        ]
-
-    if len(groups) == 0:
-        return errors
-
-    # pure group part
-    missing_group_datasets = set(group_datasets) - set(population)
-    if len(missing_group_datasets) == 1:
-        return errors + [
-            fatal(
-                f"Population {population_name} of {population.file.filename} "
-                f"misses dataset {missing_group_datasets}"
-            )
-        ]
-    if len(missing_group_datasets) == 0:
-        errors += _check_multi_groups(
-            population["edge_group_id"], population["edge_group_index"], population
-        )
-
-    if "source_node_id" in children_object_names:
+    if "source_node_id" in population:
         errors += _check_edges_node_ids(population["source_node_id"], nodes)
 
-    if "target_node_id" in children_object_names:
+    if "target_node_id" in population:
         errors += _check_edges_node_ids(population["target_node_id"], nodes)
 
-    if "indices" in children_object_names:
+    if "indices" in population:
         errors += _check_edges_indices(population)
-
-    for group in groups:
-        errors += _check_edges_group_bbp(group)
+    else:  # "optional" (not mentioned in our spec) but better to at least give a warning
+        errors.append(Error(Error.WARNING, f'No "indices" in {population.file.filename}'))
 
     return errors
 
 
-def _check_edges_population(edges_dict, nodes):
-    """Check edges population.
+def validate_edge_population(edges_file, name, nodes):
+    """Validate an edge population.
+
+    Args:
+        edges_file (str): path to the edges file
+        name (str): name of the population
+        nodes (list): "nodes" listing of the config
+
+    Returns:
+        list: List of errors, empty if no errors
+    """
+    with h5py.File(edges_file, "r") as h5f:
+        if "edges" not in h5f or len(h5f["edges"]) == 0:
+            return []
+
+        # special case in which there are populations but not the one expected
+        if name not in h5f["edges"]:
+            return [fatal(f"population '{name}' not found in {edges_file}")]
+
+        population = h5f[f"edges/{name}"]
+
+        if "0" in population:
+            return _check_edge_population_data(population, nodes)
+
+    return []
+
+
+def validate_edges_dict(edges_dict, nodes, skip_slow):
+    """Validate an item in the "edges" list.
 
     Args:
         edges_dict (dict): edges population, represented by an item of "edges" in ``config``
         nodes (list): "nodes" part of the resolved bluepysnap config
+        skip_slow(bool): skip slow tests
 
     Returns:
         list: List of errors, empty if no errors
     """
-    populations = edges_dict.get("populations", {})
-    L.debug("Check edges population: %s", set(populations))
-
     errors = []
-    edges_file = edges_dict.get("edges_file")
-    with h5py.File(edges_file, "r") as h5f:
-        edges = _get_h5_data(h5f, "edges")
-        if not edges or len(edges) == 0:
-            errors.append(fatal(f'No "edges" in {edges_file}.'))
-            return errors
 
-        errors += _check_populations_config(populations, edges, edges_file)
-        if len(errors) > 0:
-            return errors
+    def _is_source_node_virtual(edges_dict, edge_population, nodes):
+        """Check if source node is virtual.
 
-        for populations_config in populations.values():
-            if "type" in populations_config and populations_config["type"] not in EDGE_TYPES:
-                errors.append(
-                    BbpError(Error.WARNING, f'Invalid edge type: {populations_config["type"]}')
-                )
+        The required attributes are different for edges with virtual source nodes.
+        """
+        with h5py.File(edges_dict["edges_file"], "r") as h5:
+            source = h5.get(f"edges/{edge_population}/source_node_id")
+            source_population = source.attrs.get("node_population") if source else None
 
-        for population_name in edges:
-            population_path = "/edges/" + population_name
-            population = h5f[population_path]
-            errors += _check_edge_population_data(population, nodes)
+        if source_population:
+            nodes_dict = _find_nodes_population(source_population, nodes)
+            if nodes_dict is not None:
+                return nodes_dict["populations"][source_population].get("type") == "virtual"
+
+        return False
+
+    for name, population in edges_dict.get("populations", {}).items():
+        pop_type = population.get("type", DEFAULT_EDGE_TYPE)
+        edges_file = edges_dict["edges_file"]
+
+        if Path(edges_file).is_file():
+            virtual = False
+            if pop_type == "chemical":
+                virtual = _is_source_node_virtual(edges_dict, name, nodes)
+            errors += schemas.validate_edges_schema(edges_file, pop_type, virtual)
+            if not skip_slow:
+                errors += validate_edge_population(edges_file, name, nodes)
+        else:
+            errors.append(fatal(f'Invalid "edges_file": {edges_file}'))
 
     return errors
 
 
-def _check_populations(config):
-    """Validates all nodes and edges populations in config.
+def validate_nodes_dict(nodes_dict, components):
+    """Validate an item in the "nodes" list.
 
     Args:
-        config (dict): resolved bluepysnap config
+        nodes_dict (dict): nodes population, represented by an item of "nodes" in ``config``
+        components(dict): "components" part of the ``config``
 
     Returns:
         list: List of errors, empty if no errors
     """
-    L.debug("Check populations")
-
     errors = []
-    networks = config.get("networks")
+    for pop_name, pop_dict in nodes_dict.get("populations", {}).items():
+        population = {**components, **pop_dict}
+        population["type"] = population.get("type", DEFAULT_NODE_TYPE)
+        nodes_file = nodes_dict["nodes_file"]
 
-    nodes = networks.get("nodes")
-    for nodes_dict in nodes:
-        errors += _check_nodes_population(nodes_dict, config)
-
-    edges = networks.get("edges")
-    for edges_dict in edges:
-        errors += _check_edges_population(edges_dict, nodes)
+        if Path(nodes_file).is_file():
+            errors = schemas.validate_nodes_schema(nodes_file, population["type"])
+            errors += validate_node_population(nodes_file, population, pop_name)
+        else:
+            errors.append(fatal(f'Invalid "nodes_file": {nodes_file}'))
 
     return errors
 
 
-def validate(config_file, bbp_check=False, print_errors=True):
+def validate_networks(config, skip_slow):
+    """Validate "networks" part of the config.
+
+    Acts as a starting point of validation.
+    """
+    errors = []
+    errors += _check_duplicate_populations(config["networks"], "nodes")
+    errors += _check_duplicate_populations(config["networks"], "edges")
+
+    components = config.get("components", {})
+    nodes = config["networks"].get("nodes", [])
+
+    for nodes_dict in nodes:
+        if "nodes_file" in nodes_dict:
+            errors += validate_nodes_dict(nodes_dict, components)
+    for edges_dict in config["networks"].get("edges", []):
+        if "edges_file" in edges_dict:
+            errors += validate_edges_dict(edges_dict, nodes, skip_slow)
+
+    return errors
+
+
+def validate(config_file, skip_slow, print_errors=True):
     """Validates Sonata circuit.
 
     Args:
-        config_file (str): path to Sonata circuit config file
-        bbp_check (bool): whether to check BBP spec. It's additional check. It does not replace any
-        official checks.
+        config_file (str): path to Sonata circuit config file official checks.
+        skip_slow(bool): skip slow tests
 
     Returns:
         list: List of errors, empty if no errors
     """
     config = Parser.parse(load_json(config_file), str(Path(config_file).parent))
-    errors = _check_required_datasets(config)
+    errors = schemas.validate_circuit_schema(config_file, config)
 
-    if not errors:
-        errors = _check_populations(config)
-
-    if not bbp_check:
-        errors = [e for e in errors if not isinstance(e, BbpError)]
+    if "networks" in config:
+        errors += validate_networks(config, skip_slow)
 
     if print_errors:
         _print_errors(errors)
