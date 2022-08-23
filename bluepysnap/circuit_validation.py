@@ -339,7 +339,7 @@ def _get_node_ids(nodes_h5, population_name):
     Returns:
         np.ndarray: Numpy array of node ids, empty if couldn't find any
     """
-    if "nodes" in nodes_h5 and population_name in nodes_h5["nodes"]:
+    if f"nodes/{population_name}" in nodes_h5:
         node_population = nodes_h5["nodes"][population_name]
         if "node_id" in node_population:
             return node_population["node_id"][:]
