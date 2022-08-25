@@ -1,7 +1,8 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 from kgforge.core import Resource
 from lazy_object_proxy import Proxy
-from mock import MagicMock, patch
 
 from bluepysnap.nexus import factory as test_module
 
@@ -64,7 +65,7 @@ def test_entity_factory_open():
 def test_entity_factory_open_instance():
     mocked_instance = MagicMock()
     with patch(
-        test_module.__name__ + ".open_circuit_snap", return_value=mocked_instance
+        "bluepysnap.nexus.tools.open_circuit_snap", return_value=mocked_instance
     ) as mocked_opener:
         factory = test_module.EntityFactory(helper=MagicMock(), connector=MagicMock())
         resource = Resource(type="DetailedCircuit")
@@ -79,7 +80,7 @@ def test_entity_factory_open_instance():
 def test_entity_factory_open_instance_with_default_tool():
     mocked_instance = MagicMock()
     with patch(
-        test_module.__name__ + ".open_circuit_snap", return_value=mocked_instance
+        "bluepysnap.nexus.tools.open_circuit_snap", return_value=mocked_instance
     ) as mocked_opener:
         factory = test_module.EntityFactory(helper=MagicMock(), connector=MagicMock())
         resource = Resource(type="DetailedCircuit")
@@ -91,7 +92,7 @@ def test_entity_factory_open_instance_with_default_tool():
         mocked_opener.assert_called_once_with(result)
 
     with patch(
-        test_module.__name__ + ".open_emodelconfiguration", return_value=mocked_instance
+        "bluepysnap.nexus.tools.open_emodelconfiguration", return_value=mocked_instance
     ) as mocked_opener:
         connector = MagicMock()
         resource = Resource(type="EModelConfiguration")
@@ -122,9 +123,7 @@ def test_entity_factory_open_instance_with_non_default_tool():
 
 
 def test_entity_factory_fail_to_open_instance():
-    with patch(
-        test_module.__name__ + ".open_circuit_snap", side_effect=Exception("error")
-    ) as mocked_opener:
+    with patch("bluepysnap.nexus.tools.open_circuit_snap", side_effect=Exception("error")):
         factory = test_module.EntityFactory(helper=MagicMock(), connector=MagicMock())
         resource = Resource(type="DetailedCircuit")
 
@@ -142,115 +141,3 @@ def test__get_tool_functions_errors():
 
     with pytest.raises(RuntimeError, match="Multiple tools to open"):
         factory._get_tool_functions(("DetailedCircuit", "EModelConfiguration"))
-
-
-def test_open_circuit_snap():
-    class Entity:
-        def __init__(self):
-            self.circuitConfigPath = MagicMock(url="file:///fake/config/path")
-            self.circuitBase = MagicMock(url="file:///fake/base/path")
-
-    with patch("bluepysnap.Circuit") as patched:
-        entity = Entity()
-
-        test_module.open_circuit_snap(entity)
-        patched.assert_called_once_with("/fake/config/path")
-        patched.reset_mock()
-
-        del entity.circuitConfigPath
-        test_module.open_circuit_snap(entity)
-        patched.assert_called_once_with("/fake/base/path/sonata/circuit_config.json")
-
-
-def test_open_simulation_snap():
-    with patch("bluepysnap.Simulation") as patched:
-        entity = MagicMock()
-        entity.path = "file:///fake/path"
-        test_module.open_simulation_snap(entity)
-        patched.assert_called_once_with("/fake/path/sonata/simulation_config.json")
-
-
-def test_open_morphology_release():
-    with patch("morph_tool.morphdb.MorphDB") as patched:
-        entity = MagicMock()
-        entity.morphologyIndex.distribution.url = "file:///fake/path"
-        test_module.open_morphology_release(entity)
-        patched.from_neurondb.assert_called_once_with("/fake/path")
-
-
-def test__get_path_for_item():
-    class MockItem:
-        def __init__(self):
-            self.name = "fake_name"
-            self.contentUrl = MagicMock()
-            self.atLocation = MagicMock(location=__file__)
-
-    res = test_module._get_path_for_item(MockItem(), MagicMock())
-    assert str(res) == __file__
-
-    item = MockItem()
-    entity = MagicMock()
-
-    del item.atLocation
-    res = test_module._get_path_for_item(item, entity)
-    assert str(res) == str(test_module.DOWNLOADED_CONTENT_PATH / "fake_name")
-    entity.download.assert_called_once_with(items=item, path=test_module.DOWNLOADED_CONTENT_PATH)
-
-    del item.contentUrl
-    res = test_module._get_path_for_item(item, entity)
-    assert res is None
-
-
-def test_open_morphology_neurom():
-    entity = MagicMock()
-    entity.distribution = [MagicMock(type="DataDownload", encodingFormat="application/swc")]
-    with patch("neurom.io.utils.load_morphology") as neurom_patched:
-        neurom_patched.return_value = "done"
-
-        with patch(
-            test_module.__name__ + "._get_path_for_item", MagicMock(return_value="/fake/path")
-        ) as mock_get_path:
-            result = test_module.open_morphology_neurom(entity)
-            assert result == "done"
-            mock_get_path.assert_called_once()
-
-        neurom_patched.assert_called_once_with("/fake/path")
-
-    entity.distribution = [MagicMock(type="fake_type")]
-
-    with pytest.raises(RuntimeError, match="Missing morphology location"):
-        test_module.open_morphology_neurom(entity)
-
-    entity.distribution = [MagicMock(type="DataDownload", encodingFormat="unsupported/fmt")]
-
-    with pytest.raises(RuntimeError, match="Unsupported morphology formats: {'unsupported/fmt'}"):
-        test_module.open_morphology_neurom(entity)
-
-
-def teusnthaoe(entity):
-    import neurom
-
-    # TODO: have a possibility to also read the file atLocation, if found and accessible?
-    supported_formats = {"text/plain", "application/swc", "application/h5"}
-    unsupported_formats = set()
-
-    for item in always_iterable(entity.distribution):
-        if item.type == "DataDownload":
-            encoding_format = getattr(item, "encodingFormat", "").lower()
-            if encoding_format in supported_formats:
-                if hasattr(item, "atLocation"):
-                    if hasattr(item.atLocation, "location"):
-                        path = _get_path(item.atLocation.location)
-                        if os.access(path, os.R_OK):
-                            return neurom.io.utils.load_morphology(path)
-                if hasattr(item, "contentUrl"):
-                    entity.download(items=item, path=DOWNLOADED_CONTENT_PATH)
-                    path = _get_downloaded_path(item.name)
-                    return neurom.io.utils.load_morphology(path)
-            if encoding_format:
-                unsupported_formats.add(encoding_format)
-
-    if unsupported_formats:
-        raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
-
-    raise RuntimeError("Missing morphology location")

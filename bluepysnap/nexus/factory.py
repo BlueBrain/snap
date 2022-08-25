@@ -17,34 +17,16 @@
 
 """Functions and classes used for instantiating Nexus resources."""
 import logging
-import os
 from collections import defaultdict
 from functools import partial
-from pathlib import Path
 
 from kgforge.core import Resource
 from more_itertools import all_equal, always_iterable, first
 
-from bluepysnap.nexus.entity import DOWNLOADED_CONTENT_PATH, Entity
+from bluepysnap.nexus import tools
+from bluepysnap.nexus.entity import Entity
 
 L = logging.getLogger(__name__)
-
-
-def _get_path(p):
-    return Path(p.replace("file://", ""))
-
-
-def _get_path_for_item(item, entity):
-    if hasattr(item, "atLocation") and hasattr(item.atLocation, "location"):
-        path = _get_path(item.atLocation.location)
-        if os.access(path, os.R_OK):
-            return path
-    if hasattr(item, "contentUrl"):
-        entity.download(items=item, path=DOWNLOADED_CONTENT_PATH)
-        path = DOWNLOADED_CONTENT_PATH / item.name
-        return path
-
-    return None
 
 
 class EntityFactory:
@@ -60,12 +42,12 @@ class EntityFactory:
         self._helper = helper
         self._connector = connector
         self._function_registry = defaultdict(dict)
-        self.register("DetailedCircuit", "snap", open_circuit_snap)
-        self.register("DetailedCircuit", "bluepy", open_circuit_bluepy)
-        self.register("Simulation", "snap", open_simulation_snap)
-        self.register("Simulation", "bluepy", open_simulation_bluepy)
-        self.register("Simulation", "bglibpy", open_simulation_bglibpy)
-        self.register("MorphologyRelease", "morph-tool", open_morphology_release)
+        self.register("DetailedCircuit", "snap", tools.open_circuit_snap)
+        self.register("DetailedCircuit", "bluepy", tools.open_circuit_bluepy)
+        self.register("Simulation", "snap", tools.open_simulation_snap)
+        self.register("Simulation", "bluepy", tools.open_simulation_bluepy)
+        self.register("Simulation", "bglibpy", tools.open_simulation_bglibpy)
+        self.register("MorphologyRelease", "morph-tool", tools.open_morphology_release)
         self.register(
             [
                 "NeuronMorphology",
@@ -74,7 +56,7 @@ class EntityFactory:
                 "ReconstructedWholeBrainCell",
             ],
             "neurom",
-            open_morphology_neurom,
+            tools.open_morphology_neurom,
         )
         self.register(
             [
@@ -82,9 +64,9 @@ class EntityFactory:
                 "AtlasRelease",
             ],
             "voxcell",
-            open_atlas_voxcell,
+            tools.open_atlas_voxcell,
         )
-        self.register("EModelConfiguration", "custom-wrapper", open_emodelconfiguration)
+        self.register("EModelConfiguration", "custom-wrapper", tools.open_emodelconfiguration)
 
     def register(self, resource_types, tool, func):
         """Register a tool to open the given resource type.
@@ -149,7 +131,7 @@ class EntityFactory:
             raise RuntimeError(f"Tool {tool} not found for {types}")
 
         try:
-            if func is open_emodelconfiguration:
+            if func is tools.open_emodelconfiguration:
                 # TODO: EModelConfiguration in nexus demo/emodel_pipeline
                 # only have the morphology.name, and can't be auto downloaded
                 return func(entity, self._connector)
@@ -171,198 +153,3 @@ class EntityFactory:
         # available_tool_functions contains only one item, or all the values are identical,
         # so the first value can be returned
         return first(available_tool_functions.values())
-
-
-def open_circuit_snap(entity):
-    """Open SNAP circuit.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        Circuit: A SNAP Circuit instance.
-    """
-    import bluepysnap
-
-    if hasattr(entity, "circuitConfigPath"):
-        config_path = _get_path(entity.circuitConfigPath.url)
-    else:
-        # TODO: we should abstain from any hard coded paths (even if partial).
-        # This was used for a demo (can also be seen elsewhere). The config path should be a
-        # property of the resource.
-        config_path = _get_path(entity.circuitBase.url) / "sonata/circuit_config.json"
-    return bluepysnap.Circuit(str(config_path))
-
-
-def open_circuit_bluepy(entity):  # pragma: no cover
-    """Open bluepy circuit.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        bluepy.Circuit: A bluepy circuit instance.
-    """
-    import bluepy  # pylint: disable=import-error
-
-    config_path = _get_path(entity.circuitBase.url) / "CircuitConfig"
-    return bluepy.Circuit(str(config_path))
-
-
-def open_simulation_snap(entity):
-    """Open SNAP simulation.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        Simulation: A SNAP simulation instance.
-    """
-    import bluepysnap
-
-    # TODO: Same as with open_circuit_snap: should abstain from hard coded paths
-    config_path = _get_path(entity.path) / "sonata/simulation_config.json"
-    return bluepysnap.Simulation(str(config_path))
-
-
-def open_simulation_bluepy(entity):  # pragma: no cover
-    """Open bluepy simulation.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        bluepy.Simulation: A bluepy simulation instance.
-    """
-    import bluepy  # pylint: disable=import-error
-
-    config_path = _get_path(entity.path) / "BlueConfig"
-    return bluepy.Simulation(str(config_path))
-
-
-def open_simulation_bglibpy(entity):  # pragma: no cover
-    """Open bluepy simulation with bglibpy.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        bglibpy.SSim: A bglibpy SSim instance.
-    """
-    from bglibpy import SSim  # pylint: disable=import-error
-
-    config_path = _get_path(entity.path) / "BlueConfig"
-    return SSim(str(config_path))
-
-
-def open_morphology_release(entity):
-    """Open morphology release with morph-tool.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        morph_tool.morphdb.MorphDB: A morphology release as a MorpDB instance.
-    """
-    from morph_tool.morphdb import MorphDB
-
-    config_path = _get_path(entity.morphologyIndex.distribution.url)
-    return MorphDB.from_neurondb(str(config_path))
-
-
-def open_emodelconfiguration(entity, connector):  # pragma: no cover
-    """Open emodel configuration.
-
-    Args:
-        entity (Entity): Entity to open.
-        connector (NexusConnector): Nexus connector instance.
-
-    Returns:
-        EModelConfiguration: EModel configuration wrapper.
-    """
-    from bluepysnap.nexus.wrappers import EModelConfiguration
-
-    # TODO: we need the connector here, since the
-    # morphology/SubCellularModelScript (mod file) only exists as text;
-    # it's not 'connected'/'linked' to anything in nexus
-
-    def _get_entity_by_filter(type_, filter_):
-        resources = connector.get_resources(type_, filter_)
-        assert len(resources) == 1, f"Wanted 1 entity, got {len(resources)}"
-        ret = resources[0]
-
-        def download(path):
-            connector.download_resource(ret.distribution, path)
-            return Path(path) / ret.distribution.name
-
-        ret.download = download
-
-        return ret
-
-    def _get_named_entity(type_, name):
-        return _get_entity_by_filter(type_, {"name": name})
-
-    def _get_distribution(type_, name):
-        return _get_entity_by_filter(type_, {"channelDistribution": name})
-
-    def _get_distribution_for_parameter(param):
-        if param.location.startswith("distribution_"):
-            return _get_distribution(
-                "ElectrophysiologyFeatureOptimisationChannelDistribution",
-                param.location.split("distribution_")[1],
-            )
-
-        return None
-
-    morphology = _get_named_entity("NeuronMorphology", name=entity.morphology.name)
-    mod_file = _get_named_entity("SubCellularModelScript", name=entity.mechanisms.name)
-    distributions = {p.name: _get_distribution_for_parameter(p) for p in entity.parameters}
-
-    return EModelConfiguration(
-        entity.parameters, entity.mechanisms, distributions, morphology, mod_file
-    )
-
-
-def open_morphology_neurom(entity):
-    """Open morphology with NeuroM.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        neurom.core.morphology.Morphology: A neurom Morphology instance.
-    """
-    import neurom
-
-    supported_formats = {"text/plain", "application/swc", "application/h5"}
-    unsupported_formats = set()
-
-    for item in always_iterable(entity.distribution):
-        if item.type == "DataDownload":
-            encoding_format = getattr(item, "encodingFormat", "").lower()
-            if encoding_format in supported_formats:
-                path = _get_path_for_item(item, entity)
-                if path:
-                    return neurom.io.utils.load_morphology(path)
-            if encoding_format:
-                unsupported_formats.add(encoding_format)
-
-    if unsupported_formats:
-        raise RuntimeError(f"Unsupported morphology formats: {unsupported_formats}")
-
-    raise RuntimeError("Missing morphology location")
-
-
-def open_atlas_voxcell(entity):  # pragma: no cover
-    """Open atlas with voxcell.
-
-    Args:
-        entity (Entity): Entity to open.
-
-    Returns:
-        voxcell.nexus.voxcelbrain.Atlas: A voxcell Atlas instance.
-    """
-    from voxcell.nexus.voxelbrain import Atlas  # pylint: disable=import-error
-
-    path = _get_path(entity.distribution.url)
-    return Atlas.open(str(path))

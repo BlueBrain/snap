@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 import pandas as pd
 from kgforge.core import Resource
-from mock import patch
 
 from bluepysnap.nexus import core as test_module
 from bluepysnap.nexus.entity import Entity

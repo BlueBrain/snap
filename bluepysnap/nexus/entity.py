@@ -33,6 +33,9 @@ class ResolvingResource:
     def __init__(self, resource, retriever=None):
         """Instantiate a new wrapper class.
 
+        Wraps kgforge Resource object and provides easier access (traversing) to linked objects
+        and store metadata.
+
         Args:
             resource (kgforge.core.Resource): The wrapped resource.
             retriever (callable): A function implementing the communication with Nexus.
@@ -82,9 +85,8 @@ class ResolvingResource:
                 f"{type(self).__name__!r} object has no attribute {name!r}"
             ) from error
 
-        # TODO: In some cases 'distribution' contains list, in some cases 'DataDownload'
-        # Figure out how to handle this in a cleaner way.
-        # if isinstance(result, Resource):
+        # In some cases 'distribution' contains list, in some cases 'DataDownload'.
+        # In either case, don't wrap it as it raises an error with kgforge.
         if isinstance(result, Resource) and (
             not hasattr(result, "type") or result.type != "DataDownload"
         ):

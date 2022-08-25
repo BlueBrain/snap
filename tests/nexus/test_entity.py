@@ -1,6 +1,7 @@
+from unittest.mock import MagicMock, call
+
 import pytest
 from kgforge.core import Resource
-from mock import MagicMock, call
 
 from bluepysnap.nexus import entity as test_module
 

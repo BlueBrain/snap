@@ -56,7 +56,7 @@ NAMESPACE_MAPPING = {
 DATETIME_SUFFIX = "^^xsd:dateTime"
 
 
-def build_search_filters(type_, filters):
+def _build_search_filters(type_, filters):
     """Build search filters in the format expected by nexusforge.
 
     Args:
@@ -69,6 +69,7 @@ def build_search_filters(type_, filters):
     search_filters = {}
 
     def add_prefix_suffix(key, value):
+        # Omit non-string values (concerns at least keys: 'rev', 'deprecated')
         if not isinstance(value, str):
             return value
 
@@ -119,7 +120,7 @@ class NexusConnector:
         Returns:
             list: An array of found (kgforge.core.Resource) resources.
         """
-        search_filters = build_search_filters(type_, filters)
+        search_filters = _build_search_filters(type_, filters)
         kwargs["debug"] = kwargs.get("debug", self._debug)
         kwargs["search_in_graph"] = kwargs.get("search_in_graph", False)
 

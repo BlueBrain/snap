@@ -1,9 +1,9 @@
 import logging
 import os
+from unittest.mock import MagicMock
 
 import pytest
 from kgforge.core import KnowledgeGraphForge, Resource
-from mock import MagicMock
 
 from bluepysnap.nexus import connector as test_module
 
@@ -121,5 +121,5 @@ def test_nexus_connector_download_resource(caplog):
     ],
 )
 def test_search_builder(type_, filter_, expected):
-    result = test_module.build_search_filters(type_, filter_)
+    result = test_module._build_search_filters(type_, filter_)
     assert result == expected
