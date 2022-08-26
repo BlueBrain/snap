@@ -21,7 +21,6 @@ from pathlib import Path
 
 L = logging.getLogger(__name__)
 
-NEXUS_NAMESPACE = "https://bluebrain.github.io/nexus/vocabulary/"
 PROJECTS_NAMESPACE = "https://bbp.epfl.ch/nexus/v1/projects/"
 USERS_NAMESPACE = "https://bbp.epfl.ch/nexus/v1/realms/bbp/users/"
 
