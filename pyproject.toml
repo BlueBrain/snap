@@ -25,6 +25,8 @@ disable = [
 ]
 
 [tool.pylint.format]
+# Regexp for a line that is allowed to be longer than the limit.
+ignore-long-lines='.*https?://'
 # Maximum number of characters on a single line.
 max-line-length = 100
 
@@ -79,4 +81,9 @@ extension-pkg-whitelist = [
 ]
 ignored-modules = [
     'numpy',
+]
+
+[tool.coverage.run]
+omit = [
+    'bluepysnap/nexus/wrappers.py',
 ]

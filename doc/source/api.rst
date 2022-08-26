@@ -1,3 +1,5 @@
+.. _api-documentation:
+
 API Documentation
 =================
 
@@ -7,5 +9,6 @@ API Documentation
 
    circuits
    simulations
+   nexus
    utilities
    changelog
