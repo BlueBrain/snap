@@ -63,7 +63,7 @@ def test_only_errors():
             only_errors=True,
         )
         assert len(errors) == 1
-        assert all(e.level == Error.FATAL for e in errors)
+        assert list(errors)[0] == Error(Error.FATAL, "fatal_error")
 
 
 def test_print_errors(capsys):
