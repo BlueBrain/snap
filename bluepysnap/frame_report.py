@@ -29,7 +29,7 @@ from bluepysnap.utils import ensure_ids, ensure_list
 
 L = logging.getLogger(__name__)
 
-FORMAT_TO_EXT = {"ASCII": ".txt", "HDF5": ".h5", "BIN": ".bbp"}
+REPORT_EXTENSION = ".h5"
 
 
 def _collect_population_reports(frame_report, cls):
@@ -39,9 +39,9 @@ def _collect_population_reports(frame_report, cls):
 
 
 def _get_reader(reader_report, cls):
-    path = reader_report.simulation.config["output"]["output_dir"]
-    ext = FORMAT_TO_EXT[reader_report.config.get("format", "HDF5")]
-    file_name = reader_report.config.get("file_name", reader_report.name) + ext
+    path = reader_report.simulation.output.output_dir
+    file_name = reader_report.config.get("file_name", reader_report.name) + REPORT_EXTENSION
+    # file_name = reader_report.to_libsonata.file_name + REPORT_EXTENSION
     path = str(Path(path, file_name))
     return cls(path)
 
@@ -205,25 +205,30 @@ class FrameReport:
         return _get_reader(self, ElementReportReader)
 
     @property
+    def to_libsonata(self):
+        """Access libsonata instance of the report."""
+        return self.simulation.to_libsonata.report(self.name)
+
+    @property
     def config(self):
         """Access the report config."""
-        return self._simulation.config["reports"][self.name]
+        return self.simulation.config["reports"][self.name]
 
     @property
     def time_start(self):
         """Returns the starting time of the report."""
-        return self.config.get("start_time", self._simulation.time_start)
+        return self.to_libsonata.start_time
 
     @property
     def time_stop(self):
         """Returns the stopping time of the report."""
-        return self.config.get("end_time", self._simulation.time_stop)
+        return self.to_libsonata.end_time
 
     @property
     def dt(self):
         """Returns the frequency of reporting in milliseconds."""
-        dt = self.config.get("dt", self._simulation.dt)
-        if dt != self._simulation.dt:
+        dt = self.to_libsonata.dt
+        if dt != self.simulation.dt:
             L.warning("dt from the report differs from the global simulation dt.")
         return dt
 
@@ -246,7 +251,7 @@ class FrameReport:
     @property
     def node_set(self):
         """Returns the node set for the report."""
-        return self.simulation.node_sets[self.config["cells"]]
+        return self.simulation.node_sets[self.to_libsonata.cells]
 
     @property
     def simulation(self):
