@@ -28,11 +28,13 @@ def cli(verbose):
         "edge indices are correct, etc"
     ),
 )
-def validate(config_file, skip_slow):
+@click.option("--only-errors", is_flag=True, help=("Only print fatal errors (ignore warnings)"))
+def validate(config_file, skip_slow, only_errors):
     """Validate of Sonata circuit based on config file.
 
     Args:
         config_file (str): path to Sonata circuit config file
-        skip_slow(bool): skip slow tests
+        skip_slow (bool): skip slow tests
+        only_errors (bool): only print fatal errors
     """
-    circuit_validation.validate(config_file, skip_slow)
+    circuit_validation.validate(config_file, skip_slow, only_errors)
