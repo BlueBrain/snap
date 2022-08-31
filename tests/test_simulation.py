@@ -76,7 +76,7 @@ def test_nonimplemented_report():
             test_module.Simulation(config_path).reports
 
 
-def test_no_network_config():
+def test_network_file_not_found():
     with copy_test_data(config="simulation_config.json") as (_, config_path):
         with edit_config(config_path) as config:
             config.pop("network")
