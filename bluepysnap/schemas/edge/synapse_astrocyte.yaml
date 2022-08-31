@@ -1,0 +1,20 @@
+title: Edges - synapse_astrocyte
+description: schema for synapse_astrocyte edge types
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - astrocyte_section_id
+              - astrocyte_segment_id
+              - astrocyte_segment_offset
+              - astrocyte_section_pos
+              - astrocyte_center_x
+              - astrocyte_center_y
+              - astrocyte_center_z
+              - synapse_id
+              - synapse_population
