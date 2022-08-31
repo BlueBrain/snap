@@ -28,7 +28,7 @@ def cli(verbose):
         "edge indices are correct, etc"
     ),
 )
-@click.option("--only-errors", is_flag=True, help=("Only print fatal errors (ignore warnings)"))
+@click.option("--only-errors", is_flag=True, help="Only print fatal errors (ignore warnings)")
 def validate(config_file, skip_slow, only_errors):
     """Validate of Sonata circuit based on config file.
 
