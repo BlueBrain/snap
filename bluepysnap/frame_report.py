@@ -40,8 +40,8 @@ def _collect_population_reports(frame_report, cls):
 
 def _get_reader(reader_report, cls):
     path = reader_report.simulation.output.output_dir
+    # TODO: change to use reader_report.to_libsonata.file_name when fixed in libsonata
     file_name = reader_report.config.get("file_name", reader_report.name) + REPORT_EXTENSION
-    # file_name = reader_report.to_libsonata.file_name + REPORT_EXTENSION
     path = str(Path(path, file_name))
     return cls(path)
 
