@@ -24,6 +24,11 @@ $typedefs:
     properties:
       datatype:
         const: int16
+  int32:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: int32
   int64:
     $ref: "#/$typedefs/general"
     properties:
