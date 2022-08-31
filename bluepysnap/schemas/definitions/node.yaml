@@ -16,12 +16,10 @@ $node_file_defs:
             required:
               - "0"
               - node_type_id
-            additionalProperties: false
             properties:
               node_type_id:
                 $ref: "#/$typedefs/int64"
               "0":
-                #additionalProperties: false
                 type: object
                 properties:
                   dynamics_params:
@@ -29,11 +27,14 @@ $node_file_defs:
                     required:
                       - threshold_current
                       - holding_current
-                    additionalProperties: false
                     properties:
-                      threshold_current:
+                      AIS_scaler:
                         $ref: "#/$typedefs/float32"
                       holding_current:
+                        $ref: "#/$typedefs/float32"
+                      input_resistance:
+                        $ref: "#/$typedefs/float32"
+                      threshold_current:
                         $ref: "#/$typedefs/float32"
                   etype:
                     $ref: "#/$typedefs/index_or_utf8"

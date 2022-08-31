@@ -3,7 +3,6 @@ description: schema definitions that apply to all edge files
 $edge_file_defs:
   indices_id_mapping:
     type: object
-    additionalProperties: false
     properties:
       node_id_to_ranges:
         $ref: "#/$typedefs/uint64"
@@ -40,11 +39,9 @@ $edge_file_defs:
               - edge_type_id
               - source_node_id
               - target_node_id
-            additionalProperties: false
             properties:
               indices:  # Note that this is optional
                 type: object
-                additionalProperties: false
                 properties:
                   target_to_source:
                     $ref: "#/$edge_file_defs/indices_id_mapping"
@@ -61,7 +58,6 @@ $edge_file_defs:
 
               "0":
                 type: object
-                # additionalProperties: false
                 patternProperties:
                   # For docs, these would likely need to be changed actual property names.
                   # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
@@ -117,8 +113,16 @@ $edge_file_defs:
                     $ref: "#/$typedefs/uint32"
                   synapse_id:
                     $ref: "#/$typedefs/uint64"
-                  synapse_id:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    required:
+                      - attributes
+                    properties:
+                      attributes:
+                        type: object
+                        required:
+                          - edge_population
+                        properties:
+                          edge_population:
+                            type: string
                   u_hill_coefficient:
                     $ref: "#/$typedefs/float32"
                   u_syn:
