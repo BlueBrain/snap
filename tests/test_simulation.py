@@ -92,6 +92,7 @@ def test_no_node_set():
     with copy_test_data(config="simulation_config.json") as (_, config_path):
         with edit_config(config_path) as config:
             config.pop("node_sets_file")
+            # remove circuit config to prevent libsonata from fetching the path from there
             os.remove(config_path.parent / "circuit_config.json")
 
         simulation = test_module.Simulation(config_path)
