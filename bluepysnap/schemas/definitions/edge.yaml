@@ -27,7 +27,6 @@ $edge_file_defs:
       - edges
     properties:
       edges:
-        maxProperties: 1
         minProperties: 1
         type: object
         patternProperties:

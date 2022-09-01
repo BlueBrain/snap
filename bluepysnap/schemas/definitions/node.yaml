@@ -6,7 +6,6 @@ $node_file_defs:
       - nodes
     properties:
       nodes:
-        maxProperties: 1
         minProperties: 1
         type: object
         patternProperties:

@@ -301,8 +301,7 @@ def test_2_edge_populations():
         with h5py.File(edges_file, "r+") as h5f:
             h5f["edges/default2"] = h5f["edges/default"]
         errors = test_module.validate_edges_schema(str(edges_file), "chemical", virtual=False)
-        assert len(errors) == 1
-        assert errors[0] == Error(Error.FATAL, f"{str(edges_file)}:\n\tedges: too many properties")
+        assert len(errors) == 0
 
 
 def test_2_node_populations():
@@ -311,8 +310,7 @@ def test_2_node_populations():
         with h5py.File(nodes_file, "r+") as h5f:
             h5f["nodes/default2"] = h5f["nodes/default"]
         errors = test_module.validate_nodes_schema(str(nodes_file), "biophysical")
-        assert len(errors) == 1
-        assert errors[0] == Error(Error.FATAL, f"{str(nodes_file)}:\n\tnodes: too many properties")
+        assert len(errors) == 0
 
 
 def test_virtual_edge_population_ok():
