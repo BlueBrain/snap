@@ -1,4 +1,5 @@
 import json
+import os
 
 import libsonata
 import pytest
@@ -23,20 +24,20 @@ def test_all():
     assert set(simulation.circuit.nodes) == {"default", "default2"}
     assert set(simulation.circuit.edges) == {"default", "default2"}
 
-    assert simulation.run == {
-        "tstop": 1000.0,
-        "dt": 0.01,
-        "spike_threshold": -15,
-        "nsteps_block": 10000,
-        "random_seed": 42,
-    }
+    assert isinstance(simulation.run, libsonata._libsonata.Run)
+    assert simulation.run.tstop == 1000.0
+    assert simulation.run.dt == 0.01
+    assert simulation.run.spike_threshold == -15
+    assert simulation.run.random_seed == 42
     assert simulation.time_start == 0.0
     assert simulation.time_stop == 1000.0
     assert simulation.dt == 0.01
     assert simulation.time_units == "ms"
 
     assert simulation.simulator == "CORENEURON"
-    assert simulation.conditions == {"celsius": 34.0, "v_init": -80, "other": "something"}
+    assert isinstance(simulation.conditions, libsonata._libsonata.Conditions)
+    assert simulation.conditions.celsius == 34.0
+    assert simulation.conditions.v_init == -80
 
     assert simulation.node_sets.resolved == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
@@ -75,14 +76,15 @@ def test_nonimplemented_report():
             test_module.Simulation(config_path).reports
 
 
-def test_no_network_config():
+def test_network_file_not_found():
     with copy_test_data(config="simulation_config.json") as (_, config_path):
         with edit_config(config_path) as config:
             config.pop("network")
 
+        os.remove(config_path.parent / "circuit_config.json")
         simulation = test_module.Simulation(config_path)
 
-        with pytest.raises(BluepySnapError, match="No 'network' set"):
+        with pytest.raises(BluepySnapError, match="'network' file not found"):
             simulation.circuit
 
 
@@ -90,6 +92,8 @@ def test_no_node_set():
     with copy_test_data(config="simulation_config.json") as (_, config_path):
         with edit_config(config_path) as config:
             config.pop("node_sets_file")
+            # remove circuit config to prevent libsonata from fetching the path from there
+            os.remove(config_path.parent / "circuit_config.json")
 
         simulation = test_module.Simulation(config_path)
         assert simulation.node_sets == {}

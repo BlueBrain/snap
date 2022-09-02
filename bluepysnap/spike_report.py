@@ -29,8 +29,8 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import IDS_DTYPE
 
 
-def _get_reader(spike_report):
-    path = str(Path(spike_report.config["output_dir"]) / spike_report.config["spikes_file"])
+def _get_reader(config):
+    path = str(Path(config.output_dir) / config.spikes_file)
     return SpikeReader(path)
 
 
@@ -55,7 +55,7 @@ class PopulationSpikeReport:
             PopulationSpikeReport: A PopulationSpikeReport object.
         """
         self.spike_report = spike_report
-        self._spike_population = _get_reader(self.spike_report)[population_name]
+        self._spike_population = _get_reader(self.spike_report.config)[population_name]
         self._population_name = population_name
 
     @property
@@ -195,7 +195,7 @@ class SpikeReport:
     @property
     def config(self):
         """Access to the spike 'output' config part."""
-        return self._simulation.config["output"]
+        return self._simulation.output
 
     @property
     def time_start(self):
@@ -225,7 +225,7 @@ class SpikeReport:
     @contextmanager
     def log(self):
         """Context manager for the spike log file."""
-        path = Path(self.config["output_dir"]) / self.config["log_file"]
+        path = Path(self.config.output_dir) / self.config.log_file
         if not path.exists():
             raise BluepySnapError("Cannot find the log file for the spike report.")
         yield path.open("r", encoding="utf-8")
@@ -233,7 +233,7 @@ class SpikeReport:
     @cached_property
     def _spike_reader(self):
         """Access to the libsonata SpikeReader."""
-        return _get_reader(self)
+        return _get_reader(self.config)
 
     @cached_property
     def population_names(self):

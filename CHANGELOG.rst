@@ -15,15 +15,17 @@ Improvements
 - Add black & isort to handle formatting
 - Use libsonata to provide more of the functionality
   - parsing config files
-  - accessing data
+  - accessing data in Circuit and Simulation
 - Circuit validation changed to be more config-driven
   - it now only validates objects defined in the circuit configuration file
 
-Removed
-~~~~~~~
-- non-BBP Sonata circuit validation
-- NodeStorage & EdgeStorage classes
-- point_neuron support
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- Simulation
+  - `run` and `condition` properties return libsonata classes instead of dictionaries
+- non-BBP Sonata circuit validation was removed
+- The NodeStorage & EdgeStorage classes were removed
+- point_neuron is no longer supported
 
 
 Version v0.13.1

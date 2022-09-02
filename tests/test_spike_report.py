@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import libsonata
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -33,12 +34,11 @@ class TestSpikeReport:
         self.test_obj = test_module.SpikeReport(self.simulation)
 
     def test_config(self):
-        assert self.test_obj.config == {
-            "output_dir": str(TEST_DATA_DIR / "reporting"),
-            "log_file": "log_spikes.log",
-            "spikes_file": "spikes.h5",
-            "spikes_sort_order": "by_time",
-        }
+        assert isinstance(self.test_obj.config, libsonata._libsonata.Output)
+        assert self.test_obj.config.output_dir == str(TEST_DATA_DIR / "reporting")
+        assert self.test_obj.config.log_file == "log_spikes.log"
+        assert self.test_obj.config.spikes_file == "spikes.h5"
+        assert self.test_obj.config.spikes_sort_order.name == "by_time"
 
     def test_time_start(self):
         assert self.test_obj.time_start == 0.0
