@@ -49,6 +49,23 @@ def test_skip_slow():
         patched.assert_not_called()
 
 
+def test_only_errors():
+    with patch(f"{test_module.__name__}.validate_networks") as patched:
+        patched.return_value = [
+            Error(Error.FATAL, "fatal_error"),
+            Error(Error.WARNING, "a mere warning"),
+            Error(Error.INFO, "utterly useful message"),
+        ]
+
+        errors = test_module.validate(
+            str(TEST_DATA_DIR / "circuit_config.json"),
+            skip_slow=True,
+            only_errors=True,
+        )
+        assert len(errors) == 1
+        assert list(errors)[0] == Error(Error.FATAL, "fatal_error")
+
+
 def test_print_errors(capsys):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:

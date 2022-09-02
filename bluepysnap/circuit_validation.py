@@ -590,12 +590,14 @@ def validate_networks(config, skip_slow):
     return errors
 
 
-def validate(config_file, skip_slow, print_errors=True):
+def validate(config_file, skip_slow, only_errors=False, print_errors=True):
     """Validates Sonata circuit.
 
     Args:
         config_file (str): path to Sonata circuit config file official checks.
-        skip_slow(bool): skip slow tests
+        skip_slow (bool): skip slow tests
+        only_errors (bool): only return/print fatal errors
+        print_errors (bool): print errors
 
     Returns:
         list: List of errors, empty if no errors
@@ -605,6 +607,9 @@ def validate(config_file, skip_slow, print_errors=True):
 
     if "networks" in config:
         errors += validate_networks(config, skip_slow)
+
+    if only_errors:
+        errors = [e for e in errors if e.level == Error.FATAL]
 
     if print_errors:
         _print_errors(errors)
