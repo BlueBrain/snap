@@ -92,7 +92,7 @@ class Simulation:
     @property
     def time_start(self):
         """Returns the starting time of the simulation."""
-        return getattr(self.run, "tstart", 0)
+        return 0
 
     @property
     def time_stop(self):
