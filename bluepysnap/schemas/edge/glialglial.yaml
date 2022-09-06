@@ -1,0 +1,34 @@
+title: Edges - glialglial
+description: schema for glialglial edge types
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - afferent_center_x
+              - afferent_center_y
+              - afferent_center_z
+              - afferent_surface_x
+              - afferent_surface_y
+              - afferent_surface_z
+              - afferent_section_id
+              - afferent_section_pos
+              - afferent_section_type
+              - afferent_segment_id
+              - afferent_segment_offset
+              - efferent_center_x
+              - efferent_center_y
+              - efferent_center_z
+              - efferent_surface_x
+              - efferent_surface_y
+              - efferent_surface_z
+              - efferent_section_id
+              - efferent_section_pos
+              - efferent_section_type
+              - efferent_segment_id
+              - efferent_segment_offset
+              - spine_length

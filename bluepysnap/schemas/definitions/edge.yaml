@@ -3,7 +3,6 @@ description: schema definitions that apply to all edge files
 $edge_file_defs:
   indices_id_mapping:
     type: object
-    additionalProperties: false
     properties:
       node_id_to_ranges:
         $ref: "#/$typedefs/uint64"
@@ -28,7 +27,6 @@ $edge_file_defs:
       - edges
     properties:
       edges:
-        maxProperties: 1
         minProperties: 1
         type: object
         patternProperties:
@@ -40,11 +38,9 @@ $edge_file_defs:
               - edge_type_id
               - source_node_id
               - target_node_id
-            additionalProperties: false
             properties:
               indices:  # Note that this is optional
                 type: object
-                additionalProperties: false
                 properties:
                   target_to_source:
                     $ref: "#/$edge_file_defs/indices_id_mapping"
@@ -61,7 +57,6 @@ $edge_file_defs:
 
               "0":
                 type: object
-                # additionalProperties: false
                 patternProperties:
                   # For docs, these would likely need to be changed actual property names.
                   # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
@@ -72,38 +67,68 @@ $edge_file_defs:
                     $ref: "#/$typedefs/uint32"
                   ^(a|e)fferent_(section|segment)_(pos|offset)$:
                     $ref: "#/$typedefs/float32"
+                  ^astrocyte_center_(x|y|z)$:
+                    $ref: "#/$typedefs/float32"
+                  ^astrocyte_(section|segment)_id$:
+                    $ref: "#/$typedefs/uint32"
+                  ^endfoot_compartment_(length|diameter|perimeter)$:
+                    $ref: "#/$typedefs/float32"
+                  ^endfoot_surface_(x|y|z)$:
+                    $ref: "#/$typedefs/float32"
+                  ^neuromod_(dtc|strength)$:
+                    $ref: "#/$typedefs/float32"
+                  ^vasculature_(section|segment)_id$:
+                    $ref: "#/$typedefs/uint32"
                 properties:
+                  astrocyte_section_pos:
+                    $ref: "#/$typedefs/float32"
+                  astrocyte_segment_offset:
+                    $ref: "#/$typedefs/float32"
                   conductance:
+                    $ref: "#/$typedefs/float32"
+                  conductance_scale_factor:
                     $ref: "#/$typedefs/float32"
                   decay_time:
                     $ref: "#/$typedefs/float32"
+                  delay:
+                    $ref: "#/$typedefs/float32"
                   depression_time:
                     $ref: "#/$typedefs/float32"
+                  endfoot_id:
+                    $ref: "#/$typedefs/uint64"
                   facilitation_time:
-                    $ref: "#/$typedefs/float32"
-                  u_syn:
                     $ref: "#/$typedefs/float32"
                   n_rrp_vesicles:
                     $ref: "#/$typedefs/uint32"
                   spine_length:
                     $ref: "#/$typedefs/float32"
-                  syn_type_id:
-                    $ref: "#/$typedefs/uint32"
-                  delay:
-                    $ref: "#/$typedefs/float32"
-                  # Optional properties
                   spine_morphology:
-                    $ref: "#/$typedefs/uint32"
+                    $ref: "#/$typedefs/index_or_utf8"
                   spine_psd_id:
                     $ref: "#/$typedefs/int64"
                   spine_sharding_id:
                     $ref: "#/$typedefs/int64"
-                  conductance_scale_factor:
-                    $ref: "#/$typedefs/float32"
+                  syn_type_id:
+                    $ref: "#/$typedefs/uint32"
+                  synapse_id:
+                    $ref: "#/$typedefs/uint64"
+                    required:
+                      - attributes
+                    properties:
+                      attributes:
+                        type: object
+                        required:
+                          - edge_population
+                        properties:
+                          edge_population:
+                            type: string
                   u_hill_coefficient:
+                    $ref: "#/$typedefs/float32"
+                  u_syn:
                     $ref: "#/$typedefs/float32"
                   "@library":
                     type: object
-                    properties:
-                      spine_morphology:
+                    patternProperties:
+                      # "" is used as a wild card for field name
+                      "":
                         $ref: "#/$typedefs/utf8"

@@ -1,0 +1,25 @@
+title: Nodes - vasculature
+description: schema for vasculature node types
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
+properties:
+  nodes:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - start_x
+              - start_y
+              - start_z
+              - end_x
+              - end_y
+              - end_z
+              - start_diameter
+              - end_diameter
+              - start_node
+              - end_node
+              - type
+              - section_id
+              - segment_id
+              - model_type

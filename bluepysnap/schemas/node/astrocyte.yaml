@@ -1,0 +1,19 @@
+title: Nodes - astrocyte
+description: schema for astrocyte node types
+allOf: [{ $ref: "#/$node_file_defs/nodes_file_root" }]
+properties:
+  nodes:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - x
+              - y
+              - z
+              - radius
+              - mtype
+              - morphology
+              - model_type
+              - model_template

@@ -12,23 +12,50 @@ $typedefs:
   index_or_utf8:
       anyOf:
         - $ref: "#/$typedefs/utf8"
+        - $ref: "#/$typedefs/int8"
+        - $ref: "#/$typedefs/int16"
+        - $ref: "#/$typedefs/int32"
+        - $ref: "#/$typedefs/int64"
+        - $ref: "#/$typedefs/uint8"
+        - $ref: "#/$typedefs/uint16"
         - $ref: "#/$typedefs/uint32"
+        - $ref: "#/$typedefs/uint64"
 
   float32:
     $ref: "#/$typedefs/general"
     properties:
       datatype:
         const: float32
+  int8:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: int8
   int16:
     $ref: "#/$typedefs/general"
     properties:
       datatype:
         const: int16
+  int32:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: int32
   int64:
     $ref: "#/$typedefs/general"
     properties:
       datatype:
         const: int64
+  uint8:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: uint8
+  uint16:
+    $ref: "#/$typedefs/general"
+    properties:
+      datatype:
+        const: uint16
   uint32:
     $ref: "#/$typedefs/general"
     properties:

@@ -1,0 +1,21 @@
+title: Edges - endfoot
+description: schema for endfoot edge types
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - endfoot_id
+              - endfoot_surface_x
+              - endfoot_surface_y
+              - endfoot_surface_z
+              - vasculature_section_id
+              - vasculature_segment_id
+              - astrocyte_section_id
+              - endfoot_compartment_length
+              - endfoot_compartment_diameter
+              - endfoot_compartment_perimeter

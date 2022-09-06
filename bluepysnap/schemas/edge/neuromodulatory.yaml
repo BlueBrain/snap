@@ -1,0 +1,17 @@
+title: Edges - neuromodulatory
+description: schema for neuromodulatory edge types
+allOf: [{ $ref: "#/$edge_file_defs/edges_file_root" }]
+properties:
+  edges:
+    patternProperties:
+      # "" is used as a wild card for population name
+      "":
+        properties:
+          "0":
+            required:
+              - afferent_section_id
+              - afferent_section_pos
+              - afferent_segment_id
+              - delay
+              - neuromod_dtc
+              - neuromod_strength
