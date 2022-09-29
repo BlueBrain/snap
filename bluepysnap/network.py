@@ -60,7 +60,7 @@ class NetworkObject(abc.ABC):
 
         res = {}
         for pop in self.values():
-            for varname, dtype in pop.property_dtypes.iteritems():
+            for varname, dtype in pop.property_dtypes.items():
                 _update(res, varname, dtype)
         return pd.Series(res)
 
@@ -146,7 +146,7 @@ class NetworkObject(abc.ABC):
 
     @abc.abstractmethod
     def get(self, group=None, properties=None):
-        """Returns the properties of a the NetworkObject."""
+        """Returns the properties of the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)
         # We don t convert to set properties itself to keep the column order.
@@ -164,6 +164,15 @@ class NetworkObject(abc.ABC):
             # indices from Population and get functions are different so I cannot
             # use a dataframe equal directly and properties have different types so cannot use a
             # multi dim numpy array
-            for prop in pop_properties:
-                res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, prop).to_numpy()
+            if len(global_pop_ids) < len(res):
+                for prop in pop_properties:
+                    res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, prop).to_numpy()
+            else:
+                # Dirty hack to avoid:
+                # FutureWarning: In a future version, `df.iloc[:, i] = newvals` will attempt
+                # to set the values inplace instead of always setting a new array.
+                # To retain the old behavior, use either `df[df.columns[i]] = newvals` or,
+                # if columns are non-unique, `df.isetitem(i, newvals)`
+                for prop in pop_properties:
+                    res[prop] = pop.get(pop_ids, prop).to_numpy()
         return res.sort_index()

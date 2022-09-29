@@ -111,6 +111,7 @@ class PopulationSpikeReport:
                 data=[], index=pd.Index([], name="times"), name=series_name, dtype=IDS_DTYPE
             )
 
+        # pylint: disable=unsubscriptable-object
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
@@ -228,7 +229,8 @@ class SpikeReport:
         path = Path(self.config.output_dir) / self.config.log_file
         if not path.exists():
             raise BluepySnapError("Cannot find the log file for the spike report.")
-        yield path.open("r", encoding="utf-8")
+        with path.open("r", encoding="utf-8") as f:
+            yield f
 
     @cached_property
     def _spike_reader(self):

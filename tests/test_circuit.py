@@ -5,7 +5,6 @@ from libsonata import SonataError
 
 import bluepysnap.circuit as test_module
 from bluepysnap.edges import EdgePopulation, Edges
-from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.nodes import NodePopulation, Nodes
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
@@ -26,7 +25,7 @@ def test_all():
     assert isinstance(circuit.nodes["default"], NodePopulation)
     assert isinstance(circuit.nodes["default2"], NodePopulation)
     assert sorted(circuit.node_sets) == sorted(
-        json.load(open(str(TEST_DATA_DIR / "node_sets.json")))
+        json.loads((TEST_DATA_DIR / "node_sets.json").read_text())
     )
 
 

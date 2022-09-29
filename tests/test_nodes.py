@@ -362,7 +362,7 @@ class TestNodePopulation:
             Cell.Z,
         ]
         assert sorted(self.test_obj._node_sets) == sorted(
-            json.load(open(str(TEST_DATA_DIR / "node_sets.json")))
+            json.loads((TEST_DATA_DIR / "node_sets.json").read_text())
         )
 
     def test_population_type(self):

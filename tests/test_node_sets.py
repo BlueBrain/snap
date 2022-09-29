@@ -46,7 +46,7 @@ class TestNodeSets:
         }
 
     def test_iter(self):
-        expected = set(json.load(open(str(TEST_DATA_DIR / "node_sets_file.json"))))
+        expected = set(json.loads((TEST_DATA_DIR / "node_sets_file.json").read_text()))
         assert set(self.test_obj) == expected
 
 
