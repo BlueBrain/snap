@@ -55,6 +55,11 @@ class CircuitIds(abc.ABC):
             index = index.sortlevel()[0]
         self.index = index
 
+    @property
+    def index_schema(self):
+        """Return an empty index with the same names of the wrapped index."""
+        return pd.MultiIndex.from_tuples([], names=self.index.names)
+
     @classmethod
     def _instance(cls, index, sort_index=True):
         """The instance returned by the functions."""

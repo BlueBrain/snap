@@ -696,5 +696,6 @@ class Nodes(
             for the `properties` argument.
         """
         if properties is None:
-            properties = self.property_names
+            # not strictly needed, but ensure that the properties are always in the same order
+            properties = sorted(self.property_names)
         return super().get(group, properties)

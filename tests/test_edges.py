@@ -289,8 +289,8 @@ class TestEdges:
         assert tested == expected
 
     def test_get(self):
-        with pytest.raises(BluepySnapError):
-            self.test_obj.get(properties=["other2", "unknown"])
+        with pytest.raises(BluepySnapError, match="You need to set edge_ids in get."):
+            self.test_obj.get(properties=["other2"])
 
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
         with pytest.deprecated_call(
@@ -314,40 +314,132 @@ class TestEdges:
 
         # tested columns
         tested = self.test_obj.get(ids, properties=["other2", "other1", "@source_node"])
-        assert tested.shape == (self.test_obj.size, 3)
-        assert list(tested) == ["other2", "other1", "@source_node"]
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+                "other1": np.array(
+                    [np.NaN, np.NaN, np.NaN, np.NaN, "A", "B", "C", "D"], dtype=object
+                ),
+                "@source_node": np.array([2, 0, 0, 2, 2, 0, 0, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default", 3),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "edge_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(
             CircuitEdgeIds.from_dict({"default2": [0, 1, 2, 3]}),
             properties=["other2", "other1", "@source_node"],
         )
-        assert tested.shape == (4, 3)
         # correct ordering when setting the dataframe with the population dataframe
-        assert tested.loc[("default2", 0)].tolist() == [10, "A", 2]
-        with pytest.raises(KeyError):
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([10, 11, 12, 13], dtype=np.int32),
+                "other1": np.array(["A", "B", "C", "D"], dtype=object),
+                "@source_node": np.array([2, 0, 0, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "edge_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
+
+        with pytest.raises(KeyError, match="'default'"):
             tested.loc[("default", 0)]
 
         tested = self.test_obj.get(
             CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3]}),
             properties=["other2", "other1", "@source_node"],
         )
-        assert tested.shape == (4, 3)
-        assert tested.loc[("default", 0)].tolist() == [np.NaN, np.NaN, 2]
-        assert tested.loc[("default", 1)].tolist() == [np.NaN, np.NaN, 0]
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=float),
+                "other1": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=object),
+                "@source_node": np.array([2, 0, 0, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default", 3),
+                ],
+                names=["population", "edge_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(ids, properties="@source_node")
-        assert tested["@source_node"].tolist() == [2, 0, 0, 2, 2, 0, 0, 2]
+        expected = pd.DataFrame(
+            {
+                "@source_node": np.array([2, 0, 0, 2, 2, 0, 0, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default", 3),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "edge_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(ids, properties="other2")
-        assert tested["other2"].tolist() == [np.NaN, np.NaN, np.NaN, np.NaN, 10, 11, 12, 13]
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default", 3),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "edge_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             self.test_obj.get(ids, properties=["other2", "unknown"])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             self.test_obj.get(ids, properties="unknown")
 
-        with pytest.deprecated_call():
+        with pytest.deprecated_call(
+            match=(
+                "Returning ids with get/properties is deprecated and will be removed in 1.0.0. "
+                "Please use Edges.ids instead."
+            )
+        ):
             self.test_obj.get(ids)
 
     def test_properties_deprecated(self):
