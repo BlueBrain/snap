@@ -156,9 +156,8 @@ class NetworkObject(abc.ABC):
         if unknown_props:
             raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
-        # Retrieve the dtypes of the selected properties. However:
-        # - the category dtype is not preserved
-        # - the int dtype may not be preserved if some values are NaN
+        # Retrieve the dtypes of the selected properties.
+        # However, the int dtype may not be preserved if some values are NaN.
         dtypes = {
             column: dtype
             for column, dtype in self.property_dtypes.items()
