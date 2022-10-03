@@ -156,23 +156,26 @@ class NetworkObject(abc.ABC):
         if unknown_props:
             raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
-        res = pd.DataFrame(index=ids.index, columns=properties)
-        for name, pop in self.items():
+        # Retrieve the dtypes of the selected properties. However:
+        # - the category dtype is not preserved
+        # - the int dtype may not be preserved if some values are NaN
+        dtypes = {
+            column: dtype
+            for column, dtype in self.property_dtypes.items()
+            if column in properties_set
+        }
+        dataframes = [pd.DataFrame(columns=properties, index=ids.index_schema).astype(dtypes)]
+        for name, pop in sorted(self.items()):
+            # since ids is sorted, global_pop_ids should be sorted as well
             global_pop_ids = ids.filter_population(name)
             pop_ids = global_pop_ids.get_ids()
-            pop_properties = properties_set & pop.property_names
-            # indices from Population and get functions are different so I cannot
-            # use a dataframe equal directly and properties have different types so cannot use a
-            # multi dim numpy array
-            if len(global_pop_ids) < len(res):
-                for prop in pop_properties:
-                    res.loc[global_pop_ids.index, prop] = pop.get(pop_ids, prop).to_numpy()
-            else:
-                # Dirty hack to avoid:
-                # FutureWarning: In a future version, `df.iloc[:, i] = newvals` will attempt
-                # to set the values inplace instead of always setting a new array.
-                # To retain the old behavior, use either `df[df.columns[i]] = newvals` or,
-                # if columns are non-unique, `df.isetitem(i, newvals)`
-                for prop in pop_properties:
-                    res[prop] = pop.get(pop_ids, prop).to_numpy()
-        return res.sort_index()
+            if len(pop_ids) > 0:
+                pop_properties = properties_set & pop.property_names
+                # Since the columns are passed as Series, index cannot be specified directly.
+                # However, it's a bit more performant than converting the Series to numpy arrays.
+                pop_df = pd.DataFrame({prop: pop.get(pop_ids, prop) for prop in pop_properties})
+                pop_df.index = global_pop_ids.index
+                dataframes.append(pop_df)
+        res = pd.concat(dataframes)
+        assert res.index.is_monotonic_increasing, "The index should be already sorted"
+        return res

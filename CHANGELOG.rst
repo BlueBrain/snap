@@ -18,6 +18,8 @@ Improvements
   - accessing data in Circuit and Simulation
 - Circuit validation changed to be more config-driven
   - it now only validates objects defined in the circuit configuration file
+- Improved performance when loading nodes and edges from a circuit.
+- Fixed warnings with Pandas 1.5.0
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
@@ -26,7 +28,7 @@ Breaking Changes
 - non-BBP Sonata circuit validation was removed
 - The NodeStorage & EdgeStorage classes were removed
 - point_neuron is no longer supported
-
+- Some column data types in the nodes and edges DataFrames returned by the `get()` method may be `float` or `int` instead of `object`.
 
 Version v0.13.1
 ---------------

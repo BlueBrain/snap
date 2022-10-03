@@ -307,35 +307,115 @@ class TestNodes:
 
         # tested columns
         tested = self.test_obj.get(properties=["other2", "other1", "layer"])
-        assert tested.shape == (self.test_obj.size, 3)
-        assert list(tested) == ["other2", "other1", "layer"]
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+                "other1": np.array([np.NaN, np.NaN, np.NaN, "A", "B", "C", "D"], dtype=object),
+                "layer": np.array([2, 6, 6, 7, 8, 8, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "node_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(
             group={"population": "default2"}, properties=["other2", "other1", "layer"]
         )
-        assert tested.shape == (4, 3)
-        # correct ordering when setting the dataframe with the population dataframe
-        assert tested.loc[("default2", 0)].tolist() == [10, "A", 7]
-        with pytest.raises(KeyError):
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([10, 11, 12, 13], dtype=int),
+                "other1": np.array(["A", "B", "C", "D"], dtype=object),
+                "layer": np.array([7, 8, 8, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "node_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
+
+        with pytest.raises(KeyError, match="'default'"):
             tested.loc[("default", 0)]
 
         tested = self.test_obj.get(
             group={"population": "default"}, properties=["other2", "other1", "layer"]
         )
-        assert tested.shape == (3, 3)
-        assert tested.loc[("default", 0)].tolist() == [np.NaN, np.NaN, 2]
-        assert tested.loc[("default", 1)].tolist() == [np.NaN, np.NaN, 6]
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([np.NaN, np.NaN, np.NaN], dtype=float),
+                "other1": np.array([np.NaN, np.NaN, np.NaN], dtype=object),
+                "layer": np.array([2, 6, 6], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                ],
+                names=["population", "node_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="layer")
-        assert tested["layer"].tolist() == [2, 6, 6, 7, 8, 8, 2]
+        expected = pd.DataFrame(
+            {
+                "layer": np.array([2, 6, 6, 7, 8, 8, 2], dtype=int),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "node_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="other2")
-        assert tested["other2"].tolist() == [np.NaN, np.NaN, np.NaN, 10, 11, 12, 13]
+        expected = pd.DataFrame(
+            {
+                "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+            },
+            index=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                    ("default2", 3),
+                ],
+                names=["population", "node_ids"],
+            ),
+        )
+        pdt.assert_frame_equal(tested, expected)
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             self.test_obj.get(properties=["other2", "unknown"])
 
-        with pytest.raises(BluepySnapError):
+        with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             self.test_obj.get(properties="unknown")
 
 
