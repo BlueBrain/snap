@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version v0.13.2
+---------------
+
+Bug Fixes
+~~~~~~~~~
+- Pin libsonata version to ``<0.1.15``
+
+  - Changes behavior of circuit config handling
+
 Version v0.13.1
 ---------------
 
