@@ -108,7 +108,9 @@ class PopulationSpikeReport:
             return pd.Series(data=[], index=pd.Index([], name="times"),
                              name=series_name, dtype=IDS_DTYPE)
 
+        # pylint: disable=unsubscriptable-object
         res = pd.DataFrame(data=res, columns=[series_name, "times"]).set_index("times")[series_name]
+        # pylint: enable=unsubscriptable-object
         if self._sorted_by != "by_time":
             res.sort_index(inplace=True)
         return res.astype(IDS_DTYPE)
