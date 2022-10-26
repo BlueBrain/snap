@@ -19,7 +19,7 @@ def _multi_index():
 
 
 class TestCircuitNodeId:
-    def setup(self):
+    def setup_method(self):
         self.test_obj = test_module.CircuitNodeId("pop", 1)
 
     def test_init(self):
@@ -32,7 +32,7 @@ class TestCircuitNodeId:
 
 
 class TestCircuitEdgeId:
-    def setup(self):
+    def setup_method(self):
         self.test_obj = test_module.CircuitEdgeId("pop", 1)
 
     def test_init(self):
@@ -62,7 +62,7 @@ class TestCircuitNodeIds:
         index.names = ["population", self.id_name]
         return index
 
-    def setup(self):
+    def setup_method(self):
         self.test_obj_unsorted = self.ids_cls(_multi_index(), sort_index=False)
         self.test_obj_sorted = self.ids_cls(_multi_index())
 

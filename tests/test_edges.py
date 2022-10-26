@@ -50,7 +50,7 @@ def test_estimate_range_size_4():
 
 
 class TestEdges:
-    def setup(self):
+    def setup_method(self):
         circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
         self.test_obj = test_module.Edges(circuit)
 
@@ -809,7 +809,7 @@ class TestEdgePopulation:
         circuit = Circuit(circuit_path)
         return test_module.EdgePopulation(circuit, pop_name)
 
-    def setup(self):
+    def setup_method(self):
         self.test_obj = TestEdgePopulation.get_edge_population(
             str(TEST_DATA_DIR / "circuit_config.json"), "default"
         )

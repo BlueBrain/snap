@@ -24,7 +24,7 @@ from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_co
 
 
 class TestNodes:
-    def setup(self):
+    def setup_method(self):
         circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
         self.test_obj = test_module.Nodes(circuit)
 
@@ -420,7 +420,7 @@ class TestNodes:
 
 
 class TestNodePopulation:
-    def setup(self):
+    def setup_method(self):
         self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes["default"]
 
     def test_basic(self):

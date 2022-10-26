@@ -10,7 +10,7 @@ from utils import TEST_DATA_DIR
 
 
 class TestNodeSets:
-    def setup(self):
+    def setup_method(self):
         self.test_obj = test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
 
     def test_init(self):
