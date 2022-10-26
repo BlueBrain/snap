@@ -20,7 +20,6 @@ import inspect
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
 
-import libsonata
 import numpy as np
 import pandas as pd
 from cached_property import cached_property

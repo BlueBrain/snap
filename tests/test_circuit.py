@@ -1,6 +1,5 @@
 import json
 
-import libsonata
 import pytest
 from libsonata import SonataError
 
