@@ -569,11 +569,6 @@ class EdgePopulation:
         for edge_conf in self._circuit.config["networks"]["edges"]:
             if self.name in edge_conf["populations"]:
                 return edge_conf["edges_file"]
-        for edge_conf in self._circuit.config["networks"]["edges"]:
-            h5_filepath = edge_conf["edges_file"]
-            storage = libsonata.EdgeStorage(h5_filepath)
-            if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
-                return h5_filepath
         raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
 
 

@@ -7,11 +7,18 @@ from contextlib import contextmanager
 from distutils.dir_util import copy_tree
 from pathlib import Path
 
+import libsonata
+import pytest
+
 from bluepysnap.circuit import Circuit
 from bluepysnap.nodes import NodePopulation, Nodes
 
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / "data"
+
+skip_if_libsonata_0_1_16 = pytest.mark.skipif(
+    libsonata.version == "0.1.16", reason="Disabled with libsonata 0.1.16"
+)
 
 
 @contextmanager
@@ -78,17 +85,18 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None, pop
         pop_name (str): population name inside the file.
         circuit (Mock/Circuit): either a real circuit or a Mock containing the nodes.
         node_sets: (Mock/NodeSets): either a real node_sets or a mocked node_sets.
+        pop_type (str): optional population type.
     Returns:
         NodePopulation: return a node population.
     """
     node_pop_config = {
         "nodes_file": filepath,
         "node_types_file": None,
-        "populations": {},
+        "populations": {pop_name: {}},
     }
 
     if pop_type is not None:
-        node_pop_config["populations"][pop_name] = {"type": pop_type}
+        node_pop_config["populations"][pop_name]["type"] = pop_type
 
     with copy_test_data() as (_, config_path):
         with edit_config(config_path) as config:
