@@ -50,7 +50,6 @@ setup(
         "morphio>=3.0.0,<4.0.0",
         "morph-tool>=2.4.3,<3.0.0",
         "neurom>=1.6",
-        "nexusforge>=0.7.0,<1.0.0",
         "numpy>=1.8",
         "pandas>=1.0.0",
         "click>=7.0",

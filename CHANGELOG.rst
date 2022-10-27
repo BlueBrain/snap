@@ -6,7 +6,6 @@ Version v1.0.0
 
 New Features
 ~~~~~~~~~~~~
-- First version of the Nexus Forge integration
 - jsonschema based validation of h5 files and circuit configuration
   - checks for required attributes and data types of attributes (in h5 files)
 
