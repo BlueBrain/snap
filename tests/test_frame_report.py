@@ -28,6 +28,7 @@ class TestFrameReport:
             "variable_name": "m",
             "sections": "soma",
             "type": "compartment",
+            "file_name": "soma_report",
             "start_time": 0,
             "end_time": 1000.0,
             "dt": 0.01,
