@@ -35,7 +35,8 @@ def test_duplicate_node_populations():
         with edit_config(config_path) as config:
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
 
-        with pytest.raises(SonataError, match="Duplicate population"):
+        match = "Duplicate population|Population default is declared twice"
+        with pytest.raises(SonataError, match=match):
             test_module.Circuit(config_path)
 
 
@@ -45,7 +46,8 @@ def test_duplicate_edge_populations():
         with edit_config(config_path) as config:
             config["networks"]["edges"].append(config["networks"]["edges"][0])
 
-        with pytest.raises(SonataError, match="Duplicate population"):
+        match = "Duplicate population|Population default is declared twice"
+        with pytest.raises(SonataError, match=match):
             test_module.Circuit(config_path)
 
 
