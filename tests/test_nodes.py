@@ -24,7 +24,7 @@ from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_co
 
 
 class TestNodes:
-    def setup(self):
+    def setup_method(self):
         circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
         self.test_obj = test_module.Nodes(circuit)
 
@@ -420,7 +420,7 @@ class TestNodes:
 
 
 class TestNodePopulation:
-    def setup(self):
+    def setup_method(self):
         self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes["default"]
 
     def test_basic(self):
@@ -996,20 +996,6 @@ class TestNodePopulation:
 
     def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
-
-    def test_h5_filepath_from_libsonata(self):
-        with copy_test_data() as (config_dir, config_path):
-            node_path = str(Path(config_dir) / "nodes.h5")
-            with edit_config(config_path) as config:
-                config["networks"]["nodes"] = [
-                    {
-                        "node_types_file": None,
-                        "nodes_file": node_path,
-                        "populations": {"fake": {}},
-                    }
-                ]
-            test_obj = test_module.Nodes(Circuit(config_path))
-            assert test_obj["default"].h5_filepath == node_path
 
     def test_no_h5_filepath(self):
         with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):

@@ -115,6 +115,8 @@ def test_missing_data_config_no_population_for_edge(to_remove):
         assert errors == {
             Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
             Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default2/source_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default2/target_node_id"'),
         }
 
 
@@ -288,6 +290,16 @@ def test_no_bio_component_dirs():
                 (
                     "at least one of 'morphologies_dir' or 'alternate_morphologies' "
                     "must to be defined for 'biophysical' population 'default'"
+                ),
+            ),
+            Error(
+                Error.FATAL, "'biophysical_neuron_models_dir' not defined for population 'default2'"
+            ),
+            Error(
+                Error.FATAL,
+                (
+                    "at least one of 'morphologies_dir' or 'alternate_morphologies' "
+                    "must to be defined for 'biophysical' population 'default2'"
                 ),
             ),
         }
@@ -483,6 +495,14 @@ def test_no_edge_all_node_ids():
                 Error.FATAL,
                 "/edges/default/target_node_id does not have node ids in its node population",
             ),
+            Error(
+                Error.FATAL,
+                "/edges/default2/source_node_id does not have node ids in its node population",
+            ),
+            Error(
+                Error.FATAL,
+                "/edges/default2/target_node_id does not have node ids in its node population",
+            ),
         }
 
 
@@ -530,5 +550,6 @@ def test_no_duplicate_population_names():
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
         errors = validate(str(config_copy_path))
         assert errors == {
-            Error(Error.FATAL, 'Already have population "default" in config for type "nodes"')
+            Error(Error.FATAL, 'Already have population "default" in config for type "nodes"'),
+            Error(Error.FATAL, 'Already have population "default2" in config for type "nodes"'),
         }

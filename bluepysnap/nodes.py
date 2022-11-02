@@ -20,7 +20,6 @@ import inspect
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
 
-import libsonata
 import numpy as np
 import pandas as pd
 from cached_property import cached_property
@@ -575,11 +574,6 @@ class NodePopulation:
         for node_conf in self._circuit.config["networks"]["nodes"]:
             if self.name in node_conf["populations"]:
                 return node_conf["nodes_file"]
-        for node_conf in self._circuit.config["networks"]["nodes"]:
-            h5_filepath = node_conf["nodes_file"]
-            storage = libsonata.NodeStorage(h5_filepath)
-            if self.name in storage.population_names:  # pylint: disable=unsupported-membership-test
-                return h5_filepath
         raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
 
 

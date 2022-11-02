@@ -15,7 +15,7 @@ from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_co
 
 
 class TestMorphHelper:
-    def setup(self):
+    def setup_method(self):
         self.nodes = create_node_population(str(TEST_DATA_DIR / "nodes_quaternions.h5"), "default")
         self.morph_path = TEST_DATA_DIR / "morphologies"
         self.test_obj = test_module.MorphHelper(str(self.morph_path), self.nodes)

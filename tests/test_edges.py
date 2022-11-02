@@ -50,7 +50,7 @@ def test_estimate_range_size_4():
 
 
 class TestEdges:
-    def setup(self):
+    def setup_method(self):
         circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
         self.test_obj = test_module.Edges(circuit)
 
@@ -809,7 +809,7 @@ class TestEdgePopulation:
         circuit = Circuit(circuit_path)
         return test_module.EdgePopulation(circuit, pop_name)
 
-    def setup(self):
+    def setup_method(self):
         self.test_obj = TestEdgePopulation.get_edge_population(
             str(TEST_DATA_DIR / "circuit_config.json"), "default"
         )
@@ -1365,7 +1365,7 @@ class TestEdgePopulation:
                     {
                         "edge_types_file": None,
                         "edges_file": str(Path(config_dir) / "edges_complete_graph.h5"),
-                        "populations": {},
+                        "populations": {"default": {"type": "chemical"}},
                     }
                 ]
 
@@ -1394,20 +1394,6 @@ class TestEdgePopulation:
 
     def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
-
-    def test_h5_filepath_from_libsonata(self):
-        with copy_test_data() as (config_dir, config_path):
-            edge_path = str(Path(config_dir) / "edges.h5")
-            with edit_config(config_path) as config:
-                config["networks"]["edges"] = [
-                    {
-                        "edge_types_file": None,
-                        "edges_file": edge_path,
-                        "populations": {"fake": {}},
-                    }
-                ]
-            test_obj = test_module.Edges(Circuit(config_path))
-            assert test_obj["default"].h5_filepath == edge_path
 
     def test_no_h5_filepath(self):
         with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):

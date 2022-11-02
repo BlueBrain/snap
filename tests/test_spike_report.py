@@ -29,7 +29,7 @@ def _create_series(node_ids, index, name="ids"):
 
 
 class TestSpikeReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.SpikeReport(self.simulation)
 
@@ -129,7 +129,7 @@ class TestSpikeReport:
 
 
 class TestPopulationSpikeReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.SpikeReport(self.simulation)["default"]
 
