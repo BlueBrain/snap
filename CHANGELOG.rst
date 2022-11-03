@@ -28,6 +28,7 @@ Breaking Changes
 - The NodeStorage & EdgeStorage classes were removed
 - point_neuron is no longer supported
 - Some column data types in the nodes and edges DataFrames returned by the `get()` method may be `float` or `int` instead of `object`.
+- require ``libsonata>=0.1.16``
 
 Version v0.13.1
 ---------------

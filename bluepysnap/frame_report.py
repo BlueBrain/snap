@@ -16,7 +16,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
 import logging
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -29,21 +28,11 @@ from bluepysnap.utils import ensure_ids, ensure_list
 
 L = logging.getLogger(__name__)
 
-REPORT_EXTENSION = ".h5"
-
 
 def _collect_population_reports(frame_report, cls):
     return {
         population: cls(frame_report, population) for population in frame_report.population_names
     }
-
-
-def _get_reader(reader_report, cls):
-    path = reader_report.simulation.output.output_dir
-    # TODO: change to use reader_report.to_libsonata.file_name when fixed in libsonata
-    file_name = reader_report.config.get("file_name", reader_report.name) + REPORT_EXTENSION
-    path = str(Path(path, file_name))
-    return cls(path)
 
 
 class PopulationFrameReport:
@@ -66,7 +55,7 @@ class PopulationFrameReport:
     @staticmethod
     def _get_reader(frame_report, population_name):
         """Access to the population compartment reader."""
-        return _get_reader(frame_report, ElementReportReader)[population_name]
+        return ElementReportReader(frame_report.to_libsonata.file_name)[population_name]
 
     @property
     def name(self):
@@ -202,7 +191,7 @@ class FrameReport:
     @cached_property
     def _frame_reader(self):
         """Access to the compartment report reader."""
-        return _get_reader(self, ElementReportReader)
+        return ElementReportReader(self.to_libsonata.file_name)
 
     @property
     def to_libsonata(self):
