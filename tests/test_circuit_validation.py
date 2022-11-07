@@ -327,19 +327,7 @@ def test_no_morph_files():
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
-            )
-        }
-
-        with h5py.File(nodes_file, "r+") as h5f:
-            morph = h5f["nodes/default/0/morphology"]
-            morph[:] = ["noname" + str(i) for i in range(len(morph))]
-        errors = validate(str(config_copy_path))
-        assert errors == {
-            Error(
-                Error.WARNING,
-                f"missing 3 files in group morphology: default/0[{nodes_file}]:"
-                "\n\tnoname0.swc\n\t...\n",
+                f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
             )
         }
 
@@ -355,7 +343,7 @@ def test_no_alternate_morph_files():
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group morphology: default/0[{nodes_file}]:\n\tmorph-A.asc\n",
+                f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tmorph-A.asc\n",
             )
         }
 
@@ -371,12 +359,12 @@ def test_no_morph_library_files():
             grp["@library/morphology"][:] = "noname"
             shape = grp["morphology"].shape
             del grp["morphology"]
-            grp.create_dataset("morphology", shape=shape, fillvalue=0)
+            grp.create_dataset("morphology", shape=shape, fillvalue=0, dtype=int)
         errors = validate(str(config_copy_path))
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
+                f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
             )
         }
 
@@ -390,7 +378,7 @@ def test_no_template_files():
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
+                f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
             )
         }
 
@@ -406,12 +394,12 @@ def test_no_template_library_files():
             grp["@library/model_template"][:] = "hoc:noname"
             shape = grp["model_template"].shape
             del grp["model_template"]
-            grp.create_dataset("model_template", shape=shape, fillvalue=0)
+            grp.create_dataset("model_template", shape=shape, fillvalue=0, dtype=int)
         errors = validate(str(config_copy_path))
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
+                f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
             )
         }
 
