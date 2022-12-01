@@ -63,7 +63,7 @@ setup(
     },
     packages=find_packages(),
     package_data={
-        "bluepysnap": ["schemas/*.yaml"],
+        "bluepysnap": ["schemas/*.yaml", "schemas/*/*.yaml"],
     },
     use_scm_version=True,
     setup_requires=[
