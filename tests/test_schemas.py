@@ -109,6 +109,31 @@ def test__get_h5_structure_as_dict(tmp_path):
     assert res == expected
 
 
+def test__get_h5_structure_as_dict_library_entries(tmp_path):
+    # Check that enumerated values types are resolved from @library
+    expected = {
+        "@library": {
+            "dataset_1": {"datatype": "utf-8"},
+            "dataset_2": {"datatype": "utf-8"},
+        },
+        "dataset_1": {"datatype": "utf-8"},
+        "dataset_2": {"datatype": "utf-8"},
+        "dataset_3": {"datatype": "int64"},
+    }
+    with h5py.File(tmp_path / "test.h5", "w") as h5:
+        lib = h5.create_group("@library")
+        h5.create_dataset("dataset_1", data=[0], dtype="i4")
+        h5.create_dataset("dataset_2", data=[0], dtype="u4")
+        h5.create_dataset("dataset_3", data=[0], dtype="i8")
+
+        lib.create_dataset("dataset_1", data="some text", dtype=h5py.string_dtype("utf-8"))
+        lib.create_dataset("dataset_2", data="also, text", dtype=h5py.string_dtype("utf-8"))
+
+        res = test_module._get_h5_structure_as_dict(h5)
+
+    assert res == expected
+
+
 def test_validate_config_ok():
     config = str(TEST_DATA_DIR / "circuit_config.json")
     res = test_module.validate_circuit_schema("fake_path", config)

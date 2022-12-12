@@ -9,18 +9,6 @@ $typedefs:
       datatype:
         type: string
 
-  index_or_utf8:
-      anyOf:
-        - $ref: "#/$typedefs/utf8"
-        - $ref: "#/$typedefs/int8"
-        - $ref: "#/$typedefs/int16"
-        - $ref: "#/$typedefs/int32"
-        - $ref: "#/$typedefs/int64"
-        - $ref: "#/$typedefs/uint8"
-        - $ref: "#/$typedefs/uint16"
-        - $ref: "#/$typedefs/uint32"
-        - $ref: "#/$typedefs/uint64"
-
   float32:
     $ref: "#/$typedefs/general"
     properties:
