@@ -146,6 +146,11 @@ def _get_h5_structure_as_dict(h5):
         if attrs:
             properties[key]["attributes"] = attrs
 
+    # Resolve enumerated properties' types to check their actual data type
+    if "@library" in properties:
+        for key, value in properties["@library"].items():
+            properties[key] = value
+
     return properties
 
 

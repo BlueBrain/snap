@@ -103,7 +103,7 @@ $edge_file_defs:
                   spine_length:
                     $ref: "#/$typedefs/float32"
                   spine_morphology:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   spine_psd_id:
                     $ref: "#/$typedefs/int64"
                   spine_sharding_id:
