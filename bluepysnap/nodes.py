@@ -582,6 +582,13 @@ class NodePopulation:
                 return h5_filepath
         raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
 
+    @cached_property
+    def spatial_index(self):
+        """Access to node spatial index."""
+        from bluepysnap.spatial_index import SpatialIndexHelper
+
+        return SpatialIndexHelper(self._properties.spatial_index_dir, self)
+
 
 class Nodes(
     NetworkObject,

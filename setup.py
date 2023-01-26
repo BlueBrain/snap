@@ -56,6 +56,7 @@ setup(
         "click>=7.0",
         "more-itertools>=8.2.0",
         "lazy-object-proxy>=1.5.2",
+        'spatial-index>=1.2.1,<2.0',
     ],
     extras_require={
         "docs": ["sphinx", "sphinx-bluebrain-theme"],
