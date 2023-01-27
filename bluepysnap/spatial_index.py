@@ -18,6 +18,7 @@
 """Spatial index access."""
 
 from typing import Optional, Union
+
 from spatial_index import open_index
 
 
@@ -39,7 +40,7 @@ class SpatialIndexHelper:
             self._index = open_index(spatial_index_dir)
         except RuntimeError as e:
             raise IOError(f"Could not load spatial index from f{spatial_index_dir}.") from e
-        
+
         self.accuracy = accuracy
 
     def sphere_query(self, center, radius, fields: Optional[Union[str, list[str]]] = None):
@@ -62,6 +63,7 @@ class SpatialIndexHelper:
 
     def box_query(self, corner, opposing_corner, fields: Optional[Union[str, list[str]]] = None):
         """Returns all elements intersecting with the query box.
+
         corner and opposing_corner must be two opposing corners of the query box.
 
         Args:
@@ -77,5 +79,4 @@ class SpatialIndexHelper:
         Returns:
         TODO
         """
-        self.check_loaded()
         return self._index.box_query(corner, opposing_corner, fields=fields, accuracy=self.accuracy)

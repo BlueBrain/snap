@@ -576,6 +576,13 @@ class EdgePopulation:
                 return h5_filepath
         raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
 
+    @cached_property
+    def spatial_index(self):
+        """Access to edges spatial index."""
+        from spatial_index import open_index
+
+        return open_index(self._properties.spatial_index_dir)
+
 
 class Edges(
     NetworkObject,
