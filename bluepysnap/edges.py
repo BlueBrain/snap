@@ -571,12 +571,22 @@ class EdgePopulation:
                 return edge_conf["edges_file"]
         raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
 
+    @property
+    def _spatial_index_dir(self):
+        try:
+            for edge_conf in self._circuit.config["networks"]["edges"]:
+                if self.name in edge_conf["populations"]:
+                    return edge_conf["populations"][self.name]["spatial_index_dir"]
+        except KeyError:
+            pass
+        raise BluepySnapError(f"spatial_index_dir not found for population '{self.name}'")
+
     @cached_property
     def spatial_index(self):
         """Access to edges spatial index."""
         from spatial_index import open_index
 
-        return open_index(self._properties.spatial_index_dir)
+        return open_index(self._spatial_index_dir)
 
 
 class Edges(

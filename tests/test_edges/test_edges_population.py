@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import numpy.testing as npt
@@ -617,3 +618,8 @@ class TestEdgePopulation:
         with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
             self.test_obj.name = "fake"
             self.test_obj.h5_filepath
+
+    def test_spatial_index(self):
+        with mock.patch("spatial_index.open_index") as mock_open_index:
+            self.test_obj.spatial_index
+        mock_open_index.assert_called_once_with("path/to/edge/dir")
