@@ -573,12 +573,10 @@ class EdgePopulation:
 
     @property
     def _spatial_index_dir(self):
-        try:
-            for edge_conf in self._circuit.config["networks"]["edges"]:
-                if self.name in edge_conf["populations"]:
-                    return edge_conf["populations"][self.name]["spatial_index_dir"]
-        except KeyError:
-            pass
+        for edge_conf in self._circuit.config["networks"]["edges"]:
+            if self.name in edge_conf["populations"]:
+                return edge_conf["populations"][self.name]["spatial_index_dir"]
+
         raise BluepySnapError(f"spatial_index_dir not found for population '{self.name}'")
 
     @cached_property

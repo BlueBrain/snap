@@ -619,6 +619,11 @@ class TestEdgePopulation:
             self.test_obj.name = "fake"
             self.test_obj.h5_filepath
 
+    def test_spatial_index_dir(self):
+        with pytest.raises(BluepySnapError, match="spatial_index_dir not found for population"):
+            self.test_obj.name = "fake"
+            self.test_obj._spatial_index_dir
+
     def test_spatial_index(self):
         with mock.patch("spatial_index.open_index") as mock_open_index:
             self.test_obj.spatial_index
