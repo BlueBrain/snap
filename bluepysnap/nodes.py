@@ -578,10 +578,10 @@ class NodePopulation:
 
     @cached_property
     def spatial_index(self):
-        """Access to node spatial index."""
-        from bluepysnap.spatial_index import SpatialIndexHelper
+        """Access to edges spatial index."""
+        from spatial_index import open_index
 
-        return SpatialIndexHelper(self._properties.spatial_index_dir, self)
+        return open_index(self._properties.spatial_index_dir)
 
 
 class Nodes(
