@@ -6,7 +6,6 @@ Version v1.0.0
 
 New Features
 ~~~~~~~~~~~~
-- First version of the Nexus Forge integration
 - jsonschema based validation of h5 files and circuit configuration
   - checks for required attributes and data types of attributes (in h5 files)
 
@@ -29,6 +28,7 @@ Breaking Changes
 - The NodeStorage & EdgeStorage classes were removed
 - point_neuron is no longer supported
 - Some column data types in the nodes and edges DataFrames returned by the `get()` method may be `float` or `int` instead of `object`.
+- require ``libsonata>=0.1.16``
 
 Version v0.13.1
 ---------------

@@ -82,8 +82,3 @@ extension-pkg-whitelist = [
 ignored-modules = [
     'numpy',
 ]
-
-[tool.coverage.run]
-omit = [
-    'bluepysnap/nexus/wrappers.py',
-]

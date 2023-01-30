@@ -7,14 +7,14 @@ import bluepysnap.circuit as test_module
 from bluepysnap.edges import EdgePopulation, Edges
 from bluepysnap.nodes import NodePopulation, Nodes
 
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
+from utils import TEST_DATA_DIR, copy_test_data, edit_config, skip_if_libsonata_0_1_16
 
 
 def test_all():
     circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
     assert circuit.config["networks"]["nodes"][0] == {
         "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
-        "populations": {"default": {"type": "biophysical"}},
+        "populations": {"default": {"type": "biophysical"}, "default2": {"type": "biophysical"}},
     }
     assert isinstance(circuit.nodes, Nodes)
     assert isinstance(circuit.edges, Edges)
@@ -29,21 +29,25 @@ def test_all():
     )
 
 
+@skip_if_libsonata_0_1_16
 def test_duplicate_node_populations():
     with copy_test_data() as (_, config_path):
         with edit_config(config_path) as config:
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
 
-        with pytest.raises(SonataError, match="Duplicate population"):
+        match = "Duplicate population|Population default is declared twice"
+        with pytest.raises(SonataError, match=match):
             test_module.Circuit(config_path)
 
 
+@skip_if_libsonata_0_1_16
 def test_duplicate_edge_populations():
     with copy_test_data() as (_, config_path):
         with edit_config(config_path) as config:
             config["networks"]["edges"].append(config["networks"]["edges"][0])
 
-        with pytest.raises(SonataError, match="Duplicate population"):
+        match = "Duplicate population|Population default is declared twice"
+        with pytest.raises(SonataError, match=match):
             test_module.Circuit(config_path)
 
 

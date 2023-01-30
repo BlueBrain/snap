@@ -17,7 +17,7 @@ from utils import TEST_DATA_DIR
 
 
 class TestFrameReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.FrameReport(self.simulation, "soma_report")
         self.test_obj_info = test_module.FrameReport(self.simulation, "section_report")
@@ -28,6 +28,7 @@ class TestFrameReport:
             "variable_name": "m",
             "sections": "soma",
             "type": "compartment",
+            "file_name": "soma_report",
             "start_time": 0,
             "end_time": 1000.0,
             "dt": 0.01,
@@ -85,7 +86,7 @@ class TestFrameReport:
 
 
 class TestCompartmentReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")
 
@@ -132,7 +133,7 @@ class TestCompartmentReport:
 
 
 class TestSomaReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.SomaReport(self.simulation, "soma_report")
 
@@ -184,7 +185,7 @@ class TestSomaReport:
 
 
 class TestPopulationFrameReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.FrameReport(self.simulation, "section_report")["default"]
 
@@ -197,7 +198,7 @@ class TestPopulationFrameReport:
 
 
 class TestPopulationCompartmentReport:
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.CompartmentReport(self.simulation, "section_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)
@@ -292,7 +293,7 @@ class TestPopulationCompartmentReport:
 
 
 class TestPopulationSomaReport(TestPopulationCompartmentReport):
-    def setup(self):
+    def setup_method(self):
         self.simulation = Simulation(str(TEST_DATA_DIR / "simulation_config.json"))
         self.test_obj = test_module.SomaReport(self.simulation, "soma_report")["default"]
         timestamps = np.linspace(0, 0.9, 10)

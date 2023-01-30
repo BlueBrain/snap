@@ -73,19 +73,6 @@ Or a python free function:
     errors = validate("my/circuit/path/circuit_config.json")
 
 
-Nexus Forge integration
-~~~~~~~~~~~~~~~~~~~~~~~
-
-There is also a `Nexus Forge <https://github.com/BlueBrain/nexus-forge>`__ integration in Blue brain SNAP.
-It is meant to help users search and acquire data from Nexus and instantiate the acquired data.
-
-To use it, all that is needed, is to instantiate the Nexus Helper class:
-
-.. code-block:: python3
-
-    from bluepysnap.nexus import NexusHelper
-    nexus = NexusHelper(nexus_access_token, bucket)
-
 Acknowledgements
 ----------------
 

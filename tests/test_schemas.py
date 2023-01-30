@@ -109,6 +109,31 @@ def test__get_h5_structure_as_dict(tmp_path):
     assert res == expected
 
 
+def test__get_h5_structure_as_dict_library_entries(tmp_path):
+    # Check that enumerated values types are resolved from @library
+    expected = {
+        "@library": {
+            "dataset_1": {"datatype": "utf-8"},
+            "dataset_2": {"datatype": "utf-8"},
+        },
+        "dataset_1": {"datatype": "utf-8"},
+        "dataset_2": {"datatype": "utf-8"},
+        "dataset_3": {"datatype": "int64"},
+    }
+    with h5py.File(tmp_path / "test.h5", "w") as h5:
+        lib = h5.create_group("@library")
+        h5.create_dataset("dataset_1", data=[0], dtype="i4")
+        h5.create_dataset("dataset_2", data=[0], dtype="u4")
+        h5.create_dataset("dataset_3", data=[0], dtype="i8")
+
+        lib.create_dataset("dataset_1", data="some text", dtype=h5py.string_dtype("utf-8"))
+        lib.create_dataset("dataset_2", data="also, text", dtype=h5py.string_dtype("utf-8"))
+
+        res = test_module._get_h5_structure_as_dict(h5)
+
+    assert res == expected
+
+
 def test_validate_config_ok():
     config = str(TEST_DATA_DIR / "circuit_config.json")
     res = test_module.validate_circuit_schema("fake_path", config)
@@ -137,38 +162,45 @@ def test_validate_config_ok_missing_optional_fields(to_remove):
 
 
 @pytest.mark.parametrize(
-    ("to_remove", "expected"),
+    ("to_remove_list", "expected"),
     (
         (
-            ["networks", "nodes", 0, "populations", "default"],
+            [
+                ["networks", "nodes", 0, "populations", "default"],
+                ["networks", "nodes", 0, "populations", "default2"],
+            ],
             "networks.nodes[0].populations: too few properties",
         ),
         (
-            ["networks", "edges", 0, "populations", "default"],
+            [
+                ["networks", "edges", 0, "populations", "default"],
+                ["networks", "edges", 0, "populations", "default2"],
+            ],
             "networks.edges[0].populations: too few properties",
         ),
         (
-            ["networks", "nodes", 0, "populations"],
+            [["networks", "nodes", 0, "populations"]],
             "networks.nodes[0]: 'populations' is a required property",
         ),
         (
-            ["networks", "edges", 0, "populations"],
+            [["networks", "edges", 0, "populations"]],
             "networks.edges[0]: 'populations' is a required property",
         ),
-        (["networks", "nodes", 0], "networks.nodes: [] is too short"),
-        (["networks", "edges", 0], "networks.edges: [] is too short"),
-        (["networks", "nodes"], "networks: 'nodes' is a required property"),
-        (["networks", "edges"], "networks: 'edges' is a required property"),
-        (["networks"], "'networks' is a required property"),
+        ([["networks", "nodes", 0]], "networks.nodes: [] is too short"),
+        ([["networks", "edges", 0]], "networks.edges: [] is too short"),
+        ([["networks", "nodes"]], "networks: 'nodes' is a required property"),
+        ([["networks", "edges"]], "networks: 'edges' is a required property"),
+        ([["networks"]], "'networks' is a required property"),
     ),
 )
-def test_validate_config_error(to_remove, expected):
+def test_validate_config_error(to_remove_list, expected):
     with copy_test_data() as (_, config_copy_path):
         with edit_config(config_copy_path) as config:
-            c = config
-            for key in to_remove[:-1]:
-                c = c[key]
-            del c[to_remove[-1]]
+            for to_remove in to_remove_list:
+                c = config
+                for key in to_remove[:-1]:
+                    c = c[key]
+                del c[to_remove[-1]]
         errors = test_module.validate_circuit_schema(str(config_copy_path), config)
 
         assert len(errors) == 1

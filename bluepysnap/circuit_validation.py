@@ -2,7 +2,6 @@
 
 The idea here is to not depend on libsonata if possible, so we can use this in all situations
 """
-import itertools as it
 import logging
 from pathlib import Path
 
@@ -94,14 +93,21 @@ def _check_files(name, files, level):
     Returns:
         list: List of errors, empty if no errors
     """
-    missing = sorted({f for f in files if not f.is_file()})
-    if missing:
-        examples = [e.name for e in it.islice(missing, MAX_MISSING_FILES_DISPLAY)]
-        if len(missing) > MAX_MISSING_FILES_DISPLAY:
-            examples.append("...")
+    files = set(files)
+    missing = []
+    for f in sorted(files):
+        if not f.is_file():
+            missing.append(f)
 
-        filenames = "".join(f"\t{e}\n" for e in examples)
-        return [Error(level, f"missing {len(missing)} files in group {name}:\n{filenames}")]
+        if len(missing) >= MAX_MISSING_FILES_DISPLAY:
+            break
+
+    if missing:
+        filenames = "".join(f"\t{m.name}\n" for m in missing)
+
+        return [
+            Error(level, f"missing at least {len(missing)} files in group {name}:\n{filenames}")
+        ]
 
     return []
 
@@ -177,7 +183,7 @@ def _nodes_group_to_dataframe(group, population):
         pd.DataFrame: dataframe with all group attributes
     """
     # TODO: remove multi-indexing (BBP only supports group '0')
-    df = pd.DataFrame(population["node_type_id"], columns=["type_id"])
+    df = pd.DataFrame(population["node_type_id"][:], columns=["type_id"])
     size = df.size
     df["id"] = population["node_id"] if "node_id" in population else np.arange(size)
     df["group_id"] = population["node_group_id"] if "node_group_id" in population else 0
@@ -187,6 +193,8 @@ def _nodes_group_to_dataframe(group, population):
     df = df[df["group_id"] == int(str(_get_group_name(group)))]
 
     for k, v in group.items():
+        if k == "@library":
+            continue
         if isinstance(v, h5py.Dataset):
             if v.dtype == h5py.string_dtype():
                 df[k] = v.asstr()[:]
@@ -196,7 +204,7 @@ def _nodes_group_to_dataframe(group, population):
     if "@library" in group:
         for k, v in group["@library"].items():
             if isinstance(v, h5py.Dataset):
-                df[k] = v.asstr()[:][df[k].to_numpy(dtype=int)]
+                df[k] = pd.Categorical.from_codes(df[k], categories=v.asstr()[:])
 
     return df
 
@@ -249,7 +257,7 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
 
             errors += _check_files(
                 f"morphology: {group_name}[{group.file.filename}]",
-                (Path(morph_path, m + "." + extension) for m in group_df["morphology"]),
+                (Path(morph_path, m + "." + extension) for m in group_df["morphology"].unique()),
                 Error.WARNING,
             )
 
@@ -260,7 +268,10 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
         L.debug("Checking neuron model files: %s", bio_path)
         errors += _check_files(
             f"model_template: {group_name}[{group.file.filename}]",
-            (bio_path / _get_model_template_file(m) for m in group_df.get("model_template", [])),
+            (
+                bio_path / _get_model_template_file(m)
+                for m in group_df.get("model_template", pd.Series(dtype="object")).unique()
+            ),
             Error.WARNING,
         )
     else:

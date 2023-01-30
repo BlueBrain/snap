@@ -36,37 +36,37 @@ $node_file_defs:
                       threshold_current:
                         $ref: "#/$typedefs/float32"
                   etype:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   exc-mini_frequency:
                     $ref: "#/$typedefs/float32"
                   hemisphere:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   inh-mini_frequency:
                     $ref: "#/$typedefs/float32"
                   layer:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   me_combo:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   model_template:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   model_type:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   morphology:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   morph_class:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   mtype:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   radius:
                     $ref: "#/$typedefs/float32"
                   region:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   section_id:
                     $ref: "#/$typedefs/uint32"
                   segment_id:
                     $ref: "#/$typedefs/uint32"
                   synapse_class:
-                    $ref: "#/$typedefs/index_or_utf8"
+                    $ref: "#/$typedefs/utf8"
                   type:
                     $ref: "#/$typedefs/int32"
                   "@library":

@@ -6,7 +6,6 @@
    :maxdepth: 2
 
    Home <self>
-   nexusforge
    api
 
 .. |banner| image:: /_images/BlueBrainSNAP.jpg

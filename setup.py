@@ -46,11 +46,10 @@ setup(
         "cached_property>=1.0",
         "h5py>=3.0.1,<4.0.0",
         "jsonschema>=4.0.0,<5.0.0",
-        "libsonata>=0.1.13,<1.0.0",
+        "libsonata>=0.1.16,<1.0.0",
         "morphio>=3.0.0,<4.0.0",
         "morph-tool>=2.4.3,<3.0.0",
         "neurom>=1.6",
-        "nexusforge>=0.7.0,<1.0.0",
         "numpy>=1.8",
         "pandas>=1.0.0",
         "click>=7.0",
@@ -65,7 +64,7 @@ setup(
     },
     packages=find_packages(),
     package_data={
-        "bluepysnap": ["schemas/*.yaml"],
+        "bluepysnap": ["schemas/*.yaml", "schemas/*/*.yaml"],
     },
     use_scm_version=True,
     setup_requires=[

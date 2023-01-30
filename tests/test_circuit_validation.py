@@ -115,6 +115,8 @@ def test_missing_data_config_no_population_for_edge(to_remove):
         assert errors == {
             Error(Error.FATAL, 'No node population for "/edges/default/source_node_id"'),
             Error(Error.FATAL, 'No node population for "/edges/default/target_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default2/source_node_id"'),
+            Error(Error.FATAL, 'No node population for "/edges/default2/target_node_id"'),
         }
 
 
@@ -290,6 +292,16 @@ def test_no_bio_component_dirs():
                     "must to be defined for 'biophysical' population 'default'"
                 ),
             ),
+            Error(
+                Error.FATAL, "'biophysical_neuron_models_dir' not defined for population 'default2'"
+            ),
+            Error(
+                Error.FATAL,
+                (
+                    "at least one of 'morphologies_dir' or 'alternate_morphologies' "
+                    "must to be defined for 'biophysical' population 'default2'"
+                ),
+            ),
         }
 
 
@@ -315,19 +327,7 @@ def test_no_morph_files():
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
-            )
-        }
-
-        with h5py.File(nodes_file, "r+") as h5f:
-            morph = h5f["nodes/default/0/morphology"]
-            morph[:] = ["noname" + str(i) for i in range(len(morph))]
-        errors = validate(str(config_copy_path))
-        assert errors == {
-            Error(
-                Error.WARNING,
-                f"missing 3 files in group morphology: default/0[{nodes_file}]:"
-                "\n\tnoname0.swc\n\t...\n",
+                f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
             )
         }
 
@@ -343,7 +343,7 @@ def test_no_alternate_morph_files():
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group morphology: default/0[{nodes_file}]:\n\tmorph-A.asc\n",
+                f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tmorph-A.asc\n",
             )
         }
 
@@ -359,12 +359,12 @@ def test_no_morph_library_files():
             grp["@library/morphology"][:] = "noname"
             shape = grp["morphology"].shape
             del grp["morphology"]
-            grp.create_dataset("morphology", shape=shape, fillvalue=0)
+            grp.create_dataset("morphology", shape=shape, fillvalue=0, dtype=int)
         errors = validate(str(config_copy_path))
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
+                f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
             )
         }
 
@@ -378,7 +378,7 @@ def test_no_template_files():
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
+                f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
             )
         }
 
@@ -394,12 +394,12 @@ def test_no_template_library_files():
             grp["@library/model_template"][:] = "hoc:noname"
             shape = grp["model_template"].shape
             del grp["model_template"]
-            grp.create_dataset("model_template", shape=shape, fillvalue=0)
+            grp.create_dataset("model_template", shape=shape, fillvalue=0, dtype=int)
         errors = validate(str(config_copy_path))
         assert errors == {
             Error(
                 Error.WARNING,
-                f"missing 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
+                f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
             )
         }
 
@@ -483,6 +483,14 @@ def test_no_edge_all_node_ids():
                 Error.FATAL,
                 "/edges/default/target_node_id does not have node ids in its node population",
             ),
+            Error(
+                Error.FATAL,
+                "/edges/default2/source_node_id does not have node ids in its node population",
+            ),
+            Error(
+                Error.FATAL,
+                "/edges/default2/target_node_id does not have node ids in its node population",
+            ),
         }
 
 
@@ -530,5 +538,6 @@ def test_no_duplicate_population_names():
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
         errors = validate(str(config_copy_path))
         assert errors == {
-            Error(Error.FATAL, 'Already have population "default" in config for type "nodes"')
+            Error(Error.FATAL, 'Already have population "default" in config for type "nodes"'),
+            Error(Error.FATAL, 'Already have population "default2" in config for type "nodes"'),
         }

@@ -9,6 +9,5 @@ API Documentation
 
    circuits
    simulations
-   nexus
    utilities
    changelog
