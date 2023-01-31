@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 from unittest import mock
 
 import numpy as np
@@ -16,6 +17,7 @@ from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
 from bluepysnap.utils import IDS_DTYPE
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
+
 
 def index_as_ids_dtypes(values):
     """have pandas index types match"""
@@ -620,11 +622,25 @@ class TestEdgePopulation:
             self.test_obj.h5_filepath
 
     def test_spatial_index_dir(self):
+        assert self.test_obj._spatial_index_dir == "path/to/edge/dir"
+
+    def test_spatial_index_dir_error(self):
         with pytest.raises(BluepySnapError, match="spatial_index_dir not found for population"):
             self.test_obj.name = "fake"
             self.test_obj._spatial_index_dir
 
+    @pytest.mark.skip(reason="Until spatial-index releses publicly")
     def test_spatial_index(self):
         with mock.patch("spatial_index.open_index") as mock_open_index:
             self.test_obj.spatial_index
         mock_open_index.assert_called_once_with("path/to/edge/dir")
+
+    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
+    def test_spatial_index_call(self):
+        self.test_obj.spatial_index
+
+    def test_spatial_index_error(self):
+        with pytest.raises(
+            BluepySnapError, match="Spatial index is for now only available internaly to BBP."
+        ):
+            self.test_obj.spatial_index

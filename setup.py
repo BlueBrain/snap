@@ -55,12 +55,12 @@ setup(
         "click>=7.0",
         "more-itertools>=8.2.0",
         "lazy-object-proxy>=1.5.2",
-        "spatial-index>=1.2.1,<2.0",
     ],
     extras_require={
         "docs": ["sphinx", "sphinx-bluebrain-theme"],
         "plots": ["matplotlib>=3.0.0"],
         "tools": ["bglibpy>=4.4.26"],
+        "spatial-index": ["spatial-index>=1.2.1,<2.0"],
     },
     packages=find_packages(),
     package_data={
