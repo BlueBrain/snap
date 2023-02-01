@@ -187,8 +187,9 @@ class CircuitConfig(Config):
         # components: null in the config
         config = self.to_dict()
         networks = config.get("networks") or {}
+        components = config.get("components") or {}
 
-        def resolve_network_populations(element_type, components):
+        def resolve_network_populations(element_type):
             populations = {}
             type_file_key = f"{element_type}_file"
             element_dicts = networks.get(element_type) or []
@@ -206,10 +207,9 @@ class CircuitConfig(Config):
 
             return populations
 
-        # 'components' is not extended to edges as it currently has no keys for edges.
         self._populations = {
-            "node": resolve_network_populations("nodes", config.get("components") or {}),
-            "edge": resolve_network_populations("edges", {}),
+            "node": resolve_network_populations("nodes"),
+            "edge": resolve_network_populations("edges"),
         }
 
 
