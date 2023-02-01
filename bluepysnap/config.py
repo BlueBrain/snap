@@ -17,6 +17,7 @@
 
 """SONATA network config parsing."""
 
+import copy
 import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -163,10 +164,53 @@ class Config:
 class CircuitConfig(Config):
     """Handle CircuitConfig."""
 
+    def __init__(self, *args):
+        """Initializes circuit config."""
+        super().__init__(*args)
+        self._populations = None
+        self._resolve_population_configs()
+
     @classmethod
     def from_config(cls, config_path):
         """Instantiate the config class from circuit configuration."""
         return cls(config_path, libsonata.CircuitConfig)
+
+    @property
+    def populations(self):
+        """Access population configs."""
+        return self._populations
+
+    # NOTE: These are parsed here to keep Parser returning the exact parsed configuration.
+    def _resolve_population_configs(self):
+        """Resolves population configs for the node and edge populations."""
+        # All the "or"s exist to have empty dicts lists instead of None's to overcome issues like:
+        # components: null in the config
+        config = self.to_dict()
+        networks = config.get("networks") or {}
+
+        def resolve_network_populations(element_type, components):
+            populations = {}
+            type_file_key = f"{element_type}_file"
+            element_dicts = networks.get(element_type) or []
+
+            for elem_dict in element_dicts:
+                elem_pops = elem_dict.get("populations") or {}
+
+                for pop, cfg in elem_pops.items():
+                    populations[pop] = copy.deepcopy(components)
+                    populations[pop].update(cfg or {})
+
+                    # add h5 filepath for simpler access
+                    if type_file_key in elem_dict:
+                        populations[pop][type_file_key] = elem_dict[type_file_key]
+
+            return populations
+
+        # 'components' is not extended to edges as it currently has no keys for edges.
+        self._populations = {
+            "node": resolve_network_populations("nodes", config.get("components") or {}),
+            "edge": resolve_network_populations("edges", {}),
+        }
 
 
 class SimulationConfig(Config):

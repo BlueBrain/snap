@@ -49,6 +49,14 @@ class Circuit:
         """Network config dictionary."""
         return self._config.to_dict()
 
+    def get_node_population_config(self, name):
+        """Get node population configuration."""
+        return self._config.populations["node"].get(name, {})
+
+    def get_edge_population_config(self, name):
+        """Get edge population configuration."""
+        return self._config.populations["edge"].get(name, {})
+
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the circuit."""

@@ -115,6 +115,14 @@ class EdgePopulation:
         return {Edge.SOURCE_NODE_ID, Edge.TARGET_NODE_ID}
 
     @property
+    def population_config(self):
+        """Access the configuration for the population.
+
+        This configuration is extended the filepath to the h5 file containing the population.
+        """
+        return self._circuit.get_edge_population_config(self.name)
+
+    @property
     def property_names(self):
         """Set of available edge properties.
 
@@ -450,6 +458,7 @@ class EdgePopulation:
 
     def _iter_connections(self, source_node_ids, target_node_ids, unique_node_ids, shuffle):
         """Iterate through `source_node_ids` -> `target_node_ids` connections."""
+
         # pylint: disable=too-many-branches,too-many-locals
         def _optimal_direction():
             """Choose between source and target node IDs for iterating."""
@@ -566,10 +575,10 @@ class EdgePopulation:
     @cached_property
     def h5_filepath(self):
         """Get the H5 edges file associated with population."""
-        for edge_conf in self._circuit.config["networks"]["edges"]:
-            if self.name in edge_conf["populations"]:
-                return edge_conf["edges_file"]
-        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
+        try:
+            return self.population_config["edges_file"]
+        except KeyError as e:
+            raise BluepySnapError(f"h5_filepath not found for population '{self.name}'") from e
 
 
 class Edges(
