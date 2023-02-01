@@ -587,7 +587,7 @@ class EdgePopulation:
         except ImportError as e:
             raise BluepySnapError(
                 (
-                    "Spatial index is for now only available internaly to BBP. ",
+                    "Spatial index is for now only available internally to BBP. ",
                     "It requires `spatial_index`, an internal package.",
                 )
             ) from e
