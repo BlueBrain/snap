@@ -4,7 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-import bluepysnap.edges as test_module
+import bluepysnap.edges.edge_population as test_module
 
 
 def test_estimate_range_size_1():
