@@ -660,7 +660,6 @@ class TestEdges:
         )
 
     def test_pair_edges(self):
-
         # no connection between 0 and 2
         assert self.test_obj.pair_edges(0, 2, None) == CircuitEdgeIds.from_arrays([], [])
         actual = self.test_obj.pair_edges(0, 2, [Synapse.AXONAL_DELAY])
