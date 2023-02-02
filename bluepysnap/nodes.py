@@ -577,13 +577,10 @@ class NodePopulation:
 
         return NeuronModelsHelper(self._properties, self)
 
-    @cached_property
+    @property
     def h5_filepath(self):
         """Get the H5 nodes file associated with population."""
-        try:
-            return self.population_config["nodes_file"]
-        except KeyError as e:
-            raise BluepySnapError(f"h5_filepath not found for population '{self.name}'") from e
+        return self.population_config["nodes_file"]
 
 
 class Nodes(

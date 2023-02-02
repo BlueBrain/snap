@@ -572,13 +572,10 @@ class EdgePopulation:
             omit_edge_count = lambda x: x[:2]
             return map(omit_edge_count, it)
 
-    @cached_property
+    @property
     def h5_filepath(self):
         """Get the H5 edges file associated with population."""
-        try:
-            return self.population_config["edges_file"]
-        except KeyError as e:
-            raise BluepySnapError(f"h5_filepath not found for population '{self.name}'") from e
+        return self.population_config["edges_file"]
 
 
 class Edges(

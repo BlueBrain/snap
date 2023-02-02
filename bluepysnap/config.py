@@ -167,8 +167,7 @@ class CircuitConfig(Config):
     def __init__(self, *args):
         """Initializes circuit config."""
         super().__init__(*args)
-        self._populations = None
-        self._resolve_population_configs()
+        self._populations = self._resolve_population_configs()
 
     @classmethod
     def from_config(cls, config_path):
@@ -183,8 +182,6 @@ class CircuitConfig(Config):
     # NOTE: These are parsed here to keep Parser returning the exact parsed configuration.
     def _resolve_population_configs(self):
         """Resolves population configs for the node and edge populations."""
-        # All the "or"s exist to have empty dicts lists instead of None's to overcome issues like:
-        # components: null in the config
         config = self.to_dict()
         networks = config.get("networks") or {}
         components = config.get("components") or {}
@@ -207,7 +204,7 @@ class CircuitConfig(Config):
 
             return populations
 
-        self._populations = {
+        return {
             "node": resolve_network_populations("nodes"),
             "edge": resolve_network_populations("edges"),
         }
