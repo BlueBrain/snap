@@ -450,6 +450,7 @@ class EdgePopulation:
 
     def _iter_connections(self, source_node_ids, target_node_ids, unique_node_ids, shuffle):
         """Iterate through `source_node_ids` -> `target_node_ids` connections."""
+
         # pylint: disable=too-many-branches,too-many-locals
         def _optimal_direction():
             """Choose between source and target node IDs for iterating."""

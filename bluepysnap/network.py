@@ -156,14 +156,8 @@ class NetworkObject(abc.ABC):
         if unknown_props:
             raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
-        # Retrieve the dtypes of the selected properties.
-        # However, the int dtype may not be preserved if some values are NaN.
-        dtypes = {
-            column: dtype
-            for column, dtype in self.property_dtypes.items()
-            if column in properties_set
-        }
-        dataframes = [pd.DataFrame(columns=properties, index=ids.index_schema).astype(dtypes)]
+        # TODO: add dtypes to the initial dataframe when a proper fix to the dtype issue is done
+        dataframes = [pd.DataFrame(columns=properties, index=ids.index_schema)]
         for name, pop in sorted(self.items()):
             # since ids is sorted, global_pop_ids should be sorted as well
             global_pop_ids = ids.filter_population(name)

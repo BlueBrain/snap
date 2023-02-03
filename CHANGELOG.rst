@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version v1.0.1
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- nodes.get, edges.get were throwing an incorrect "Same property with different dtype" Error
+
 Version v1.0.0
 --------------
 
