@@ -15,8 +15,8 @@ def test_all():
     assert circuit.config["networks"]["nodes"][0] == {
         "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
         "populations": {
-            "default": {"type": "biophysical", "spatial_index_dir": "path/to/node/dir"},
-            "default2": {"type": "biophysical", "spatial_index_dir": "path/to/node/dir2"},
+            "default": {"type": "biophysical", "spatial_segment_index_dir": "path/to/node/dir"},
+            "default2": {"type": "biophysical", "spatial_segment_index_dir": "path/to/node/dir2"},
         },
     }
     assert isinstance(circuit.nodes, Nodes)

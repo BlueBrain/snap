@@ -16,11 +16,11 @@
         "populations": {
             "default": {
                 "type": "biophysical",
-                "spatial_index_dir": "path/to/node/dir"
+                "spatial_segment_index_dir": "path/to/node/dir"
             },
             "default2": {
                 "type": "biophysical",
-                "spatial_index_dir": "path/to/node/dir2"
+                "spatial_segment_index_dir": "path/to/node/dir2"
             }
         }
       }
@@ -31,11 +31,11 @@
         "populations": {
             "default":{
                 "type": "chemical",
-                "spatial_index_dir": "path/to/edge/dir"
+                "spatial_synapse_index_dir": "path/to/edge/dir"
             },
             "default2":{
                 "type": "chemical",
-                "spatial_index_dir": "path/to/edge/dir2"
+                "spatial_synapse_index_dir": "path/to/edge/dir2"
             }
         }
       }

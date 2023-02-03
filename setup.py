@@ -59,7 +59,6 @@ setup(
     extras_require={
         "docs": ["sphinx", "sphinx-bluebrain-theme"],
         "plots": ["matplotlib>=3.0.0"],
-        "tools": ["bglibpy>=4.4.26"],
         "spatial-index": ["spatial-index>=1.2.1,<2.0"],
     },
     packages=find_packages(),

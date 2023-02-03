@@ -574,14 +574,6 @@ class NodePopulation:
                 return node_conf["nodes_file"]
         raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
 
-    @property
-    def _spatial_index_dir(self):
-        for edge_conf in self._circuit.config["networks"]["nodes"]:
-            if self.name in edge_conf["populations"]:
-                return edge_conf["populations"][self.name]["spatial_index_dir"]
-
-        raise BluepySnapError(f"spatial_index_dir not found for population '{self.name}'")
-
     @cached_property
     def spatial_index(self):
         """Access to edges spatial index."""
@@ -590,9 +582,9 @@ class NodePopulation:
         except ImportError as e:
             raise BluepySnapError(
                 (
-                    "Spatial index is for now only available internaly to BBP. ",
+                    "Spatial index is for now only available internally to BBP. ",
                     "It requires `spatial_index`, an internal package.",
                 )
             ) from e
 
-        return open_index(self._spatial_index_dir)
+        return open_index(self.population_config["spatial_segment_index_dir"])
