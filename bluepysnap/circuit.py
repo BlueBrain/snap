@@ -53,14 +53,14 @@ class Circuit:
     def get_node_population_config(self, name):
         """Get node population configuration."""
         try:
-            return self._config.populations["node"][name]
+            return self._config.node_populations[name]
         except KeyError as e:
             raise BluepySnapError(f"Population config not found for node population: {name}") from e
 
     def get_edge_population_config(self, name):
         """Get edge population configuration."""
         try:
-            return self._config.populations["edge"][name]
+            return self._config.edge_populations[name]
         except KeyError as e:
             raise BluepySnapError(f"Population config not found for edge population: {name}") from e
 

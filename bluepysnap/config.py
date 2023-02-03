@@ -175,9 +175,15 @@ class CircuitConfig(Config):
         return cls(config_path, libsonata.CircuitConfig)
 
     @property
-    def populations(self):
-        """Access population configs."""
-        return self._populations
+    def node_populations(self):
+        """Access node population configs."""
+        return self._populations['nodes']
+
+    @property
+    def edge_populations(self):
+        """Access edge population configs."""
+        return self._populations['edges']
+
 
     # NOTE: These are parsed here to keep Parser returning the exact parsed configuration.
     def _resolve_population_configs(self):
@@ -205,8 +211,8 @@ class CircuitConfig(Config):
             return populations
 
         return {
-            "node": resolve_network_populations("nodes"),
-            "edge": resolve_network_populations("edges"),
+            "nodes": resolve_network_populations("nodes"),
+            "edges": resolve_network_populations("edges"),
         }
 
 
