@@ -583,11 +583,11 @@ class EdgePopulation:
         """Access to edges spatial index."""
         try:
             from spatial_index import open_index
-        except ImportError as e:
+        except (ImportError, ModuleNotFoundError) as e:
             raise BluepySnapError(
                 (
-                    "Spatial index is for now only available internally to BBP. ",
-                    "It requires `spatial_index`, an internal package.",
+                    "Spatial index is for now only available internally to BBP. "
+                    "It requires `spatial_index`, an internal package."
                 )
             ) from e
 

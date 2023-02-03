@@ -8,7 +8,7 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-import bluepysnap.edges as test_module
+import bluepysnap.edges.edge_population as test_module
 from bluepysnap.bbp import Synapse
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeIds
@@ -641,6 +641,10 @@ class TestEdgePopulation:
 
     def test_spatial_index_error(self):
         with pytest.raises(
-            BluepySnapError, match="Spatial index is for now only available internaly to BBP."
+            BluepySnapError,
+            match=(
+                "Spatial index is for now only available internally to BBP. "
+                "It requires `spatial_index`, an internal package."
+            ),
         ):
             self.test_obj.spatial_index
