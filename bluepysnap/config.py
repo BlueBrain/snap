@@ -167,7 +167,7 @@ class CircuitConfig(Config):
     def __init__(self, *args):
         """Initializes circuit config."""
         super().__init__(*args)
-        self._populations = self._resolve_population_configs()
+        self._populations = self._resolve_population_configs(self.to_dict())
 
     @classmethod
     def from_config(cls, config_path):
@@ -177,18 +177,18 @@ class CircuitConfig(Config):
     @property
     def node_populations(self):
         """Access node population configs."""
-        return self._populations['nodes']
+        return self._populations["nodes"]
 
     @property
     def edge_populations(self):
         """Access edge population configs."""
-        return self._populations['edges']
-
+        return self._populations["edges"]
 
     # NOTE: These are parsed here to keep Parser returning the exact parsed configuration.
-    def _resolve_population_configs(self):
+
+    @staticmethod
+    def _resolve_population_configs(config):
         """Resolves population configs for the node and edge populations."""
-        config = self.to_dict()
         networks = config.get("networks") or {}
         components = config.get("components") or {}
 
