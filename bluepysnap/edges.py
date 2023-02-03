@@ -118,7 +118,9 @@ class EdgePopulation:
     def population_config(self):
         """Access the configuration for the population.
 
-        This configuration is extended the filepath to the h5 file containing the population.
+        This configuration is extended with
+        * 'components' of the circuit config
+        * 'edges_file': the path the h5 file containing the population.
         """
         return self._circuit.get_edge_population_config(self.name)
 
