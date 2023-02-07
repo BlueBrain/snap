@@ -1,4 +1,4 @@
 """Nodes and NodePopulation objects."""
 
-from .node_population import NodePopulation
-from .nodes import Nodes
+from bluepysnap.nodes.node_population import NodePopulation
+from bluepysnap.nodes.nodes import Nodes
