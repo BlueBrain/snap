@@ -17,6 +17,7 @@
 
 """SONATA network config parsing."""
 
+import copy
 import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
@@ -163,10 +164,54 @@ class Config:
 class CircuitConfig(Config):
     """Handle CircuitConfig."""
 
+    def __init__(self, *args):
+        """Initializes circuit config."""
+        super().__init__(*args)
+        self._populations = self._resolve_population_configs(self.to_dict())
+
     @classmethod
     def from_config(cls, config_path):
         """Instantiate the config class from circuit configuration."""
         return cls(config_path, libsonata.CircuitConfig)
+
+    @property
+    def node_populations(self):
+        """Access node population configs."""
+        return self._populations["nodes"]
+
+    @property
+    def edge_populations(self):
+        """Access edge population configs."""
+        return self._populations["edges"]
+
+    @staticmethod
+    def _resolve_population_configs(config):
+        """Resolves population configs for the node and edge populations."""
+        networks = config.get("networks") or {}
+        components = config.get("components") or {}
+
+        def resolve_network_populations(element_type):
+            populations = {}
+            type_file_key = f"{element_type}_file"
+            element_dicts = networks.get(element_type) or []
+
+            for elem_dict in element_dicts:
+                elem_pops = elem_dict.get("populations") or {}
+
+                for pop, cfg in elem_pops.items():
+                    populations[pop] = copy.deepcopy(components)
+                    populations[pop].update(cfg or {})
+
+                    # add h5 filepath for simpler access
+                    if type_file_key in elem_dict:
+                        populations[pop][type_file_key] = elem_dict[type_file_key]
+
+            return populations
+
+        return {
+            "nodes": resolve_network_populations("nodes"),
+            "edges": resolve_network_populations("edges"),
+        }
 
 
 class SimulationConfig(Config):

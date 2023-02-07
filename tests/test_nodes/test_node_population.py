@@ -599,11 +599,6 @@ class TestNodePopulation:
     def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
 
-    def test_no_h5_filepath(self):
-        with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
-            self.test_obj.name = "fake"
-            self.test_obj.h5_filepath
-
     def test_spatial_index_dir(self):
         assert self.test_obj._spatial_index_dir == "path/to/node/dir"
 

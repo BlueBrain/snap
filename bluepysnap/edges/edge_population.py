@@ -113,6 +113,16 @@ class EdgePopulation:
         return {Edge.SOURCE_NODE_ID, Edge.TARGET_NODE_ID}
 
     @property
+    def population_config(self):
+        """Access the configuration for the population.
+
+        This configuration is extended with
+        * 'components' of the circuit config
+        * 'edges_file': the path the h5 file containing the population.
+        """
+        return self._circuit.get_edge_population_config(self.name)
+
+    @property
     def property_names(self):
         """Set of available edge properties.
 
@@ -562,13 +572,10 @@ class EdgePopulation:
             omit_edge_count = lambda x: x[:2]
             return map(omit_edge_count, it)
 
-    @cached_property
+    @property
     def h5_filepath(self):
         """Get the H5 edges file associated with population."""
-        for edge_conf in self._circuit.config["networks"]["edges"]:
-            if self.name in edge_conf["populations"]:
-                return edge_conf["edges_file"]
-        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
+        return self.population_config["edges_file"]
 
     @cached_property
     def spatial_index(self):
