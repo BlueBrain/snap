@@ -184,7 +184,6 @@ class CircuitConfig(Config):
         """Access edge population configs."""
         return self._populations["edges"]
 
-
     @staticmethod
     def _resolve_population_configs(config):
         """Resolves population configs for the node and edge populations."""
