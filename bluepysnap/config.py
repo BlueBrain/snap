@@ -184,7 +184,6 @@ class CircuitConfig(Config):
         """Access edge population configs."""
         return self._populations["edges"]
 
-    # NOTE: These are parsed here to keep Parser returning the exact parsed configuration.
 
     @staticmethod
     def _resolve_population_configs(config):
