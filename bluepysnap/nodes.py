@@ -128,6 +128,16 @@ class NodePopulation:
         )
 
     @property
+    def population_config(self):
+        """Access the configuration for the population.
+
+        This configuration is extended with
+        * 'components' of the circuit config
+        * 'nodes_file': the path the h5 file containing the population.
+        """
+        return self._circuit.get_node_population_config(self.name)
+
+    @property
     def property_names(self):
         """Set of available node properties.
 
@@ -568,13 +578,10 @@ class NodePopulation:
 
         return NeuronModelsHelper(self._properties, self)
 
-    @cached_property
+    @property
     def h5_filepath(self):
         """Get the H5 nodes file associated with population."""
-        for node_conf in self._circuit.config["networks"]["nodes"]:
-            if self.name in node_conf["populations"]:
-                return node_conf["nodes_file"]
-        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
+        return self.population_config["nodes_file"]
 
 
 class Nodes(

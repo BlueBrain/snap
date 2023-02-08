@@ -692,7 +692,6 @@ class TestEdges:
         )
 
     def test_pair_edges(self):
-
         # no connection between 0 and 2
         assert self.test_obj.pair_edges(0, 2, None) == CircuitEdgeIds.from_arrays([], [])
         actual = self.test_obj.pair_edges(0, 2, [Synapse.AXONAL_DELAY])
@@ -1394,8 +1393,3 @@ class TestEdgePopulation:
 
     def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
-
-    def test_no_h5_filepath(self):
-        with pytest.raises(BluepySnapError, match="h5_filepath not found for population"):
-            self.test_obj.name = "fake"
-            self.test_obj.h5_filepath

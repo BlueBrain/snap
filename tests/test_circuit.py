@@ -5,6 +5,7 @@ from libsonata import SonataError
 
 import bluepysnap.circuit as test_module
 from bluepysnap.edges import EdgePopulation, Edges
+from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.nodes import NodePopulation, Nodes
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config, skip_if_libsonata_0_1_16
@@ -27,6 +28,16 @@ def test_all():
     assert sorted(circuit.node_sets) == sorted(
         json.loads((TEST_DATA_DIR / "node_sets.json").read_text())
     )
+
+    fake_pop = "fake"
+    with pytest.raises(
+        BluepySnapError, match=f"Population config not found for node population: {fake_pop}"
+    ):
+        circuit.get_node_population_config(fake_pop)
+    with pytest.raises(
+        BluepySnapError, match=f"Population config not found for edge population: {fake_pop}"
+    ):
+        circuit.get_edge_population_config(fake_pop)
 
 
 @skip_if_libsonata_0_1_16

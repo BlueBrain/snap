@@ -155,3 +155,48 @@ def test_simulation_config():
     )
     assert actual["conditions"]["celsius"] == 34.0
     assert actual["conditions"]["v_init"] == -80
+
+
+def test__resolve_population_configs():
+    node = {
+        "nodes_file": "nodes_path",
+        "populations": {"node_pop": {"changed_node": "changed", "added_this": "node_test"}},
+    }
+
+    edge = {
+        "edges_file": "edges_path",
+        "populations": {"edge_pop": {"changed_edge": "changed", "added_this": "edge_test"}},
+    }
+
+    config = {
+        "components": {
+            "unchanged": True,
+            "changed_node": "unchanged",
+            "changed_edge": "unchanged",
+        },
+        "networks": {
+            "nodes": [node],
+            "edges": [edge],
+        },
+    }
+    expected_node_pop = {
+        "unchanged": True,
+        "changed_node": "changed",
+        "changed_edge": "unchanged",
+        "added_this": "node_test",
+        "nodes_file": "nodes_path",
+    }
+    expected_edge_pop = {
+        "unchanged": True,
+        "changed_node": "unchanged",
+        "changed_edge": "changed",
+        "added_this": "edge_test",
+        "edges_file": "edges_path",
+    }
+    expected = {
+        "nodes": {"node_pop": expected_node_pop},
+        "edges": {"edge_pop": expected_edge_pop},
+    }
+    res = test_module.CircuitConfig._resolve_population_configs(config)
+
+    assert res == expected
