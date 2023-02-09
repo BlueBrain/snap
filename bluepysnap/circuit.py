@@ -21,6 +21,7 @@ from cached_property import cached_property
 
 from bluepysnap.config import CircuitConfig
 from bluepysnap.edges import Edges
+from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.nodes import Nodes
 
@@ -48,6 +49,20 @@ class Circuit:
     def config(self):
         """Network config dictionary."""
         return self._config.to_dict()
+
+    def get_node_population_config(self, name):
+        """Get node population configuration."""
+        try:
+            return self._config.node_populations[name]
+        except KeyError as e:
+            raise BluepySnapError(f"Population config not found for node population: {name}") from e
+
+    def get_edge_population_config(self, name):
+        """Get edge population configuration."""
+        try:
+            return self._config.edge_populations[name]
+        except KeyError as e:
+            raise BluepySnapError(f"Population config not found for edge population: {name}") from e
 
     @cached_property
     def node_sets(self):
