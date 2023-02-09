@@ -578,7 +578,7 @@ class EdgePopulation:
         return self.population_config["edges_file"]
 
     @cached_property
-    def spatial_index(self):
+    def spatial_synapse_index(self):
         """Access to edges spatial index."""
         try:
             from spatial_index import open_index

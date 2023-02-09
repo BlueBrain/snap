@@ -582,7 +582,7 @@ class NodePopulation:
         return self.population_config["nodes_file"]
 
     @cached_property
-    def spatial_index(self):
+    def spatial_segment_index(self):
         """Access to edges spatial index."""
         try:
             from spatial_index import open_index

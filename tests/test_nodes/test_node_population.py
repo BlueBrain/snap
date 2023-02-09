@@ -600,18 +600,18 @@ class TestNodePopulation:
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
 
     @pytest.mark.skip(reason="Until spatial-index is released publicly")
-    def test_spatial_index(self):
+    def test_spatial_segment_index(self):
         with mock.patch("spatial_index.open_index") as mock_open_index:
-            self.test_obj.spatial_index
+            self.test_obj.spatial_segment_index
         mock_open_index.assert_called_once_with("path/to/node/dir")
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
-    def test_spatial_index_call(self):
-        self.test_obj.spatial_index
+    def test_spatial_segment_index_call(self):
+        self.test_obj.spatial_segment_index
         sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/node/dir")
 
-    def test_spatial_index_error(self):
+    def test_spatial_segment_index_error(self):
         with pytest.raises(
             BluepySnapError, match="Spatial index is for now only available internally to BBP."
         ):
-            self.test_obj.spatial_index
+            self.test_obj.spatial_segment_index

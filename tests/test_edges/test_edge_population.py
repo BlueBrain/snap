@@ -617,17 +617,17 @@ class TestEdgePopulation:
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
 
     @pytest.mark.skip(reason="Until spatial-index is released publicly")
-    def test_spatial_index(self):
+    def test_spatial_synapse_index(self):
         with mock.patch("spatial_index.open_index") as mock_open_index:
-            self.test_obj.spatial_index
+            self.test_obj.spatial_synapse_index
         mock_open_index.assert_called_once_with("path/to/edge/dir")
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
-    def test_spatial_index_call(self):
-        self.test_obj.spatial_index
+    def test_spatial_synapse_index_call(self):
+        self.test_obj.spatial_synapse_index
         sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/edge/dir")
 
-    def test_spatial_index_error(self):
+    def test_spatial_synapse_index_error(self):
         with pytest.raises(
             BluepySnapError,
             match=(
@@ -635,4 +635,4 @@ class TestEdgePopulation:
                 "It requires `spatial_index`, an internal package."
             ),
         ):
-            self.test_obj.spatial_index
+            self.test_obj.spatial_synapse_index
