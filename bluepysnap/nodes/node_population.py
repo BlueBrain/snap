@@ -578,8 +578,4 @@ class NodePopulation:
 
     @property
     def h5_filepath(self):
-        """Get the H5 nodes file associated with population."""
-        for node_conf in self._circuit.config["networks"]["nodes"]:
-            if self.name in node_conf["populations"]:
-                return node_conf["nodes_file"]
-        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
+        return self.population_config["nodes_file"]

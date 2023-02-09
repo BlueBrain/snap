@@ -574,8 +574,4 @@ class EdgePopulation:
 
     @property
     def h5_filepath(self):
-        """Get the H5 edges file associated with population."""
-        for edge_conf in self._circuit.config["networks"]["edges"]:
-            if self.name in edge_conf["populations"]:
-                return edge_conf["edges_file"]
-        raise BluepySnapError(f"h5_filepath not found for population '{self.name}'")
+        return self.population_config["edges_file"]
