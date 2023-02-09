@@ -578,4 +578,5 @@ class NodePopulation:
 
     @property
     def h5_filepath(self):
+        """Get the H5 nodes file associated with population."""
         return self.population_config["nodes_file"]

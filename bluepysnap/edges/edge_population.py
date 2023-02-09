@@ -574,4 +574,5 @@ class EdgePopulation:
 
     @property
     def h5_filepath(self):
+        """Get the H5 edges file associated with population."""
         return self.population_config["edges_file"]
