@@ -12,7 +12,7 @@ from utils import TEST_DATA_DIR, copy_test_data, edit_config, skip_if_libsonata_
 
 
 def test_all():
-    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
+    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config_spatial_index.json"))
     assert circuit.config["networks"]["nodes"][0] == {
         "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
         "populations": {

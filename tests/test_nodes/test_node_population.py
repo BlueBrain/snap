@@ -607,11 +607,23 @@ class TestNodePopulation:
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
     def test_spatial_segment_index_call(self):
-        self.test_obj.spatial_segment_index
-        sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/node/dir")
+        with pytest.raises(KeyError):
+            self.test_obj.spatial_segment_index
+            sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/node/dir")
 
     def test_spatial_segment_index_error(self):
         with pytest.raises(
             BluepySnapError, match="Spatial index is for now only available internally to BBP."
         ):
             self.test_obj.spatial_segment_index
+
+
+class TestNodePopulationSpatialIndex(TestNodePopulation):
+    def setup_method(self):
+        self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config_spatial_index.json")).nodes["default"]
+
+
+    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
+    def test_spatial_segment_index_call(self):
+        self.test_obj.spatial_segment_index
+        sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/node/dir")

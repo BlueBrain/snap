@@ -624,9 +624,9 @@ class TestEdgePopulation:
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
     def test_spatial_synapse_index_call(self):
-        self.test_obj.spatial_synapse_index
-        sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/edge/dir")
-
+        with pytest.raises(KeyError):
+            self.test_obj.spatial_synapse_index
+    
     def test_spatial_synapse_index_error(self):
         with pytest.raises(
             BluepySnapError,
@@ -636,3 +636,15 @@ class TestEdgePopulation:
             ),
         ):
             self.test_obj.spatial_synapse_index
+
+
+class TestEdgePopulationSpatialIndex(TestEdgePopulation):
+    def setup_method(self):
+        self.test_obj = TestEdgePopulation.get_edge_population(
+            str(TEST_DATA_DIR / "circuit_config_spatial_index.json"), "default"
+        )
+
+    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
+    def test_spatial_synapse_index_call(self):
+        self.test_obj.spatial_synapse_index
+        sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/edge/dir")

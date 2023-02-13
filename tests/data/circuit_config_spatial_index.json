@@ -15,10 +15,12 @@
         "nodes_file": "$NETWORK_DIR/nodes.h5",
         "populations": {
             "default": {
-                "type": "biophysical"
+                "type": "biophysical",
+                "spatial_segment_index_dir": "path/to/node/dir"
             },
             "default2": {
-                "type": "biophysical"
+                "type": "biophysical",
+                "spatial_segment_index_dir": "path/to/node/dir2"
             }
         }
       }
@@ -28,10 +30,12 @@
         "edges_file": "$NETWORK_DIR/edges.h5",
         "populations": {
             "default":{
-                "type": "chemical"
+                "type": "chemical",
+                "spatial_synapse_index_dir": "path/to/edge/dir"
             },
             "default2":{
-                "type": "chemical"
+                "type": "chemical",
+                "spatial_synapse_index_dir": "path/to/edge/dir2"
             }
         }
       }
