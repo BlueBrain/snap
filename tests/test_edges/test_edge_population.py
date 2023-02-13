@@ -626,7 +626,7 @@ class TestEdgePopulation:
     def test_spatial_synapse_index_call(self):
         with pytest.raises(KeyError):
             self.test_obj.spatial_synapse_index
-    
+
     def test_spatial_synapse_index_error(self):
         with pytest.raises(
             BluepySnapError,
