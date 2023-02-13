@@ -7,6 +7,7 @@ Version v1.0.1
 New Features
 ~~~~~~~~~~~~
 - Access the population configs for node/edge populations via population_config property
+- Spatial index for segments and synapses
 
 Version v1.0.0
 --------------
