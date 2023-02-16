@@ -12,12 +12,12 @@ from utils import TEST_DATA_DIR, copy_test_data, edit_config, skip_if_libsonata_
 
 
 def test_all():
-    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config_spatial_index.json"))
+    circuit = test_module.Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
     assert circuit.config["networks"]["nodes"][0] == {
         "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
         "populations": {
-            "default": {"type": "biophysical", "spatial_segment_index_dir": "path/to/node/dir"},
-            "default2": {"type": "biophysical", "spatial_segment_index_dir": "path/to/node/dir2"},
+            "default": {"type": "biophysical"},
+            "default2": {"type": "biophysical", "spatial_segment_index_dir": "path/to/node/dir"},
         },
     }
     assert isinstance(circuit.nodes, Nodes)

@@ -638,10 +638,10 @@ class TestEdgePopulation:
             self.test_obj.spatial_synapse_index
 
 
-class TestEdgePopulationSpatialIndex(TestEdgePopulation):
+class TestEdgePopulationSpatialIndex:
     def setup_method(self):
         self.test_obj = TestEdgePopulation.get_edge_population(
-            str(TEST_DATA_DIR / "circuit_config_spatial_index.json"), "default"
+            str(TEST_DATA_DIR / "circuit_config.json"), "default2"
         )
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})

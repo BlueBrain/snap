@@ -618,10 +618,10 @@ class TestNodePopulation:
             self.test_obj.spatial_segment_index
 
 
-class TestNodePopulationSpatialIndex(TestNodePopulation):
+class TestNodePopulationSpatialIndex:
     def setup_method(self):
-        self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config_spatial_index.json")).nodes[
-            "default"
+        self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes[
+            "default2"
         ]
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
