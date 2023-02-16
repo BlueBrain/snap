@@ -624,7 +624,10 @@ class TestEdgePopulation:
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
     def test_spatial_synapse_index_call(self):
-        with pytest.raises(KeyError):
+        with pytest.raises(
+            BluepySnapError,
+            match="Spatial synapse index directory not found for population default",
+        ):
             self.test_obj.spatial_synapse_index
 
     def test_spatial_synapse_index_error(self):

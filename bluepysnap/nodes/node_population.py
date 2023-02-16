@@ -594,4 +594,9 @@ class NodePopulation:
                 )
             ) from e
 
-        return open_index(self.population_config["spatial_segment_index_dir"])
+        try:
+            return open_index(self.population_config["spatial_segment_index_dir"])
+        except KeyError as e:
+            raise BluepySnapError(
+                f"Spatial segment index directory not found for population {self.name}"
+            ) from e

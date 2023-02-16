@@ -590,4 +590,9 @@ class EdgePopulation:
                 )
             ) from e
 
-        return open_index(self.population_config["spatial_synapse_index_dir"])
+        try:
+            return open_index(self.population_config["spatial_synapse_index_dir"])
+        except KeyError as e:
+            raise BluepySnapError(
+                f"Spatial synapse index directory not found for population {self.name}"
+            ) from e
