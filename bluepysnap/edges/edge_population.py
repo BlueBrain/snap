@@ -113,7 +113,7 @@ class EdgePopulation:
         return {Edge.SOURCE_NODE_ID, Edge.TARGET_NODE_ID}
 
     @property
-    def population_config(self):
+    def config(self):
         """Access the configuration for the population.
 
         This configuration is extended with
@@ -575,4 +575,4 @@ class EdgePopulation:
     @property
     def h5_filepath(self):
         """Get the H5 edges file associated with population."""
-        return self.population_config["edges_file"]
+        return self.config["edges_file"]

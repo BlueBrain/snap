@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version v1.0.2
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Renamed `population_config` to `config` for backwards compatibility
+
 Version v1.0.1
 --------------
 

@@ -126,7 +126,7 @@ class NodePopulation:
         )
 
     @property
-    def population_config(self):
+    def config(self):
         """Access the configuration for the population.
 
         This configuration is extended with
@@ -579,4 +579,4 @@ class NodePopulation:
     @property
     def h5_filepath(self):
         """Get the H5 nodes file associated with population."""
-        return self.population_config["nodes_file"]
+        return self.config["nodes_file"]
