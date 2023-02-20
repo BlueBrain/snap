@@ -17,7 +17,7 @@
             "default": {
                 "type": "biophysical"
               },
-              "default2": {
+            "default2": {
                 "type": "biophysical",
                 "spatial_segment_index_dir": "path/to/node/dir"
             }
@@ -31,7 +31,7 @@
             "default":{
                 "type": "chemical"
               },
-              "default2":{
+            "default2":{
                 "type": "chemical",
                 "spatial_synapse_index_dir": "path/to/edge/dir"
             }

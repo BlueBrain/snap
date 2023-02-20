@@ -591,4 +591,6 @@ class EdgePopulation:
             ) from e
 
         properties = self._circuit.to_libsonata.edge_population_properties(self.name)
+        if not properties.spatial_synapse_index_dir:
+            raise BluepySnapError(f"It appears {self.name} does not have synapse indices")
         return open_index(properties.spatial_synapse_index_dir)

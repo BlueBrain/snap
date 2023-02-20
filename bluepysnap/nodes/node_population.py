@@ -595,4 +595,8 @@ class NodePopulation:
             ) from e
 
         properties = self._circuit.to_libsonata.node_population_properties(self.name)
+
+        if not properties.spatial_segment_index_dir:
+            raise BluepySnapError(f"It appears {self.name} does not have segment indices")
+
         return open_index(properties.spatial_segment_index_dir)

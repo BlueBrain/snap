@@ -605,6 +605,14 @@ class TestNodePopulation:
             self.test_obj.spatial_segment_index
         mock_open_index.assert_called_once_with("path/to/node/dir")
 
+    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
+    def test_spatial_segment_index_call(self):
+        with pytest.raises(
+            BluepySnapError,
+            match="It appears default does not have segment indices",
+        ):
+            self.test_obj.spatial_segment_index
+
     def test_spatial_segment_index_error(self):
         with pytest.raises(
             BluepySnapError, match="Spatial index is for now only available internally to BBP."
