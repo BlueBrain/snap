@@ -16,9 +16,10 @@
         "populations": {
             "default": {
                 "type": "biophysical"
-            },
+              },
             "default2": {
-                "type": "biophysical"
+                "type": "biophysical",
+                "spatial_segment_index_dir": "path/to/node/dir"
             }
         }
       }
@@ -29,9 +30,10 @@
         "populations": {
             "default":{
                 "type": "chemical"
-            },
+              },
             "default2":{
-                "type": "chemical"
+                "type": "chemical",
+                "spatial_synapse_index_dir": "path/to/edge/dir"
             }
         }
       }

@@ -46,7 +46,7 @@ setup(
         "cached_property>=1.0",
         "h5py>=3.0.1,<4.0.0",
         "jsonschema>=4.0.0,<5.0.0",
-        "libsonata>=0.1.16,<1.0.0",
+        "libsonata>=0.1.17,<1.0.0",
         "morphio>=3.0.0,<4.0.0",
         "morph-tool>=2.4.3,<3.0.0",
         "neurom>=1.6",
@@ -59,7 +59,7 @@ setup(
     extras_require={
         "docs": ["sphinx", "sphinx-bluebrain-theme"],
         "plots": ["matplotlib>=3.0.0"],
-        "tools": ["bglibpy>=4.4.26"],
+        "spatial-index": ["spatial-index>=1.2.1,<2.0"],
     },
     packages=find_packages(),
     package_data={

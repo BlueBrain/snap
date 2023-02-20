@@ -1,4 +1,5 @@
 doc/build
+build
 doc/source/submodules
 coverage.xml
 .coverage

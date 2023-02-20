@@ -1,4 +1,6 @@
 import json
+import sys
+from unittest import mock
 
 import numpy as np
 import numpy.testing as npt
@@ -596,3 +598,36 @@ class TestNodePopulation:
 
     def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "nodes.h5")
+
+    @pytest.mark.skip(reason="Until spatial-index is released publicly")
+    def test_spatial_segment_index(self):
+        with mock.patch("spatial_index.open_index") as mock_open_index:
+            self.test_obj.spatial_segment_index
+        mock_open_index.assert_called_once_with("path/to/node/dir")
+
+    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
+    def test_spatial_segment_index_call(self):
+        with pytest.raises(
+            BluepySnapError,
+            match="It appears default does not have segment indices",
+        ):
+            self.test_obj.spatial_segment_index
+
+    def test_spatial_segment_index_error(self):
+        with pytest.raises(
+            BluepySnapError, match="Spatial index is for now only available internally to BBP."
+        ):
+            self.test_obj.spatial_segment_index
+
+
+class TestNodePopulationSpatialIndex:
+    def setup_method(self):
+        self.test_obj = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes["default2"]
+
+    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
+    def test_spatial_segment_index_call(self):
+        self.test_obj.spatial_segment_index
+
+        mock = sys.modules["spatial_index"].open_index
+        assert mock.call_count == 1
+        assert mock.call_args[0][0].endswith("path/to/node/dir")

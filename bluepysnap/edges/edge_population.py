@@ -576,3 +576,21 @@ class EdgePopulation:
     def h5_filepath(self):
         """Get the H5 edges file associated with population."""
         return self.config["edges_file"]
+
+    @cached_property
+    def spatial_synapse_index(self):
+        """Access to edges spatial index."""
+        try:
+            from spatial_index import open_index
+        except ImportError as e:
+            raise BluepySnapError(
+                (
+                    "Spatial index is for now only available internally to BBP. "
+                    "It requires `spatial_index`, an internal package."
+                )
+            ) from e
+
+        properties = self._circuit.to_libsonata.edge_population_properties(self.name)
+        if not properties.spatial_synapse_index_dir:
+            raise BluepySnapError(f"It appears {self.name} does not have synapse indices")
+        return open_index(properties.spatial_synapse_index_dir)

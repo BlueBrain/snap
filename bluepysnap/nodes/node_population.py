@@ -580,3 +580,23 @@ class NodePopulation:
     def h5_filepath(self):
         """Get the H5 nodes file associated with population."""
         return self.config["nodes_file"]
+
+    @cached_property
+    def spatial_segment_index(self):
+        """Access to edges spatial index."""
+        try:
+            from spatial_index import open_index
+        except ImportError as e:
+            raise BluepySnapError(
+                (
+                    "Spatial index is for now only available internally to BBP. ",
+                    "It requires `spatial_index`, an internal package.",
+                )
+            ) from e
+
+        properties = self._circuit.to_libsonata.node_population_properties(self.name)
+
+        if not properties.spatial_segment_index_dir:
+            raise BluepySnapError(f"It appears {self.name} does not have segment indices")
+
+        return open_index(properties.spatial_segment_index_dir)
