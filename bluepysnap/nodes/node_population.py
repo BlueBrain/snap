@@ -594,9 +594,5 @@ class NodePopulation:
                 )
             ) from e
 
-        try:
-            return open_index(self.population_config["spatial_segment_index_dir"])
-        except KeyError as e:
-            raise BluepySnapError(
-                f"Spatial segment index directory not found for population {self.name}"
-            ) from e
+        properties = self._circuit.to_libsonata.node_population_properties(self.name)
+        return open_index(properties.spatial_segment_index_dir)

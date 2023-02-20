@@ -605,15 +605,6 @@ class TestNodePopulation:
             self.test_obj.spatial_segment_index
         mock_open_index.assert_called_once_with("path/to/node/dir")
 
-    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
-    def test_spatial_segment_index_call(self):
-        with pytest.raises(
-            BluepySnapError,
-            match="Spatial segment index directory not found for population default",
-        ):
-            self.test_obj.spatial_segment_index
-            sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/node/dir")
-
     def test_spatial_segment_index_error(self):
         with pytest.raises(
             BluepySnapError, match="Spatial index is for now only available internally to BBP."
@@ -628,4 +619,7 @@ class TestNodePopulationSpatialIndex:
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
     def test_spatial_segment_index_call(self):
         self.test_obj.spatial_segment_index
-        sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/node/dir")
+
+        mock = sys.modules["spatial_index"].open_index
+        assert mock.call_count == 1
+        assert mock.call_args[0][0].endswith("path/to/node/dir")

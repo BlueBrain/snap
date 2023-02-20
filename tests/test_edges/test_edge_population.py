@@ -622,14 +622,6 @@ class TestEdgePopulation:
             self.test_obj.spatial_synapse_index
         mock_open_index.assert_called_once_with("path/to/edge/dir")
 
-    @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
-    def test_spatial_synapse_index_call(self):
-        with pytest.raises(
-            BluepySnapError,
-            match="Spatial synapse index directory not found for population default",
-        ):
-            self.test_obj.spatial_synapse_index
-
     def test_spatial_synapse_index_error(self):
         with pytest.raises(
             BluepySnapError,
@@ -650,4 +642,6 @@ class TestEdgePopulationSpatialIndex:
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})
     def test_spatial_synapse_index_call(self):
         self.test_obj.spatial_synapse_index
-        sys.modules["spatial_index"].open_index.assert_called_once_with("path/to/edge/dir")
+        mock = sys.modules["spatial_index"].open_index
+        assert mock.call_count == 1
+        assert mock.call_args[0][0].endswith("path/to/edge/dir")
