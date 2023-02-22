@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import h5py
+import numpy as np
 import pytest
 
 import bluepysnap.schemas.schemas as test_module
@@ -429,3 +430,15 @@ def test_wrong_datatype(field):
         assert len(errors) == 1
         assert errors[0].level == Error.WARNING
         assert f"incorrect datatype 'int16' for '{field}'" in errors[0].message
+
+
+def test_nodes_schema_types():
+    property_types, dynamics_params = test_module.nodes_schema_types("biophysical")
+    assert "x" in property_types
+    assert property_types["x"] == np.float32
+
+
+def test_edges_schema_types():
+    edge_property_types = test_module.edges_schema_types("chemical", virtual=True)
+    assert "afferent_center_x" in edge_property_types
+    assert edge_property_types["afferent_center_x"] == np.float32

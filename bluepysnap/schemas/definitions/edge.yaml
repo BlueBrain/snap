@@ -49,7 +49,7 @@ $edge_file_defs:
               source_node_id:
                 $ref: "#/$edge_file_defs/edge_node_ids"
 
-              target_node_id:
+              targe_node_id:
                 $ref: "#/$edge_file_defs/edge_node_ids"
 
               edge_type_id:
@@ -57,46 +57,83 @@ $edge_file_defs:
 
               "0":
                 type: object
-                patternProperties:
+                properties:
                   # For docs, these would likely need to be changed actual property names.
                   # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
                   # to keep stuff cleaner as they will be reused anyhow.
-                  ^(a|e)fferent_(center|surface)_(x|y|z)$:
+                  afferent_center_x:
                     $ref: "#/$typedefs/float32"
-                  ^(a|e)fferent_(section|segment|junction)_(id|type)$:
+                  afferent_center_y:
+                    $ref: "#/$typedefs/float32"
+                  afferent_center_z:
+                    $ref: "#/$typedefs/float32"
+
+                  afferent_surface_x:
+                    $ref: "#/$typedefs/float32"
+                  afferent_surface_y:
+                    $ref: "#/$typedefs/float32"
+                  afferent_surface_z:
+                    $ref: "#/$typedefs/float32"
+
+                  afferent_section_id:
                     $ref: "#/$typedefs/uint32"
-                  ^(a|e)fferent_(section|segment)_(pos|offset)$:
-                    $ref: "#/$typedefs/float32"
-                  ^astrocyte_center_(x|y|z)$:
-                    $ref: "#/$typedefs/float32"
-                  ^astrocyte_(section|segment)_id$:
+                  afferent_section_type:
                     $ref: "#/$typedefs/uint32"
-                  ^endfoot_compartment_(length|diameter|perimeter)$:
+                  afferent_section_pos:
                     $ref: "#/$typedefs/float32"
-                  ^endfoot_surface_(x|y|z)$:
+                  afferent_section_offset:
                     $ref: "#/$typedefs/float32"
-                  ^neuromod_(dtc|strength)$:
-                    $ref: "#/$typedefs/float32"
-                  ^vasculature_(section|segment)_id$:
+
+                  afferent_segment_id:
                     $ref: "#/$typedefs/uint32"
-                properties:
-                  astrocyte_section_pos:
+                  afferent_segment_type:
+                    $ref: "#/$typedefs/uint32"
+                  afferent_segment_pos:
                     $ref: "#/$typedefs/float32"
-                  astrocyte_segment_offset:
+                  afferent_segment_offset:
                     $ref: "#/$typedefs/float32"
+
+                  efferent_center_x:
+                    $ref: "#/$typedefs/float32"
+                  efferent_center_y:
+                    $ref: "#/$typedefs/float32"
+                  efferent_center_z:
+                    $ref: "#/$typedefs/float32"
+
+                  efferent_surface_x:
+                    $ref: "#/$typedefs/float32"
+                  efferent_surface_y:
+                    $ref: "#/$typedefs/float32"
+                  efferent_surface_z:
+                    $ref: "#/$typedefs/float32"
+
+                  efferent_section_id:
+                    $ref: "#/$typedefs/uint32"
+                  efferent_section_type:
+                    $ref: "#/$typedefs/uint32"
+                  efferent_section_pos:
+                    $ref: "#/$typedefs/float32"
+                  efferent_section_offset:
+                    $ref: "#/$typedefs/float32"
+
+                  efferent_segment_id:
+                    $ref: "#/$typedefs/uint32"
+                  efferent_segment_type:
+                    $ref: "#/$typedefs/uint32"
+                  efferent_segment_pos:
+                    $ref: "#/$typedefs/float32"
+                  efferent_segment_offset:
+                    $ref: "#/$typedefs/float32"
+
                   conductance:
-                    $ref: "#/$typedefs/float32"
-                  conductance_scale_factor:
                     $ref: "#/$typedefs/float32"
                   decay_time:
                     $ref: "#/$typedefs/float32"
-                  delay:
-                    $ref: "#/$typedefs/float32"
                   depression_time:
                     $ref: "#/$typedefs/float32"
-                  endfoot_id:
-                    $ref: "#/$typedefs/uint64"
                   facilitation_time:
+                    $ref: "#/$typedefs/float32"
+                  u_syn:
                     $ref: "#/$typedefs/float32"
                   n_rrp_vesicles:
                     $ref: "#/$typedefs/uint32"
@@ -108,8 +145,66 @@ $edge_file_defs:
                     $ref: "#/$typedefs/int64"
                   spine_sharding_id:
                     $ref: "#/$typedefs/int64"
+                  conductance_scale_factor:
+                    $ref: "#/$typedefs/float32"
+                  u_hill_coefficient:
+                    $ref: "#/$typedefs/float32"
                   syn_type_id:
                     $ref: "#/$typedefs/uint32"
+                  delay:
+                    $ref: "#/$typedefs/float32"
+
+                  # Connection type is electrical_synapse
+                  afferent_junction_id:
+                    $ref: "#/$typedefs/uint32"
+                  afferent_junction_type:
+                    $ref: "#/$typedefs/uint32"
+                  efferent_junction_id:
+                    $ref: "#/$typedefs/uint32"
+                  efferent_junction_type:
+                    $ref: "#/$typedefs/uint32"
+                  # Connection type is synapse_astrocyte
+                  astrocyte_section_id:
+                    $ref: "#/$typedefs/uint32"
+                  astrocyte_segment_id:
+                    $ref: "#/$typedefs/uint32"
+                  astrocyte_section_pos:
+                    $ref: "#/$typedefs/float32"
+                  astrocyte_segment_offset:
+                    $ref: "#/$typedefs/float32"
+                  astrocyte_center_x:
+                    $ref: "#/$typedefs/float32"
+                  astrocyte_center_y:
+                    $ref: "#/$typedefs/float32"
+                  astrocyte_center_z:
+                    $ref: "#/$typedefs/float32"
+
+                  # Connection type is neuromodulatory.
+                  neuromod_dtc:
+                    $ref: "#/$typedefs/float32"
+                  neuromod_strength:
+                    $ref: "#/$typedefs/float32"
+
+                  # Connection type is endfoot.
+                  endfoot_id:
+                    $ref: "#/$typedefs/uint64"
+                  endfoot_surface_x:
+                    $ref: "#/$typedefs/float32"
+                  endfoot_surface_y:
+                    $ref: "#/$typedefs/float32"
+                  endfoot_surface_z:
+                    $ref: "#/$typedefs/float32"
+                  endfoot_compartment_length:
+                    $ref: "#/$typedefs/float32"
+                  endfoot_compartment_diameter:
+                    $ref: "#/$typedefs/float32"
+                  endfoot_compartment_perimeter:
+                    $ref: "#/$typedefs/float32"
+                  vasculature_section_id:
+                    $ref: "#/$typedefs/uint32"
+                  vasculature_segment_id:
+                    $ref: "#/$typedefs/uint32"
+
                   synapse_id:
                     $ref: "#/$typedefs/uint64"
                     required:
@@ -122,10 +217,7 @@ $edge_file_defs:
                         properties:
                           edge_population:
                             type: string
-                  u_hill_coefficient:
-                    $ref: "#/$typedefs/float32"
-                  u_syn:
-                    $ref: "#/$typedefs/float32"
+
                   "@library":
                     type: object
                     patternProperties:
