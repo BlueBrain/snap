@@ -313,7 +313,8 @@ class NodePopulation:
         """Node IDs corresponding to node ``group``.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): see :ref:`Group Concept`
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None):
+                See :ref:`Group Concept`
             sample (int): If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
                 the size of the NodePopulation then all ids are taken and shuffled.
@@ -375,7 +376,8 @@ class NodePopulation:
         """Node properties as a pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): see :ref:`Group Concept`
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None):
+                see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise return all properties.
 
