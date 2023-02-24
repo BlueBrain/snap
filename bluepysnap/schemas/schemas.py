@@ -252,7 +252,7 @@ def edges_schema_types(edges_type, virtual):
     """Get the datatypes of the attribute for nodes.
 
     Args:
-        nodes_type (str): node type (e.g., "chemical")
+        edges_type (str): edges type (e.g., "chemical")
         virtual(bool): whether this a virtual edge population
 
     Returns:

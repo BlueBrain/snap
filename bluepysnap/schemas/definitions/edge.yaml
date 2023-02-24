@@ -49,7 +49,7 @@ $edge_file_defs:
               source_node_id:
                 $ref: "#/$edge_file_defs/edge_node_ids"
 
-              targe_node_id:
+              target_node_id:
                 $ref: "#/$edge_file_defs/edge_node_ids"
 
               edge_type_id:
