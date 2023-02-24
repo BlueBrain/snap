@@ -15,7 +15,48 @@
 # along with this library; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""Node population access."""
+"""Node population access.
+
+Group Concept
+=============
+
+A `Group` is a flexible way to address a series of node IDs, it can take the form of:
+
+- ``int``, ``CircuitNodeId``: return a single node ID if it belongs to the circuit.
+- ``CircuitNodeIds`` return IDs of nodes from the node population in an array.
+- ``sequence``: return IDs of nodes in an array.
+- ``str``: return IDs of nodes in a node set.
+- ``mapping``: return IDs of nodes matching a properties filter.
+- ``None``: return all node IDs.
+
+If ``group`` is a ``sequence``, the order of results is preserved.
+Otherwise the result is sorted and contains no duplicates.
+
+Examples:
+    The available group parameter values:
+
+    >>> nodes.ids(group=None)  #  returns all IDs
+    >>> nodes.ids(group={})  #  returns all IDs
+    >>> nodes.ids(group=1)  #  returns the single ID if present in population
+    >>> #  returns the single ID if present in population and the circuit id population
+    >>> #  corresponds to nodes.name
+    >>> nodes.ids(group=CircuitNodeId('pop', 1))
+    >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
+    >>> #  returns list of IDs if all present in population
+    >>> nodes.ids(group=CircuitNodeIds.from_dict({"pop": [0, 1,2]}))
+    >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
+    >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
+    >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
+    >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+    >>> # returns list of IDs matching one of the queries inside the 'or' list
+    >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
+    >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+    >>> # returns list of IDs matching all the queries inside the 'and' list
+    >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
+    >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
+
+    See more examples in ``NodePopulation::get``
+"""
 import inspect
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
@@ -272,19 +313,7 @@ class NodePopulation:
         """Node IDs corresponding to node ``group``.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which IDs will be
-                returned depends on the type of the ``group`` argument:
-
-                - ``int``, ``CircuitNodeId``: return a single node ID if it belongs to the circuit.
-                - ``CircuitNodeIds`` return IDs of nodes from the node population in an array.
-                - ``sequence``: return IDs of nodes in an array.
-                - ``str``: return IDs of nodes in a node set.
-                - ``mapping``: return IDs of nodes matching a properties filter.
-                - ``None``: return all node IDs.
-
-                If ``group`` is a ``sequence``, the order of results is preserved.
-                Otherwise the result is sorted and contains no duplicates.
-
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): see :ref:`Group Concept`
             sample (int): If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
                 the size of the NodePopulation then all ids are taken and shuffled.
@@ -298,29 +327,6 @@ class NodePopulation:
 
         Returns:
             numpy.array: A numpy array of IDs.
-
-        Examples:
-            The available group parameter values:
-
-            >>> nodes.ids(group=None)  #  returns all IDs
-            >>> nodes.ids(group={})  #  returns all IDs
-            >>> nodes.ids(group=1)  #  returns the single ID if present in population
-            >>> #  returns the single ID if present in population and the circuit id population
-            >>> #  corresponds to nodes.name
-            >>> nodes.ids(group=CircuitNodeId('pop', 1))
-            >>> nodes.ids(group=[1,2,3])  # returns list of IDs if all present in population
-            >>> #  returns list of IDs if all present in population
-            >>> nodes.ids(group=CircuitNodeIds.from_dict({"pop": [0, 1,2]}))
-            >>> nodes.ids(group="node_set_name")  # returns list of IDs matching node set
-            >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
-            >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
-            >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
-            >>> # returns list of IDs matching one of the queries inside the 'or' list
-            >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
-            >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
-            >>> # returns list of IDs matching all the queries inside the 'and' list
-            >>> nodes.ids(group={'$and': [{ Node.LAYER: [2, 3]},
-            >>>                           { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
         """
         # pylint: disable=too-many-branches
         preserve_order = False
@@ -369,16 +375,7 @@ class NodePopulation:
         """Node properties as a pandas Series or DataFrame.
 
         Args:
-            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): Which nodes will
-                have their properties returned depends on the type of the ``group`` argument:
-
-                - ``int``, ``CircuitNodeId``: return the properties of a single node.
-                - ``CircuitNodeIds`` return the properties from a NodeCircuitNodeIds.
-                - ``sequence``: return the properties from a list of node.
-                - ``str``: return the properties of nodes in a node set.
-                - ``mapping``: return the properties of nodes matching a properties filter.
-                - ``None``: return the properties of all nodes.
-
+            group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None): see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise return all properties.
 

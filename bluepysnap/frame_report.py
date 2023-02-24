@@ -80,7 +80,7 @@ class PopulationFrameReport:
         """Fetch data from the report.
 
         Args:
-            group (None/int/list/np.array/dict): Get frames filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get frames filtered by group. See :ref:`Group Concept`.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
 
@@ -130,7 +130,7 @@ class FilteredFrameReport:
 
         Args:
             frame_report (FrameReport): The FrameReport to filter.
-            group (None/int/list/np.array/dict): Get frames filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get frames filtered by group. See :ref:`Group Concept`.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
 
@@ -272,7 +272,7 @@ class FrameReport:
         from all the populations of a report.
 
         Args:
-            group (None/int/list/np.array/dict): Get frames filtered by group. See NodePopulation.
+            group (None/int/list/np.array/dict): Get frames filtered by group. See :ref:`Group Concept`.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
 
