@@ -23,8 +23,10 @@ version = release
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -69,3 +71,7 @@ autodoc_mock_imports = ["neurom", "libsonata"]
 
 # autosummary settings
 autosummary_generate = True
+
+suppress_warnings = [
+    "autosectionlabel.*",
+]

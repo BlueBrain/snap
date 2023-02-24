@@ -5,6 +5,7 @@ Circuits
 
 .. autosummary::
    :toctree: submodules
+   :recursive:
 
    circuit
    config
