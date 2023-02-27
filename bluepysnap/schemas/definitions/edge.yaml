@@ -58,9 +58,6 @@ $edge_file_defs:
               "0":
                 type: object
                 properties:
-                  # For docs, these would likely need to be changed actual property names.
-                  # Best probably combine each to a definition like "#/edge_field_defs/..._xyz"
-                  # to keep stuff cleaner as they will be reused anyhow.
                   afferent_center_x:
                     $ref: "#/$typedefs/float32"
                   afferent_center_y:

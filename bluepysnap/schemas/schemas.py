@@ -194,7 +194,7 @@ def validate_edges_schema(path, edges_type, virtual):
     Args:
         path (str): path to the edges file
         edges_type (str): edge type (e.g., "chemical")
-        virtual(bool): whether this a virtual edge population
+        virtual(bool): whether this is a virtual edge population
 
     Returns:
         list: List of errors, empty if no errors
@@ -253,7 +253,7 @@ def edges_schema_types(edges_type, virtual):
 
     Args:
         edges_type (str): edges type (e.g., "chemical")
-        virtual(bool): whether this a virtual edge population
+        virtual(bool): whether this is a virtual edge population
 
     Returns:
         dict: name -> type of column
