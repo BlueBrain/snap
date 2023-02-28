@@ -35,6 +35,30 @@ $node_file_defs:
                         $ref: "#/$typedefs/float32"
                       threshold_current:
                         $ref: "#/$typedefs/float32"
+
+                  x:
+                    $ref: "#/$typedefs/float32"
+                  y:
+                    $ref: "#/$typedefs/float32"
+                  z:
+                    $ref: "#/$typedefs/float32"
+
+                  orientation_w:
+                    $ref: "#/$typedefs/float32"
+                  orientation_x:
+                    $ref: "#/$typedefs/float32"
+                  orientation_y:
+                    $ref: "#/$typedefs/float32"
+                  orientation_z:
+                    $ref: "#/$typedefs/float32"
+
+                  rotation_angle_xaxis:
+                    $ref: "#/$typedefs/float32"
+                  rotation_angle_yaxis:
+                    $ref: "#/$typedefs/float32"
+                  rotation_angle_zaxis:
+                    $ref: "#/$typedefs/float32"
+
                   etype:
                     $ref: "#/$typedefs/utf8"
                   exc-mini_frequency:
@@ -69,23 +93,32 @@ $node_file_defs:
                     $ref: "#/$typedefs/utf8"
                   type:
                     $ref: "#/$typedefs/int32"
+
                   "@library":
                     type: object
                     patternProperties:
                       # "" is used as a wild card for field name
                       "":
                         $ref: "#/$typedefs/utf8"
-                patternProperties:
-                  ^(start_|end_)?(x|y|z)$:
+
+                  # model_type: vasculature
+                  start_x:
                     $ref: "#/$typedefs/float32"
-                  ^(start|end)_diameter$:
+                  start_y:
                     $ref: "#/$typedefs/float32"
-                  ^(start|end)_node$:
+                  start_z:
+                    $ref: "#/$typedefs/float32"
+                  end_x:
+                    $ref: "#/$typedefs/float32"
+                  end_y:
+                    $ref: "#/$typedefs/float32"
+                  end_z:
+                    $ref: "#/$typedefs/float32"
+                  start_diameter:
+                    $ref: "#/$typedefs/float32"
+                  end_diameter:
+                    $ref: "#/$typedefs/float32"
+                  start_node:
                     $ref: "#/$typedefs/uint64"
-                  ^rotation_angle_(x|y|z)axis$:
-                    $ref: "#/$typedefs/float32"
-                  ^orientation_(w|x|y|z)$:
-                    $ref: "#/$typedefs/float32"
-
-
-
+                  end_node:
+                    $ref: "#/$typedefs/uint64"

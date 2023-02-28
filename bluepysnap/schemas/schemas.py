@@ -3,6 +3,7 @@ from pathlib import Path
 
 import h5py
 import jsonschema
+import numpy as np
 import pkg_resources
 import yaml
 
@@ -193,6 +194,7 @@ def validate_edges_schema(path, edges_type, virtual):
     Args:
         path (str): path to the edges file
         edges_type (str): edge type (e.g., "chemical")
+        virtual(bool): whether this is a virtual edge population
 
     Returns:
         list: List of errors, empty if no errors
@@ -206,3 +208,65 @@ def validate_edges_schema(path, edges_type, virtual):
     errors = _validate_schema_for_dict(_parse_schema("edge", edges_type), edges_h5_dict)
 
     return _wrap_errors(path, errors, "/")
+
+
+def _resolve_types(resolver, types):
+    """Use jsonschema `resolver` to resolve the `types` dict."""
+    cache = {}
+
+    def _resolve_type(type_):
+        if type_ not in cache:
+            type_ = resolver.resolve(type_)[1]["properties"]["datatype"]["const"]
+            if hasattr(np, type_):
+                cache[type_] = getattr(np, type_)
+            elif type_ == "utf-8":
+                cache[type_] = str
+
+        return cache[type_]
+
+    return {k: _resolve_type(v["$ref"]) for k, v in types.items()}
+
+
+def nodes_schema_types(nodes_type):
+    """Get the datatypes of the attribute for nodes.
+
+    Args:
+        nodes_type (str): node type (e.g., "biophysical")
+
+    Returns:
+        dict: name -> type of column
+    """
+    schema = _parse_schema("node", nodes_type)
+    resolver = jsonschema.validators.RefResolver("", schema)
+
+    schema = schema["$node_file_defs"]["nodes_file_root"]["properties"]["nodes"]
+    schema = schema["patternProperties"][""]["properties"]["0"]["properties"]
+    dynamics_params = schema["dynamics_params"]["properties"]
+    del schema["dynamics_params"]
+    del schema["@library"]
+
+    return _resolve_types(resolver, schema), _resolve_types(resolver, dynamics_params)
+
+
+def edges_schema_types(edges_type, virtual):
+    """Get the datatypes of the attribute for nodes.
+
+    Args:
+        edges_type (str): edges type (e.g., "chemical")
+        virtual(bool): whether this is a virtual edge population
+
+    Returns:
+        dict: name -> type of column
+    """
+    if virtual:
+        edges_type += "_virtual"
+
+    schema = _parse_schema("edge", edges_type)
+    resolver = jsonschema.validators.RefResolver("", schema)
+
+    schema = schema["$edge_file_defs"]["edges_file_root"]["properties"]["edges"]
+    schema = schema["patternProperties"][""]["properties"]["0"]["properties"]
+    del schema["@library"]
+    del schema["synapse_id"]
+
+    return _resolve_types(resolver, schema)
