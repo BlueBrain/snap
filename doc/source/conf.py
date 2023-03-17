@@ -67,7 +67,7 @@ autodoc_default_options = {
 
 autoclass_content = "both"
 
-autodoc_mock_imports = ["neurom", "libsonata"]
+autodoc_mock_imports = ["libsonata"]
 
 # autosummary settings
 autosummary_generate = True

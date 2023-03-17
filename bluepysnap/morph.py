@@ -82,7 +82,7 @@ class MorphHelper:
         return Path(self._get_morph_dir(extension), f"{name}.{extension}")
 
     def get(self, node_id, transform=False, extension="swc"):
-        """Return NeuroM morphology object corresponding to `node_id`.
+        """Return MorphIO morphology object corresponding to `node_id`.
 
         Args:
             node_id (int/CircuitNodeId): could be a single int or a CircuitNodeId.
