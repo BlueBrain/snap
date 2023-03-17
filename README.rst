@@ -40,7 +40,7 @@ indexed in a way to facilitate combining data from different sources (that is, b
 Among other dependencies, Blue Brain SNAP relies on Blue Brain Project provided libraries:
 
 - `libsonata <https://github.com/BlueBrain/libsonata>`__, for accessing SONATA files
-- `NeuroM <https://github.com/BlueBrain/NeuroM>`__, for accessing detailed morphologies
+- `MorphIO <https://github.com/BlueBrain/MorphIO>`__, for accessing detailed morphologies
 
 Tools
 -----
