@@ -10,4 +10,3 @@ API Documentation
    circuits
    simulations
    utilities
-   changelog
