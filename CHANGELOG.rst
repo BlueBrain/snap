@@ -1,6 +1,30 @@
 Changelog
 =========
 
+Version v1.0.4
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Remove NeuroM and lazy-object-proxy dependency leftovers.
+
+
+Version v1.0.3
+--------------
+
+New Features
+~~~~~~~~~~~~
+- Teach schemas to return datatypes for attributes for the nodes and edges.
+- Add support for spatial indices:
+
+  - node_populations now have a "spatial_segment_index" property which gives access to the segment index
+  - edge_populations now have a "spatial_synapse_index" property which gives access to the synapse index
+
+
+Bug Fixes
+~~~~~~~~~
+- Set recursive autodoc generation to include 'nodes' and 'edges'.
+
 Version v1.0.2
 --------------
 
@@ -22,15 +46,18 @@ Version v1.0.0
 New Features
 ~~~~~~~~~~~~
 - jsonschema based validation of h5 files and circuit configuration
+
   - checks for required attributes and data types of attributes (in h5 files)
 
 Improvements
 ~~~~~~~~~~~~
 - Add black & isort to handle formatting
 - Use libsonata to provide more of the functionality
+
   - parsing config files
   - accessing data in Circuit and Simulation
 - Circuit validation changed to be more config-driven
+
   - it now only validates objects defined in the circuit configuration file
 - Improved performance when loading nodes and edges from a circuit.
 - Fixed warnings with Pandas 1.5.0
@@ -38,6 +65,7 @@ Improvements
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - Simulation
+
   - `run` and `condition` properties return libsonata classes instead of dictionaries
 - non-BBP Sonata circuit validation was removed
 - The NodeStorage & EdgeStorage classes were removed
@@ -173,6 +201,7 @@ Improvements
 Removed
 ~~~~~~~
 - Dropped Python2 support (#109)
+
   - Removed python2 tox
   - Removed python2 dependencies and bump deps version
   - Removed the python2 switches in setup.py
@@ -198,6 +227,7 @@ Version v0.7.0
 New Features
 ~~~~~~~~~~~~
 - Added a circuit node interface (#99)
+
   - Added the CircuitNodeId/CircuitNodeIds
   - Added Nodes class
 - All functions can use the CircuitNodeId/CircuitNodeIds
@@ -226,6 +256,7 @@ Version v0.6.1
 New Features
 ~~~~~~~~~~~~
 - Improved the configuration paths handling (#85)
+
   - Can use all the "." + something (i.e: ., ./dir, ../, ./../, ../../something, etc) as paths
   - Added raises to avoid errors
   - Manifest not mandatory anymore (if no anchors in the config)
@@ -234,6 +265,7 @@ New Features
 Improvements
 ~~~~~~~~~~~~
 - Improved circuit validation for virtual nodes (#86)
+
   - "components" is mandatory by the validation only if the circuit contains nodes other than virtual nodes
 
 Bug Fixes
@@ -357,6 +389,7 @@ Version v0.3.0
 New Features
 ~~~~~~~~~~~~
 - Added the Simulation support
+
   - Simulation config support
   - Spike reports support
   - Frame reports support

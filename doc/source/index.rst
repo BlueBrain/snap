@@ -7,6 +7,7 @@
 
    Home <self>
    api
+   changelog
 
 .. |banner| image:: /_images/BlueBrainSNAP.jpg
 .. |circuit| replace:: :class:`.Circuit`
