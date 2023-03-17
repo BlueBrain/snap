@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v1.0.5
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Add python 3.10 tests, and update GitHub actions.
+
+
 Version v1.0.4
 --------------
 
