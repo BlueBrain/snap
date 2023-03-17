@@ -53,7 +53,6 @@ setup(
         "pandas>=1.0.0",
         "click>=7.0",
         "more-itertools>=8.2.0",
-        "lazy-object-proxy>=1.5.2",
     ],
     extras_require={
         "docs": ["sphinx", "sphinx-bluebrain-theme"],
