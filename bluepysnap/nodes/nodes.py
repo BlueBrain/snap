@@ -142,3 +142,11 @@ class Nodes(
             # not strictly needed, but ensure that the properties are always in the same order
             properties = sorted(self.property_names)
         return super().get(group, properties)
+
+    def __getstate__(self):
+        """Make Nodes pickle-able, without storing state of caches."""
+        return self._circuit
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        self.__init__(state)

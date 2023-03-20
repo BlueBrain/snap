@@ -1,4 +1,5 @@
 import json
+import pickle
 
 import pytest
 from libsonata import SonataError
@@ -81,3 +82,17 @@ def test_integration():
     edge_reduced = edge_ids.limit(2)
     edge_props_reduced = edge_props.loc[edge_reduced]
     assert edge_props_reduced["syn_weight"].tolist() == [1, 1]
+
+
+def test_pickle(tmp_path):
+    circuit = test_module.Circuit(TEST_DATA_DIR / "circuit_config.json")
+
+    pickle_path = tmp_path / "pickle.pkl"
+    with open(pickle_path, "wb") as fd:
+        pickle.dump(circuit, fd)
+
+    with open(pickle_path, "rb") as fd:
+        circuit = pickle.load(fd)
+
+    assert pickle_path.stat().st_size < 200
+    assert list(circuit.edges) == ["default", "default2"]

@@ -7,6 +7,7 @@ Version v1.0.5
 Improvements
 ~~~~~~~~~~~~
 - Add python 3.10 tests, and update GitHub actions.
+- Add pickling to classes with caching, to reduce chances of blowup on cached methods
 
 
 Version v1.0.4
