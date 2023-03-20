@@ -599,3 +599,12 @@ class NodePopulation:
             raise BluepySnapError(f"It appears {self.name} does not have segment indices")
 
         return open_index(properties.spatial_segment_index_dir)
+
+    def __getstate__(self):
+        """Make NodePopulation pickle-able, without storing state of caches."""
+        return (self._circuit, self.name)
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        circuit, name = state
+        self.__init__(circuit=circuit, population_name=name)

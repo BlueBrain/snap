@@ -594,3 +594,12 @@ class EdgePopulation:
         if not properties.spatial_synapse_index_dir:
             raise BluepySnapError(f"It appears {self.name} does not have synapse indices")
         return open_index(properties.spatial_synapse_index_dir)
+
+    def __getstate__(self):
+        """Make EdgePopulation pickle-able, without storing state of caches."""
+        return self._circuit, self.name
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        circuit, population_name = state
+        self.__init__(circuit, population_name)

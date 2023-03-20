@@ -43,7 +43,6 @@ class NetworkObject(abc.ABC):
         """Cached population dictionary."""
         return self._get_populations(self._population_class)
 
-    @cached_property
     @abc.abstractmethod
     def population_names(self):
         """Should define all sorted NetworkObjects population names from the Circuit."""

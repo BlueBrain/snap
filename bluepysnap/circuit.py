@@ -38,6 +38,7 @@ class Circuit:
         Returns:
             Circuit: A Circuit object.
         """
+        self._circuit_config_path = config
         self._config = CircuitConfig.from_config(config)
 
     @property
@@ -80,3 +81,11 @@ class Circuit:
     def edges(self):
         """Access to edge population(s). See :py:class:`~bluepysnap.edges.Edges`."""
         return Edges(self)
+
+    def __getstate__(self):
+        """Make Circuits pickle-able, without storing state of caches."""
+        return self._circuit_config_path
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        self.__init__(state)
