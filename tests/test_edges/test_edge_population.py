@@ -1,3 +1,4 @@
+import pickle
 import sys
 from pathlib import Path
 from unittest import mock
@@ -32,7 +33,7 @@ class TestEdgePopulation:
 
     def setup_method(self):
         self.test_obj = TestEdgePopulation.get_edge_population(
-            str(TEST_DATA_DIR / "circuit_config.json"), "default"
+            TEST_DATA_DIR / "circuit_config.json", "default"
         )
 
     def test_basic(self):
@@ -640,11 +641,28 @@ class TestEdgePopulation:
         ):
             self.test_obj.spatial_synapse_index
 
+    def test_pickle(self, tmp_path):
+        pickle_path = tmp_path / "pickle.pkl"
+
+        # trigger some cached properties, to makes sure they aren't being pickeld
+        self.test_obj.source
+        self.test_obj.target
+        self.test_obj.property_dtypes
+
+        with open(pickle_path, "wb") as fd:
+            pickle.dump(self.test_obj, fd)
+
+        with open(pickle_path, "rb") as fd:
+            edge_population = pickle.load(fd)
+
+        assert pickle_path.stat().st_size < 250
+        assert edge_population.name == "default"
+
 
 class TestEdgePopulationSpatialIndex:
     def setup_method(self):
         self.test_obj = TestEdgePopulation.get_edge_population(
-            str(TEST_DATA_DIR / "circuit_config.json"), "default2"
+            TEST_DATA_DIR / "circuit_config.json", "default2"
         )
 
     @mock.patch.dict(sys.modules, {"spatial_index": mock.Mock()})

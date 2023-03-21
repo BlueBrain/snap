@@ -18,7 +18,6 @@
 """Nodes access."""
 
 import numpy as np
-from cached_property import cached_property
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitNodeIds
@@ -41,7 +40,7 @@ class Nodes(
         """Initialize the top level Nodes accessor."""
         super().__init__(circuit)
 
-    @cached_property
+    @property
     def population_names(self):
         """Defines all sorted node population names from the Circuit."""
         return sorted(self._circuit.to_libsonata.node_populations)
@@ -143,3 +142,11 @@ class Nodes(
             # not strictly needed, but ensure that the properties are always in the same order
             properties = sorted(self.property_names)
         return super().get(group, properties)
+
+    def __getstate__(self):
+        """Make Nodes pickle-able, without storing state of caches."""
+        return self._circuit
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        self.__init__(state)

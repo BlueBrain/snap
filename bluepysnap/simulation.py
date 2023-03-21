@@ -58,6 +58,7 @@ class Simulation:
         Returns:
             Simulation: A Simulation object.
         """
+        self._simulation_config_path = Path(config).absolute()
         self._config = SimulationConfig.from_config(config)
 
     @property
@@ -142,3 +143,11 @@ class Simulation:
             Supported FrameReports are soma and compartment reports.
         """
         return _collect_frame_reports(self)
+
+    def __getstate__(self):
+        """Make Simulations pickle-able, without storing state of caches."""
+        return self._simulation_config_path
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        self.__init__(state)

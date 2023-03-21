@@ -1,3 +1,4 @@
+import pickle
 from unittest.mock import PropertyMock, patch
 
 import numpy as np
@@ -768,3 +769,20 @@ class TestEdges:
                     ids, ids, return_edge_ids=True, return_edge_count=True
                 )
             )
+
+    def test_pickle(self, tmp_path):
+        pickle_path = tmp_path / "pickle.pkl"
+
+        # trigger some cached properties, to makes sure they aren't being pickeld
+        self.test_obj.size
+        self.test_obj.property_names
+        self.test_obj.property_dtypes
+
+        with open(pickle_path, "wb") as fd:
+            pickle.dump(self.test_obj, fd)
+
+        with open(pickle_path, "rb") as fd:
+            test_obj = pickle.load(fd)
+
+        assert pickle_path.stat().st_size < 150
+        assert test_obj.size == 8

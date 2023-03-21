@@ -43,7 +43,7 @@ class NetworkObject(abc.ABC):
         """Cached population dictionary."""
         return self._get_populations(self._population_class)
 
-    @cached_property
+    @property
     @abc.abstractmethod
     def population_names(self):
         """Should define all sorted NetworkObjects population names from the Circuit."""
@@ -178,3 +178,11 @@ class NetworkObject(abc.ABC):
         res = pd.concat(dataframes)
         assert res.index.is_monotonic_increasing, "The index should be already sorted"
         return res
+
+    @abc.abstractmethod
+    def __getstate__(self):
+        """Make pickle-able, without storing state of caches."""
+
+    @abc.abstractmethod
+    def __setstate__(self, state):
+        """Load from pickle state."""

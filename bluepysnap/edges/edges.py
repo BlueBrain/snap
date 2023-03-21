@@ -18,7 +18,6 @@
 """Edges access."""
 
 import numpy as np
-from cached_property import cached_property
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
@@ -42,7 +41,7 @@ class Edges(
         """Initialize the top level Edges accessor."""
         super().__init__(circuit)
 
-    @cached_property
+    @property
     def population_names(self):
         """Defines all sorted edge population names from the Circuit."""
         return sorted(self._circuit.to_libsonata.edge_populations)
@@ -306,3 +305,11 @@ class Edges(
                 yield from self._add_edge_ids(it, source_pop, target_pop, name)
             else:
                 yield from self._omit_edge_count(it, source_pop, target_pop)
+
+    def __getstate__(self):
+        """Make Edges pickle-able, without storing state of caches."""
+        return self._circuit
+
+    def __setstate__(self, state):
+        """Load from pickle state."""
+        self.__init__(state)

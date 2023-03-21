@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 
 import libsonata
 import pytest
@@ -97,3 +98,20 @@ def test_no_node_set():
 
         simulation = test_module.Simulation(config_path)
         assert simulation.node_sets == {}
+
+
+def test_pickle(tmp_path):
+    pickle_path = tmp_path / "pickle.pkl"
+    simulation = test_module.Simulation(TEST_DATA_DIR / "simulation_config.json")
+
+    # trigger some cached properties, to makes sure they aren't being pickeld
+    simulation.circuit
+
+    with open(pickle_path, "wb") as fd:
+        pickle.dump(simulation, fd)
+
+    with open(pickle_path, "rb") as fd:
+        simulation = pickle.load(fd)
+
+    assert pickle_path.stat().st_size < 190
+    assert simulation.dt == 0.01

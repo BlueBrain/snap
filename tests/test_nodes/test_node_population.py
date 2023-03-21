@@ -1,4 +1,5 @@
 import json
+import pickle
 import sys
 from unittest import mock
 
@@ -618,6 +619,22 @@ class TestNodePopulation:
             BluepySnapError, match="Spatial index is for now only available internally to BBP."
         ):
             self.test_obj.spatial_segment_index
+
+    def test_pickle(self, tmp_path):
+        pickle_path = tmp_path / "pickle.pkl"
+
+        # trigger some cached properties, to makes sure they aren't being pickeld
+        self.test_obj._node_sets
+        self.test_obj.size
+
+        with open(pickle_path, "wb") as fd:
+            pickle.dump(self.test_obj, fd)
+
+        with open(pickle_path, "rb") as fd:
+            test_obj = pickle.load(fd)
+
+        assert pickle_path.stat().st_size < 190
+        assert test_obj.size == 3
 
 
 class TestNodePopulationSpatialIndex:
