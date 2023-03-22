@@ -96,3 +96,20 @@ def test_pickle(tmp_path):
 
     assert pickle_path.stat().st_size < 200
     assert list(circuit.edges) == ["default", "default2"]
+
+
+def test_empty_manifest(tmp_path):
+    path = tmp_path / "circuit_config.json"
+    with open(path, "w") as fd:
+        json.dump(
+            {
+                "manifest": {},
+                "networks": {
+                    "nodes": {},
+                    "edges": {},
+                },
+            },
+            fd,
+        )
+
+    test_module.Circuit(path)

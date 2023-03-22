@@ -65,8 +65,8 @@ class Parser:
              Parser: A Parser object.
         """
         content = config.copy()
-
-        self.manifest = Parser._resolve_manifest(content.pop("manifest", {}), config_dir)
+        manifest = content.pop("manifest", None) or {}
+        self.manifest = Parser._resolve_manifest(manifest, config_dir)
         self.content = content
 
     @staticmethod
