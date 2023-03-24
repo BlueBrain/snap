@@ -85,80 +85,6 @@ class TestEdges:
             "syn_weight",
         }
 
-    def test_property_dtypes(self):
-        expected = pd.Series(
-            data=[
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("int64"),
-                dtype("int64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float64"),
-                IDS_DTYPE,
-                IDS_DTYPE,
-                dtype("O"),
-                dtype("int32"),
-            ],
-            index=[
-                "syn_weight",
-                "@dynamics:param1",
-                "afferent_surface_y",
-                "afferent_surface_z",
-                "conductance",
-                "efferent_center_x",
-                "delay",
-                "afferent_center_z",
-                "efferent_section_id",
-                "afferent_section_id",
-                "efferent_center_y",
-                "afferent_center_x",
-                "efferent_surface_z",
-                "afferent_center_y",
-                "afferent_surface_x",
-                "efferent_surface_x",
-                "afferent_section_pos",
-                "efferent_section_pos",
-                "efferent_surface_y",
-                "efferent_center_z",
-                "@source_node",
-                "@target_node",
-                "other1",
-                "other2",
-            ],
-        ).sort_index()
-        pdt.assert_series_equal(self.test_obj.property_dtypes.sort_index(), expected)
-
-    def test_property_dtypes_fail(self):
-        a = pd.Series(
-            data=[dtype("int64"), dtype("float64")], index=["syn_weight", "efferent_surface_z"]
-        ).sort_index()
-        b = pd.Series(
-            data=[dtype("int32"), dtype("float64")], index=["syn_weight", "efferent_surface_z"]
-        ).sort_index()
-
-        with patch(
-            "bluepysnap.edges.EdgePopulation.property_dtypes", new_callable=PropertyMock
-        ) as mock:
-            mock.side_effect = [a, b]
-            circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
-            test_obj = test_module.Edges(circuit)
-            with pytest.raises(BluepySnapError):
-                test_obj.property_dtypes.sort_index()
-
     def test_ids(self):
         np.random.seed(42)
         # single edge ID --> CircuitEdgeIds return populations with the 0 id
@@ -340,7 +266,7 @@ class TestEdges:
         expected = pd.DataFrame(
             {
                 "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=float),
-                "other1": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=object),
+                "other1": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=float),
                 "@source_node": np.array([2, 0, 0, 2], dtype=int),
             },
             index=pd.MultiIndex.from_tuples(

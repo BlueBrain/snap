@@ -25,6 +25,62 @@ from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 
+def _gather_properties(populations, ids, properties):
+    """Helper function to get data from populations.
+
+    Args:
+        populations (list): populations (NodePopulation, EdgePopulation) to consider
+        ids (CircuitNodeIds, CircuitEdgeIds): node/edge ids to retrieve
+        properties (list): properties to retrieve
+
+    Returns:
+        pandas.DataFrame: dataframe containing the gathered data
+    """
+    values = {}
+    indices = {}
+
+    # gather properties for each of the population
+    for pop in populations:
+        global_pop_ids = ids.filter_population(pop.name)
+
+        pop_ids = global_pop_ids.get_ids()
+        pop_properties = set(properties) & pop.property_names
+
+        for prop in pop_properties:
+            data = pop.get(pop_ids, prop)
+
+            if data.size > 0:
+                values[prop] = values.get(prop, []) + [data]
+
+            # Is there a better way to merge multi-indices than append?
+            if prop in indices:
+                indices[prop] = indices[prop].append(global_pop_ids.index)
+            else:
+                indices[prop] = global_pop_ids.index
+
+    def _serialize(property_name):
+        ids = indices[property_name]
+        val = values[property_name]
+
+        # If any of the dtypes is a category, force it. Otherwise, let pandas handle it.
+        has_categoricals = any(map(pd.api.types.is_categorical_dtype, val))
+
+        return pd.Series(
+            np.concatenate(val),
+            index=ids,
+            name=property_name,
+            dtype="category" if has_categoricals else None,
+        )
+
+    series = [_serialize(prop) for prop in values]
+
+    return pd.DataFrame(
+        pd.concat(series, axis=1) if series else None,
+        columns=properties,
+        index=ids.index,
+    )
+
+
 class NetworkObject(abc.ABC):
     """Abstract class for the top level NetworkObjects accessor."""
 
@@ -47,22 +103,6 @@ class NetworkObject(abc.ABC):
     @abc.abstractmethod
     def population_names(self):
         """Should define all sorted NetworkObjects population names from the Circuit."""
-
-    @cached_property
-    def property_dtypes(self):
-        """Returns all the NetworkObjects property dtypes for the Circuit."""
-
-        def _update(d, index, value):
-            if d.setdefault(index, value) != value:
-                raise BluepySnapError(
-                    f"Same property with different dtype. {index}: {value}!= {d[index]}"
-                )
-
-        res = {}
-        for pop in self.values():
-            for varname, dtype in pop.property_dtypes.items():
-                _update(res, varname, dtype)
-        return pd.Series(res)
 
     def keys(self):
         """Returns iterator on the NetworkObjectPopulation names.
@@ -149,33 +189,15 @@ class NetworkObject(abc.ABC):
         """Returns the properties of the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)
-        # We don t convert to set properties itself to keep the column order.
-        properties_set = set(properties)
 
-        unknown_props = properties_set - self.property_names
+        unknown_props = set(properties) - self.property_names
         if unknown_props:
             raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
-        # Retrieve the dtypes of the selected properties.
-        # However, the int dtype may not be preserved if some values are NaN.
-        dtypes = {
-            column: dtype
-            for column, dtype in self.property_dtypes.items()
-            if column in properties_set
-        }
-        dataframes = [pd.DataFrame(columns=properties, index=ids.index_schema).astype(dtypes)]
-        for name, pop in sorted(self.items()):
-            # since ids is sorted, global_pop_ids should be sorted as well
-            global_pop_ids = ids.filter_population(name)
-            pop_ids = global_pop_ids.get_ids()
-            if len(pop_ids) > 0:
-                pop_properties = properties_set & pop.property_names
-                # Since the columns are passed as Series, index cannot be specified directly.
-                # However, it's a bit more performant than converting the Series to numpy arrays.
-                pop_df = pd.DataFrame({prop: pop.get(pop_ids, prop) for prop in pop_properties})
-                pop_df.index = global_pop_ids.index
-                dataframes.append(pop_df)
-        res = pd.concat(dataframes)
+        populations = self.values()
+
+        res = _gather_properties(populations, ids, properties)
+
         assert res.index.is_monotonic_increasing, "The index should be already sorted"
         return res
 

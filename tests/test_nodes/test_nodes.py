@@ -78,60 +78,6 @@ class TestNodes:
         assert self.test_obj.property_values("mtype") == {"L2_X", "L7_X", "L9_Z", "L8_Y", "L6_Y"}
         assert self.test_obj.property_values("other2") == {10, 11, 12, 13}
 
-    def test_property_dtypes(self):
-        expected = pd.Series(
-            data=[
-                dtype("int64"),
-                dtype("O"),
-                dtype("O"),
-                dtype("O"),
-                dtype("O"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("O"),
-                dtype("int64"),
-            ],
-            index=[
-                "layer",
-                "model_template",
-                "model_type",
-                "morphology",
-                "mtype",
-                "rotation_angle_xaxis",
-                "rotation_angle_yaxis",
-                "rotation_angle_zaxis",
-                "x",
-                "y",
-                "z",
-                "@dynamics:holding_current",
-                "other1",
-                "other2",
-            ],
-        ).sort_index()
-        pdt.assert_series_equal(self.test_obj.property_dtypes.sort_index(), expected)
-
-    def test_property_dtypes_fail(self):
-        a = pd.Series(
-            data=[dtype("int64"), dtype("O")], index=["layer", "model_template"]
-        ).sort_index()
-        b = pd.Series(
-            data=[dtype("int32"), dtype("O")], index=["layer", "model_template"]
-        ).sort_index()
-
-        with patch(
-            "bluepysnap.nodes.NodePopulation.property_dtypes", new_callable=PropertyMock
-        ) as mock:
-            mock.side_effect = [a, b]
-            circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
-            test_obj = test_module.Nodes(circuit)
-            with pytest.raises(BluepySnapError):
-                test_obj.property_dtypes.sort_index()
-
     def test_ids(self):
         np.random.seed(42)
 
@@ -352,7 +298,7 @@ class TestNodes:
         expected = pd.DataFrame(
             {
                 "other2": np.array([np.NaN, np.NaN, np.NaN], dtype=float),
-                "other1": np.array([np.NaN, np.NaN, np.NaN], dtype=object),
+                "other1": np.array([np.NaN, np.NaN, np.NaN], dtype=float),
                 "layer": np.array([2, 6, 6], dtype=int),
             },
             index=pd.MultiIndex.from_tuples(
