@@ -364,7 +364,6 @@ class TestNodes:
         # trigger some cached properties, to makes sure they aren't being pickeld
         self.test_obj.size
         self.test_obj.property_names
-        self.test_obj.property_dtypes
 
         with open(pickle_path, "wb") as fd:
             pickle.dump(self.test_obj, fd)
