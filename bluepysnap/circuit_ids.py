@@ -253,6 +253,26 @@ class CircuitIds(abc.ABC):
         """
         return self._apply(lambda x: x.unique(), inplace)
 
+    def intersection(self, ids, inplace=False):
+        """Take the intersection of this CircuitIDs with another.
+
+        Notes:
+            This function returns a CircuitIDs which contains only those ids which are in both
+            the this CircuitNodeIDs and the provided CircuitIDs. The index of the resulting
+            CircuitNodeIDs will be sorted.
+
+        Args:
+            ids: The other CircuitNodeIDs
+            inplace: if True, modify this CircuitNodeIDs
+        """
+        tuples_other = set(ids.tolist())
+        def _intersect(ind):
+            tuples_self = set(ind)
+            intersected = tuples_self.intersection(tuples_other)
+            return self.from_tuples(list(intersected), sort_index=True).index
+
+        return self._apply(_intersect, inplace)
+    
     def to_csv(self, filepath):
         """Save CircuitIds to csv format."""
         self.index.to_frame(index=False).to_csv(filepath, index=False)
