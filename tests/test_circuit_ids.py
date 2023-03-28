@@ -80,7 +80,7 @@ class TestCircuitNodeIds:
             self.ids_cls(1)
 
         assert isinstance(self.test_obj_sorted, self.ids_cls)
-        
+
     def test_from_arrays(self):
         tested = self.ids_cls.from_arrays(["a", "b"], [0, 1])
         pdt.assert_index_equal(tested.index, self._circuit_ids(["a", "b"], [0, 1]))
@@ -210,10 +210,9 @@ class TestCircuitNodeIds:
         assert test_obj == expected
 
     def test_intersection(self):
-        first_ids = self.ids_cls.from_tuples(
-            [('a', 1), ('a', 2), ('a', 1), ('a', 2), ('b', 1)])
-        to_intersect = self.ids_cls.from_tuples([('b', 1), ('a', 3), ('a', 2)])
-        expected = self.ids_cls.from_tuples([('a', 2), ('b', 1)])
+        first_ids = self.ids_cls.from_tuples([("a", 1), ("a", 2), ("a", 1), ("a", 2), ("b", 1)])
+        to_intersect = self.ids_cls.from_tuples([("b", 1), ("a", 3), ("a", 2)])
+        expected = self.ids_cls.from_tuples([("a", 2), ("b", 1)])
         print(first_ids, first_ids.intersection(to_intersect))
         assert first_ids.intersection(to_intersect) == expected
         assert first_ids != expected

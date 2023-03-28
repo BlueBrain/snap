@@ -266,13 +266,14 @@ class CircuitIds(abc.ABC):
             inplace: if True, modify this CircuitNodeIDs
         """
         tuples_other = set(ids.tolist())
+
         def _intersect(ind):
             tuples_self = set(ind)
             intersected = tuples_self.intersection(tuples_other)
             return self.from_tuples(list(intersected), sort_index=True).index
 
         return self._apply(_intersect, inplace)
-    
+
     def to_csv(self, filepath):
         """Save CircuitIds to csv format."""
         self.index.to_frame(index=False).to_csv(filepath, index=False)
