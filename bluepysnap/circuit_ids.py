@@ -258,8 +258,7 @@ class CircuitIds(abc.ABC):
 
         Notes:
             This function returns a CircuitIDs which contains only those ids which are in both
-            the this CircuitNodeIDs and the provided CircuitIDs. The index of the resulting
-            CircuitNodeIDs will be sorted.
+            this CircuitIds and the provided CircuitIds. The index of the result will be sorted.
 
         Args:
             ids: The other CircuitNodeIDs
