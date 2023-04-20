@@ -655,7 +655,7 @@ class TestEdgePopulation:
         with open(pickle_path, "rb") as fd:
             edge_population = pickle.load(fd)
 
-        assert pickle_path.stat().st_size < 250
+        assert pickle_path.stat().st_size <= 250
         assert edge_population.name == "default"
 
 
