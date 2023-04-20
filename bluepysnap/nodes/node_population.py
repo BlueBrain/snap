@@ -442,11 +442,6 @@ class NodePopulation:
                 (pandas.core.frame.DataFrame, (1, 1))
         """
         result = self._data
-        if properties is not None:
-            for p in utils.ensure_list(properties):
-                self._check_property(p)
-            result = result[properties]
-
         if group is not None:
             if isinstance(group, (int, np.integer)):
                 self._check_id(group)
@@ -455,6 +450,11 @@ class NodePopulation:
             else:
                 group = self.ids(group)
             result = result.loc[group]
+
+        if properties is not None:
+            for p in utils.ensure_list(properties):
+                self._check_property(p)
+            result = result[properties]
 
         return result
 
