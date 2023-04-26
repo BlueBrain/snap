@@ -101,11 +101,6 @@ class NetworkObject(abc.ABC):
         """Total number of NetworkObject inside the circuit."""
         return sum(pop.size for pop in self.values())
 
-    @property
-    def partial_circuit_config(self):
-        """Check partiality of circuit config."""
-        return self._circuit.partial_config
-
     @cached_property
     def property_names(self):
         """Returns all the NetworkObject properties present inside the circuit."""

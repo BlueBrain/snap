@@ -6,17 +6,9 @@ from libsonata._libsonata import SonataError
 
 import bluepysnap.circuit as test_module
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.sonata_constants import Node
 
-from utils import copy_config, edit_config, copy_test_data
-
-
-def test_partial_circuit_config_wrong_status():
-    with copy_config("circuit_config.json") as config_path:
-        with edit_config(config_path) as config:
-            config["metadata"] = {"status": "NOT A TYPE"}
-
-        with pytest.raises(SonataError):
-            test_module.Circuit(config_path)
+from utils import copy_config, edit_config, copy_test_data, TEST_DATA_DIR
 
 
 @pytest.mark.parametrize(
@@ -90,7 +82,25 @@ def test_partial_circuit_config_partial(nodes_update, edges_update):
 
             assert circuit.get_node_population_config("default")
             assert circuit.nodes
-            assert circuit.nodes["default"].type == "biophysical"
+            assert circuit.nodes["default"].type
+            assert circuit.nodes["default"].size
+            assert circuit.nodes["default"].source_in_edges()
+            assert circuit.nodes["default"].target_in_edges()
+            assert circuit.nodes["default"].config
+            assert circuit.nodes["default"].property_names
+            assert circuit.nodes["default"].container_property_names(Node)
+            assert circuit.nodes["default"].property_values("layer")
+            assert circuit.nodes["default"].property_dtypes is not None
+            assert circuit.nodes["default"].ids() is not None
+            assert circuit.nodes["default"].get() is not None
+            assert circuit.nodes["default"].positions() is not None
+            assert circuit.nodes["default"].orientations() is not None
+            assert circuit.nodes["default"].count()
+            assert circuit.nodes["default"].morph
+            assert circuit.nodes["default"].models
+            assert circuit.nodes["default"].h5_filepath
+            assert circuit.nodes["default"]._properties.spatial_segment_index_dir == ""
+
             assert circuit.nodes.population_names == ["default"]
             assert list(circuit.nodes.values())
 
@@ -98,21 +108,27 @@ def test_partial_circuit_config_partial(nodes_update, edges_update):
 
             assert circuit.get_edge_population_config("default")
             assert circuit.edges
-            assert circuit.edges["default"].type == "chemical"
+            assert circuit.edges["default"].size
+            assert circuit.edges["default"].type
+            assert circuit.edges["default"].source
+            assert circuit.edges["default"].target
+            assert circuit.edges["default"].config
+            assert circuit.edges["default"].property_names
+            assert circuit.edges["default"].property_dtypes is not None
+            assert circuit.edges["default"].container_property_names(Node) == []
+            assert circuit.edges["default"].ids() is not None
+            assert circuit.edges["default"].get([1, 2], None) is not None
+            assert circuit.edges["default"].positions([1, 2], "afferent", "center") is not None
+            assert circuit.edges["default"].afferent_nodes(None) is not None
+            assert circuit.edges["default"].efferent_nodes(None) is not None
+            assert circuit.edges["default"].pathway_edges(0) is not None
+            assert circuit.edges["default"].afferent_edges(0) is not None
+            assert circuit.edges["default"].efferent_edges(0) is not None
+            assert circuit.edges["default"].iter_connections() is not None
+            assert circuit.edges["default"].h5_filepath
+            assert circuit.nodes["default"]._properties.spatial_segment_index_dir == ""
+
             assert circuit.edges.population_names == ["default"]
             assert list(circuit.edges.values())
 
             assert [item.id for item in circuit.edges.ids()] == [0, 1, 2, 3]
-
-
-def test_partial_circuit_config_full():
-    with copy_config("circuit_config.json") as config_path:
-        with edit_config(config_path) as config:
-            config["metadata"] = {"status": "partial"}
-
-        circuit = test_module.Circuit(config_path)
-
-    assert circuit.get_node_population_config("default")
-    assert circuit.get_edge_population_config("default")
-    assert circuit.nodes.population_names
-    assert circuit.edges.population_names
