@@ -21,6 +21,7 @@ import copy
 import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+from enum import Enum
 
 import libsonata
 
@@ -46,6 +47,10 @@ EXPECTED_PATH_KEYS = {
     "mechanisms_dir",
 }
 
+class CircuitConfigStatus(Enum):
+    INVALID = "invalid"
+    COMPLETE = "complete"
+    PARTIAL = "partial"
 
 class Parser:
     """SONATA network config parser.
@@ -183,6 +188,11 @@ class CircuitConfig(Config):
     def edge_populations(self):
         """Access edge population configs."""
         return self._populations["edges"]
+
+    @property
+    def status(self) -> CircuitConfigStatus:
+        """Return status of the config."""
+        return CircuitConfigStatus(self._libsonata.config_status)
 
     @staticmethod
     def _resolve_population_configs(config):

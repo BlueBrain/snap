@@ -19,7 +19,7 @@
 
 from cached_property import cached_property
 
-from bluepysnap.config import CircuitConfig
+from bluepysnap.config import CircuitConfig, CircuitConfigStatus
 from bluepysnap.edges import Edges
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
@@ -81,6 +81,11 @@ class Circuit:
     def edges(self):
         """Access to edge population(s). See :py:class:`~bluepysnap.edges.Edges`."""
         return Edges(self)
+
+    @cached_property
+    def partial_config(self):
+        """Check partiality of th config."""
+        return self._config.status is CircuitConfigStatus.PARTIAL
 
     def __getstate__(self):
         """Make Circuits pickle-able, without storing state of caches."""
