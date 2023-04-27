@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """Access to circuit data."""
+import logging
 
 from cached_property import cached_property
 
@@ -24,6 +25,8 @@ from bluepysnap.edges import Edges
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.nodes import Nodes
+
+L = logging.getLogger(__name__)
 
 
 class Circuit:
@@ -40,6 +43,12 @@ class Circuit:
         """
         self._circuit_config_path = config
         self._config = CircuitConfig.from_config(config)
+
+        if self.partial_config:
+            L.info(
+                "Loaded PARTIAL circuit config. Functionality may be limited. "
+                "It is up to the user to be diligent when accessing properties."
+            )
 
     @property
     def to_libsonata(self):
@@ -84,7 +93,7 @@ class Circuit:
 
     @cached_property
     def partial_config(self):
-        """Check partiality of th config."""
+        """Check partiality of the config."""
         return self._config.status is CircuitConfigStatus.PARTIAL
 
     def __getstate__(self):
