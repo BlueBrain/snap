@@ -8,7 +8,7 @@ import bluepysnap.circuit as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
 
-from utils import copy_config, edit_config, copy_test_data, TEST_DATA_DIR
+from utils import copy_config, copy_test_data, edit_config
 
 
 @pytest.mark.parametrize(

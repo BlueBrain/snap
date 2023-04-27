@@ -21,9 +21,9 @@ import copy
 import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from enum import Enum
 
 import libsonata
+from libsonata import CircuitConfigStatus
 
 from bluepysnap.exceptions import BluepySnapError
 
@@ -47,10 +47,6 @@ EXPECTED_PATH_KEYS = {
     "mechanisms_dir",
 }
 
-class CircuitConfigStatus(Enum):
-    INVALID = "invalid"
-    COMPLETE = "complete"
-    PARTIAL = "partial"
 
 class Parser:
     """SONATA network config parser.
@@ -192,7 +188,7 @@ class CircuitConfig(Config):
     @property
     def status(self) -> CircuitConfigStatus:
         """Return status of the config."""
-        return CircuitConfigStatus(self._libsonata.config_status)
+        return self._libsonata.config_status
 
     @staticmethod
     def _resolve_population_configs(config):
