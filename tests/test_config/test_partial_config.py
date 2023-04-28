@@ -1,7 +1,11 @@
 import json
+import logging
 import tempfile
 
+import pytest
+
 import bluepysnap.circuit as test_module
+from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Edge, Node
 
 from utils import TEST_DATA_DIR
@@ -96,3 +100,33 @@ def test_partial_circuit_config_minimal():
     assert list(circuit.edges.values())
 
     assert [item.id for item in circuit.edges.ids()] == [0, 1, 2, 3]
+
+
+def test_partial_circuit_config_log(caplog):
+    caplog.set_level(logging.INFO)
+
+    config = {"metadata": {"status": "partial"}}
+
+    with tempfile.NamedTemporaryFile(mode="w+") as config_file:
+        config_file.write(json.dumps(config))
+        config_file.flush()
+        test_module.Circuit(config_file.name)
+
+    assert "Loaded PARTIAL circuit config" in caplog.text
+
+
+def test_partial_circuit_config_empty():
+    config = {"metadata": {"status": "partial"}}
+    with tempfile.NamedTemporaryFile(mode="w+") as config_file:
+        config_file.write(json.dumps(config))
+        config_file.flush()
+        circuit = test_module.Circuit(config_file.name)
+
+    with pytest.raises(BluepySnapError):
+        assert circuit.get_node_population_config("default")
+    with pytest.raises(BluepySnapError):
+        assert circuit.get_edge_population_config("default")
+    with pytest.raises(BluepySnapError):
+        circuit.nodes.ids()
+    with pytest.raises(BluepySnapError):
+        circuit.edges.ids()
