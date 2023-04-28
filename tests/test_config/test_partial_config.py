@@ -1,43 +1,36 @@
 import json
 import tempfile
 
-import pytest
-
 import bluepysnap.circuit as test_module
 from bluepysnap.sonata_constants import Edge, Node
 
 from utils import TEST_DATA_DIR
 
 
-@pytest.mark.parametrize(
-    "config",
-    [
-        {
-            "metadata": {"status": "partial"},
-            "networks": {
-                "nodes": [
-                    {
-                        # missing `nodes_file` rises libsonata exception
-                        "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
-                        "populations": {
-                            "default": {},
-                        },
-                    }
-                ],
-                "edges": [
-                    {
-                        # missing `edges_file` rises libsonata exception
-                        "edges_file": str(TEST_DATA_DIR / "edges.h5"),
-                        "populations": {
-                            "default": {},
-                        },
-                    }
-                ],
-            },
+def test_partial_circuit_config_minimal():
+    config = {
+        "metadata": {"status": "partial"},
+        "networks": {
+            "nodes": [
+                {
+                    # missing `nodes_file` rises libsonata exception
+                    "nodes_file": str(TEST_DATA_DIR / "nodes.h5"),
+                    "populations": {
+                        "default": {},
+                    },
+                }
+            ],
+            "edges": [
+                {
+                    # missing `edges_file` rises libsonata exception
+                    "edges_file": str(TEST_DATA_DIR / "edges.h5"),
+                    "populations": {
+                        "default": {},
+                    },
+                }
+            ],
         },
-    ],
-)
-def test_partial_circuit_config_minimal(config):
+    }
     with tempfile.NamedTemporaryFile(mode="w+") as config_file:
         config_file.write(json.dumps(config))
         config_file.flush()
