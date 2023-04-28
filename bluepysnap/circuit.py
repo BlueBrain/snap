@@ -94,7 +94,7 @@ class Circuit:
     @cached_property
     def partial_config(self):
         """Check partiality of the config."""
-        return self._config.status is CircuitConfigStatus.PARTIAL
+        return self._config.status is CircuitConfigStatus.partial
 
     def __getstate__(self):
         """Make Circuits pickle-able, without storing state of caches."""

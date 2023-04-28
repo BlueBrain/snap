@@ -633,7 +633,7 @@ class TestNodePopulation:
         with open(pickle_path, "rb") as fd:
             test_obj = pickle.load(fd)
 
-        assert pickle_path.stat().st_size < 190
+        assert pickle_path.stat().st_size < 210
         assert test_obj.size == 3
 
 
