@@ -25,5 +25,11 @@ class BluepySnapDeprecationError(Exception):
     """SNAP deprecation exception."""
 
 
+class BluepySnapWarning(Warning):
+    """Base SNAP warning."""
+    
+
 class BluepySnapDeprecationWarning(DeprecationWarning):
     """SNAP deprecation warning."""
+
+

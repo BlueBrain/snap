@@ -22,8 +22,8 @@ import pandas as pd
 from cached_property import cached_property
 
 from bluepysnap import utils
-from bluepysnap.exceptions import BluepySnapError
-
+from bluepysnap.exceptions import BluepySnapError, BluepySnapWarning
+import warnings
 
 class NetworkObject(abc.ABC):
     """Abstract class for the top level NetworkObjects accessor."""
@@ -54,8 +54,8 @@ class NetworkObject(abc.ABC):
 
         def _update(d, index, value):
             if d.setdefault(index, value) != value:
-                raise BluepySnapError(
-                    f"Same property with different dtype. {index}: {value}!= {d[index]}"
+                warnings.warn(f"Same property with different dtype. {index}: {value}!= {d[index]}",
+                              BluebySnapWarning
                 )
 
         res = {}
