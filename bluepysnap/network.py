@@ -55,7 +55,7 @@ class NetworkObject(abc.ABC):
         def _update(d, index, value):
             if d.setdefault(index, value) != value:
                 warnings.warn(f"Same property with different dtype. {index}: {value}!= {d[index]}",
-                              BluebySnapWarning
+                              BluepySnapWarning
                 )
 
         res = {}
