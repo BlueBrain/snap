@@ -100,7 +100,7 @@ class NodePopulation:
         categoricals = nodes.enumeration_names
 
         _all = nodes.select_all()
-        result = pd.DataFrame(index=pd.RangeIndex(_all.flat_size))
+        result = pd.DataFrame(index=pd.RangeIndex(_all.flat_size, name="node_ids"))
 
         for attr in sorted(nodes.attribute_names):
             if attr in categoricals:
