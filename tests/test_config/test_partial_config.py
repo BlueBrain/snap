@@ -59,10 +59,7 @@ def test_partial_circuit_config_minimal():
     assert circuit.nodes["default"].count() == 3
     assert circuit.nodes["default"].morph is not None
     assert circuit.nodes["default"].models is not None
-    assert (
-        circuit.nodes["default"].h5_filepath
-        == "/gpfs/bbp.cscs.ch/project/proj30/home/subert/snap/tests/data/nodes.h5"
-    )
+    assert circuit.nodes["default"].h5_filepath.endswith("/snap/tests/data/nodes.h5")
     assert circuit.nodes["default"]._properties.spatial_segment_index_dir == ""
 
     assert circuit.nodes.population_names == ["default"]
@@ -90,10 +87,7 @@ def test_partial_circuit_config_minimal():
     assert list(circuit.edges["default"].afferent_edges(0)) == [0]
     assert list(circuit.edges["default"].efferent_edges(0)) == [1, 2]
     assert circuit.edges["default"].iter_connections() is not None
-    assert (
-        circuit.edges["default"].h5_filepath
-        == "/gpfs/bbp.cscs.ch/project/proj30/home/subert/snap/tests/data/edges.h5"
-    )
+    assert circuit.edges["default"].h5_filepath.endswith("/snap/tests/data/edges.h5")
     assert circuit.nodes["default"]._properties.spatial_segment_index_dir == ""
 
     assert circuit.edges.population_names == ["default"]
