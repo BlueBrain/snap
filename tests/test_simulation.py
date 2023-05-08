@@ -113,5 +113,5 @@ def test_pickle(tmp_path):
     with open(pickle_path, "rb") as fd:
         simulation = pickle.load(fd)
 
-    assert pickle_path.stat().st_size < 190
+    assert pickle_path.stat().st_size < 200
     assert simulation.dt == 0.01

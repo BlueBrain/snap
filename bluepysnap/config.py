@@ -23,6 +23,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import libsonata
+from libsonata import CircuitConfigStatus
 
 from bluepysnap.exceptions import BluepySnapError
 
@@ -183,6 +184,11 @@ class CircuitConfig(Config):
     def edge_populations(self):
         """Access edge population configs."""
         return self._populations["edges"]
+
+    @property
+    def status(self) -> CircuitConfigStatus:
+        """Return status of the config."""
+        return self._libsonata.config_status
 
     @staticmethod
     def _resolve_population_configs(config):

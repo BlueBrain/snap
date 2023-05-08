@@ -541,3 +541,19 @@ def test_no_duplicate_population_names():
             Error(Error.FATAL, 'Already have population "default" in config for type "nodes"'),
             Error(Error.FATAL, 'Already have population "default2" in config for type "nodes"'),
         }
+
+
+def test_partial_config_warning():
+    with copy_test_data() as (_, config_copy_path):
+        with edit_config(config_copy_path) as config:
+            config["metadata"] = {"status": "partial"}
+        errors = validate(str(config_copy_path))
+        assert errors == {
+            Error(
+                Error.WARNING,
+                (
+                    "The Circuit config is partial. Validity cannot be established "
+                    "for partial configs as it depends on the intended use. "
+                ),
+            ),
+        }

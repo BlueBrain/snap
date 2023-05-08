@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Improvements
+~~~~~~~~~~~~
+- Clarification for partial circuit configs
+
 Version v1.0.5
 --------------
 

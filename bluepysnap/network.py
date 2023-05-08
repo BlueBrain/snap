@@ -123,6 +123,9 @@ class NetworkObject(abc.ABC):
         Returns:
             CircuitNodeIds/CircuitEdgeIds: containing the IDs and the populations.
         """
+        if not self.population_names:
+            raise BluepySnapError("Cannot create CircuitIds for empty population.")
+
         str_type = f"<U{max(len(pop) for pop in self.population_names)}"
         ids = []
         populations = []

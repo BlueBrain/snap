@@ -66,6 +66,10 @@ def fatal(message):
     return Error(Error.FATAL, message)
 
 
+def _check_partial_circuit_config(config):
+    return config.get("metadata", {}).get("status") == "partial"
+
+
 def _check_components_dir(name, components):
     """Checks existence of directory within Sonata config 'components'.
 
@@ -618,6 +622,14 @@ def validate(config_file, skip_slow, only_errors=False, print_errors=True):
 
     if "networks" in config:
         errors += validate_networks(config, skip_slow)
+
+    if _check_partial_circuit_config(config):
+        message = (
+            "The Circuit config is partial. Validity cannot be established "
+            "for partial configs as it depends on the intended use. "
+        )
+        L.warning(message)
+        errors.append(Error(Error.WARNING, message))
 
     if only_errors:
         errors = [e for e in errors if e.level == Error.FATAL]
