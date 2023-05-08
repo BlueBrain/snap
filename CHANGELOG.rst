@@ -11,6 +11,7 @@ New Features
 Improvements
 ~~~~~~~~~~~~
 - Node set resolution is done by libsonata
+- Added kwarg: `raise_if_missing property` to `NodePopulation.get`
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~

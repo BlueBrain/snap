@@ -452,7 +452,7 @@ class NodePopulation:
         else:
             return np.unique(result)
 
-    def get(self, group=None, properties=None):
+    def get(self, group=None, properties=None, raise_missing_property=True):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
@@ -460,6 +460,8 @@ class NodePopulation:
                 see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise, return all the properties.
+            raise_missing_property (bool): if True, raises if a property used for filtering ids
+                is not listed in this population. Otherwise, no ids are selected.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
@@ -525,9 +527,9 @@ class NodePopulation:
             if isinstance(group, (int, np.integer)):
                 self._check_id(group)
             elif isinstance(group, CircuitNodeId):
-                group = self.ids(group)[0]
+                group = self.ids(group, raise_missing_property=raise_missing_property)[0]
             else:
-                group = self.ids(group)
+                group = self.ids(group, raise_missing_property=raise_missing_property)
 
         result = self._get_data(properties=properties)
         result = result.loc[group] if group is not None else result
