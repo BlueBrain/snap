@@ -100,7 +100,7 @@ class NodePopulation:
         categoricals = nodes.enumeration_names
 
         _all = nodes.select_all()
-        result = pd.DataFrame(index=np.arange(_all.flat_size))
+        result = pd.DataFrame(index=pd.RangeIndex(_all.flat_size))
 
         for attr in sorted(nodes.attribute_names):
             if attr in categoricals:
@@ -240,7 +240,7 @@ class NodePopulation:
 
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
-        if node_id not in self._data.index:
+        if node_id < 0 or node_id >= len(self._data.index):
             raise BluepySnapError(f"node ID not found: {node_id} in population '{self.name}'")
 
     def _check_ids(self, node_ids):
@@ -254,9 +254,9 @@ class NodePopulation:
         else:
             max_id = max(node_ids)
             min_id = min(node_ids)
-        if min_id < 0 or max_id >= self._data.index.shape[0]:
+        if min_id < 0 or max_id >= len(self._data.index):
             raise BluepySnapError(
-                f"All node IDs must be >= 0 and < {self._data.index.shape[0]} "
+                f"All node IDs must be >= 0 and < {len(self._data.index)} "
                 f"for population '{self.name}'"
             )
 
