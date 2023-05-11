@@ -1,8 +1,10 @@
+import itertools
 import json
 import pickle
 import sys
 from unittest import mock
 
+import libsonata
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -19,7 +21,7 @@ from bluepysnap.node_sets import NodeSets
 from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Node
 from bluepysnap.utils import IDS_DTYPE
 
-from utils import TEST_DATA_DIR, create_node_population
+from utils import TEST_DATA_DIR, assert_array_equal_strict, create_node_population
 
 
 class TestNodePopulation:
@@ -304,7 +306,7 @@ class TestNodePopulation:
             }
         )
         # replace the data using the __dict__ directly
-        test_obj.__dict__["_data"] = data
+        test_obj.__dict__["_cache"] = data
 
         # only full match is accepted
         npt.assert_equal(
@@ -639,6 +641,53 @@ class TestNodePopulation:
 
         assert pickle_path.stat().st_size < 210
         assert test_obj.size == 3
+
+    def test_filter_properties(self):
+        attrs_list = [
+            [f"attr{i:02d}" for i in range(30, 0, -1)],
+            [f"@dynamics:dyn{i:02d}" for i in range(30, 0, -1)],
+        ]
+        existing_columns = [
+            "attr10",
+            "attr11",
+            "attr20",
+            "@dynamics:dyn10",
+            "@dynamics:dyn11",
+            "@dynamics:dyn20",
+        ]
+        properties_set = {"attr11", "attr12", "@dynamics:dyn09"}
+        result = self.test_obj._filter_properties(
+            attrs_list=attrs_list, existing_columns=existing_columns, properties_set=properties_set
+        )
+        expected = [
+            (2, "attr12"),
+            (3, "@dynamics:dyn09"),
+        ]
+        for actual_item, expected_item in itertools.zip_longest(result, expected):
+            assert actual_item == expected_item
+
+    def test_get_values_from_sonata(self):
+        # valid attributes
+        selection = libsonata.Selection([0, 2])
+        result = self.test_obj._get_values_from_sonata("mtype", selection)
+        assert_array_equal_strict(result, np.array(["L2_X", "L6_Y"], dtype=object))
+
+        # dynamics attribute
+        selection = libsonata.Selection([2])
+        result = self.test_obj._get_values_from_sonata("@dynamics:holding_current", selection)
+        assert_array_equal_strict(result, np.array([0.3], dtype=float))
+
+        # empty selection
+        selection = libsonata.Selection([])
+        result = self.test_obj._get_values_from_sonata("x", selection)
+        assert_array_equal_strict(result, np.array([], dtype=float))
+
+        # unknown attribute
+        selection = libsonata.Selection([2])
+        with pytest.raises(
+            BluepySnapError, match="Attribute not found in population default: unknown"
+        ):
+            self.test_obj._get_values_from_sonata("unknown", selection)
 
 
 class TestNodePopulationSpatialIndex:
