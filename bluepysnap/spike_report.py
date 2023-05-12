@@ -143,7 +143,7 @@ class FilteredSpikeReport:
             t_stop (float): Include only frames occurring at or before this time.
 
         Returns:
-            FilteredSpikeReport: A FilteredFrameReport object.
+            FilteredSpikeReport: A FilteredSpikeReport object.
         """
         self.spike_report = spike_report
         self.group = group
@@ -267,6 +267,6 @@ class SpikeReport:
             t_stop (float): Include only frames occurring at or before this time.
 
         Returns:
-            FilteredSpikeReport: A FilteredFrameReport object.
+            FilteredSpikeReport: A FilteredSpikeReport object.
         """
         return FilteredSpikeReport(self, group, t_start, t_stop)
