@@ -62,8 +62,6 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     if time_binsize is not None and time_binsize <= 0:
         raise BluepySnapError(f"Invalid time_binsize = {time_binsize}. Should be > 0.")
 
-    spike_report = filtered_report.spike_report
-
     times = filtered_report.report.index
     node_count = filtered_report.report[["ids", "population"]].drop_duplicates().shape[0]
 
