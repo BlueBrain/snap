@@ -341,7 +341,7 @@ class TestNodePopulation:
                     [301.0, "L6_Y", 0.3],
                 ],
                 columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
-                index=[1, 2],
+                index=pd.Index([1, 2], name="node_ids"),
             ),
         )
 
@@ -357,7 +357,7 @@ class TestNodePopulation:
                     [301.0, "L6_Y", 0.3],
                 ],
                 columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
-                index=[1, 2],
+                index=pd.Index([1, 2], name="node_ids"),
             ),
         )
 
@@ -373,7 +373,7 @@ class TestNodePopulation:
                     [301.0, "L6_Y", 0.3],
                 ],
                 columns=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT],
-                index=[1, 2],
+                index=pd.Index([1, 2], name="node_ids"),
             ),
         )
 
@@ -385,7 +385,7 @@ class TestNodePopulation:
                     [301.0, "L6_Y", 6],
                 ],
                 columns=[Cell.X, Cell.MTYPE, Cell.LAYER],
-                index=[1, 2],
+                index=pd.Index([1, 2], name="node_ids"),
             ),
         )
 
@@ -438,7 +438,7 @@ class TestNodePopulation:
                     [301.0, 302.0, 303.0],
                     [101.0, 102.0, 103.0],
                 ],
-                index=[2, 0],
+                index=pd.Index([2, 0], name="node_ids"),
                 columns=[Cell.X, Cell.Y, Cell.Z],
             ),
         )
@@ -484,7 +484,7 @@ class TestNodePopulation:
                         ]
                     ),
                 ],
-                index=[2, 0, 1],
+                index=pd.Index([2, 0, 1], name="node_ids"),
                 name="orientation",
             ),
         )
@@ -519,7 +519,11 @@ class TestNodePopulation:
 
         pdt.assert_series_equal(
             _call_no_rot([2, 0, 1]),
-            pd.Series([np.eye(3), np.eye(3), np.eye(3)], index=[2, 0, 1], name="orientation"),
+            pd.Series(
+                [np.eye(3), np.eye(3), np.eye(3)],
+                index=pd.Index([2, 0, 1], name="node_ids"),
+                name="orientation",
+            ),
         )
 
         # NodePopulation with quaternions
@@ -567,7 +571,7 @@ class TestNodePopulation:
                         ]
                     ),
                 ],
-                index=[2, 0, 1],
+                index=pd.Index([2, 0, 1], name="node_ids"),
                 name="orientation",
             ),
         )
