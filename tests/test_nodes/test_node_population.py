@@ -519,8 +519,11 @@ class TestNodePopulation:
 
         pdt.assert_series_equal(
             _call_no_rot([2, 0, 1]),
-            pd.Series([np.eye(3), np.eye(3), np.eye(3)], index=pd.Index([2, 0, 1], name="node_ids"),
-                      name="orientation"),
+            pd.Series(
+                [np.eye(3), np.eye(3), np.eye(3)],
+                index=pd.Index([2, 0, 1], name="node_ids"),
+                name="orientation",
+            ),
         )
 
         # NodePopulation with quaternions
