@@ -69,7 +69,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
 
     if len(times) == 0:
         raise BluepySnapError(
-            "No data to display. You should check your " f"'group' query: {spike_report.group}."
+            f"No data to display. You should check your 'group' query: {filtered_report.group}."
         )
 
     time_start = np.min(times)
@@ -214,8 +214,7 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
 
     if len(values) == 0:
         raise BluepySnapError(
-            "No data to display. You should check your "
-            f"'group' query: {filtered_report.spike_report.group}."
+            f"No data to display. You should check your 'group' query: {filtered_report.group}."
         )
     if use_frequency:
         values = values[values > 0]  # filter out zero intervals
