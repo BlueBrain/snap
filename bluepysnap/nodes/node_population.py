@@ -460,8 +460,8 @@ class NodePopulation:
                 see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise, return all the properties.
-            raise_missing_property (bool): if True, raises if a property used for filtering ids
-                is not listed in this population. Otherwise, no ids are selected.
+            raise_missing_property (bool): when a property used for filtering ids is not present in
+                the population, raise an error if True, or return empty Series/DataFrame if False.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
