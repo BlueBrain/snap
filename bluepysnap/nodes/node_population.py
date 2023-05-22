@@ -86,6 +86,7 @@ class NodePopulation:
         Returns:
             NodePopulation: A NodePopulation object.
         """
+        self._cached_nodes = None
         self._circuit = circuit
         self.name = population_name
 
@@ -94,15 +95,12 @@ class NodePopulation:
         """Node sets defined for this node population."""
         return self._circuit.node_sets
 
-    @cached_property
-    def _cache(self):
-        """Return the partial DataFrame of nodes used as cache.
-
-        It should be called directly only in one of these cases:
-        - to add columns, in _get_data()
-        - to read the index (node_ids)
-        """
-        return pd.DataFrame(index=pd.RangeIndex(self.size, name="node_ids"))
+    @staticmethod
+    def _create_nodes_dataframe(size_or_ids):
+        """Create and return a new pd.DataFrame of nodes, without columns."""
+        if isinstance(size_or_ids, (int, np.integer)):
+            return pd.DataFrame(index=pd.RangeIndex(size_or_ids, name="node_ids"))
+        return pd.DataFrame(index=pd.Index(size_or_ids, name="node_ids", dtype=utils.IDS_DTYPE))
 
     def _get_values_from_sonata(self, attr, selection):
         """Return the selected values as np.ndarray or pd.Categorical."""
@@ -160,16 +158,18 @@ class NodePopulation:
         """
 
         nodes = self._population
+        if self._cached_nodes is None:
+            self._cached_nodes = self._create_nodes_dataframe(self.size)
         if properties is None:
             properties_set = self.property_names
         else:
             properties_set = set(utils.ensure_list(properties))
             self._check_properties(properties_set)
         if node_ids is None:
-            result = self._cache
+            result = self._cached_nodes
             selection = nodes.select_all()
         else:
-            result = pd.DataFrame(index=pd.RangeIndex(len(node_ids), name="node_ids"))
+            result = self._create_nodes_dataframe(node_ids)
             selection = libsonata.Selection(node_ids)
         attrs_list = [
             nodes.attribute_names,
@@ -378,7 +378,7 @@ class NodePopulation:
         # load all the properties needed to execute the query, excluding the unknown properties
         data = self._get_data(properties & self.property_names)
         idx = query.resolve_ids(data, self.name, queries)
-        return self._cache.index[idx].array
+        return idx.nonzero()[0]
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Node IDs corresponding to node ``group``.
@@ -408,7 +408,7 @@ class NodePopulation:
             group = group.filter_population(self.name).get_ids()
 
         if group is None:
-            result = self._cache.index.array
+            result = np.arange(self.size)
         elif isinstance(group, Mapping):
             result = self._node_ids_by_filter(
                 queries=group, raise_missing_prop=raise_missing_property

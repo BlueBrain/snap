@@ -305,8 +305,8 @@ class TestNodePopulation:
                 Cell.MTYPE: ["L23_MC", "L4_BP", "L6_BP", "L6_BPC"],
             }
         )
-        # replace the data using the __dict__ directly
-        test_obj.__dict__["_cache"] = data
+        # populate the cached nodes
+        test_obj._cached_nodes = data
 
         # only full match is accepted
         npt.assert_equal(
