@@ -188,12 +188,20 @@ class NodePopulation:
                 result.insert(n + loc, name, values)
         return result
 
-    @property
+    @cached_property
     def _properties(self):
+        """Node population properties.
+
+        Cached for some performance improvement when it's accessed several times.
+        """
         return self._circuit.to_libsonata.node_population_properties(self.name)
 
-    @property
+    @cached_property
     def _population(self):
+        """Libsonata node population.
+
+        Cached for some performance improvement when it's accessed several times.
+        """
         return self._circuit.to_libsonata.node_population(self.name)
 
     @cached_property
@@ -665,12 +673,10 @@ class NodePopulation:
                 )
             ) from e
 
-        properties = self._circuit.to_libsonata.node_population_properties(self.name)
-
-        if not properties.spatial_segment_index_dir:
+        if not self._properties.spatial_segment_index_dir:
             raise BluepySnapError(f"It appears {self.name} does not have segment indices")
 
-        return open_index(properties.spatial_segment_index_dir)
+        return open_index(self._properties.spatial_segment_index_dir)
 
     def __getstate__(self):
         """Make NodePopulation pickle-able, without storing state of caches."""
