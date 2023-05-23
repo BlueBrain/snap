@@ -175,17 +175,16 @@ class NodePopulation:
             nodes.attribute_names,
             utils.add_dynamic_prefix(nodes.dynamics_attribute_names),
         ]
-        # Reverse the iterator to be able to insert columns without invalidating the order.
-        for loc, name in reversed(
-            list(
-                self._filter_properties(
-                    attrs_list=attrs_list,
-                    existing_columns=result.columns,
-                    properties_set=properties_set,
-                )
+        # insert columns at the correct position
+        for n, (loc, name) in enumerate(
+            self._filter_properties(
+                attrs_list=attrs_list,
+                existing_columns=result.columns,
+                properties_set=properties_set,
             )
         ):
-            result.insert(loc, name, self._get_values_from_sonata(name, selection=selection))
+            values = self._get_values_from_sonata(name, selection=selection)
+            result.insert(n + loc, name, values)
         return result
 
     @property
