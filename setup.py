@@ -63,7 +63,9 @@ setup(
     package_data={
         "bluepysnap": ["schemas/*.yaml", "schemas/*/*.yaml"],
     },
-    use_scm_version=True,
+    use_scm_version={
+        "write_to": "bluepysnap/_version.py",
+    },
     setup_requires=[
         "setuptools_scm",
     ],

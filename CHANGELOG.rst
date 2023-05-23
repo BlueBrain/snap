@@ -1,9 +1,13 @@
 Changelog
 =========
 
+Version v1.0.6
+--------------
+
 Improvements
 ~~~~~~~~~~~~
 - Clarification for partial circuit configs
+- Publish version as ``bluepysnap.__version__``
 
 Version v1.0.5
 --------------
