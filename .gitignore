@@ -13,3 +13,4 @@ venv/
 .ipynb_checkpoints/
 .idea/
 .vscode
+bluepysnap/_version.py

@@ -21,3 +21,8 @@ from bluepysnap.circuit import Circuit
 from bluepysnap.config import Config
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
+
+try:
+    from bluepysnap._version import version as __version__
+except ImportError:  # pragma: no cover
+    __version__ = "unknown"
