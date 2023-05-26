@@ -11,5 +11,8 @@
     "population": "default",
     "mtype": "L6_Y"
   },
-  "combined": ["Node2_L6_Y", "Layer23"]
+  "combined": ["Node2_L6_Y", "Layer23"],
+  "failing": {
+      "unknown_property": [0]
+  }
 }

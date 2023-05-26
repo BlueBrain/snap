@@ -40,7 +40,7 @@ def test_all():
     assert simulation.conditions.celsius == 34.0
     assert simulation.conditions.v_init == -80
 
-    assert simulation.node_sets.resolved == {"Layer23": {"layer": [2, 3]}}
+    assert simulation.node_sets == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 

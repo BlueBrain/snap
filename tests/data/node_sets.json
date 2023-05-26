@@ -5,9 +5,6 @@
   "Layer23": {
     "layer": [2,3]
   },
-  "Empty_nodes": {
-    "node_id": []
-  },
   "Node2012": {
     "node_id": [2,0,1,2]
   },
@@ -22,10 +19,6 @@
   "Node0_L6_Y": {
     "mtype": "L6_Y",
     "node_id": [0]
-  },
-  "Empty_L6_Y": {
-    "node_id": [],
-    "mtype": "L6_Y"
   },
   "Population_default": {
     "population": "default"

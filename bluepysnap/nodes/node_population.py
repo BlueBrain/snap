@@ -269,14 +269,16 @@ class NodePopulation:
         """Returns the node set named 'node_set_name'."""
         if node_set_name not in self._node_sets:
             raise BluepySnapError(f"Undefined node set: '{node_set_name}'")
-        return self._node_sets[node_set_name]
+        return self._node_sets.resolve_ids(node_set_name, self._population)
 
     def _resolve_nodesets(self, queries):
         def _resolve(queries, queries_key):
             if queries_key == query.NODE_SET_KEY:
                 if query.AND_KEY not in queries:
                     queries[query.AND_KEY] = []
-                queries[query.AND_KEY].append(self._get_node_set(queries[queries_key]))
+                queries[query.AND_KEY].append(
+                    {query.NODE_ID_KEY: self._get_node_set(queries[queries_key])}
+                )
                 del queries[queries_key]
 
         resolved_queries = deepcopy(queries)
