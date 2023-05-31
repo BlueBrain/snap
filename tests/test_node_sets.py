@@ -28,14 +28,16 @@ class TestNodeSets:
             "failing": {"unknown_property": [0]},
         }
 
-    def test_resolve_ids(self):
-        assert_array_equal(self.test_obj.resolve_ids("Node2_L6_Y", self.test_pop), [])
+    def test_get_ids(self):
+        assert_array_equal(self.test_obj.get_ids("Node2_L6_Y", self.test_pop), [])
         assert_array_equal(
-            self.test_obj.resolve_ids("double_combined", self.test_pop),
+            self.test_obj.get_ids("double_combined", self.test_pop),
             [0, 1, 2],
         )
         with pytest.raises(BluepySnapError, match="No such attribute"):
-            self.test_obj.resolve_ids("failing", self.test_pop)
+            self.test_obj.get_ids("failing", self.test_pop)
+
+        assert self.test_obj.get_ids("failing", self.test_pop, raise_missing_property=False) == []
 
     def test_iter(self):
         expected = set(json.loads((TEST_DATA_DIR / "node_sets_file.json").read_text()))

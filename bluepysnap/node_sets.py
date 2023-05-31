@@ -42,11 +42,14 @@ class NodeSets:
         self.content = utils.load_json(filepath)
         self._instance = libsonata.NodeSets.from_file(filepath)
 
-    def resolve_ids(self, node_set_name, population):
+    def get_ids(self, node_set_name, population, raise_missing_property=True):
         """Get the resolved node set using name as key."""
         try:
             return self._instance.materialize(node_set_name, population).flatten()
         except libsonata.SonataError as e:
+            if "No such attribute" in e.args[0]:
+                if not raise_missing_property:
+                    return []
             raise BluepySnapError(*e.args) from e
 
     def __iter__(self):

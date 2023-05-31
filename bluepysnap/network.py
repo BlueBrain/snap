@@ -144,13 +144,13 @@ class NetworkObject(abc.ABC):
         return res
 
     @abc.abstractmethod
-    def ids(self, group=None, sample=None, limit=None):
+    def ids(self, group=None, sample=None, limit=None, node_sets=None):
         """Resolves the ids of the NetworkObject."""
 
     @abc.abstractmethod
-    def get(self, group=None, properties=None):
+    def get(self, group=None, properties=None, node_sets=None):  # pylint: disable=too-many-locals
         """Returns the properties of the NetworkObject."""
-        ids = self.ids(group)
+        ids = self.ids(group, node_sets=node_sets)
         properties = utils.ensure_list(properties)
         # We don t convert to set properties itself to keep the column order.
         properties_set = set(properties)

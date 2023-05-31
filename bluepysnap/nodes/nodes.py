@@ -54,7 +54,7 @@ class Nodes(
             for value in pop.property_values(prop)
         )
 
-    def ids(self, group=None, sample=None, limit=None):
+    def ids(self, group=None, sample=None, limit=None, node_sets=None):
         """Returns the CircuitNodeIds corresponding to the nodes from ``group``.
 
         Args:
@@ -116,10 +116,10 @@ class Nodes(
             if diff.size != 0:
                 raise BluepySnapError(f"Population {diff} does not exist in the circuit.")
 
-        fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
+        fun = lambda x: (x.ids(group, raise_missing_property=False, node_sets=node_sets), x.name)
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
-    def get(self, group=None, properties=None):  # pylint: disable=arguments-differ
+    def get(self, group=None, properties=None, node_sets=None):  # pylint: disable=arguments-differ
         """Node properties as a pandas DataFrame.
 
         Args:
@@ -141,7 +141,7 @@ class Nodes(
         if properties is None:
             # not strictly needed, but ensure that the properties are always in the same order
             properties = sorted(self.property_names)
-        return super().get(group, properties)
+        return super().get(group, properties, node_sets)
 
     def __getstate__(self):
         """Make Nodes pickle-able, without storing state of caches."""
