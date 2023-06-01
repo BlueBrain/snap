@@ -456,7 +456,7 @@ class NodePopulation:
         else:
             return np.unique(result)
 
-    def get(self, group=None, properties=None, populate_cache=True):
+    def get(self, group=None, properties=None):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
@@ -464,7 +464,6 @@ class NodePopulation:
                 see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise, return all the properties.
-            populate_cache: for internal tests, to be removed.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
@@ -526,28 +525,17 @@ class NodePopulation:
                 >>> type(result), result.shape
                 (pandas.core.frame.DataFrame, (1, 1))
         """
-        single_id = False
         if group is not None:
             if isinstance(group, (int, np.integer)):
                 self._check_id(group)
-                single_id = True
             elif isinstance(group, CircuitNodeId):
                 group = self.ids(group)[0]
-                single_id = True
             else:
                 group = self.ids(group)
 
-        if populate_cache:  # pragma: no cover
-            result = self._get_data(properties=properties)
-            result = result.loc[group] if group is not None else result
-        elif single_id:
-            result = self._get_data(properties=properties, node_ids=[group]).iloc[0]
-        else:
-            result = self._get_data(properties=properties, node_ids=group)
-
-        if properties is not None:
-            result = result[properties]
-
+        result = self._get_data(properties=properties)
+        result = result.loc[group] if group is not None else result
+        result = result[properties] if properties is not None else result
         return result
 
     def positions(self, group=None):
