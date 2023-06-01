@@ -62,32 +62,29 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     if time_binsize is not None and time_binsize <= 0:
         raise BluepySnapError(f"Invalid time_binsize = {time_binsize}. Should be > 0.")
 
-    times = filtered_report.report.index
-    node_count = filtered_report.report[["ids", "population"]].drop_duplicates().shape[0]
-
-    if len(times) == 0:
-        raise BluepySnapError(
-            f"No data to display. You should check your 'group' query: {filtered_report.group}."
-        )
-
-    time_start = np.min(times)
-    time_stop = np.max(times)
-
-    if time_binsize is None:
-        # heuristic for a nice bin size (~100 spikes per bin on average)
-        time_binsize = min(50.0, (time_stop - time_start) / ((len(times) / 100.0) + 1.0))
-
-    bins = np.append(np.arange(time_start, time_stop, time_binsize), time_stop)
-    hist, bin_edges = np.histogram(times, bins=bins)
-    freq = 1.0 * hist / node_count / (0.001 * time_binsize)
-
     if ax is None:
         ax = plt.gca()
         ax.set_xlabel("Time [ms]")
         ax.set_ylabel("PSTH [Hz]")
 
-    # use the middle of the bins instead of the start of the bin
-    ax.plot(0.5 * (bin_edges[1:] + bin_edges[:-1]), freq, label="PSTH", drawstyle="steps-mid")
+    times = filtered_report.report.index
+
+    if len(times) > 0:
+        time_start = np.min(times)
+        time_stop = np.max(times)
+
+        if time_binsize is None:
+            # heuristic for a nice bin size (~100 spikes per bin on average)
+            time_binsize = min(50.0, (time_stop - time_start) / ((len(times) / 100.0) + 1.0))
+
+        bins = np.append(np.arange(time_start, time_stop, time_binsize), time_stop)
+        hist, bin_edges = np.histogram(times, bins=bins)
+        node_count = filtered_report.report[["ids", "population"]].drop_duplicates().shape[0]
+        freq = 1.0 * hist / node_count / (0.001 * time_binsize)
+
+        # use the middle of the bins instead of the start of the bin
+        ax.plot(0.5 * (bin_edges[1:] + bin_edges[:-1]), freq, label="PSTH", drawstyle="steps-mid")
+
     return ax
 
 
