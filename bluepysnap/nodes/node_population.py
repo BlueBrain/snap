@@ -173,7 +173,7 @@ class NodePopulation:
             # Select the ids from the cached dataframe.
             # The original dataframe won't be updated in this case.
             result = result.loc[node_ids]
-        cached_columns = result.columns.intersection(properties_set)
+        cached_columns = properties_set.intersection(result.columns)
         if len(cached_columns) < len(properties_set):
             # some requested properties miss from the cache
             nodes = self._population
@@ -456,7 +456,7 @@ class NodePopulation:
         else:
             return np.unique(result)
 
-    def get(self, group=None, properties=None, populate_cache=False):
+    def get(self, group=None, properties=None, populate_cache=True):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
