@@ -86,7 +86,6 @@ class NodePopulation:
         Returns:
             NodePopulation: A NodePopulation object.
         """
-        self._cached_nodes = None
         self._circuit = circuit
         self.name = population_name
 
@@ -95,16 +94,20 @@ class NodePopulation:
         """Node sets defined for this node population."""
         return self._circuit.node_sets
 
-    @staticmethod
-    def _create_nodes_dataframe(size_or_ids):
-        """Create and return a new pd.DataFrame of nodes, without columns."""
-        if isinstance(size_or_ids, (int, np.integer)):
-            return pd.DataFrame(index=pd.RangeIndex(size_or_ids, name="node_ids"))
-        return pd.DataFrame(index=pd.Index(size_or_ids, name="node_ids", dtype=utils.IDS_DTYPE))
+    @cached_property
+    def _cache(self):
+        """Cached DataFrame of nodes, to be accessed through _get_data()."""
+        return pd.DataFrame(index=pd.RangeIndex(self.size, name="node_ids"))
 
-    def _get_values_from_sonata(self, attr, selection):
+    def _get_libsonata_selection(self, node_ids):
+        """Return a libsonata Selection from the given node_ids."""
+        if node_ids is None:
+            return libsonata.Selection([(0, self.size)])
+        return libsonata.Selection(node_ids)
+
+    def _get_values_from_sonata(self, nodes, attr, node_ids):
         """Return the selected values as np.ndarray or pd.Categorical."""
-        nodes = self._population
+        selection = self._get_libsonata_selection(node_ids)
         if attr in nodes.enumeration_names:
             enumeration = np.asarray(nodes.get_enumeration(attr, selection))
             values = np.asarray(nodes.enumeration_values(attr))
@@ -123,68 +126,71 @@ class NodePopulation:
         raise BluepySnapError(f"Attribute not found in population {self.name}: {attr}")
 
     @staticmethod
-    def _filter_properties(attrs_list, existing_columns, properties_set):
-        """Iterate over a list of lists of attrs, and yield only attributes in properties_set.
+    def _iter_selected_properties(reference, existing, desired):
+        """Yield (idx, attr) for each attr in desired, and not in existing, ordered by reference.
 
-        Each list is sorted alphabetically, and compared with the existing columns (already
-        correctly ordered), in order to provide the position of the attribute to be inserted.
+        Called to ensure that the order of the columns of the cached DataFrame doesn't depend
+        on the order of the retrieved attributes, when _get_data is called multiple times
+        with different properties.
 
-        This is done to ensure that the order of the columns of the cached DataFrame doesn't
-        depend on the retrieved attributes, when _get_data is called multiple times with
-        different properties.
+        Args:
+            reference: list of attributes, used to find the order and index of the yielded attrs.
+            existing: existing attributes, that are going to be skipped.
+            desired: desired attributes, that are going to be yielded in order.
         """
         idx = 0
-        existing_columns = list(existing_columns)
-        for attrs in attrs_list:
-            for attr in sorted(attrs):
-                if idx < len(existing_columns) and attr == existing_columns[idx]:
-                    idx += 1
-                    continue
-                if attr not in properties_set:
-                    continue
-                yield idx, attr
+        existing = set(existing)
+        desired = set(desired)
+        for attr in reference:
+            if attr in existing:
+                idx += 1
+                continue
+            if attr not in desired:
+                continue
+            yield idx, attr
 
     def _get_data(self, properties=None, node_ids=None):
         """Collect data for the node population as a pandas.DataFrame.
 
-        Return the cached DataFrame, loading the requested properties if needed.
-        For performance reasons, the returned DataFrame isn't filtered by columns, so it may
-        contain more properties than requested, if they were loaded previously.
+        Return a DataFrame with node_ids as index, loading the requested properties if needed.
+
+        The returned DataFrame isn't filtered by columns, so it may contain more properties than
+        requested, if they were loaded previously.
 
         Args:
-            properties (set|list|str|None): properties to load.
-            node_ids (list|np.ndarray|None): node ids to select. If None, all the node ids are
-                selected, and the internal cache is used and updated.
+            properties (str|set|list|None): properties to load, or None to load all of them.
+            node_ids (list|np.ndarray|None): node ids to select.
+                If None, all the ids are selected, and the cache is read and updated if needed.
+                If not None, the cache is read and used if possible, but not updated.
         """
-
-        nodes = self._population
-        if self._cached_nodes is None:
-            self._cached_nodes = self._create_nodes_dataframe(self.size)
+        result = self._cache
         if properties is None:
             properties_set = self.property_names
         else:
             properties_set = set(utils.ensure_list(properties))
             self._check_properties(properties_set)
-        if node_ids is None:
-            result = self._cached_nodes
-            selection = nodes.select_all()
-        else:
-            result = self._create_nodes_dataframe(node_ids)
-            selection = libsonata.Selection(node_ids)
-        attrs_list = [
-            nodes.attribute_names,
-            utils.add_dynamic_prefix(nodes.dynamics_attribute_names),
-        ]
-        # insert columns at the correct position
-        for n, (loc, name) in enumerate(
-            self._filter_properties(
-                attrs_list=attrs_list,
-                existing_columns=result.columns,
-                properties_set=properties_set,
-            )
-        ):
-            values = self._get_values_from_sonata(name, selection=selection)
-            result.insert(n + loc, name, values)
+        if node_ids is not None:
+            # Select the ids from the cached dataframe.
+            # The original dataframe won't be updated in this case.
+            result = result.loc[node_ids]
+        cached_columns = result.columns.intersection(properties_set)
+        if len(cached_columns) < len(properties_set):
+            # some requested properties miss from the cache
+            nodes = self._population
+            attrs_list = [
+                *sorted(nodes.attribute_names),
+                *sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)),
+            ]
+            # insert columns at the correct position
+            for n, (loc, name) in enumerate(
+                self._iter_selected_properties(
+                    reference=attrs_list,
+                    existing=result.columns,
+                    desired=properties_set,
+                )
+            ):
+                values = self._get_values_from_sonata(nodes=nodes, attr=name, node_ids=node_ids)
+                result.insert(n + loc, name, values)
         return result
 
     @cached_property
@@ -313,7 +319,7 @@ class NodePopulation:
         Returns:
             pandas.Series: series indexed by field name with the corresponding dtype as value.
         """
-        # read from sonata file without loading any node
+        # read all the properties, without loading any node id
         return self._get_data(properties=None, node_ids=[]).dtypes.sort_index()
 
     def _check_id(self, node_id):
@@ -450,14 +456,15 @@ class NodePopulation:
         else:
             return np.unique(result)
 
-    def get(self, group=None, properties=None):
+    def get(self, group=None, properties=None, populate_cache=False):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
             group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None):
                 see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
-                Otherwise return all properties.
+                Otherwise, return all the properties.
+            populate_cache: for internal tests, to be removed.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
@@ -519,16 +526,24 @@ class NodePopulation:
                 >>> type(result), result.shape
                 (pandas.core.frame.DataFrame, (1, 1))
         """
-        result = self._get_data(properties)
-
+        single_id = False
         if group is not None:
             if isinstance(group, (int, np.integer)):
                 self._check_id(group)
+                single_id = True
             elif isinstance(group, CircuitNodeId):
                 group = self.ids(group)[0]
+                single_id = True
             else:
                 group = self.ids(group)
-            result = result.loc[group]
+
+        if populate_cache:  # pragma: no cover
+            result = self._get_data(properties=properties)
+            result = result.loc[group] if group is not None else result
+        elif single_id:
+            result = self._get_data(properties=properties, node_ids=[group]).iloc[0]
+        else:
+            result = self._get_data(properties=properties, node_ids=group)
 
         if properties is not None:
             result = result[properties]

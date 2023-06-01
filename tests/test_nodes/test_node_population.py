@@ -306,7 +306,7 @@ class TestNodePopulation:
             }
         )
         # populate the cached nodes
-        test_obj._cached_nodes = data
+        test_obj.__dict__["_cache"] = data
 
         # only full match is accepted
         npt.assert_equal(
@@ -643,9 +643,9 @@ class TestNodePopulation:
         assert test_obj.size == 3
 
     def test_filter_properties(self):
-        attrs_list = [
-            [f"attr{i:02d}" for i in range(30, 0, -1)],
-            [f"@dynamics:dyn{i:02d}" for i in range(30, 0, -1)],
+        reference = [
+            *sorted(f"attr{i:02d}" for i in range(30, 0, -1)),
+            *sorted(f"@dynamics:dyn{i:02d}" for i in range(30, 0, -1)),
         ]
         existing_columns = [
             "attr10",
@@ -656,8 +656,8 @@ class TestNodePopulation:
             "@dynamics:dyn20",
         ]
         properties_set = {"attr11", "attr12", "@dynamics:dyn09"}
-        result = self.test_obj._filter_properties(
-            attrs_list=attrs_list, existing_columns=existing_columns, properties_set=properties_set
+        result = self.test_obj._iter_selected_properties(
+            reference=reference, existing=existing_columns, desired=properties_set
         )
         expected = [
             (2, "attr12"),
@@ -667,27 +667,25 @@ class TestNodePopulation:
             assert actual_item == expected_item
 
     def test_get_values_from_sonata(self):
+        nodes = self.test_obj._population
+
         # valid attributes
-        selection = libsonata.Selection([0, 2])
-        result = self.test_obj._get_values_from_sonata("mtype", selection)
+        result = self.test_obj._get_values_from_sonata(nodes, "mtype", [0, 1])
         assert_array_equal_strict(result, np.array(["L2_X", "L6_Y"], dtype=object))
 
         # dynamics attribute
-        selection = libsonata.Selection([2])
-        result = self.test_obj._get_values_from_sonata("@dynamics:holding_current", selection)
+        result = self.test_obj._get_values_from_sonata(nodes, "@dynamics:holding_current", [2])
         assert_array_equal_strict(result, np.array([0.3], dtype=float))
 
         # empty selection
-        selection = libsonata.Selection([])
-        result = self.test_obj._get_values_from_sonata("x", selection)
+        result = self.test_obj._get_values_from_sonata(nodes, "x", [])
         assert_array_equal_strict(result, np.array([], dtype=float))
 
         # unknown attribute
-        selection = libsonata.Selection([2])
         with pytest.raises(
             BluepySnapError, match="Attribute not found in population default: unknown"
         ):
-            self.test_obj._get_values_from_sonata("unknown", selection)
+            self.test_obj._get_values_from_sonata(nodes, "unknown", [2])
 
 
 class TestNodePopulationSpatialIndex:
