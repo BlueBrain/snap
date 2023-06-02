@@ -125,23 +125,21 @@ class NodePopulation:
                 return nodes.get_dynamics_attribute(stripped, selection)
         raise BluepySnapError(f"Attribute not found in population {self.name}: {attr}")
 
-    @staticmethod
-    def _iter_selected_properties(reference, existing, desired):
-        """Yield (idx, attr) for each attr in desired, and not in existing, ordered by reference.
+    def _iter_selected_properties(self, existing, desired):
+        """Yield ordered (idx, attr) for each attr in desired, and not in existing.
 
         Called to ensure that the order of the columns of the cached DataFrame doesn't depend
         on the order of the retrieved attributes, when _get_data is called multiple times
         with different properties.
 
         Args:
-            reference: list of attributes, used to find the order and index of the yielded attrs.
             existing: existing attributes, that are going to be skipped.
             desired: desired attributes, that are going to be yielded in order.
         """
         idx = 0
         existing = set(existing)
         desired = set(desired)
-        for attr in reference:
+        for attr in self._ordered_property_names:
             if attr in existing:
                 idx += 1
                 continue

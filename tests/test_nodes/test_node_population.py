@@ -643,25 +643,31 @@ class TestNodePopulation:
         assert test_obj.size == 3
 
     def test_filter_properties(self):
-        reference = [
-            *(f"attr{i:02d}" for i in range(1, 31)),
-            *(f"@dynamics:dyn{i:02d}" for i in range(1, 31)),
+        assert self.test_obj._ordered_property_names == [
+            "layer",
+            "model_template",
+            "model_type",
+            "morphology",
+            "mtype",
+            "rotation_angle_xaxis",
+            "rotation_angle_yaxis",
+            "rotation_angle_zaxis",
+            "x",
+            "y",
+            "z",
+            "@dynamics:holding_current",
         ]
-        existing_columns = [
-            "attr10",
-            "attr11",
-            "attr20",
-            "@dynamics:dyn10",
-            "@dynamics:dyn11",
-            "@dynamics:dyn20",
-        ]
-        properties_set = {"attr11", "attr12", "@dynamics:dyn09"}
-        result = self.test_obj._iter_selected_properties(
-            reference=reference, existing=existing_columns, desired=properties_set
-        )
+        existing = ["morphology", "mtype", "y"]
+        desired = {"@dynamics:holding_current", "z", "x", "y", "model_type", "layer", "mtype"}
+
+        result = self.test_obj._iter_selected_properties(existing=existing, desired=desired)
+
         expected = [
-            (2, "attr12"),
-            (3, "@dynamics:dyn09"),
+            (0, "layer"),
+            (0, "model_type"),
+            (2, "x"),
+            (3, "z"),
+            (3, "@dynamics:holding_current"),
         ]
         for actual_item, expected_item in itertools.zip_longest(result, expected):
             assert actual_item == expected_item
