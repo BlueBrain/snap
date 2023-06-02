@@ -644,8 +644,8 @@ class TestNodePopulation:
 
     def test_filter_properties(self):
         reference = [
-            *sorted(f"attr{i:02d}" for i in range(30, 0, -1)),
-            *sorted(f"@dynamics:dyn{i:02d}" for i in range(30, 0, -1)),
+            *(f"attr{i:02d}" for i in range(1, 31)),
+            *(f"@dynamics:dyn{i:02d}" for i in range(1, 31)),
         ]
         existing_columns = [
             "attr10",

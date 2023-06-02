@@ -157,6 +157,11 @@ class NodePopulation:
         The returned DataFrame isn't filtered by columns, so it may contain more properties than
         requested, if they were loaded previously.
 
+        This is done for efficiency, since a copy of the data is not needed:
+        - in self.get(), the DataFrame is filtered by node_ids first, and by property later
+        - in self.property_dtypes(), all the properties are needed
+        - in self._node_ids_by_filter(), the required columns are selected if and when needed
+
         Args:
             properties (str|set|list|None): properties to load, or None to load all of them.
             node_ids (list|np.ndarray|None): node ids to select.
@@ -177,14 +182,10 @@ class NodePopulation:
         if len(cached_columns) < len(properties_set):
             # some requested properties miss from the cache
             nodes = self._population
-            attrs_list = [
-                *sorted(nodes.attribute_names),
-                *sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)),
-            ]
             # insert columns at the correct position
             for n, (loc, name) in enumerate(
                 self._iter_selected_properties(
-                    reference=attrs_list,
+                    reference=self._ordered_property_names,
                     existing=result.columns,
                     desired=properties_set,
                 )
@@ -218,6 +219,11 @@ class NodePopulation:
     @cached_property
     def _dynamics_params_names(self):
         return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
+
+    @cached_property
+    def _ordered_property_names(self):
+        """Similar to self.property_names, but as an ordered list."""
+        return sorted(self._property_names) + sorted(self._dynamics_params_names)
 
     def source_in_edges(self):
         """Set of edge population names that use this node population as source.
