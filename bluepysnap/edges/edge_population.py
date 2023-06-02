@@ -60,20 +60,12 @@ class EdgePopulation:
         self._circuit = circuit
         self.name = population_name
 
-    @cached_property
+    @property
     def _properties(self):
-        """Edge population properties.
-
-        Cached for some performance improvement when it's accessed several times.
-        """
         return self._circuit.to_libsonata.edge_population_properties(self.name)
 
-    @cached_property
+    @property
     def _population(self):
-        """Libsonata edge population.
-
-        Cached for some performance improvement when it's accessed several times.
-        """
         return self._circuit.to_libsonata.edge_population(self.name)
 
     @staticmethod
@@ -598,9 +590,10 @@ class EdgePopulation:
                 )
             ) from e
 
-        if not self._properties.spatial_synapse_index_dir:
+        properties = self._circuit.to_libsonata.edge_population_properties(self.name)
+        if not properties.spatial_synapse_index_dir:
             raise BluepySnapError(f"It appears {self.name} does not have synapse indices")
-        return open_index(self._properties.spatial_synapse_index_dir)
+        return open_index(properties.spatial_synapse_index_dir)
 
     def __getstate__(self):
         """Make EdgePopulation pickle-able, without storing state of caches."""
