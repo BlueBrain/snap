@@ -78,8 +78,10 @@ def _properties_mask(data, population_name, queries):
             prop_mask = np.logical_and(prop >= v1, prop <= v2)
         elif isinstance(values, Mapping):
             prop_mask = _complex_query(prop, values)
+        elif isinstance(values, list):
+            prop_mask = prop.isin(values)
         else:
-            prop_mask = np.in1d(prop, values)
+            prop_mask = prop == values
         mask = np.logical_and(mask, prop_mask)
     return mask
 

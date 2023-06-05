@@ -19,6 +19,7 @@ Improvements
 - Publish version as ``bluepysnap.__version__``
 - Support lazy loading of nodes attributes.
 - Add t_step parameter to frame reports.
+- Improve query performance in get() and ids().
 - Add python 3.11 tests.
 - Drop python 3.7 support.
 
