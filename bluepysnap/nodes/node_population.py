@@ -182,11 +182,7 @@ class NodePopulation:
             nodes = self._population
             # insert columns at the correct position
             for n, (loc, name) in enumerate(
-                self._iter_selected_properties(
-                    reference=self._ordered_property_names,
-                    existing=result.columns,
-                    desired=properties_set,
-                )
+                self._iter_selected_properties(existing=result.columns, desired=properties_set)
             ):
                 values = self._get_values_from_sonata(nodes=nodes, attr=name, node_ids=node_ids)
                 result.insert(n + loc, name, values)
