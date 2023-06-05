@@ -8,6 +8,7 @@ Improvements
 ~~~~~~~~~~~~
 - Clarification for partial circuit configs
 - Publish version as ``bluepysnap.__version__``
+- Support lazy loading of nodes attributes.
 - Add python 3.11 tests.
 
 Version v1.0.5
