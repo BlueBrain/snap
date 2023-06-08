@@ -87,7 +87,7 @@ class PopulationFrameReport:
                 It should be a multiple of the report time step dt, and it's equal to dt by default.
                 If the given t_step isn't an exact multiple, it's rounded to the closer multiple.
                 Only the samples at t = t0 + k * t_step, for k = 0, 1... are returned,
-                where t0 is the first valid time >= t_start.
+                where t0 is the first sample time >= t_start.
 
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.
