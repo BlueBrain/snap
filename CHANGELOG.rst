@@ -1,6 +1,19 @@
 Changelog
 =========
 
+Version v1.2.0
+--------------
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- ``nodes.get`` and ``edges.get`` (and ``network.get``) no longer return a dataframe
+  - return iterators of tuples of ``(population_name, pd.DataFrame)`` instead
+- ``nodes.property_dtypes``, ``edges.property_dtypes`` no longer available
+
+Bug Fixes
+~~~~~~~~~
+- Fixed the `Same property with different dtype` issue with ``nodes.get``, ``edges.get``
+
 Version v1.1.0
 --------------
 

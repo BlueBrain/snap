@@ -1,6 +1,7 @@
 import json
 import pickle
 
+import pandas as pd
 import pytest
 from libsonata import SonataError
 
@@ -78,6 +79,7 @@ def test_integration():
     edge_ids = circuit.edges.afferent_edges(node_ids)
     edge_props = circuit.edges.get(edge_ids, properties=["syn_weight", "delay"])
     edge_reduced = edge_ids.limit(2)
+    edge_props = pd.concat(edge_props.values())
     edge_props_reduced = edge_props.loc[edge_reduced]
     assert edge_props_reduced["syn_weight"].tolist() == [1, 1]
 

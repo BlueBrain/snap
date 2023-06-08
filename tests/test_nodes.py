@@ -291,6 +291,7 @@ class TestNodes:
     def test_get(self):
         # return all properties for all the ids
         tested = self.test_obj.get()
+        tested = pd.concat(tested.values())
         assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
 
         # put NaN for the undefined values : only values for default2 in dropna
@@ -305,6 +306,7 @@ class TestNodes:
 
         # tested columns
         tested = self.test_obj.get(properties=["other2", "other1", "layer"])
+        tested = pd.concat(tested.values())
         expected = pd.DataFrame(
             {
                 "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
@@ -324,7 +326,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
-        pdt.assert_frame_equal(tested, expected)
+        pdt.assert_frame_equal(tested[expected.columns], expected)
 
         tested = self.test_obj.get(
             group={"population": "default2"}, properties=["other2", "other1", "layer"]
@@ -345,6 +347,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(tested.values())
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(KeyError, match="'default'"):
@@ -355,8 +358,8 @@ class TestNodes:
         )
         expected = pd.DataFrame(
             {
-                "other2": np.array([np.NaN, np.NaN, np.NaN], dtype=float),
-                "other1": np.array([np.NaN, np.NaN, np.NaN], dtype=object),
+                # "other2": np.array([np.NaN, np.NaN, np.NaN], dtype=float),
+                # "other1": np.array([np.NaN, np.NaN, np.NaN], dtype=object),
                 "layer": np.array([2, 6, 6], dtype=int),
             },
             index=pd.MultiIndex.from_tuples(
@@ -368,6 +371,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(tested.values())
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="layer")
@@ -388,6 +392,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(tested.values())
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="other2")
@@ -408,6 +413,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(tested.values())
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
