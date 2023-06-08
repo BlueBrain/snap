@@ -10,6 +10,7 @@ Improvements
 - Publish version as ``bluepysnap.__version__``
 - Support lazy loading of nodes attributes.
 - Add python 3.11 tests.
+- Drop python 3.7 support.
 
 Version v1.0.5
 --------------

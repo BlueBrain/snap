@@ -9,7 +9,7 @@ from bluepysnap.edges import EdgePopulation, Edges
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.nodes import NodePopulation, Nodes
 
-from utils import TEST_DATA_DIR, copy_test_data, edit_config, skip_if_libsonata_0_1_16
+from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def test_all():
@@ -44,7 +44,6 @@ def test_all():
         circuit.get_edge_population_config(fake_pop)
 
 
-@skip_if_libsonata_0_1_16
 def test_duplicate_node_populations():
     with copy_test_data() as (_, config_path):
         with edit_config(config_path) as config:
@@ -55,7 +54,6 @@ def test_duplicate_node_populations():
             test_module.Circuit(config_path)
 
 
-@skip_if_libsonata_0_1_16
 def test_duplicate_edge_populations():
     with copy_test_data() as (_, config_path):
         with edit_config(config_path) as config:
