@@ -159,7 +159,7 @@ class NetworkObject(abc.ABC):
         if unknown_props:
             raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
-        res = {}
+        res = []
         for name, pop in sorted(self.items()):
             # since ids is sorted, global_pop_ids should be sorted as well
             global_pop_ids = ids.filter_population(name)
@@ -172,7 +172,7 @@ class NetworkObject(abc.ABC):
                 pop_df.index = global_pop_ids.index
 
                 # Sort the columns in the given order
-                res[name] = pop_df[[p for p in properties if p in pop_properties]]
+                res.append((name, pop_df[[p for p in properties if p in pop_properties]]))
         return res
 
     @abc.abstractmethod

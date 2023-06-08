@@ -269,8 +269,8 @@ class TestEdges:
         assert tested == ids
 
         tested = self.test_obj.get(ids, properties=self.test_obj.property_names)
+        tested = pd.concat(df for _, df in tested)
 
-        tested = pd.concat(tested.values())
         assert len(tested) == 8
         assert len(list(tested)) == 24
 
@@ -280,7 +280,7 @@ class TestEdges:
         # the index of the dataframe is indentical to the CircuitEdgeIds index
         pdt.assert_index_equal(tested.index, ids.index)
         tested2 = self.test_obj.get([0, 1, 2, 3], properties=self.test_obj.property_names)
-        tested2 = pd.concat(tested2.values())
+        tested2 = pd.concat(df for _, df in tested2)
         pdt.assert_frame_equal(tested2, tested)
 
         # tested columns
@@ -307,7 +307,7 @@ class TestEdges:
                 names=["population", "edge_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested[expected.columns], expected)
 
         tested = self.test_obj.get(
@@ -331,7 +331,7 @@ class TestEdges:
                 names=["population", "edge_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(KeyError, match="'default'"):
@@ -357,7 +357,7 @@ class TestEdges:
                 names=["population", "edge_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(ids, properties="@source_node")
@@ -379,7 +379,7 @@ class TestEdges:
                 names=["population", "edge_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(ids, properties="other2")
@@ -401,7 +401,7 @@ class TestEdges:
                 names=["population", "edge_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
@@ -425,8 +425,8 @@ class TestEdges:
         ):
             tested = self.test_obj.properties(ids, properties=["other2", "@source_node"])
         expected = self.test_obj.get(ids, properties=["other2", "@source_node"])
-        tested = pd.concat(tested.values())
-        expected = pd.concat(expected.values())
+        tested = pd.concat(df for _, df in tested)
+        expected = pd.concat(df for _, df in expected)
         pdt.assert_frame_equal(tested, expected, check_exact=False)
 
     def test_afferent_nodes(self):
@@ -496,7 +496,7 @@ class TestEdges:
 
         expected_index = CircuitEdgeIds.from_dict({"default": [1, 2], "default2": [1, 2]})
         tested = self.test_obj.pathway_edges(source=source, target=target, properties=properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -515,7 +515,7 @@ class TestEdges:
         properties = [Synapse.SOURCE_NODE_ID, "other1"]
         expected_index = CircuitEdgeIds.from_dict({"default": [1, 2], "default2": [1, 2]})
         tested = self.test_obj.pathway_edges(source=source, target=target, properties=properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -554,7 +554,7 @@ class TestEdges:
         target = CircuitNodeId("default", 1)
         expected_index = CircuitEdgeIds.from_dict({"default": [1, 2], "default2": [1, 2]})
         tested = self.test_obj.pathway_edges(source=source, target=target, properties=properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -591,7 +591,7 @@ class TestEdges:
 
         properties = [Synapse.AXONAL_DELAY]
         tested = self.test_obj.afferent_edges(1, properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -617,7 +617,7 @@ class TestEdges:
         tested = self.test_obj.afferent_edges(
             CircuitNodeIds.from_dict({"default": [0, 1]}), properties=properties
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -646,7 +646,7 @@ class TestEdges:
 
         properties = [Synapse.AXONAL_DELAY]
         tested = self.test_obj.efferent_edges(2, properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -667,7 +667,7 @@ class TestEdges:
         expected_index = CircuitEdgeIds.from_dict({"default": [0, 3], "default2": [0, 3]})
 
         tested = self.test_obj.efferent_edges(2, properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(
@@ -687,7 +687,7 @@ class TestEdges:
         # no connection between 0 and 2
         assert self.test_obj.pair_edges(0, 2, None) == CircuitEdgeIds.from_arrays([], [])
         actual = self.test_obj.pair_edges(0, 2, [Synapse.AXONAL_DELAY])
-        assert actual == {}
+        assert actual == []
 
         assert self.test_obj.pair_edges(2, 0, None) == CircuitEdgeIds.from_tuples(
             [("default", 0), ("default2", 0)]
@@ -695,7 +695,7 @@ class TestEdges:
 
         properties = [Synapse.AXONAL_DELAY]
         tested = self.test_obj.pair_edges(2, 0, properties)
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(
             tested,
             pd.DataFrame(

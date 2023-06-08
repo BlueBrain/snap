@@ -79,10 +79,7 @@ class Edges(
             diff = np.setdiff1d(group.get_populations(unique=True), self.population_names)
             if diff.size != 0:
                 raise BluepySnapError(f"Population {diff} does not exist in the circuit.")
-
-        def fun(x):
-            return (x.ids(group), x.name)
-
+        fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
     def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed

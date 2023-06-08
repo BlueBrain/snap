@@ -291,7 +291,7 @@ class TestNodes:
     def test_get(self):
         # return all properties for all the ids
         tested = self.test_obj.get()
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
 
         # put NaN for the undefined values : only values for default2 in dropna
@@ -306,7 +306,7 @@ class TestNodes:
 
         # tested columns
         tested = self.test_obj.get(properties=["other2", "other1", "layer"])
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         expected = pd.DataFrame(
             {
                 "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
@@ -347,7 +347,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(KeyError, match="'default'"):
@@ -371,7 +371,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="layer")
@@ -392,7 +392,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="other2")
@@ -413,7 +413,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
-        tested = pd.concat(tested.values())
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
