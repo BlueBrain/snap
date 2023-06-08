@@ -108,16 +108,6 @@ class Edges(
             return edge_ids
         return super().get(edge_ids, properties)
 
-    def properties(self, edge_ids, properties):
-        """Doc is overridden below."""
-        Deprecate.warn(
-            "Edges.properties function is deprecated and will be removed in 1.0.0. "
-            "Please use Edges.get instead."
-        )
-        return self.get(edge_ids, properties)
-
-    properties.__doc__ = get.__doc__
-
     def afferent_nodes(self, target, unique=True):
         """Get afferent CircuitNodeIDs for given target ``node_id``.
 
