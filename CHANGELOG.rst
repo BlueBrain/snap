@@ -8,7 +8,7 @@ Breaking Changes
 ~~~~~~~~~~~~~~~~
 - ``nodes.get`` and ``edges.get`` (and ``network.get``) no longer return a dataframe
   - returns a generator yielding tuples of ``(<population_name>, <dataframe>)`` instead
-- ``nodes.property_dtypes``, ``edges.property_dtypes`` no longer available
+- Removed ``Network.property_dtypes``, ``CircuitIds.index_schema``
 
 Bug Fixes
 ~~~~~~~~~
