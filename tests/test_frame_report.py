@@ -220,65 +220,101 @@ class TestPopulationCompartmentReport:
         with pytest.raises(BluepySnapError):
             test_obj.nodes
 
-    def test_get(self):
-        pdt.assert_frame_equal(self.test_obj.get(), self.df)
-        pdt.assert_frame_equal(self.test_obj.get([]), pd.DataFrame())
-        pdt.assert_frame_equal(self.test_obj.get(np.array([])), pd.DataFrame())
-        pdt.assert_frame_equal(self.test_obj.get(()), pd.DataFrame())
+    @pytest.mark.parametrize("t_step", [None, 0.02, 0.04, 0.0401, 0.0399, 200000])
+    def test_get(self, t_step):
+        def _assert_frame_equal(df1, df2):
+            # compare df1 and df2, after filtering df2 according to t_stride
+            df2 = df2.iloc[::t_stride]
+            pdt.assert_frame_equal(df1, df2)
 
-        pdt.assert_frame_equal(self.test_obj.get(2), self.df.loc[:, [2]])
-        pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default", 2)), self.df.loc[:, [2]])
+        # calculate the expected t_stride, depending on t_step and dt (varying across tests)
+        t_stride = round(t_step / self.test_obj.frame_report.dt) if t_step is not None else 1
+
+        _assert_frame_equal(self.test_obj.get(t_step=t_step), self.df)
+        _assert_frame_equal(self.test_obj.get([], t_step=t_step), pd.DataFrame())
+        _assert_frame_equal(self.test_obj.get(np.array([]), t_step=t_step), pd.DataFrame())
+        _assert_frame_equal(self.test_obj.get((), t_step=t_step), pd.DataFrame())
+
+        _assert_frame_equal(self.test_obj.get(2, t_step=t_step), self.df.loc[:, [2]])
+        _assert_frame_equal(
+            self.test_obj.get(CircuitNodeId("default", 2), t_step=t_step), self.df.loc[:, [2]]
+        )
 
         # not from this population
-        pdt.assert_frame_equal(self.test_obj.get(CircuitNodeId("default2", 2)), pd.DataFrame())
-
-        pdt.assert_frame_equal(self.test_obj.get([2, 0]), self.df.loc[:, [0, 2]])
-
-        pdt.assert_frame_equal(self.test_obj.get([0, 2]), self.df.loc[:, [0, 2]])
-
-        pdt.assert_frame_equal(self.test_obj.get(np.asarray([0, 2])), self.df.loc[:, [0, 2]])
-
-        pdt.assert_frame_equal(self.test_obj.get([2], t_stop=0.5), self.df.iloc[:6].loc[:, [2]])
-
-        pdt.assert_frame_equal(self.test_obj.get([2], t_stop=0.55), self.df.iloc[:6].loc[:, [2]])
-
-        pdt.assert_frame_equal(self.test_obj.get([2], t_start=0.5), self.df.iloc[5:].loc[:, [2]])
-
-        pdt.assert_frame_equal(
-            self.test_obj.get([2], t_start=0.5, t_stop=0.8), self.df.iloc[5:9].loc[:, [2]]
+        _assert_frame_equal(
+            self.test_obj.get(CircuitNodeId("default2", 2), t_step=t_step), pd.DataFrame()
         )
 
-        pdt.assert_frame_equal(
-            self.test_obj.get([2, 1], t_start=0.5, t_stop=0.8), self.df.iloc[5:9].loc[:, [1, 2]]
+        _assert_frame_equal(self.test_obj.get([2, 0], t_step=t_step), self.df.loc[:, [0, 2]])
+
+        _assert_frame_equal(self.test_obj.get([0, 2], t_step=t_step), self.df.loc[:, [0, 2]])
+
+        _assert_frame_equal(
+            self.test_obj.get(np.asarray([0, 2]), t_step=t_step), self.df.loc[:, [0, 2]]
         )
 
-        pdt.assert_frame_equal(
-            self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8), self.df.iloc[2:9].loc[:, [1, 2]]
+        _assert_frame_equal(
+            self.test_obj.get([2], t_stop=0.5, t_step=t_step), self.df.iloc[:6].loc[:, [2]]
         )
 
-        pdt.assert_frame_equal(
-            self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8),
+        _assert_frame_equal(
+            self.test_obj.get([2], t_stop=0.55, t_step=t_step), self.df.iloc[:6].loc[:, [2]]
+        )
+
+        _assert_frame_equal(
+            self.test_obj.get([2], t_start=0.5, t_step=t_step), self.df.iloc[5:].loc[:, [2]]
+        )
+
+        _assert_frame_equal(
+            self.test_obj.get([2], t_start=0.5, t_stop=0.8, t_step=t_step),
+            self.df.iloc[5:9].loc[:, [2]],
+        )
+
+        _assert_frame_equal(
+            self.test_obj.get([2, 1], t_start=0.5, t_stop=0.8, t_step=t_step),
+            self.df.iloc[5:9].loc[:, [1, 2]],
+        )
+
+        _assert_frame_equal(
+            self.test_obj.get([2, 1], t_start=0.2, t_stop=0.8, t_step=t_step),
             self.df.iloc[2:9].loc[:, [1, 2]],
         )
 
-        pdt.assert_frame_equal(self.test_obj.get(group={Cell.MTYPE: "L2_X"}), self.df.loc[:, [0]])
+        _assert_frame_equal(
+            self.test_obj.get(group={Cell.MTYPE: "L6_Y"}, t_start=0.2, t_stop=0.8, t_step=t_step),
+            self.df.iloc[2:9].loc[:, [1, 2]],
+        )
 
-        pdt.assert_frame_equal(self.test_obj.get(group="Layer23"), self.df.loc[:, [0]])
+        _assert_frame_equal(
+            self.test_obj.get(group={Cell.MTYPE: "L2_X"}, t_step=t_step), self.df.loc[:, [0]]
+        )
+
+        _assert_frame_equal(self.test_obj.get(group="Layer23", t_step=t_step), self.df.loc[:, [0]])
 
         ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 2, 1])
-        pdt.assert_frame_equal(self.test_obj.get(group=ids), self.df.loc[:, [0, 2]])
+        _assert_frame_equal(self.test_obj.get(group=ids, t_step=t_step), self.df.loc[:, [0, 2]])
 
-        with pytest.raises(BluepySnapError):
-            self.test_obj.get(-1, t_start=0.2)
+        with pytest.raises(
+            BluepySnapError, match="All node IDs must be >= 0 and < 3 for population 'default'"
+        ):
+            self.test_obj.get(-1, t_start=0.2, t_step=t_step)
 
-        with pytest.raises(BluepySnapError):
-            self.test_obj.get(0, t_start=-1)
+        with pytest.raises(BluepySnapError, match="Times cannot be negative"):
+            self.test_obj.get(0, t_start=-1, t_step=t_step)
 
-        with pytest.raises(BluepySnapError):
-            self.test_obj.get([0, 2], t_start=15)
+        with pytest.raises(BluepySnapError, match="tstart is after the end of the range"):
+            self.test_obj.get([0, 2], t_start=15, t_step=t_step)
 
-        with pytest.raises(BluepySnapError):
-            self.test_obj.get(4)
+        with pytest.raises(
+            BluepySnapError, match="All node IDs must be >= 0 and < 3 for population 'default'"
+        ):
+            self.test_obj.get(4, t_step=t_step)
+
+    @pytest.mark.parametrize("t_step", [0, -1, 0.0000001])
+    def test_get_with_invalid_t_step(self, t_step):
+        match = f"Invalid t_step={t_step}. It should be None or a multiple of"
+        with pytest.raises(BluepySnapError, match=match):
+            self.test_obj.get(t_step=t_step)
 
     def test_get_partially_not_in_report(self):
         with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([0, 4])):
