@@ -41,7 +41,7 @@ with open("README.rst") as f:
 
 setup(
     name="bluepysnap",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "cached_property>=1.0",
         "h5py>=3.0.1,<4.0.0",
@@ -85,7 +85,6 @@ setup(
     keywords=["SONATA", "BlueBrainProject"],
     classifiers=[
         "Development Status :: 3 - Alpha",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

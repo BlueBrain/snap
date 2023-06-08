@@ -17,10 +17,6 @@ from bluepysnap.nodes import NodePopulation, Nodes
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / "data"
 
-skip_if_libsonata_0_1_16 = pytest.mark.skipif(
-    libsonata.version == "0.1.16", reason="Disabled with libsonata 0.1.16"
-)
-
 
 @contextmanager
 def setup_tempdir(cleanup=True):
