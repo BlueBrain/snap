@@ -85,6 +85,8 @@ class PopulationFrameReport:
             t_stop (float): Include only frames occurring at or before this time.
             t_step (float): Optional time step, useful to reduce the number of samples.
                 It should be a multiple of the report time step dt, and it's equal to dt by default.
+                If the given t_step isn't an exact multiple, it's rounded to the closer multiple.
+                Only the samples at t = t_start + k * t_step, for k = 0, 1... are returned.
 
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.

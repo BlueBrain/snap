@@ -220,7 +220,7 @@ class TestPopulationCompartmentReport:
         with pytest.raises(BluepySnapError):
             test_obj.nodes
 
-    @pytest.mark.parametrize("t_step", [None, 0.02, 0.04, 0.0401, 0.0399, 200000])
+    @pytest.mark.parametrize("t_step", [None, 0.02, 0.04, 0.0401, 0.0399, 0.05, 200000])
     def test_get(self, t_step):
         def _assert_frame_equal(df1, df2):
             # compare df1 and df2, after filtering df2 according to t_stride
