@@ -85,80 +85,6 @@ class TestEdges:
             "syn_weight",
         }
 
-    def test_property_dtypes(self):
-        expected = pd.Series(
-            data=[
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("int64"),
-                dtype("int64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float32"),
-                dtype("float32"),
-                dtype("float64"),
-                dtype("float64"),
-                IDS_DTYPE,
-                IDS_DTYPE,
-                dtype("O"),
-                dtype("int32"),
-            ],
-            index=[
-                "syn_weight",
-                "@dynamics:param1",
-                "afferent_surface_y",
-                "afferent_surface_z",
-                "conductance",
-                "efferent_center_x",
-                "delay",
-                "afferent_center_z",
-                "efferent_section_id",
-                "afferent_section_id",
-                "efferent_center_y",
-                "afferent_center_x",
-                "efferent_surface_z",
-                "afferent_center_y",
-                "afferent_surface_x",
-                "efferent_surface_x",
-                "afferent_section_pos",
-                "efferent_section_pos",
-                "efferent_surface_y",
-                "efferent_center_z",
-                "@source_node",
-                "@target_node",
-                "other1",
-                "other2",
-            ],
-        ).sort_index()
-        pdt.assert_series_equal(self.test_obj.property_dtypes.sort_index(), expected)
-
-    def test_property_dtypes_fail(self):
-        a = pd.Series(
-            data=[dtype("int64"), dtype("float64")], index=["syn_weight", "efferent_surface_z"]
-        ).sort_index()
-        b = pd.Series(
-            data=[dtype("int32"), dtype("float64")], index=["syn_weight", "efferent_surface_z"]
-        ).sort_index()
-
-        with patch(
-            "bluepysnap.edges.EdgePopulation.property_dtypes", new_callable=PropertyMock
-        ) as mock:
-            mock.side_effect = [a, b]
-            circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
-            test_obj = test_module.Edges(circuit)
-            with pytest.raises(BluepySnapError):
-                test_obj.property_dtypes.sort_index()
-
     def test_ids(self):
         np.random.seed(0)
         # single edge ID --> CircuitEdgeIds return populations with the 0 id
@@ -343,8 +269,6 @@ class TestEdges:
         )
         expected = pd.DataFrame(
             {
-                # "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=float),
-                # "other1": np.array([np.NaN, np.NaN, np.NaN, np.NaN], dtype=object),
                 "@source_node": np.array([2, 0, 0, 2], dtype=int),
             },
             index=pd.MultiIndex.from_tuples(
@@ -405,10 +329,10 @@ class TestEdges:
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
-            self.test_obj.get(ids, properties=["other2", "unknown"])
+            next(self.test_obj.get(ids, properties=["other2", "unknown"]))
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
-            self.test_obj.get(ids, properties="unknown")
+            next(self.test_obj.get(ids, properties="unknown"))
 
         with pytest.deprecated_call(
             match=(
@@ -687,7 +611,7 @@ class TestEdges:
         # no connection between 0 and 2
         assert self.test_obj.pair_edges(0, 2, None) == CircuitEdgeIds.from_arrays([], [])
         actual = self.test_obj.pair_edges(0, 2, [Synapse.AXONAL_DELAY])
-        assert actual == []
+        assert next(actual, None) is None
 
         assert self.test_obj.pair_edges(2, 0, None) == CircuitEdgeIds.from_tuples(
             [("default", 0), ("default2", 0)]
@@ -801,7 +725,6 @@ class TestEdges:
         # trigger some cached properties, to makes sure they aren't being pickeld
         self.test_obj.size
         self.test_obj.property_names
-        self.test_obj.property_dtypes
 
         with open(pickle_path, "wb") as fd:
             pickle.dump(self.test_obj, fd)

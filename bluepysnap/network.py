@@ -48,22 +48,6 @@ class NetworkObject(abc.ABC):
     def population_names(self):
         """Should define all sorted NetworkObjects population names from the Circuit."""
 
-    @cached_property
-    def property_dtypes(self):
-        """Returns all the NetworkObjects property dtypes for the Circuit."""
-
-        def _update(d, index, value):
-            if d.setdefault(index, value) != value:
-                raise BluepySnapError(
-                    f"Same property with different dtype. {index}: {value}!= {d[index]}"
-                )
-
-        res = {}
-        for pop in self.values():
-            for varname, dtype in pop.property_dtypes.items():
-                _update(res, varname, dtype)
-        return pd.Series(res)
-
     def keys(self):
         """Returns iterator on the NetworkObjectPopulation names.
 
@@ -149,7 +133,7 @@ class NetworkObject(abc.ABC):
 
     @abc.abstractmethod
     def get(self, group=None, properties=None):
-        """Returns the properties of the NetworkObject."""
+        """Yields the properties of the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)
         # We don t convert to set properties itself to keep the column order.
@@ -159,7 +143,6 @@ class NetworkObject(abc.ABC):
         if unknown_props:
             raise BluepySnapError(f"Unknown properties required: {unknown_props}")
 
-        res = []
         for name, pop in sorted(self.items()):
             # since ids is sorted, global_pop_ids should be sorted as well
             global_pop_ids = ids.filter_population(name)
@@ -172,8 +155,7 @@ class NetworkObject(abc.ABC):
                 pop_df.index = global_pop_ids.index
 
                 # Sort the columns in the given order
-                res.append((name, pop_df[[p for p in properties if p in pop_properties]]))
-        return res
+                yield name, pop_df[[p for p in properties if p in pop_properties]]
 
     @abc.abstractmethod
     def __getstate__(self):
