@@ -419,7 +419,7 @@ class TestNodes:
 
         node_sets = NodeSets(str(TEST_DATA_DIR / "node_sets_extra.json"))
 
-        assert self.test_obj.ids("ExtraLayer2", node_sets=node_sets) == CircuitNodeIds.from_arrays(
+        assert self.test_obj.ids(node_sets["ExtraLayer2"]) == CircuitNodeIds.from_arrays(
             ["default", "default2"], [0, 3]
         )
 
@@ -427,7 +427,7 @@ class TestNodes:
             self.test_obj.get("ExtraLayer2")
 
         pdt.assert_frame_equal(
-            self.test_obj.get("ExtraLayer2", node_sets=node_sets),
+            self.test_obj.get(node_sets["ExtraLayer2"]),
             self.test_obj.get("Layer2"),
         )
 

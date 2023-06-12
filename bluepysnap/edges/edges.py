@@ -46,7 +46,7 @@ class Edges(
         """Defines all sorted edge population names from the Circuit."""
         return sorted(self._circuit.to_libsonata.edge_populations)
 
-    def ids(self, group=None, sample=None, limit=None, **_):  # pylint: disable=arguments-differ
+    def ids(self, group=None, sample=None, limit=None):
         """Edge CircuitEdgeIds corresponding to edges ``edge_ids``.
 
         Args:
@@ -81,7 +81,7 @@ class Edges(
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
-    def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-differ
+    def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed
         """Edge properties as pandas DataFrame.
 
         Args:

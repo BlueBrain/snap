@@ -11,6 +11,25 @@ from bluepysnap.exceptions import BluepySnapError
 from utils import TEST_DATA_DIR
 
 
+class TestNodeSet:
+    def setup_method(self):
+        self.test_node_sets = test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
+        self.test_pop = libsonata.NodeStorage(str(TEST_DATA_DIR / "nodes.h5")).open_population(
+            "default"
+        )
+
+    def test_get_ids(self):
+        assert_array_equal(self.test_node_sets["Node2_L6_Y"].get_ids(self.test_pop), [])
+        assert_array_equal(self.test_node_sets["double_combined"].get_ids(self.test_pop), [0, 1, 2])
+
+        node_set = self.test_node_sets["failing"]
+
+        with pytest.raises(BluepySnapError, match="No such attribute"):
+            node_set.get_ids(self.test_pop)
+
+        assert node_set.get_ids(self.test_pop, raise_missing_property=False) == []
+
+
 class TestNodeSets:
     def setup_method(self):
         self.test_obj = test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
@@ -28,16 +47,11 @@ class TestNodeSets:
             "failing": {"unknown_property": [0]},
         }
 
-    def test_get_ids(self):
-        assert_array_equal(self.test_obj.get_ids("Node2_L6_Y", self.test_pop), [])
-        assert_array_equal(
-            self.test_obj.get_ids("double_combined", self.test_pop),
-            [0, 1, 2],
-        )
-        with pytest.raises(BluepySnapError, match="No such attribute"):
-            self.test_obj.get_ids("failing", self.test_pop)
+    def test_getitem(self):
+        assert isinstance(self.test_obj["Layer23"], test_module.NodeSet)
 
-        assert self.test_obj.get_ids("failing", self.test_pop, raise_missing_property=False) == []
+        with pytest.raises(BluepySnapError, match="Undefined node set:"):
+            self.test_obj["no-such-node-set"]
 
     def test_iter(self):
         expected = set(json.loads((TEST_DATA_DIR / "node_sets_file.json").read_text()))

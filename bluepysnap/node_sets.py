@@ -27,6 +27,33 @@ from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 
+class NodeSet:
+    """Access to single node set."""
+
+    def __init__(self, node_sets, name):
+        """Initializes a single node set object.
+
+        Args:
+            node_sets (libsonata.NodeSets): libsonata NodeSets instance.
+            name (str): name of the node set.
+
+        Returns:
+            NodeSet: A NodeSet object.
+        """
+        self._node_sets = node_sets
+        self._name = name
+
+    def get_ids(self, population, raise_missing_property=True):
+        """Get the resolved node set as ids."""
+        try:
+            return self._node_sets.materialize(self._name, population).flatten()
+        except libsonata.SonataError as e:
+            if "No such attribute" in e.args[0]:
+                if not raise_missing_property:
+                    return []
+            raise BluepySnapError(*e.args) from e
+
+
 class NodeSets:
     """Access to node sets data."""
 
@@ -42,15 +69,11 @@ class NodeSets:
         self.content = utils.load_json(filepath)
         self._instance = libsonata.NodeSets.from_file(filepath)
 
-    def get_ids(self, node_set_name, population, raise_missing_property=True):
-        """Get the resolved node set using name as key."""
-        try:
-            return self._instance.materialize(node_set_name, population).flatten()
-        except libsonata.SonataError as e:
-            if "No such attribute" in e.args[0]:
-                if not raise_missing_property:
-                    return []
-            raise BluepySnapError(*e.args) from e
+    def __getitem__(self, name):
+        """Return a node set instance for the given node_set name."""
+        if name not in self:
+            raise BluepySnapError(f"Undefined node set: '{name}'")
+        return NodeSet(self._instance, name)
 
     def __iter__(self):
         """Iter through the different node sets names."""

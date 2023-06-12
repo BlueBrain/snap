@@ -69,6 +69,7 @@ from more_itertools import first
 from bluepysnap import query, utils
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.node_sets import NodeSet
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Node
 
 
@@ -265,24 +266,14 @@ class NodePopulation:
         if prop not in self.property_names:
             raise BluepySnapError(f"No such property: '{prop}'")
 
-    def _get_node_set(self, node_set_name, raise_missing_prop, node_sets):
-        """Returns the node set named 'node_set_name'."""
-        node_sets = node_sets or self._node_sets
-        if node_set_name not in node_sets:
-            raise BluepySnapError(f"Undefined node set: '{node_set_name}'")
-        return node_sets.get_ids(node_set_name, self._population, raise_missing_prop)
-
-    def _resolve_nodesets(self, queries, raise_missing_prop, node_sets):
+    def _resolve_nodesets(self, queries, raise_missing_prop):
         def _resolve(queries, queries_key):
             if queries_key == query.NODE_SET_KEY:
                 if query.AND_KEY not in queries:
                     queries[query.AND_KEY] = []
+                node_set = self._node_sets[queries[queries_key]]
                 queries[query.AND_KEY].append(
-                    {
-                        query.NODE_ID_KEY: self._get_node_set(
-                            queries[queries_key], raise_missing_prop, node_sets
-                        )
-                    }
+                    {query.NODE_ID_KEY: node_set.get_ids(self._population, raise_missing_prop)}
                 )
                 del queries[queries_key]
 
@@ -290,7 +281,7 @@ class NodePopulation:
         query.traverse_queries_bottom_up(resolved_queries, _resolve)
         return resolved_queries
 
-    def _node_ids_by_filter(self, queries, raise_missing_prop, node_sets):
+    def _node_ids_by_filter(self, queries, raise_missing_prop):
         """Return node IDs if their properties match the `queries` dict.
 
         `props` values could be:
@@ -307,7 +298,7 @@ class NodePopulation:
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 
         """
-        queries = self._resolve_nodesets(queries, raise_missing_prop, node_sets)
+        queries = self._resolve_nodesets(queries, raise_missing_prop)
         if raise_missing_prop:
             properties = query.get_properties(queries)
             if not properties.issubset(self._data.columns):
@@ -316,7 +307,7 @@ class NodePopulation:
         idx = query.resolve_ids(self._data, self.name, queries)
         return self._data.index[idx].values
 
-    def ids(self, group=None, limit=None, sample=None, raise_missing_property=True, node_sets=None):
+    def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Node IDs corresponding to node ``group``.
 
         Args:
@@ -333,23 +324,22 @@ class NodePopulation:
             raise_missing_property (bool): if True, raises if a property is not listed in this
                 population. Otherwise the ids are just not selected if a property is missing.
 
-            node_sets (NodeSets): If specified, use this NodeSets instance to resolve node sets.
-                Otherwise use the NodeSets instance of the circuit.
-
         Returns:
             numpy.array: A numpy array of IDs.
         """
         # pylint: disable=too-many-branches
         preserve_order = False
         if isinstance(group, str):
-            group = self._get_node_set(group, raise_missing_property, node_sets)
+            group = self._node_sets[group]
         elif isinstance(group, CircuitNodeIds):
             group = group.filter_population(self.name).get_ids()
 
         if group is None:
             result = self._data.index.values
+        elif isinstance(group, NodeSet):
+            result = group.get_ids(self._population, raise_missing_property)
         elif isinstance(group, Mapping):
-            result = self._node_ids_by_filter(group, raise_missing_property, node_sets)
+            result = self._node_ids_by_filter(group, raise_missing_property)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)
@@ -380,7 +370,7 @@ class NodePopulation:
         else:
             return np.unique(result)
 
-    def get(self, group=None, properties=None, node_sets=None):
+    def get(self, group=None, properties=None):
         """Node properties as a pandas Series or DataFrame.
 
         Args:
@@ -388,8 +378,6 @@ class NodePopulation:
                 see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
                 Otherwise return all properties.
-            node_sets (NodeSets): If specified, use this NodeSets instance to resolve node sets.
-                Otherwise use the NodeSets instance of the circuit.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
@@ -458,7 +446,7 @@ class NodePopulation:
             elif isinstance(group, CircuitNodeId):
                 group = self.ids(group)[0]
             else:
-                group = self.ids(group, node_sets=node_sets)
+                group = self.ids(group)
             result = result.loc[group]
 
         if properties is not None:
