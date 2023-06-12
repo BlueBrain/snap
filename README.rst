@@ -1,6 +1,6 @@
 |banner|
 
-|build_status| |license| |coverage| |docs|
+|build_status| |license| |coverage| |docs| |DOI|
 
 Blue Brain SNAP
 ===============
@@ -105,20 +105,24 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-.. |build_status| image:: https://travis-ci.com/BlueBrain/snap.svg?branch=master
-   :target: https://travis-ci.com/BlueBrain/snap
+.. |build_status| image:: https://github.com/BlueBrain/snap/actions/workflows/run-tox.yml/badge.svg
    :alt: Build Status
 
 .. |license| image:: https://img.shields.io/pypi/l/bluepysnap
-                :target: https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER
+   :target: https://github.com/BlueBrain/snap/blob/master/COPYING.LESSER
+   :alt: License
 
 .. |coverage| image:: https://codecov.io/github/BlueBrain/snap/coverage.svg?branch=master
    :target: https://codecov.io/github/BlueBrain/snap?branch=master
    :alt: codecov.io
 
 .. |docs| image:: https://readthedocs.org/projects/bluebrainsnap/badge/?version=latest
-             :target: https://bluebrainsnap.readthedocs.io/
-             :alt: documentation status
+   :target: https://bluebrainsnap.readthedocs.io/
+   :alt: documentation status
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8026852.svg
+   :target: https://doi.org/10.5281/zenodo.8026852
+   :alt: DOI
 
 .. substitutions
 .. |banner| image:: doc/source/_images/BlueBrainSNAP.jpg
