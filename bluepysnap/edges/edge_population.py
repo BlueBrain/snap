@@ -60,12 +60,9 @@ class EdgePopulation:
         self._circuit = circuit
         self.name = population_name
 
-    @property
+    @cached_property
     def _properties(self):
-        """Edge population properties.
-
-        Not cached because quick enough, but do not call in heavy loops.
-        """
+        """Edge population properties."""
         return self._circuit.to_libsonata.edge_population_properties(self.name)
 
     @property

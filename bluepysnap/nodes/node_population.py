@@ -188,12 +188,9 @@ class NodePopulation:
                 result.insert(n + loc, name, values)
         return result
 
-    @property
+    @cached_property
     def _properties(self):
-        """Node population properties.
-
-        Not cached because quick enough, but do not call in heavy loops.
-        """
+        """Node population properties."""
         return self._circuit.to_libsonata.node_population_properties(self.name)
 
     @property
