@@ -18,6 +18,11 @@ NODE_SET_KEY = "$node_set"
 VALUE_KEYS = {REGEX_KEY}
 ALL_KEYS = {NODE_ID_KEY, EDGE_ID_KEY, POPULATION_KEY, OR_KEY, AND_KEY, NODE_SET_KEY} | VALUE_KEYS
 
+GT_KEY = "$gt"
+LT_KEY = "$lt"
+GTE_KEY = "$gte"
+LTE_KEY = "$lte"
+
 
 # TODO: move to `libsonata` library
 def _complex_query(prop, query):
@@ -158,3 +163,45 @@ def resolve_ids(data, population_name, queries):
     queries = deepcopy(queries)
     traverse_queries_bottom_up(queries, _collect)
     return _merge_queries_masks(queries)
+
+
+def _convert(queries, node_sets, node_set_name):
+    for queries_key, queries_value in queries.items():
+        if queries_key == OR_KEY:
+            # create a node_set for each item, and a combined node_set with the list
+            assert len(queries) == 1, f"Mixing {OR_KEY} and other keys isn't supported yet"
+            names = []
+            for n, val in enumerate(queries_value):
+                assert isinstance(val, dict)
+                name = f"{node_set_name}_{n}"
+                _convert(val, node_sets, name)
+                names.append(name)
+            node_sets[node_set_name] = names
+        elif queries_key == AND_KEY:
+            assert len(queries) == 1, f"Mixing {AND_KEY} and other keys isn't supported yet"
+            raise NotImplementedError
+        else:
+            if isinstance(queries_value, tuple) and len(queries_value) == 2:
+                start, stop = queries_value
+                queries_value = {GTE_KEY: start, LTE_KEY: stop}
+            assert (
+                isinstance(queries_value, (str, int, float))
+                or isinstance(queries_value, list)
+                and all(isinstance(i, (str, int, float)) for i in queries_value)
+                or isinstance(queries_value, dict)
+                and {REGEX_KEY, GT_KEY, LT_KEY, GTE_KEY, LTE_KEY}.issuperset(queries_value)
+                and all(isinstance(i, (str, int, float)) for i in queries_value.values())
+            ), (
+                "Value should be a scalar, a list of scalars, a dict of operators, "
+                "or a tuple of 2 elements representing an interval."
+            )
+            node_sets.setdefault(node_set_name, {})[queries_key] = deepcopy(queries_value)
+
+
+def to_node_set(queries):
+    """Convert a query to node_sets."""
+    name = "ns"
+    node_sets = {}
+    _convert(queries, node_sets, name)
+    return node_sets, name
+    # return NodeSets.from_dict(node_sets)[name]
