@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from bluepysnap import BluepySnapError
-from bluepysnap.query import _circuit_mask, _positional_mask, resolve_ids
+from bluepysnap.query import _circuit_mask, _positional_mask, resolve_ids, to_node_set
 
 
 def test_positional_mask():
@@ -58,3 +58,32 @@ def test_resolve_ids():
     with pytest.raises(BluepySnapError) as e:
         resolve_ids(data, "", {"str": {"$regex": "*.some", "edge_id": 2}})
     assert "Value operators can't be used with plain values" in e.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "queries, expected",
+    [
+        (
+            {"x": (0, 1), "mtype": "L1_SLAC"},
+            {"ns": {"mtype": "L1_SLAC", "x": {"$gte": 0, "$lte": 1}}},
+        ),
+        (
+            {"$or": [{"layer": [2, 3]}, {"x": (0, 1), "mtype": "L1_SLAC"}]},
+            {
+                "ns_0": {"layer": [2, 3]},
+                "ns_1": {"x": {"$gte": 0, "$lte": 1}, "mtype": "L1_SLAC"},
+                "ns": ["ns_0", "ns_1"],
+            },
+        ),
+    ],
+)
+def test_to_node_set(queries, expected):
+    node_sets, name = to_node_set(queries)
+    assert name == "ns"
+    assert node_sets == expected
+
+
+def test_to_node_raises():
+    queries = {"$and": [{"mtype": "L6_Y"}, {"morphology": "morph-B"}]}
+    with pytest.raises(NotImplementedError):
+        to_node_set(queries)
