@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v1.0.7
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fix CircuitIds.sample() to always return different samples.
+
+
 Version v1.0.6
 --------------
 
@@ -12,6 +20,7 @@ Improvements
 - Add t_step parameter to frame reports.
 - Add python 3.11 tests.
 - Drop python 3.7 support.
+
 
 Version v1.0.5
 --------------
