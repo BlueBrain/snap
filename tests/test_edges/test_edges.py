@@ -160,7 +160,7 @@ class TestEdges:
                 test_obj.property_dtypes.sort_index()
 
     def test_ids(self):
-        np.random.seed(42)
+        np.random.seed(0)
         # single edge ID --> CircuitEdgeIds return populations with the 0 id
         expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
         tested = self.test_obj.ids(0)
@@ -214,7 +214,7 @@ class TestEdges:
         assert ids.filter_population("default2").limit(2) == expected
 
         tested = self.test_obj.ids(sample=2)
-        expected = CircuitEdgeIds.from_arrays(["default2", "default"], [2, 3], sort_index=False)
+        expected = CircuitEdgeIds.from_arrays(["default2", "default"], [2, 2], sort_index=False)
         assert tested == expected
 
         tested = self.test_obj.ids(limit=5)
