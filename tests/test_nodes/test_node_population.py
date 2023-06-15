@@ -228,11 +228,13 @@ class TestNodePopulation:
 
         npt.assert_equal(_call("Layer2"), [0])
         npt.assert_equal(_call("Layer23"), [0])
+        npt.assert_equal(_call("Empty_nodes"), [])
         npt.assert_equal(_call("Node2012"), [0, 1, 2])  # reordered + duplicates are removed
         npt.assert_equal(_call("Node12_L6_Y"), [1, 2])
         npt.assert_equal(_call("Node2_L6_Y"), [2])
 
         npt.assert_equal(_call("Node0_L6_Y"), [])  # return empty if disjoint samples
+        npt.assert_equal(_call("Empty_L6_Y"), [])  # return empty if empty node_id = []
         npt.assert_equal(_call("Population_default"), [0, 1, 2])  # return all ids
         npt.assert_equal(_call("Population_default2"), [])  # return empty if diff population
         npt.assert_equal(_call("Population_default_L6_Y"), [1, 2])  # population + other query ok
