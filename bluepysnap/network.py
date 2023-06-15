@@ -148,7 +148,7 @@ class NetworkObject(abc.ABC):
         """Resolves the ids of the NetworkObject."""
 
     @abc.abstractmethod
-    def get(self, group=None, properties=None):  # pylint: disable=too-many-locals
+    def get(self, group=None, properties=None):
         """Returns the properties of the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)

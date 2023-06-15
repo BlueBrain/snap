@@ -69,6 +69,13 @@ class NodeSets:
         self.content = utils.load_json(filepath)
         self._instance = libsonata.NodeSets.from_file(filepath)
 
+    def __contains__(self, name):
+        """Check if node set exists."""
+        if isinstance(name, str):
+            return name in self._instance.names
+
+        raise BluepySnapError(f"Unexpected type: '{type(name).__name__}' (expected: 'str')")
+
     def __getitem__(self, name):
         """Return a node set instance for the given node_set name."""
         if name not in self:

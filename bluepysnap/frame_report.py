@@ -239,8 +239,8 @@ class FrameReport:
 
     @property
     def node_set(self):
-        """Returns the node set for the report."""
-        return self.simulation.node_sets.content[self.to_libsonata.cells]
+        """Returns the name of the node set for the report."""
+        return self.to_libsonata.cells
 
     @property
     def simulation(self):
