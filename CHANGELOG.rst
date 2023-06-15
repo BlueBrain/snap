@@ -6,13 +6,34 @@ Version v1.1.0
 
 Improvements
 ~~~~~~~~~~~~
-- Clarification for partial circuit configs
 - Node set resolution is done by libsonata
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - ``NodeSet.resolved`` is no longer available
 - ``FrameReport.node_set`` returns node_set name instead of resolved node set query
+
+
+Version v1.0.7
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fix CircuitIds.sample() to always return different samples.
+
+
+Version v1.0.6
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Clarification for partial circuit configs
+- Publish version as ``bluepysnap.__version__``
+- Support lazy loading of nodes attributes.
+- Add t_step parameter to frame reports.
+- Add python 3.11 tests.
+- Drop python 3.7 support.
+
 
 Version v1.0.5
 --------------

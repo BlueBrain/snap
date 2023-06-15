@@ -76,20 +76,31 @@ class PopulationFrameReport:
         """Allows to change the columns names if needed."""
         return columns
 
-    def get(self, group=None, t_start=None, t_stop=None):
+    def get(self, group=None, t_start=None, t_stop=None, t_step=None):
         """Fetch data from the report.
 
         Args:
             group (None/int/list/np.array/dict): Get frames filtered by :ref:`Group Concept`.
             t_start (float): Include only frames occurring at or after this time.
             t_stop (float): Include only frames occurring at or before this time.
+            t_step (float): Optional time step, useful to reduce the number of samples.
+                It should be a multiple of the report time step dt, and it's equal to dt by default.
+                If the given t_step isn't an exact multiple, it's rounded to the closer multiple.
+                Only the samples at t = t0 + k * t_step, for k = 0, 1... are returned,
+                where t0 is the first sample time >= t_start.
 
         Returns:
             pandas.DataFrame: frame as columns indexed by timestamps.
         """
+        t_stride = round(t_step / self.frame_report.dt) if t_step is not None else 1
+        if t_stride < 1:
+            msg = f"Invalid {t_step=}. It should be None or a multiple of {self.frame_report.dt}."
+            raise BluepySnapError(msg)
         ids = self._resolve(group).tolist()
         try:
-            view = self._frame_population.get(node_ids=ids, tstart=t_start, tstop=t_stop)
+            view = self._frame_population.get(
+                node_ids=ids, tstart=t_start, tstop=t_stop, tstride=t_stride
+            )
         except SonataError as e:
             raise BluepySnapError(e) from e
 

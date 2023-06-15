@@ -8,6 +8,7 @@ from distutils.dir_util import copy_tree
 from pathlib import Path
 
 import libsonata
+import numpy.testing as npt
 import pytest
 
 from bluepysnap.circuit import Circuit
@@ -15,10 +16,6 @@ from bluepysnap.nodes import NodePopulation, Nodes
 
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / "data"
-
-skip_if_libsonata_0_1_16 = pytest.mark.skipif(
-    libsonata.version == "0.1.16", reason="Disabled with libsonata 0.1.16"
-)
 
 
 @contextmanager
@@ -111,3 +108,10 @@ def create_node_population(filepath, pop_name, circuit=None, node_sets=None, pop
     node_pop = NodePopulation(circuit, pop_name)
     circuit.nodes = Nodes(circuit)
     return node_pop
+
+
+def assert_array_equal_strict(x, y):
+    # With numpy >= 1.22.4 it would be possible to specify strict=True.
+    # The strict parameter ensures that the array data types match.
+    npt.assert_array_equal(x, y)
+    assert x.dtype == y.dtype

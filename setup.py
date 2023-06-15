@@ -41,7 +41,7 @@ with open("README.rst") as f:
 
 setup(
     name="bluepysnap",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "cached_property>=1.0",
         "h5py>=3.0.1,<4.0.0",
@@ -57,13 +57,15 @@ setup(
     extras_require={
         "docs": ["sphinx", "sphinx-bluebrain-theme"],
         "plots": ["matplotlib>=3.0.0"],
-        "spatial-index": ["spatial-index>=1.2.1,<2.0"],
+        "spatial-index": ["spatial-index>=1.2.1"],
     },
     packages=find_packages(),
     package_data={
         "bluepysnap": ["schemas/*.yaml", "schemas/*/*.yaml"],
     },
-    use_scm_version=True,
+    use_scm_version={
+        "write_to": "bluepysnap/_version.py",
+    },
     setup_requires=[
         "setuptools_scm",
     ],
@@ -83,10 +85,10 @@ setup(
     keywords=["SONATA", "BlueBrainProject"],
     classifiers=[
         "Development Status :: 3 - Alpha",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Operating System :: POSIX",
         "Topic :: Scientific/Engineering",
         "Topic :: Utilities",

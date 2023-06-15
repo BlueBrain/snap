@@ -229,7 +229,7 @@ class CircuitIds(abc.ABC):
                 the size of the CircuitIds then all ids are taken and shuffled.
             inplace (bool): if set to True. Do the transformation inplace.
         """
-        sampling = np.random.choice(len(self), size=min(sample_size, len(self)))
+        sampling = np.random.choice(len(self), size=min(sample_size, len(self)), replace=False)
         return self._apply(lambda x: x[sampling], inplace)
 
     def limit(self, limit_size, inplace=False):

@@ -61,6 +61,7 @@ import inspect
 from collections.abc import Mapping, Sequence
 from copy import deepcopy
 
+import libsonata
 import numpy as np
 import pandas as pd
 from cached_property import cached_property
@@ -95,36 +96,110 @@ class NodePopulation:
         return self._circuit.node_sets
 
     @cached_property
-    def _data(self):
-        """Collect data for the node population as a pandas.DataFrame."""
-        nodes = self._population
-        categoricals = nodes.enumeration_names
+    def _cache(self):
+        """Cached DataFrame of nodes, to be accessed through _get_data()."""
+        return pd.DataFrame(index=pd.RangeIndex(self.size, name="node_ids"))
 
-        _all = nodes.select_all()
-        result = pd.DataFrame(index=pd.RangeIndex(_all.flat_size, name="node_ids"))
+    def _get_libsonata_selection(self, node_ids):
+        """Return a libsonata Selection from the given node_ids."""
+        if node_ids is None:
+            return libsonata.Selection([(0, self.size)])
+        return libsonata.Selection(node_ids)
 
-        for attr in sorted(nodes.attribute_names):
-            if attr in categoricals:
-                enumeration = np.asarray(nodes.get_enumeration(attr, _all))
-                values = np.asarray(nodes.enumeration_values(attr))
-                # if the size of `values` is large enough compared to `enumeration`, not using
-                # categorical reduces the memory usage.
-                if values.shape[0] < 0.5 * enumeration.shape[0]:
-                    result[attr] = pd.Categorical.from_codes(enumeration, categories=values)
-                else:
-                    result[attr] = values[enumeration]
-            else:
-                result[attr] = nodes.get_attribute(attr, _all)
-        for attr in sorted(utils.add_dynamic_prefix(nodes.dynamics_attribute_names)):
-            result[attr] = nodes.get_dynamics_attribute(attr.split(DYNAMICS_PREFIX)[1], _all)
+    def _get_values_from_sonata(self, nodes, attr, node_ids):
+        """Return the selected values as np.ndarray or pd.Categorical."""
+        selection = self._get_libsonata_selection(node_ids)
+        if attr in nodes.enumeration_names:
+            enumeration = np.asarray(nodes.get_enumeration(attr, selection))
+            values = np.asarray(nodes.enumeration_values(attr))
+            # if the size of `values` is large enough compared to `enumeration`, not using
+            # categorical reduces the memory usage.
+            # We compare with nodes.size instead of len(enumeration) to not depend on the selection.
+            if len(values) < 0.5 * nodes.size:
+                return pd.Categorical.from_codes(enumeration, categories=values)
+            return values[enumeration]
+        if attr in nodes.attribute_names:
+            return nodes.get_attribute(attr, selection)
+        if attr.startswith(DYNAMICS_PREFIX):
+            stripped = attr[len(DYNAMICS_PREFIX) :]
+            if stripped in nodes.dynamics_attribute_names:
+                return nodes.get_dynamics_attribute(stripped, selection)
+        raise BluepySnapError(f"Attribute not found in population {self.name}: {attr}")
+
+    def _iter_selected_properties(self, existing, desired):
+        """Yield ordered (idx, attr) for each attr in desired, and not in existing.
+
+        Called to ensure that the order of the columns of the cached DataFrame doesn't depend
+        on the order of the retrieved attributes, when _get_data is called multiple times
+        with different properties.
+
+        Args:
+            existing: existing attributes, that are going to be skipped.
+            desired: desired attributes, that are going to be yielded in order.
+        """
+        idx = 0
+        existing = set(existing)
+        desired = set(desired)
+        for attr in self._ordered_property_names:
+            if attr in existing:
+                idx += 1
+                continue
+            if attr not in desired:
+                continue
+            yield idx, attr
+
+    def _get_data(self, properties=None, node_ids=None):
+        """Collect data for the node population as a pandas.DataFrame.
+
+        Return a DataFrame with node_ids as index, loading the requested properties if needed.
+
+        The returned DataFrame isn't filtered by columns, so it may contain more properties than
+        requested, if they were loaded previously.
+
+        This is done for efficiency, since a copy of the data is not needed:
+        - in self.get(), the DataFrame is filtered by node_ids first, and by property later
+        - in self.property_dtypes(), all the properties are needed
+        - in self._node_ids_by_filter(), the required columns are selected if and when needed
+
+        Args:
+            properties (str|set|list|None): properties to load, or None to load all of them.
+            node_ids (list|np.ndarray|None): node ids to select.
+                If None, all the ids are selected, and the cache is read and updated if needed.
+                If not None, the cache is read and used if possible, but not updated.
+        """
+        result = self._cache
+        if properties is None:
+            properties_set = self.property_names
+        else:
+            properties_set = set(utils.ensure_list(properties))
+            self._check_properties(properties_set)
+        if node_ids is not None:
+            # Select the ids from the cached dataframe.
+            # The original dataframe won't be updated in this case.
+            result = result.loc[node_ids]
+        cached_columns = properties_set.intersection(result.columns)
+        if len(cached_columns) < len(properties_set):
+            # some requested properties miss from the cache
+            nodes = self._population
+            # insert columns at the correct position
+            for n, (loc, name) in enumerate(
+                self._iter_selected_properties(existing=result.columns, desired=properties_set)
+            ):
+                values = self._get_values_from_sonata(nodes=nodes, attr=name, node_ids=node_ids)
+                result.insert(n + loc, name, values)
         return result
 
-    @property
+    @cached_property
     def _properties(self):
+        """Node population properties."""
         return self._circuit.to_libsonata.node_population_properties(self.name)
 
     @property
     def _population(self):
+        """Libsonata node population.
+
+        Not cached because it would keep the hdf5 file open.
+        """
         return self._circuit.to_libsonata.node_population(self.name)
 
     @cached_property
@@ -144,6 +219,11 @@ class NodePopulation:
     @cached_property
     def _dynamics_params_names(self):
         return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
+
+    @cached_property
+    def _ordered_property_names(self):
+        """Similar to self.property_names, but as an ordered list."""
+        return sorted(self._property_names) + sorted(self._dynamics_params_names)
 
     def source_in_edges(self):
         """Set of edge population names that use this node population as source.
@@ -237,11 +317,12 @@ class NodePopulation:
         Returns:
             pandas.Series: series indexed by field name with the corresponding dtype as value.
         """
-        return self._data.dtypes.sort_index()
+        # read all the properties, without loading any node id
+        return self._get_data(properties=None, node_ids=[]).dtypes.sort_index()
 
     def _check_id(self, node_id):
         """Check that single node ID belongs to the circuit."""
-        if node_id < 0 or node_id >= len(self._data.index):
+        if node_id < 0 or node_id >= self.size:
             raise BluepySnapError(f"node ID not found: {node_id} in population '{self.name}'")
 
     def _check_ids(self, node_ids):
@@ -255,16 +336,16 @@ class NodePopulation:
         else:
             max_id = max(node_ids)
             min_id = min(node_ids)
-        if min_id < 0 or max_id >= len(self._data.index):
+        if min_id < 0 or max_id >= self.size:
             raise BluepySnapError(
-                f"All node IDs must be >= 0 and < {len(self._data.index)} "
-                f"for population '{self.name}'"
+                f"All node IDs must be >= 0 and < {self.size} " f"for population '{self.name}'"
             )
 
-    def _check_property(self, prop):
-        """Check if a property exists inside the dataset."""
-        if prop not in self.property_names:
-            raise BluepySnapError(f"No such property: '{prop}'")
+    def _check_properties(self, properties):
+        """Check if the properties exist inside the dataset."""
+        unknown_props = properties - self.property_names
+        if unknown_props:
+            raise BluepySnapError(f"Unknown node properties: {sorted(unknown_props)}")
 
     def _resolve_nodesets(self, queries, raise_missing_prop):
         def _resolve(queries, queries_key):
@@ -299,13 +380,13 @@ class NodePopulation:
 
         """
         queries = self._resolve_nodesets(queries, raise_missing_prop)
+        properties = query.get_properties(queries)
         if raise_missing_prop:
-            properties = query.get_properties(queries)
-            if not properties.issubset(self._data.columns):
-                unknown_props = properties - set(self._data.columns)
-                raise BluepySnapError(f"Unknown node properties: {unknown_props}")
-        idx = query.resolve_ids(self._data, self.name, queries)
-        return self._data.index[idx].values
+            self._check_properties(properties)
+        # load all the properties needed to execute the query, excluding the unknown properties
+        data = self._get_data(properties & self.property_names)
+        idx = query.resolve_ids(data, self.name, queries)
+        return idx.nonzero()[0]
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
         """Node IDs corresponding to node ``group``.
@@ -335,7 +416,7 @@ class NodePopulation:
             group = group.filter_population(self.name).get_ids()
 
         if group is None:
-            result = self._data.index.values
+            result = np.arange(self.size)
         elif isinstance(group, NodeSet):
             result = group.get_ids(self._population, raise_missing_property)
         elif isinstance(group, Mapping):
@@ -377,7 +458,7 @@ class NodePopulation:
             group (int/CircuitNodeId/CircuitNodeIds/sequence/str/mapping/None):
                 see :ref:`Group Concept`
             properties (list|str|None): If specified, return only the properties in the list.
-                Otherwise return all properties.
+                Otherwise, return all the properties.
 
         Returns:
             value/pandas.Series/pandas.DataFrame:
@@ -439,7 +520,6 @@ class NodePopulation:
                 >>> type(result), result.shape
                 (pandas.core.frame.DataFrame, (1, 1))
         """
-        result = self._data
         if group is not None:
             if isinstance(group, (int, np.integer)):
                 self._check_id(group)
@@ -447,13 +527,10 @@ class NodePopulation:
                 group = self.ids(group)[0]
             else:
                 group = self.ids(group)
-            result = result.loc[group]
 
-        if properties is not None:
-            for p in utils.ensure_list(properties):
-                self._check_property(p)
-            result = result[properties]
-
+        result = self._get_data(properties=properties)
+        result = result.loc[group] if group is not None else result
+        result = result[properties] if properties is not None else result
         return result
 
     def positions(self, group=None):
@@ -591,12 +668,10 @@ class NodePopulation:
                 )
             ) from e
 
-        properties = self._circuit.to_libsonata.node_population_properties(self.name)
-
-        if not properties.spatial_segment_index_dir:
+        index_dir = self._properties.spatial_segment_index_dir
+        if not index_dir:
             raise BluepySnapError(f"It appears {self.name} does not have segment indices")
-
-        return open_index(properties.spatial_segment_index_dir)
+        return open_index(index_dir)
 
     def __getstate__(self):
         """Make NodePopulation pickle-able, without storing state of caches."""

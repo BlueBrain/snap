@@ -1,7 +1,7 @@
 [tool.black]
 line-length  =  100
 target-version  =  [
-    'py37',
+    'py38',
 ]
 include  =  '(bluepysnap|tests)\/.*\.py|doc\/source\/conf\.py|setup\.py'
 
@@ -12,6 +12,10 @@ known_local_folder  =  [
 'utils',
 'test_module',
 ]
+
+[tool.pylint.main]
+# Files or directories to be skipped. They should be base names, not paths.
+ignore = ["CVS", "_version.py"]
 
 [tool.pylint.messages_control]
 disable = [

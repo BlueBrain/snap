@@ -134,7 +134,7 @@ class TestNodes:
                 test_obj.property_dtypes.sort_index()
 
     def test_ids(self):
-        np.random.seed(42)
+        np.random.seed(0)
 
         # None --> CircuitNodeIds with all ids
         tested = self.test_obj.ids()
@@ -278,7 +278,7 @@ class TestNodes:
         assert ids.filter_population("default2").limit(2) == expected
 
         tested = self.test_obj.ids(sample=2)
-        expected = CircuitNodeIds.from_arrays(["default2", "default2"], [3, 0], sort_index=False)
+        expected = CircuitNodeIds.from_arrays(["default2", "default"], [3, 2], sort_index=False)
         assert tested == expected
 
         tested = self.test_obj.ids(limit=4)
