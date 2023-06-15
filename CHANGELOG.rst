@@ -1,9 +1,18 @@
 Changelog
 =========
 
+Version v1.1.0
+--------------
+
 Improvements
 ~~~~~~~~~~~~
 - Clarification for partial circuit configs
+- Node set resolution is done by libsonata
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- ``NodeSet.resolved`` is no longer available
+- ``FrameReport.node_set`` returns node_set name instead of resolved node set query
 
 Version v1.0.5
 --------------
