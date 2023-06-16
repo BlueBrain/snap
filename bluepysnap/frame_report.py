@@ -164,10 +164,13 @@ class FilteredFrameReport:
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
             ids = frames.nodes.ids(group=self.group, raise_missing_property=False)
-            data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
-            dataframes[population] = data
-        # preserve MultiIndex for columns, adding a population level
-        result = pd.concat(dataframes.values(), axis=1, keys=dataframes.keys())
+            df = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
+            dataframes[population] = df
+        # optimize when there is at most one non-empty df: use copy=False, and no need to sort
+        if sum(not df.empty for df in dataframes.values()) <= 1:
+            return pd.concat(dataframes, axis=1, copy=False)
+        # when concatenating multiple df, don't use copy=False because 2x slower (Pandas 2.0.2)
+        result = pd.concat(dataframes, axis=1)
         return result.sort_index(axis=0).sort_index(axis=1)
 
     # pylint: disable=protected-access
