@@ -48,9 +48,8 @@ class NodeSet:
         try:
             return self._node_sets.materialize(self._name, population).flatten()
         except libsonata.SonataError as e:
-            if "No such attribute" in e.args[0]:
-                if not raise_missing_property:
-                    return []
+            if not raise_missing_property and "No such attribute" in e.args[0]:
+                return []
             raise BluepySnapError(*e.args) from e
 
 
