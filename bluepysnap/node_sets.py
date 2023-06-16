@@ -21,6 +21,8 @@ For more information see:
 https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#node-sets-file
 """
 
+import json
+
 import libsonata
 
 from bluepysnap import utils
@@ -56,7 +58,7 @@ class NodeSet:
 class NodeSets:
     """Access to node sets data."""
 
-    def __init__(self, filepath):
+    def __init__(self, content, instance):
         """Initializes a node set object from a node sets file.
 
         Args:
@@ -65,8 +67,27 @@ class NodeSets:
         Returns:
             NodeSets: A NodeSets object.
         """
-        self.content = utils.load_json(filepath)
-        self._instance = libsonata.NodeSets.from_file(filepath)
+        self.content = content
+        self._instance = instance
+
+    @classmethod
+    def from_file(cls, filepath):
+        """Create NodeSets instance from a file."""
+        content = utils.load_json(filepath)
+        instance = libsonata.NodeSets.from_file(filepath)
+        return cls(content, instance)
+
+    @classmethod
+    def from_string(cls, content):
+        """Create NodeSets instance from a JSON string."""
+        instance = libsonata.NodeSets(content)
+        content = json.loads(content)
+        return cls(content, instance)
+
+    @classmethod
+    def from_dict(cls, content):
+        """Create NodeSets instance from a dict."""
+        return cls.from_string(json.dumps(content))
 
     def __contains__(self, name):
         """Check if node set exists."""

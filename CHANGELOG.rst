@@ -4,6 +4,10 @@ Changelog
 Version v1.1.0
 --------------
 
+New Features
+~~~~~~~~~~~~
+- ``NodeSets`` object can be instantiated with three methods: ``from_file``, ``from_string``, ``from_dict``
+
 Improvements
 ~~~~~~~~~~~~
 - Node set resolution is done by libsonata

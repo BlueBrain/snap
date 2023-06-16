@@ -78,7 +78,7 @@ class Circuit:
     def node_sets(self):
         """Returns the NodeSets object bound to the circuit."""
         if "node_sets_file" in self.config:
-            return NodeSets(self.config["node_sets_file"])
+            return NodeSets.from_file(self.config["node_sets_file"])
         return {}
 
     @cached_property

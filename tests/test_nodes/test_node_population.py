@@ -54,7 +54,7 @@ class TestNodePopulation:
         test_obj = create_node_population(
             str(TEST_DATA_DIR / "nodes.h5"),
             "default",
-            node_sets=NodeSets(str(TEST_DATA_DIR / "node_sets.json")),
+            node_sets=NodeSets.from_file(str(TEST_DATA_DIR / "node_sets.json")),
             pop_type="fake_type",
         )
         assert test_obj.type == "fake_type"

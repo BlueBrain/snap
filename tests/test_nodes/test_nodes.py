@@ -417,7 +417,7 @@ class TestNodes:
         with pytest.raises(BluepySnapError, match="Undefined node set"):
             self.test_obj.ids("ExtraLayer2")
 
-        node_sets = NodeSets(str(TEST_DATA_DIR / "node_sets_extra.json"))
+        node_sets = NodeSets.from_file(str(TEST_DATA_DIR / "node_sets_extra.json"))
 
         assert self.test_obj.ids(node_sets["ExtraLayer2"]) == CircuitNodeIds.from_arrays(
             ["default", "default2"], [0, 3]

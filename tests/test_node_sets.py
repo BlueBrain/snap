@@ -13,7 +13,9 @@ from utils import TEST_DATA_DIR
 
 class TestNodeSet:
     def setup_method(self):
-        self.test_node_sets = test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
+        self.test_node_sets = test_module.NodeSets.from_file(
+            str(TEST_DATA_DIR / "node_sets_file.json")
+        )
         self.test_pop = libsonata.NodeStorage(str(TEST_DATA_DIR / "nodes.h5")).open_population(
             "default"
         )
@@ -32,7 +34,7 @@ class TestNodeSet:
 
 class TestNodeSets:
     def setup_method(self):
-        self.test_obj = test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
+        self.test_obj = test_module.NodeSets.from_file(str(TEST_DATA_DIR / "node_sets_file.json"))
         self.test_pop = libsonata.NodeStorage(str(TEST_DATA_DIR / "nodes.h5")).open_population(
             "default"
         )
@@ -46,6 +48,20 @@ class TestNodeSets:
             "combined": ["Node2_L6_Y", "Layer23"],
             "failing": {"unknown_property": [0]},
         }
+
+    def test_from_string(self):
+        res = test_module.NodeSets.from_string(json.dumps(self.test_obj.content))
+        assert res.content == self.test_obj.content
+
+    def test_from_dict(self):
+        res = test_module.NodeSets.from_dict(self.test_obj.content)
+        assert res.content == self.test_obj.content
+
+    def test_contains(self):
+        assert "Layer23" in self.test_obj
+        assert "find_me_you_will_not" not in self.test_obj
+        with pytest.raises(BluepySnapError, match="Unexpected type"):
+            42 in self.test_obj
 
     def test_getitem(self):
         assert isinstance(self.test_obj["Layer23"], test_module.NodeSet)
