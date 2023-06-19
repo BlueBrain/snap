@@ -69,7 +69,7 @@ def test_no_node_set():
         with edit_config(config_path) as config:
             config.pop("node_sets_file")
         circuit = test_module.Circuit(config_path)
-        assert circuit.node_sets == {}
+        assert circuit.node_sets.content == {}
 
 
 def test_integration():

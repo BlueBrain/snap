@@ -14,6 +14,7 @@ Improvements
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
+- ``Circuit.node_sets`` returns ``NodeSets`` object initialized with empty dict when ``node_sets_file`` not present
 - ``NodeSet.resolved`` is no longer available
 - ``FrameReport.node_set`` returns node_set name instead of resolved node set query
 
