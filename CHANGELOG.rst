@@ -7,6 +7,7 @@ Version v1.0.7
 Bug Fixes
 ~~~~~~~~~
 - Fix CircuitIds.sample() to always return different samples.
+- Ensure that the report DataFrames have the same schema even when empty.
 
 
 Version v1.0.6
