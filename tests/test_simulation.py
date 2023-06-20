@@ -99,7 +99,7 @@ def test_no_node_set():
             os.remove(config_path.parent / "circuit_config.json")
 
         simulation = test_module.Simulation(config_path)
-        assert simulation.node_sets == {}
+        assert simulation.node_sets.content == {}
 
 
 def test_pickle(tmp_path):
