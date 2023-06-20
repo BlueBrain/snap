@@ -97,7 +97,7 @@ class NodeSets:
         raise BluepySnapError(f"Unexpected type: '{type(name).__name__}' (expected: 'str')")
 
     def __getitem__(self, name):
-        """Return a node set instance for the given node_set name."""
+        """Return a node set instance for the given node set name."""
         if name not in self:
             raise BluepySnapError(f"Undefined node set: '{name}'")
         return NodeSet(self._instance, name)
