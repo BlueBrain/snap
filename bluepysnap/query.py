@@ -1,6 +1,8 @@
 """Module to process search queries of nodes/edges."""
+import operator
 from collections.abc import Mapping
 from copy import deepcopy
+from functools import reduce
 
 import numpy as np
 
@@ -19,12 +21,51 @@ VALUE_KEYS = {REGEX_KEY}
 ALL_KEYS = {NODE_ID_KEY, EDGE_ID_KEY, POPULATION_KEY, OR_KEY, AND_KEY, NODE_SET_KEY} | VALUE_KEYS
 
 
-# TODO: move to `libsonata` library
+def _logical_and(masks):
+    """Calculate and return the "logical and" of the given masks.
+
+    Args:
+        masks: list of array-like, or booleans.
+
+    Returns:
+        the resulting mask as a numpy array, or a bool. Return True if the masks list is empty.
+    """
+    # filter out True masks (as bool)
+    masks = [m for m in masks if m is not True]
+    if any(m is False for m in masks):
+        return False
+    if len(masks) == 0:
+        return True
+    masks = (np.asarray(m, dtype=bool) for m in masks)
+    # faster than np.logical_and.reduce or np.all
+    return reduce(operator.and_, masks)
+
+
+def _logical_or(masks):
+    """Calculate and return the "logical or" of the given masks.
+
+    Args:
+        masks: list of array-like, or booleans.
+
+    Returns:
+        the resulting mask as a numpy array, or a bool. Return False if the masks list is empty.
+    """
+    # filter out False masks (as bool)
+    masks = [m for m in masks if m is not False]
+    if any(m is True for m in masks):
+        return True
+    if len(masks) == 0:
+        return False
+    masks = (np.asarray(m, dtype=bool) for m in masks)
+    # faster than np.logical_or.reduce or np.any
+    return reduce(operator.or_, masks)
+
+
 def _complex_query(prop, query):
-    result = np.full(len(prop), True)
+    result = True
     for key, value in query.items():
         if key == REGEX_KEY:
-            result = np.logical_and(result, prop.str.match(value + "\\Z"))
+            result = _logical_and([result, prop.str.match(value + "\\Z")])
         else:
             raise BluepySnapError(f"Unknown query modifier: '{key}'")
     return result
@@ -41,7 +82,7 @@ def _positional_mask(data, ids):
         _positional_mask(data, [0,2]) --> [True, False, True, False, False]
     """
     if ids is None:
-        return np.full(len(data), fill_value=True)
+        return True
     if isinstance(ids, int):
         ids = [ids]
     mask = np.full(len(data), fill_value=False)
@@ -64,12 +105,12 @@ def _properties_mask(data, population_name, queries):
     """Return mask of IDs matching `props` dict."""
     unknown_props = set(queries) - set(data.columns) - ALL_KEYS
     if unknown_props:
-        return np.full(len(data), fill_value=False)
+        return False
 
     queries, mask = _circuit_mask(data, population_name, queries)
-    if not mask.any():
+    if mask is False or isinstance(mask, np.ndarray) and not mask.any():
         # Avoid fail and/or processing time if wrong population or no nodes
-        return mask
+        return False
 
     for prop, values in queries.items():
         prop = data[prop]
@@ -82,7 +123,7 @@ def _properties_mask(data, population_name, queries):
             prop_mask = prop.isin(values)
         else:
             prop_mask = prop == values
-        mask = np.logical_and(mask, prop_mask)
+        mask = _logical_and([mask, prop_mask])
     return mask
 
 
@@ -138,20 +179,18 @@ def resolve_ids(data, population_name, queries):
     """
 
     def _merge_queries_masks(queries):
-        if len(queries) == 0:
-            return np.full(len(data), True)
-        return np.logical_and.reduce(list(queries.values()))
+        return _logical_and(queries.values())
 
     def _collect(queries, queries_key):
         # each queries value is replaced with a bit mask of corresponding ids
         if queries_key == OR_KEY:
             # children are already resolved masks due to traverse order
             children_mask = [_merge_queries_masks(query) for query in queries[queries_key]]
-            queries[queries_key] = np.logical_or.reduce(children_mask)
+            queries[queries_key] = _logical_or(children_mask)
         elif queries_key == AND_KEY:
             # children are already resolved masks due to traverse order
             children_mask = [_merge_queries_masks(query) for query in queries[queries_key]]
-            queries[queries_key] = np.logical_and.reduce(children_mask)
+            queries[queries_key] = _logical_and(children_mask)
         else:
             queries[queries_key] = _properties_mask(
                 data, population_name, {queries_key: queries[queries_key]}
@@ -159,4 +198,5 @@ def resolve_ids(data, population_name, queries):
 
     queries = deepcopy(queries)
     traverse_queries_bottom_up(queries, _collect)
-    return _merge_queries_masks(queries)
+    result = _merge_queries_masks(queries)
+    return np.full(len(data), fill_value=result) if isinstance(result, bool) else result
