@@ -71,7 +71,7 @@ def _complex_query(prop, query):
     result = True
     for key, value in query.items():
         if key == REGEX_KEY:
-            result = _logical_and([result, prop.str.match(value + "\\Z")])
+            result = _logical_and([result, prop.str.match(value + r"\Z")])
         else:
             raise BluepySnapError(f"Unknown query modifier: '{key}'")
     return result
