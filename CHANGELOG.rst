@@ -8,7 +8,7 @@ Bug Fixes
 ~~~~~~~~~
 - Fix CircuitIds.sample() to always return different samples.
 - Ensure that the report DataFrames have the same schema even when empty.
-
+- Improve performance when querying a population with get() and ids().
 
 Version v1.0.6
 --------------
@@ -19,7 +19,6 @@ Improvements
 - Publish version as ``bluepysnap.__version__``
 - Support lazy loading of nodes attributes.
 - Add t_step parameter to frame reports.
-- Improve query performance in get() and ids().
 - Add python 3.11 tests.
 - Drop python 3.7 support.
 
