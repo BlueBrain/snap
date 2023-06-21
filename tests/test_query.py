@@ -54,6 +54,8 @@ def test_resolve_ids():
     assert [True, False, True] == resolve_ids(
         data, "", {"$or": [{"node_id": 0}, {"edge_id": 2}]}
     ).tolist()
+    assert [False, False, False] == resolve_ids(data, "", {"$or": []}).tolist()
+    assert [True, True, True] == resolve_ids(data, "", {"$and": []}).tolist()
 
     with pytest.raises(BluepySnapError) as e:
         resolve_ids(data, "", {"str": {"$regex": "*.some", "edge_id": 2}})

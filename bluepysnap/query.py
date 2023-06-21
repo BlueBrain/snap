@@ -28,17 +28,20 @@ def _logical_and(masks):
         masks: list of array-like, or booleans.
 
     Returns:
-        the resulting mask as a numpy array, or a bool. Return True if the masks list is empty.
+        the resulting mask as a numpy array, or a bool.
+        Return True if the masks list is empty, similarly to all([]).
     """
-    # filter out True masks (as bool)
-    masks = [m for m in masks if m is not True]
-    if any(m is False for m in masks):
-        return False
-    if len(masks) == 0:
+    filtered_masks = []
+    for mask in masks:
+        if mask is False:
+            return False
+        if mask is True:
+            continue
+        filtered_masks.append(mask)
+    if not filtered_masks:
         return True
-    masks = (np.asarray(m, dtype=bool) for m in masks)
-    # faster than np.logical_and.reduce or np.all
-    return reduce(operator.and_, masks)
+    # reduce(operator.and_, masks) is faster than np.logical_and.reduce() or np.all()
+    return reduce(operator.and_, (np.asarray(m, dtype=bool) for m in filtered_masks))
 
 
 def _logical_or(masks):
@@ -48,17 +51,20 @@ def _logical_or(masks):
         masks: list of array-like, or booleans.
 
     Returns:
-        the resulting mask as a numpy array, or a bool. Return False if the masks list is empty.
+        the resulting mask as a numpy array, or a bool.
+        Return False if the masks list is empty, similarly to any([]).
     """
-    # filter out False masks (as bool)
-    masks = [m for m in masks if m is not False]
-    if any(m is True for m in masks):
-        return True
-    if len(masks) == 0:
+    filtered_masks = []
+    for mask in masks:
+        if mask is True:
+            return True
+        if mask is False:
+            continue
+        filtered_masks.append(mask)
+    if not filtered_masks:
         return False
-    masks = (np.asarray(m, dtype=bool) for m in masks)
-    # faster than np.logical_or.reduce or np.any
-    return reduce(operator.or_, masks)
+    # reduce(operator.or_, masks) is faster than np.logical_or.reduce() or np.any()
+    return reduce(operator.or_, (np.asarray(m, dtype=bool) for m in filtered_masks))
 
 
 def _complex_query(prop, query):
