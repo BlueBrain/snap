@@ -59,20 +59,21 @@ class Nodes(
 
         Args:
             group (CircuitNodeId/CircuitNodeIds/int/sequence/str/mapping/None): Which IDs will be
-            returned depends on the type of the ``group`` argument:
+                returned depends on the type of the ``group`` argument:
+
                 - ``CircuitNodeId``: return the ID in a CircuitNodeIds object if it belongs to
-                    the circuit.
+                  the circuit.
                 - ``CircuitNodeIds``: return the IDs in a CircuitNodeIds object if they belong to
-                    the circuit.
+                  the circuit.
                 - ``int``: if the node ID is present in all populations, returns a CircuitNodeIds
-                    object containing the corresponding node ID for all populations.
+                  object containing the corresponding node ID for all populations.
                 - ``sequence``: if all the values contained in the sequence are present in all
-                    populations, returns a CircuitNodeIds object containing the corresponding node
-                    IDs for all populations.
+                  populations, returns a CircuitNodeIds object containing the corresponding node
+                  IDs for all populations.
                 - ``str``: use a node set name as input. Returns a CircuitNodeIds object containing
-                    nodes selected by the node set.
+                  nodes selected by the node set.
                 - ``mapping``: Returns a CircuitNodeIds object containing nodes matching a
-                    properties filter.
+                  properties filter.
                 - ``None``: return all node IDs of the circuit in a CircuitNodeIds object.
             sample (int): If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
@@ -83,8 +84,8 @@ class Nodes(
 
         Returns:
             CircuitNodeIds: returns a CircuitNodeIds containing all the node IDs and the
-                corresponding populations. All the explicitly requested IDs must be present inside
-                the circuit.
+            corresponding populations. All the explicitly requested IDs must be present inside
+            the circuit.
 
         Raises:
             BluepySnapError: when a population from a CircuitNodeIds is not present in the circuit.

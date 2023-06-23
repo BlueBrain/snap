@@ -74,6 +74,7 @@ def test_resolve_ids():
         ([np.array([False])], np.array([False])),
         ([np.array([True, True]), np.array([True, False])], np.array([True, False])),
         ([np.array([100, 100]), np.array([True, False])], np.array([True, False])),
+        ([pd.Series([100, 100]), np.array([True, False])], np.array([True, False])),
         (
             [np.array([True, False, True, False]), np.array([True, True, False, False])],
             np.array([True, False, False, False]),
@@ -112,6 +113,7 @@ def test__logical_and(masks, expected):
         ([np.array([False])], np.array([False])),
         ([np.array([True, True]), np.array([True, False])], np.array([True, True])),
         ([np.array([100, 100]), np.array([True, False])], np.array([True, True])),
+        ([pd.Series([100, 100]), np.array([True, False])], np.array([True, True])),
         (
             [np.array([True, False, True, False]), np.array([True, True, False, False])],
             np.array([True, True, True, False]),

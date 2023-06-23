@@ -8,11 +8,14 @@ New Features
 ~~~~~~~~~~~~
 - Added ``CircuitIds.intersection`` to take the intersection of two ``CircuitIds``.
 
+Improvements
+~~~~~~~~~~~~
+- Improve performance when querying a population with get() and ids().
+
 Bug Fixes
 ~~~~~~~~~
 - Fix CircuitIds.sample() to always return different samples.
 - Ensure that the report DataFrames have the same schema even when empty.
-- Improve performance when querying a population with get() and ids().
 
 Version v1.0.6
 --------------

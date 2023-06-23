@@ -121,7 +121,8 @@ class EdgePopulation:
     def config(self):
         """Access the configuration for the population.
 
-        This configuration is extended with
+        This configuration is extended with:
+
         * 'components' of the circuit config
         * 'edges_file': the path the h5 file containing the population.
         """
@@ -154,7 +155,7 @@ class EdgePopulation:
 
         Returns:
             list: A list of strings corresponding to the properties that you can use from the
-                container class
+            container class
 
         Examples:
             >>> from bluepysnap.sonata_constants import Edge
@@ -244,6 +245,7 @@ class EdgePopulation:
         Args:
             group (None/int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
                 returned depends on the type of the ``group`` argument:
+
                 - ``None``: return all IDs.
                 - ``int``, ``CircuitEdgeId``: return a single edge ID.
                 - ``CircuitEdgeIds`` return IDs of edges the edge population in an array.
@@ -299,8 +301,8 @@ class EdgePopulation:
 
         Returns:
             pandas.Series/pandas.DataFrame:
-                A pandas Series indexed by edge IDs if ``properties`` is scalar.
-                A pandas DataFrame indexed by edge IDs if ``properties`` is list.
+                - A pandas Series indexed by edge IDs if ``properties`` is scalar.
+                - A pandas DataFrame indexed by edge IDs if ``properties`` is list.
 
         Notes:
             The EdgePopulation.property_names function will give you all the usable properties
@@ -394,9 +396,9 @@ class EdgePopulation:
             properties: None / edge property name / list of edge property names
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            - List of edge IDs, if ``properties`` is None;
+            - Pandas Series indexed by edge IDs if ``properties`` is string;
+            - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         if source is None and target is None:
             raise BluepySnapError("Either `source` or `target` should be specified")
@@ -424,9 +426,9 @@ class EdgePopulation:
 
         Returns:
             pandas.Series/pandas.DataFrame/list:
-                A pandas Series indexed by edge ID if ``properties`` is a string.
-                A pandas DataFrame indexed by edge ID if ``properties`` is a list.
-                A list of edge IDs, if ``properties`` is None.
+                - A pandas Series indexed by edge ID if ``properties`` is a string.
+                - A pandas DataFrame indexed by edge ID if ``properties`` is a list.
+                - A list of edge IDs, if ``properties`` is None.
         """
         return self.pathway_edges(source=None, target=node_id, properties=properties)
 
@@ -438,9 +440,9 @@ class EdgePopulation:
             properties: None / edge property name / list of edge property names
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            - List of edge IDs, if ``properties`` is None;
+            - Pandas Series indexed by edge IDs if ``properties`` is string;
+            - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         return self.pathway_edges(source=node_id, target=None, properties=properties)
 
@@ -453,9 +455,9 @@ class EdgePopulation:
             properties: None / edge property name / list of edge property names
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            - List of edge IDs, if ``properties`` is None;
+            - Pandas Series indexed by edge IDs if ``properties`` is string;
+            - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         return self.pathway_edges(
             source=source_node_id, target=target_node_id, properties=properties
@@ -554,9 +556,9 @@ class EdgePopulation:
         ``return_edge_count`` and ``return_edge_ids`` are mutually exclusive.
 
         Yields:
-            (source_node_id, target_node_id, edge_ids) if return_edge_ids == True;
-            (source_node_id, target_node_id, edge_count) if return_edge_count == True;
-            (source_node_id, target_node_id) otherwise.
+            - (source_node_id, target_node_id, edge_ids) if ``return_edge_ids`` is True;
+            - (source_node_id, target_node_id, edge_count) if ``return_edge_count`` is True;
+            - (source_node_id, target_node_id) otherwise.
         """
         if return_edge_ids and return_edge_count:
             raise BluepySnapError(

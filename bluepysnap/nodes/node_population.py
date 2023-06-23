@@ -250,7 +250,8 @@ class NodePopulation:
     def config(self):
         """Access the configuration for the population.
 
-        This configuration is extended with
+        This configuration is extended with:
+
         * 'components' of the circuit config
         * 'nodes_file': the path the h5 file containing the population.
         """
@@ -273,7 +274,7 @@ class NodePopulation:
 
         Returns:
             list: A list of strings corresponding to the properties that you can use from the
-                container class
+            container class
 
         Examples:
             >>> from bluepysnap.sonata_constants import Node
