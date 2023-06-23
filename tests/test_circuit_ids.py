@@ -210,14 +210,15 @@ class TestCircuitNodeIds:
         assert test_obj == expected
 
     def test_intersection(self):
-        first_ids = self.ids_cls.from_tuples([("a", 1), ("a", 2), ("a", 1), ("a", 2), ("b", 1)])
-        to_intersect = self.ids_cls.from_tuples([("b", 1), ("a", 3), ("a", 2)])
-        expected = self.ids_cls.from_tuples([("a", 2), ("b", 1)])
-        print(first_ids, first_ids.intersection(to_intersect))
-        assert first_ids.intersection(to_intersect) == expected
-        assert first_ids != expected
-        first_ids.intersection(to_intersect, inplace=True)
-        assert first_ids == expected
+        test_obj = self.ids_cls.from_tuples(_multi_index())
+        other = self.ids_cls.from_tuples([("b", 0), ("a", 3), ("a", 2)])
+        expected = self.ids_cls.from_tuples([("a", 2), ("b", 0)])
+
+        assert test_obj.intersection(other) == expected
+        assert test_obj != expected
+
+        test_obj.intersection(other, inplace=True)
+        assert test_obj == expected
 
     def test_sample(self):
         with patch("numpy.random.choice", return_value=np.array([0, 3])):
