@@ -51,14 +51,15 @@ class Edges(
 
         Args:
             group (None/int/CircuitEdgeId/CircuitEdgeIds/sequence): Which IDs will be
-            returned depends on the type of the ``group`` argument:
+                returned depends on the type of the ``group`` argument:
+
                 - ``None``: return all CircuitEdgeIds.
                 - ``CircuitEdgeId``: return the ID in a CircuitEdgeIds object.
                 - ``CircuitEdgeIds``: return the IDs in a CircuitNodeIds object.
                 - ``int``: returns a CircuitEdgeIds object containing the corresponding edge ID
-                    for all populations.
+                  for all populations.
                 - ``sequence``: returns a CircuitEdgeIds object containing the corresponding edge
-                    IDs for all populations.
+                  IDs for all populations.
             sample (int): If specified, randomly choose ``sample`` number of
                 IDs from the match result. If the size of the sample is greater than
                 the size of all the EdgePopulations then all ids are taken and shuffled.
@@ -68,8 +69,8 @@ class Edges(
 
         Returns:
             CircuitEdgeIds: returns a CircuitEdgeIds containing all the edge IDs and the
-                corresponding populations. For performance reasons we do not test if the edge ids
-                are present or not in the circuit.
+            corresponding populations. For performance reasons we do not test if the edge ids
+            are present or not in the circuit.
 
         Notes:
             This envision also the maybe future selection of edges on queries.
@@ -91,8 +92,8 @@ class Edges(
 
         Returns:
             pandas.Series/pandas.DataFrame:
-                A pandas Series indexed by edge IDs if ``properties`` is scalar.
-                A pandas DataFrame indexed by edge IDs if ``properties`` is list.
+                - A pandas Series indexed by edge IDs if ``properties`` is scalar.
+                - A pandas DataFrame indexed by edge IDs if ``properties`` is list.
 
         Notes:
             The Edges.property_names function will give you all the usable properties
@@ -171,9 +172,9 @@ class Edges(
             properties: None / edge property name / list of edge property names
 
         Returns:
-            CircuitEdgeIDs, if ``properties`` is None;
-            Pandas Series indexed by CircuitEdgeIDs if ``properties`` is string;
-            Pandas DataFrame indexed by CircuitEdgeIDs if ``properties`` is list.
+            - CircuitEdgeIDs, if ``properties`` is None;
+            - Pandas Series indexed by CircuitEdgeIDs if ``properties`` is string;
+            - Pandas DataFrame indexed by CircuitEdgeIDs if ``properties`` is list.
         """
         if source is None and target is None:
             raise BluepySnapError("Either `source` or `target` should be specified")
@@ -198,9 +199,9 @@ class Edges(
 
         Returns:
             pandas.Series/pandas.DataFrame/list:
-                A pandas Series indexed by edge ID if ``properties`` is a string.
-                A pandas DataFrame indexed by edge ID if ``properties`` is a list.
-                A list of edge IDs, if ``properties`` is None.
+                - A pandas Series indexed by edge ID if ``properties`` is a string.
+                - A pandas DataFrame indexed by edge ID if ``properties`` is a list.
+                - A list of edge IDs, if ``properties`` is None.
         """
         return self.pathway_edges(source=None, target=node_id, properties=properties)
 
@@ -212,9 +213,9 @@ class Edges(
             properties: None / edge property name / list of edge property names
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            - List of edge IDs, if ``properties`` is None;
+            - Pandas Series indexed by edge IDs if ``properties`` is string;
+            - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         return self.pathway_edges(source=node_id, target=None, properties=properties)
 
@@ -227,9 +228,9 @@ class Edges(
             properties: None / edge property name / list of edge property names
 
         Returns:
-            List of edge IDs, if ``properties`` is None;
-            Pandas Series indexed by edge IDs if ``properties`` is string;
-            Pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            - List of edge IDs, if ``properties`` is None;
+            - Pandas Series indexed by edge IDs if ``properties`` is string;
+            - Pandas DataFrame indexed by edge IDs if ``properties`` is list.
         """
         return self.pathway_edges(
             source=source_node_id, target=target_node_id, properties=properties
@@ -282,9 +283,9 @@ class Edges(
         ``return_edge_count`` and ``return_edge_ids`` are mutually exclusive.
 
         Yields:
-            (source_node_id, target_node_id, edge_ids) if return_edge_ids == True;
-            (source_node_id, target_node_id, edge_count) if return_edge_count == True;
-            (source_node_id, target_node_id) otherwise.
+            - (source_node_id, target_node_id, edge_ids) if ``return_edge_ids`` is True;
+            - (source_node_id, target_node_id, edge_count) if ``return_edge_count`` is True;
+            - (source_node_id, target_node_id) otherwise.
         """
         if return_edge_ids and return_edge_count:
             raise BluepySnapError(

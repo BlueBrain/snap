@@ -1,9 +1,10 @@
+import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
 
 from bluepysnap import BluepySnapError
-from bluepysnap.query import _circuit_mask, _positional_mask, resolve_ids
+from bluepysnap.query import _circuit_mask, _logical_and, _logical_or, _positional_mask, resolve_ids
 
 
 def test_positional_mask():
@@ -54,7 +55,87 @@ def test_resolve_ids():
     assert [True, False, True] == resolve_ids(
         data, "", {"$or": [{"node_id": 0}, {"edge_id": 2}]}
     ).tolist()
+    assert [False, False, False] == resolve_ids(data, "", {"$or": []}).tolist()
+    assert [True, True, True] == resolve_ids(data, "", {"$and": []}).tolist()
 
     with pytest.raises(BluepySnapError) as e:
         resolve_ids(data, "", {"str": {"$regex": "*.some", "edge_id": 2}})
     assert "Value operators can't be used with plain values" in e.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "masks, expected",
+    [
+        ([], True),
+        ([True], True),
+        ([False], False),
+        ([True, False], False),
+        ([np.array([True])], np.array([True])),
+        ([np.array([False])], np.array([False])),
+        ([np.array([True, True]), np.array([True, False])], np.array([True, False])),
+        ([np.array([100, 100]), np.array([True, False])], np.array([True, False])),
+        ([pd.Series([100, 100]), np.array([True, False])], np.array([True, False])),
+        (
+            [np.array([True, False, True, False]), np.array([True, True, False, False])],
+            np.array([True, False, False, False]),
+        ),
+        ([np.array([1, 0, 1, 0]), np.array([1, 1, 0, 0])], np.array([True, False, False, False])),
+        (
+            [np.array([1, 0, 1, 0]), np.array([1, 1, 0, 0]), True],
+            np.array([True, False, False, False]),
+        ),
+        ([np.array([1, 0, 1, 0]), np.array([1, 1, 0, 0]), False], False),
+        (
+            [
+                np.array([1, 0, 1, 0, 1, 0, 1, 0]),
+                np.array([1, 1, 0, 0, 1, 1, 0, 0]),
+                np.array([1, 1, 1, 1, 0, 0, 0, 0]),
+            ],
+            np.array([True, False, False, False, False, False, False, False]),
+        ),
+    ],
+)
+def test__logical_and(masks, expected):
+    result = _logical_and(masks)
+
+    assert type(result) is type(expected)
+    npt.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "masks, expected",
+    [
+        ([], False),
+        ([True], True),
+        ([False], False),
+        ([True, False], True),
+        ([np.array([True])], np.array([True])),
+        ([np.array([False])], np.array([False])),
+        ([np.array([True, True]), np.array([True, False])], np.array([True, True])),
+        ([np.array([100, 100]), np.array([True, False])], np.array([True, True])),
+        ([pd.Series([100, 100]), np.array([True, False])], np.array([True, True])),
+        (
+            [np.array([True, False, True, False]), np.array([True, True, False, False])],
+            np.array([True, True, True, False]),
+        ),
+        ([np.array([1, 0, 1, 0]), np.array([1, 1, 0, 0])], np.array([True, True, True, False])),
+        (
+            [np.array([1, 0, 1, 0]), np.array([1, 1, 0, 0]), False],
+            np.array([True, True, True, False]),
+        ),
+        ([np.array([1, 0, 1, 0]), np.array([1, 1, 0, 0]), True], True),
+        (
+            [
+                np.array([1, 0, 1, 0, 1, 0, 1, 0]),
+                np.array([1, 1, 0, 0, 1, 1, 0, 0]),
+                np.array([1, 1, 1, 1, 0, 0, 0, 0]),
+            ],
+            np.array([True, True, True, True, True, True, True, False]),
+        ),
+    ],
+)
+def test__logical_or(masks, expected):
+    result = _logical_or(masks)
+
+    assert type(result) is type(expected)
+    npt.assert_equal(result, expected)

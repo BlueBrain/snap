@@ -24,7 +24,7 @@ from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import ensure_ids, ensure_list
+from bluepysnap.utils import ensure_ids
 
 L = logging.getLogger(__name__)
 
@@ -104,9 +104,6 @@ class PopulationFrameReport:
         except SonataError as e:
             raise BluepySnapError(e) from e
 
-        if len(view.ids) == 0:
-            return pd.DataFrame()
-
         # cell ids and section ids in the columns are enforced to be int64
         # to avoid issues with numpy automatic conversions and to ensure that
         # the results are the same regardless of the libsonata version [NSETM-1766]
@@ -159,25 +156,23 @@ class FilteredFrameReport:
 
         Returns:
             pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
-                different timestamps and the column's MultiIndex are :
-                - (population_name, node_id, compartment id) for the CompartmentReport
-                - (population_name, node_id) for the SomaReport
+            different timestamps and the column's MultiIndex are:
+
+            - (population_name, node_id, compartment id) for the CompartmentReport
+            - (population_name, node_id) for the SomaReport
         """
-        res = pd.DataFrame()
+        dataframes = {}
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
-            try:
-                ids = frames.nodes.ids(group=self.group)
-            except BluepySnapError:
-                continue
-            data = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
-            if data.empty:
-                continue
-            new_index = tuple(tuple([population] + ensure_list(x)) for x in data.columns)
-            data.columns = pd.MultiIndex.from_tuples(new_index)
-            # need to do this in order to preserve MultiIndex for columns
-            res = data if res.empty else data.join(res, how="outer")
-        return res.sort_index().sort_index(axis=1)
+            ids = frames.nodes.ids(group=self.group, raise_missing_property=False)
+            df = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
+            dataframes[population] = df
+        # optimize when there is at most one non-empty df: use copy=False, and no need to sort
+        if sum(not df.empty for df in dataframes.values()) <= 1:
+            return pd.concat(dataframes, axis=1, copy=False)
+        # when concatenating multiple df, don't use copy=False because 2x slower (Pandas 2.0.2)
+        result = pd.concat(dataframes, axis=1)
+        return result.sort_index(axis=0).sort_index(axis=1)
 
     # pylint: disable=protected-access
     trace = bluepysnap._plotting.frame_trace

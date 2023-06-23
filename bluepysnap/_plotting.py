@@ -248,12 +248,13 @@ def spikes_firing_animation(
         ax(matplotlib.Axis): matplotlib Axis to draw on (if not specified, pyplot.gca()
             and plt.figure() are used).
 
-    Returns :
+    Returns:
         (matplotlib.animation.FuncAnimation, matplotlib.Axis): the matplotlib animation object and
-            the corresponding axis.
+        the corresponding axis.
 
-    Notes:
+    Examples:
         From scripts:
+
         >>> import matplotlib.pyplot as plt
         >>> from bluepysnap import Simulation
         >>> report = Simulation("config.json").spikes["my_population"]
@@ -262,6 +263,7 @@ def spikes_firing_animation(
         >>> # to save the animation : do not plt.show() and just anim.save('my_movie.mp4')
 
         From notebooks:
+
         >>> from IPython.display import HTML
         >>> from bluepysnap import Simulation
         >>> report = Simulation("config.json").spikes["my_population"]

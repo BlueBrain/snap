@@ -205,6 +205,9 @@ class TestNodes:
         # Mapping --> CircuitNodeIds query on the populations empty dict return all
         assert self.test_obj.ids({}) == self.test_obj.ids()
 
+        assert self.test_obj.ids({"$and": []}) == self.test_obj.ids()
+        assert self.test_obj.ids({"$or": []}) == CircuitNodeIds.from_dict({})
+
         # Mapping --> CircuitNodeIds query on the populations
         tested = self.test_obj.ids({"layer": 2})
         expected = CircuitNodeIds.from_arrays(["default", "default2"], [0, 3])

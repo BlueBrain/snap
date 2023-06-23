@@ -253,6 +253,18 @@ class CircuitIds(abc.ABC):
         """
         return self._apply(lambda x: x.unique(), inplace)
 
+    def intersection(self, circuit_ids, inplace=False):
+        """Take the intersection of this CircuitIds and the input.
+
+        The index of the resulting object is sorted if ``inplace=False``.
+        Otherwise, the orginal order of the index is kept.
+
+        Args:
+            circuit_ids (CircuitIds): The CircuitIds to intersect with.
+            inplace (bool): if set to True, do the transformation inplace.
+        """
+        return self._apply(lambda x: x.intersection(circuit_ids.index), inplace)
+
     def to_csv(self, filepath):
         """Save CircuitIds to csv format."""
         self.index.to_frame(index=False).to_csv(filepath, index=False)

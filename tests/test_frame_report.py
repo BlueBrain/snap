@@ -99,37 +99,63 @@ class TestCompartmentReport:
             isinstance(report, test_module.PopulationCompartmentReport)
 
     def test_filter(self):
+        expected = pd.DataFrame(
+            data=[
+                np.array([0.3, 1.3, 2.3, 3.3, 4.3, 5.3, 6.3] * 2, dtype=np.float32) + 0.1 * i
+                for i in range(4)
+            ],
+            columns=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0, 0),
+                    ("default", 0, 1),
+                    ("default", 1, 0),
+                    ("default", 1, 1),
+                    ("default", 2, 0),
+                    ("default", 2, 1),
+                    ("default", 2, 1),
+                    ("default2", 0, 0),
+                    ("default2", 0, 1),
+                    ("default2", 1, 0),
+                    ("default2", 1, 1),
+                    ("default2", 2, 0),
+                    ("default2", 2, 1),
+                    ("default2", 2, 1),
+                ]
+            ),
+            index=np.array([0.3, 0.4, 0.5, 0.6]),
+        )
+
         filtered = self.test_obj.filter(group=[0], t_start=0.3, t_stop=0.6)
         assert filtered.frame_report == self.test_obj
         assert filtered.t_start == 0.3
         assert filtered.t_stop == 0.6
         assert filtered.group == [0]
         assert isinstance(filtered, test_module.FilteredFrameReport)
-        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.4, 0.5, 0.6]))
-        assert filtered.report.columns.tolist() == [
+        expected_columns = [
             ("default", 0, 0),
             ("default", 0, 1),
             ("default2", 0, 0),
             ("default2", 0, 1),
         ]
+        pdt.assert_frame_equal(filtered.report, expected.loc[:, expected_columns])
 
         filtered = self.test_obj.filter(group={"other1": ["B"]}, t_start=0.3, t_stop=0.6)
-        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.4, 0.5, 0.6]))
-        assert filtered.report.columns.tolist() == [("default2", 1, 0), ("default2", 1, 1)]
+        expected_columns = [("default2", 1, 0), ("default2", 1, 1)]
+        pdt.assert_frame_equal(filtered.report, expected.loc[:, expected_columns])
 
         filtered = self.test_obj.filter(group={"population": "default2"}, t_start=0.3, t_stop=0.6)
-        assert filtered.report.columns.tolist() == [
+        expected_columns = [
             ("default2", 0, 0),
             ("default2", 0, 1),
             ("default2", 1, 0),
             ("default2", 1, 1),
             ("default2", 2, 0),
             ("default2", 2, 1),
-            ("default2", 2, 1),
         ]
+        pdt.assert_frame_equal(filtered.report, expected.loc[:, expected_columns])
 
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
-        pdt.assert_frame_equal(filtered.report, pd.DataFrame())
+        pdt.assert_frame_equal(filtered.report, expected.iloc[:0, :0])
 
 
 class TestSomaReport:
@@ -146,42 +172,45 @@ class TestSomaReport:
             isinstance(report, test_module.PopulationSomaReport)
 
     def test_filter(self):
+        expected = pd.DataFrame(
+            data=[
+                np.array([0.3, 1.3, 2.3, 0.3, 1.3, 2.3], dtype=np.float32) + 0.1 * i
+                for i in range(4)
+            ],
+            columns=pd.MultiIndex.from_tuples(
+                [
+                    ("default", 0),
+                    ("default", 1),
+                    ("default", 2),
+                    ("default2", 0),
+                    ("default2", 1),
+                    ("default2", 2),
+                ]
+            ),
+            index=np.array([0.3, 0.4, 0.5, 0.6]),
+        )
+
         filtered = self.test_obj.filter(group=None, t_start=0.3, t_stop=0.6)
         assert filtered.frame_report == self.test_obj
         assert filtered.t_start == 0.3
         assert filtered.t_stop == 0.6
         assert filtered.group is None
         assert isinstance(filtered, test_module.FilteredFrameReport)
-        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.4, 0.5, 0.6]))
-        assert filtered.report.columns.tolist() == [
-            ("default", 0),
-            ("default", 1),
-            ("default", 2),
-            ("default2", 0),
-            ("default2", 1),
-            ("default2", 2),
-        ]
+        pdt.assert_frame_equal(filtered.report, expected)
 
         filtered = self.test_obj.filter(group={"other1": ["B"]}, t_start=0.3, t_stop=0.6)
-        npt.assert_allclose(filtered.report.index, np.array([0.3, 0.4, 0.5, 0.6]))
-        assert filtered.report.columns.tolist() == [("default2", 1)]
+        pdt.assert_frame_equal(filtered.report, expected.loc[:, [("default2", 1)]])
 
         filtered = self.test_obj.filter(group={"population": "default2"}, t_start=0.3, t_stop=0.6)
-        assert filtered.report.columns.tolist() == [
-            ("default2", 0),
-            ("default2", 1),
-            ("default2", 2),
-        ]
+        pdt.assert_frame_equal(filtered.report, expected.loc[:, ["default2"]])
 
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
-        pdt.assert_frame_equal(filtered.report, pd.DataFrame())
+        pdt.assert_frame_equal(filtered.report, expected.iloc[:0, :0])
 
         ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 1])
         filtered = self.test_obj.filter(group=ids, t_start=0.3, t_stop=0.6)
-        assert filtered.report.columns.tolist() == [("default", 0), ("default", 1), ("default2", 1)]
-        ids = CircuitNodeIds.from_tuples([("default2", 1)])
-        npt.assert_allclose(filtered.report.loc[:, ids.index].index, np.array([0.3, 0.4, 0.5, 0.6]))
-        npt.assert_allclose(filtered.report.loc[:, ids.index], np.array([[1.3, 1.4, 1.5, 1.6]]).T)
+        expected_columns = [("default", 0), ("default", 1), ("default2", 1)]
+        pdt.assert_frame_equal(filtered.report, expected.loc[:, expected_columns])
 
 
 class TestPopulationFrameReport:
@@ -205,6 +234,11 @@ class TestPopulationCompartmentReport:
         data = np.array([np.arange(7) + j * 0.1 for j in range(10)], dtype=np.float32)
         ids = [(0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (2, 1)]
         self.df = pd.DataFrame(data=data, columns=pd.MultiIndex.from_tuples(ids), index=timestamps)
+
+    @property
+    def empty_df(self):
+        """Return an empty DataFrame with the original types of index and columns."""
+        return self.df.iloc[:0, :0]
 
     def test__resolve(self):
         npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
@@ -231,9 +265,9 @@ class TestPopulationCompartmentReport:
         t_stride = round(t_step / self.test_obj.frame_report.dt) if t_step is not None else 1
 
         _assert_frame_equal(self.test_obj.get(t_step=t_step), self.df)
-        _assert_frame_equal(self.test_obj.get([], t_step=t_step), pd.DataFrame())
-        _assert_frame_equal(self.test_obj.get(np.array([]), t_step=t_step), pd.DataFrame())
-        _assert_frame_equal(self.test_obj.get((), t_step=t_step), pd.DataFrame())
+        _assert_frame_equal(self.test_obj.get([], t_step=t_step), self.empty_df)
+        _assert_frame_equal(self.test_obj.get(np.array([]), t_step=t_step), self.empty_df)
+        _assert_frame_equal(self.test_obj.get((), t_step=t_step), self.empty_df)
 
         _assert_frame_equal(self.test_obj.get(2, t_step=t_step), self.df.loc[:, [2]])
         _assert_frame_equal(
@@ -242,7 +276,7 @@ class TestPopulationCompartmentReport:
 
         # not from this population
         _assert_frame_equal(
-            self.test_obj.get(CircuitNodeId("default2", 2), t_step=t_step), pd.DataFrame()
+            self.test_obj.get(CircuitNodeId("default2", 2), t_step=t_step), self.empty_df
         )
 
         _assert_frame_equal(self.test_obj.get([2, 0], t_step=t_step), self.df.loc[:, [0, 2]])
@@ -322,7 +356,7 @@ class TestPopulationCompartmentReport:
 
     def test_get_not_in_report(self):
         with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
-            pdt.assert_frame_equal(self.test_obj.get([4]), pd.DataFrame())
+            pdt.assert_frame_equal(self.test_obj.get([4]), self.empty_df)
 
     def test_node_ids(self):
         npt.assert_array_equal(self.test_obj.node_ids, np.array(sorted([0, 1, 2]), dtype=IDS_DTYPE))
