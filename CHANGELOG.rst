@@ -4,6 +4,10 @@ Changelog
 Version v1.0.7
 --------------
 
+New Features
+~~~~~~~~~~~~
+- Added ``CircuitIds.intersection`` to take the intersection of two ``CircuitIds``.
+
 Bug Fixes
 ~~~~~~~~~
 - Fix CircuitIds.sample() to always return different samples.
