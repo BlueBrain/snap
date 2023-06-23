@@ -263,11 +263,7 @@ class CircuitIds(abc.ABC):
             circuit_ids (CircuitIds): The CircuitIds to intersect with.
             inplace (bool): if set to True, do the transformation inplace.
         """
-
-        def _intersection(index):
-            return index.intersection(circuit_ids.index)
-
-        return self._apply(_intersection, inplace)
+        return self._apply(lambda x: x.intersection(circuit_ids.index), inplace)
 
     def to_csv(self, filepath):
         """Save CircuitIds to csv format."""
