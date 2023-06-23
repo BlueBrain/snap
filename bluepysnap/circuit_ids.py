@@ -256,18 +256,16 @@ class CircuitIds(abc.ABC):
     def intersection(self, circuit_ids, inplace=False):
         """Take the intersection of this CircuitIds and the input.
 
-        Notes:
-            The index of the result is sorted.
+        The index of the resulting object is sorted if ``inplace=False``.
+        Otherwise, the orginal order of the index is kept.
 
         Args:
             circuit_ids (CircuitIds): The CircuitIds to intersect with.
             inplace (bool): if set to True, do the transformation inplace.
         """
-        ids = set(circuit_ids.tolist())
 
-        def _intersection(ind):
-            res = ids.intersection(set(ind))
-            return self.from_tuples((*res,), sort_index=True).index
+        def _intersection(index):
+            return index.intersection(circuit_ids.index)
 
         return self._apply(_intersection, inplace)
 
