@@ -156,7 +156,7 @@ class FilteredSpikeReport:
 
         Returns:
             pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
-                different timestamps and the columns are ids and population names.
+            different timestamps and the columns are ids and population names.
         """
         res = pd.DataFrame()
         for population in self.spike_report.population_names:

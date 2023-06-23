@@ -156,9 +156,10 @@ class FilteredFrameReport:
 
         Returns:
             pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
-                different timestamps and the column's MultiIndex are :
-                - (population_name, node_id, compartment id) for the CompartmentReport
-                - (population_name, node_id) for the SomaReport
+            different timestamps and the column's MultiIndex are:
+
+            - (population_name, node_id, compartment id) for the CompartmentReport
+            - (population_name, node_id) for the SomaReport
         """
         dataframes = {}
         for population in self.frame_report.population_names:
