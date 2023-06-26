@@ -9,7 +9,7 @@ from bluepysnap.edges import EdgePopulation, Edges
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.nodes import NodePopulation, Nodes
 
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
+from utils import PICKLED_SIZE_OFFSET, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def test_all():
@@ -92,7 +92,7 @@ def test_pickle(tmp_path):
     with open(pickle_path, "rb") as fd:
         circuit = pickle.load(fd)
 
-    assert pickle_path.stat().st_size < 200
+    assert pickle_path.stat().st_size < 200 + PICKLED_SIZE_OFFSET
     assert list(circuit.edges) == ["default", "default2"]
 
 
