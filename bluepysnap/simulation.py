@@ -125,8 +125,8 @@ class Simulation:
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the simulation."""
-        node_sets_file = self.to_libsonata.node_sets_file
-        return NodeSets(node_sets_file) if node_sets_file else {}
+        path = self.to_libsonata.node_sets_file
+        return NodeSets.from_file(path) if path else NodeSets.from_dict({})
 
     @cached_property
     def spikes(self):

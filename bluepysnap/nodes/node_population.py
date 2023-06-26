@@ -70,6 +70,7 @@ from more_itertools import first
 from bluepysnap import query, utils
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.node_sets import NodeSet
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Node
 
 
@@ -347,18 +348,15 @@ class NodePopulation:
         if unknown_props:
             raise BluepySnapError(f"Unknown node properties: {sorted(unknown_props)}")
 
-    def _get_node_set(self, node_set_name):
-        """Returns the node set named 'node_set_name'."""
-        if node_set_name not in self._node_sets:
-            raise BluepySnapError(f"Undefined node set: '{node_set_name}'")
-        return self._node_sets[node_set_name]
-
-    def _resolve_nodesets(self, queries):
+    def _resolve_nodesets(self, queries, raise_missing_prop):
         def _resolve(queries, queries_key):
             if queries_key == query.NODE_SET_KEY:
                 if query.AND_KEY not in queries:
                     queries[query.AND_KEY] = []
-                queries[query.AND_KEY].append(self._get_node_set(queries[queries_key]))
+                node_set = self._node_sets[queries[queries_key]]
+                queries[query.AND_KEY].append(
+                    {query.NODE_ID_KEY: node_set.get_ids(self._population, raise_missing_prop)}
+                )
                 del queries[queries_key]
 
         resolved_queries = deepcopy(queries)
@@ -382,7 +380,7 @@ class NodePopulation:
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 
         """
-        queries = self._resolve_nodesets(queries)
+        queries = self._resolve_nodesets(queries, raise_missing_prop)
         properties = query.get_properties(queries)
         if raise_missing_prop:
             self._check_properties(properties)
@@ -414,16 +412,16 @@ class NodePopulation:
         # pylint: disable=too-many-branches
         preserve_order = False
         if isinstance(group, str):
-            group = self._get_node_set(group)
+            group = self._node_sets[group]
         elif isinstance(group, CircuitNodeIds):
             group = group.filter_population(self.name).get_ids()
 
         if group is None:
             result = np.arange(self.size)
+        elif isinstance(group, NodeSet):
+            result = group.get_ids(self._population, raise_missing_property)
         elif isinstance(group, Mapping):
-            result = self._node_ids_by_filter(
-                queries=group, raise_missing_prop=raise_missing_property
-            )
+            result = self._node_ids_by_filter(group, raise_missing_property)
         elif isinstance(group, np.ndarray):
             result = group
             self._check_ids(result)

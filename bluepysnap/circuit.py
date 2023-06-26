@@ -77,9 +77,8 @@ class Circuit:
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the circuit."""
-        if "node_sets_file" in self.config:
-            return NodeSets(self.config["node_sets_file"])
-        return {}
+        path = self.to_libsonata.node_sets_path
+        return NodeSets.from_file(path) if path else NodeSets.from_dict({})
 
     @cached_property
     def nodes(self):

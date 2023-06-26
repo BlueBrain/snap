@@ -1,7 +1,9 @@
 import json
 from unittest.mock import patch
 
+import libsonata
 import pytest
+from numpy.testing import assert_array_equal
 
 import bluepysnap.node_sets as test_module
 from bluepysnap.exceptions import BluepySnapError
@@ -9,9 +11,33 @@ from bluepysnap.exceptions import BluepySnapError
 from utils import TEST_DATA_DIR
 
 
+class TestNodeSet:
+    def setup_method(self):
+        self.test_node_sets = test_module.NodeSets.from_file(
+            str(TEST_DATA_DIR / "node_sets_file.json")
+        )
+        self.test_pop = libsonata.NodeStorage(str(TEST_DATA_DIR / "nodes.h5")).open_population(
+            "default"
+        )
+
+    def test_get_ids(self):
+        assert_array_equal(self.test_node_sets["Node2_L6_Y"].get_ids(self.test_pop), [])
+        assert_array_equal(self.test_node_sets["double_combined"].get_ids(self.test_pop), [0, 1, 2])
+
+        node_set = self.test_node_sets["failing"]
+
+        with pytest.raises(BluepySnapError, match="No such attribute"):
+            node_set.get_ids(self.test_pop)
+
+        assert node_set.get_ids(self.test_pop, raise_missing_property=False) == []
+
+
 class TestNodeSets:
     def setup_method(self):
-        self.test_obj = test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
+        self.test_obj = test_module.NodeSets.from_file(str(TEST_DATA_DIR / "node_sets_file.json"))
+        self.test_pop = libsonata.NodeStorage(str(TEST_DATA_DIR / "nodes.h5")).open_population(
+            "default"
+        )
 
     def test_init(self):
         assert self.test_obj.content == {
@@ -20,54 +46,29 @@ class TestNodeSets:
             "Layer23": {"layer": [3, 2, 2]},
             "population_default_L6": {"population": "default", "mtype": "L6_Y"},
             "combined": ["Node2_L6_Y", "Layer23"],
+            "failing": {"unknown_property": [0]},
         }
 
-        # node_id from Node2_L6_Y should be 2 and not [2], layer from Layer23 should be [2, 3]
-        assert self.test_obj.resolved == {
-            "Node2_L6_Y": {"mtype": "L6_Y", "node_id": [20, 30]},
-            "Layer23": {"layer": [2, 3]},
-            "combined": {"$or": [{"mtype": "L6_Y", "node_id": [20, 30]}, {"layer": [2, 3]}]},
-            "population_default_L6": {"population": "default", "mtype": "L6_Y"},
-            "double_combined": {
-                "$or": [
-                    {"$or": [{"mtype": "L6_Y", "node_id": [20, 30]}, {"layer": [2, 3]}]},
-                    {"population": "default", "mtype": "L6_Y"},
-                ]
-            },
-        }
+    def test_from_string(self):
+        res = test_module.NodeSets.from_string(json.dumps(self.test_obj.content))
+        assert res.content == self.test_obj.content
 
-    def test_get(self):
-        assert self.test_obj["Node2_L6_Y"] == {"mtype": "L6_Y", "node_id": [20, 30]}
-        assert self.test_obj["double_combined"] == {
-            "$or": [
-                {"$or": [{"mtype": "L6_Y", "node_id": [20, 30]}, {"layer": [2, 3]}]},
-                {"population": "default", "mtype": "L6_Y"},
-            ]
-        }
+    def test_from_dict(self):
+        res = test_module.NodeSets.from_dict(self.test_obj.content)
+        assert res.content == self.test_obj.content
+
+    def test_contains(self):
+        assert "Layer23" in self.test_obj
+        assert "find_me_you_will_not" not in self.test_obj
+        with pytest.raises(BluepySnapError, match="Unexpected type"):
+            42 in self.test_obj
+
+    def test_getitem(self):
+        assert isinstance(self.test_obj["Layer23"], test_module.NodeSet)
+
+        with pytest.raises(BluepySnapError, match="Undefined node set:"):
+            self.test_obj["no-such-node-set"]
 
     def test_iter(self):
         expected = set(json.loads((TEST_DATA_DIR / "node_sets_file.json").read_text()))
         assert set(self.test_obj) == expected
-
-
-@patch("bluepysnap.utils.load_json")
-def test_fail_resolve(mock_load):
-    mock_load.return_value = {"empty_dict": {}}
-    with pytest.raises(BluepySnapError):
-        test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
-
-    mock_load.return_value = {"empty_list": []}
-    with pytest.raises(BluepySnapError):
-        test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
-
-    mock_load.return_value = {"int": 1}
-    with pytest.raises(BluepySnapError):
-        test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
-
-    mock_load.return_value = {"bool": True}
-    with pytest.raises(BluepySnapError):
-        test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))
-
-    mock_load.return_value = {"combined": ["known", "unknown"], "known": {"v": 1}}
-    with pytest.raises(BluepySnapError):
-        test_module.NodeSets(str(TEST_DATA_DIR / "node_sets_file.json"))

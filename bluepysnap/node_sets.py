@@ -20,88 +20,45 @@
 For more information see:
 https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#node-sets-file
 """
-from collections.abc import Mapping
-from copy import deepcopy
 
-import numpy as np
+import json
+
+import libsonata
 
 from bluepysnap import utils
 from bluepysnap.exceptions import BluepySnapError
 
 
-def _sanitize(node_set):
-    """Sanitize standard node set (not compounds).
+class NodeSet:
+    """Access to single node set."""
 
-    Set a single value instead of a one element list.
-    Sorted and unique values for the lists of values.
+    def __init__(self, node_sets, name):
+        """Initializes a single node set object.
 
-    Args:
-        node_set (Mapping): A standard non compound node set.
+        Args:
+            node_sets (libsonata.NodeSets): libsonata NodeSets instance.
+            name (str): name of the node set.
 
-    Return:
-         map: The sanitized node set.
-    """
-    for key, values in node_set.items():
-        if isinstance(values, list):
-            if len(values) == 1:
-                node_set[key] = values[0]
-            else:
-                # sorted unique value list
-                node_set[key] = np.unique(np.asarray(values)).tolist()
-    return node_set
+        Returns:
+            NodeSet: A NodeSet object.
+        """
+        self._node_sets = node_sets
+        self._name = name
 
-
-def _resolve_set(content, resolved, node_set_name):
-    """Resolve the node set 'node_set_name' from content.
-
-    The resolved node set is returned and the resolved dict is updated in place with the
-    resolved node set.
-
-    Args:
-        content (dict): the global dictionary containing all unresolved node sets.
-        resolved (dict): the global resolved dictionary containing the already resolved node sets.
-        node_set_name (str): the name of the current node set to resolve.
-
-    Returns:
-        dict: the resolved node set.
-
-    Notes:
-        If the node set is a compound node set then all the sub node sets are also resolved and
-        stored inside the resolved dictionary.
-    """
-    if node_set_name in resolved:
-        # return already resolved node_sets
-        return resolved[node_set_name]
-
-    # keep the content intact
-    set_value = deepcopy(content.get(node_set_name))
-    if set_value is None:
-        raise BluepySnapError(f"Missing node_set: '{node_set_name}'")
-    if not isinstance(set_value, (Mapping, list)) or not set_value:
-        raise BluepySnapError(f"Ambiguous node_set: { {node_set_name: set_value} }")
-    if isinstance(set_value, Mapping):
-        resolved[node_set_name] = _sanitize(set_value)
-        return resolved[node_set_name]
-
-    # compounds only
-    res = [_resolve_set(content, resolved, sub_set_name) for sub_set_name in set_value]
-
-    resolved[node_set_name] = {"$or": res}
-    return resolved[node_set_name]
-
-
-def _resolve(content):
-    """Resolve all node sets in content."""
-    resolved = {}
-    for set_name in content:
-        _resolve_set(content, resolved, set_name)
-    return resolved
+    def get_ids(self, population, raise_missing_property=True):
+        """Get the resolved node set as ids."""
+        try:
+            return self._node_sets.materialize(self._name, population).flatten()
+        except libsonata.SonataError as e:
+            if not raise_missing_property and "No such attribute" in e.args[0]:
+                return []
+            raise BluepySnapError(*e.args) from e
 
 
 class NodeSets:
     """Access to node sets data."""
 
-    def __init__(self, filepath):
+    def __init__(self, content, instance):
         """Initializes a node set object from a node sets file.
 
         Args:
@@ -110,13 +67,41 @@ class NodeSets:
         Returns:
             NodeSets: A NodeSets object.
         """
-        self.content = utils.load_json(filepath)
-        self.resolved = _resolve(self.content)
+        self.content = content
+        self._instance = instance
 
-    def __getitem__(self, node_set_name):
-        """Get the resolved node set using name as key."""
-        return self.resolved[node_set_name]
+    @classmethod
+    def from_file(cls, filepath):
+        """Create NodeSets instance from a file."""
+        content = utils.load_json(filepath)
+        instance = libsonata.NodeSets.from_file(filepath)
+        return cls(content, instance)
+
+    @classmethod
+    def from_string(cls, content):
+        """Create NodeSets instance from a JSON string."""
+        instance = libsonata.NodeSets(content)
+        content = json.loads(content)
+        return cls(content, instance)
+
+    @classmethod
+    def from_dict(cls, content):
+        """Create NodeSets instance from a dict."""
+        return cls.from_string(json.dumps(content))
+
+    def __contains__(self, name):
+        """Check if node set exists."""
+        if isinstance(name, str):
+            return name in self._instance.names
+
+        raise BluepySnapError(f"Unexpected type: '{type(name).__name__}' (expected: 'str')")
+
+    def __getitem__(self, name):
+        """Return a node set instance for the given node set name."""
+        if name not in self:
+            raise BluepySnapError(f"Undefined node set: '{name}'")
+        return NodeSet(self._instance, name)
 
     def __iter__(self):
         """Iter through the different node sets names."""
-        return iter(self.resolved)
+        return iter(self._instance.names)

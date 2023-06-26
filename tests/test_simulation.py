@@ -14,6 +14,7 @@ from bluepysnap.frame_report import (
     PopulationSomaReport,
     SomaReport,
 )
+from bluepysnap.node_sets import NodeSets
 from bluepysnap.spike_report import PopulationSpikeReport, SpikeReport
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
@@ -40,7 +41,8 @@ def test_all():
     assert simulation.conditions.celsius == 34.0
     assert simulation.conditions.v_init == -80
 
-    assert simulation.node_sets.resolved == {"Layer23": {"layer": [2, 3]}}
+    assert isinstance(simulation.node_sets, NodeSets)
+    assert simulation.node_sets.content == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
@@ -97,7 +99,7 @@ def test_no_node_set():
             os.remove(config_path.parent / "circuit_config.json")
 
         simulation = test_module.Simulation(config_path)
-        assert simulation.node_sets == {}
+        assert simulation.node_sets.content == {}
 
 
 def test_pickle(tmp_path):

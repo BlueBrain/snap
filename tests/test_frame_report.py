@@ -64,8 +64,8 @@ class TestFrameReport:
         assert isinstance(self.test_obj_info.simulation, Simulation)
 
     def test_node_set(self):
-        assert self.test_obj.node_set == {"layer": [2, 3]}
-        assert self.test_obj_info.node_set == {"layer": [2, 3]}
+        assert self.test_obj.node_set == "Layer23"
+        assert self.test_obj_info.node_set == "Layer23"
 
     def test_population_names(self):
         assert sorted(self.test_obj.population_names) == ["default", "default2"]

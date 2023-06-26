@@ -1,6 +1,24 @@
 Changelog
 =========
 
+Version v1.1.0
+--------------
+
+New Features
+~~~~~~~~~~~~
+- ``NodeSets`` object can be instantiated with three methods: ``from_file``, ``from_string``, ``from_dict``
+
+Improvements
+~~~~~~~~~~~~
+- Node set resolution is done by libsonata
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- ``Circuit.node_sets``, ``Simulation.node_sets`` returns ``NodeSets`` object initialized with empty dict when node sets file is not present
+- ``NodeSet.resolved`` is no longer available
+- ``FrameReport.node_set`` returns node_set name instead of resolved node set query
+
+
 Version v1.0.7
 --------------
 

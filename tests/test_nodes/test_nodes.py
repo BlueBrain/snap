@@ -12,6 +12,7 @@ import bluepysnap.nodes as test_module
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.node_sets import NodeSets
 from bluepysnap.utils import IDS_DTYPE
 
 from utils import TEST_DATA_DIR
@@ -414,6 +415,24 @@ class TestNodes:
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             self.test_obj.get(properties="unknown")
+
+    def test_functionality_with_separate_node_set(self):
+        with pytest.raises(BluepySnapError, match="Undefined node set"):
+            self.test_obj.ids("ExtraLayer2")
+
+        node_sets = NodeSets.from_file(str(TEST_DATA_DIR / "node_sets_extra.json"))
+
+        assert self.test_obj.ids(node_sets["ExtraLayer2"]) == CircuitNodeIds.from_arrays(
+            ["default", "default2"], [0, 3]
+        )
+
+        with pytest.raises(BluepySnapError, match="Undefined node set"):
+            self.test_obj.get("ExtraLayer2")
+
+        pdt.assert_frame_equal(
+            self.test_obj.get(node_sets["ExtraLayer2"]),
+            self.test_obj.get("Layer2"),
+        )
 
     def test_pickle(self, tmp_path):
         pickle_path = tmp_path / "pickle.pkl"
