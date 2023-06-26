@@ -377,12 +377,11 @@ class TestNodes:
         )
 
         with pytest.raises(BluepySnapError, match="Undefined node set"):
-            self.test_obj.get("ExtraLayer2")
+            next(self.test_obj.get("ExtraLayer2"))
 
-        pdt.assert_frame_equal(
-            self.test_obj.get(node_sets["ExtraLayer2"]),
-            self.test_obj.get("Layer2"),
-        )
+        tested = pd.concat(df for _, df in self.test_obj.get(node_sets["ExtraLayer2"]))
+        expected = pd.concat(df for _, df in self.test_obj.get("Layer2"))
+        pdt.assert_frame_equal(tested, expected)
 
     def test_pickle(self, tmp_path):
         pickle_path = tmp_path / "pickle.pkl"
