@@ -41,7 +41,7 @@ class Circuit:
         Returns:
             Circuit: A Circuit object.
         """
-        self._circuit_config_path = config
+        self._circuit_config_path = str(config)
         self._config = CircuitConfig.from_config(config)
 
         if self.partial_config:
