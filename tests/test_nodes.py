@@ -15,7 +15,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.utils import IDS_DTYPE
 
-from utils import TEST_DATA_DIR
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR
 
 
 class TestNodes:
@@ -448,5 +448,5 @@ class TestNodes:
         with open(pickle_path, "rb") as fd:
             test_obj = pickle.load(fd)
 
-        assert pickle_path.stat().st_size < 180
+        assert pickle_path.stat().st_size < 100 + PICKLED_SIZE_ADJUSTMENT
         assert test_obj.size == 7

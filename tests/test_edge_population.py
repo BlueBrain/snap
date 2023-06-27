@@ -17,7 +17,7 @@ from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
 from bluepysnap.utils import IDS_DTYPE
 
-from utils import TEST_DATA_DIR, copy_test_data, edit_config
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 def index_as_ids_dtypes(values):
@@ -655,7 +655,7 @@ class TestEdgePopulation:
         with open(pickle_path, "rb") as fd:
             edge_population = pickle.load(fd)
 
-        assert pickle_path.stat().st_size < 260
+        assert pickle_path.stat().st_size < 130 + PICKLED_SIZE_ADJUSTMENT
         assert edge_population.name == "default"
 
 

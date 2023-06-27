@@ -58,7 +58,7 @@ class Simulation:
         Returns:
             Simulation: A Simulation object.
         """
-        self._simulation_config_path = Path(config).absolute()
+        self._simulation_config_path = str(Path(config).absolute())
         self._config = SimulationConfig.from_config(config)
 
     @property

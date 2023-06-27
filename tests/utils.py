@@ -1,6 +1,7 @@
 """Module providing utility functions for the tests"""
 
 import json
+import pickle
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -16,6 +17,11 @@ from bluepysnap.nodes import NodePopulation, Nodes
 
 TEST_DIR = Path(__file__).resolve().parent
 TEST_DATA_DIR = TEST_DIR / "data"
+
+# Pickle size tests often fail when run locally. At the moment, the only thing affecting the
+# pickled size is the path length. This is to estimate a safe offset for the size limit
+# based on the pickled size of the path of the test data directory.
+PICKLED_SIZE_ADJUSTMENT = len(pickle.dumps(str(TEST_DATA_DIR.absolute())))
 
 
 @contextmanager

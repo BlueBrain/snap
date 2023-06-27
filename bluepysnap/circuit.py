@@ -17,6 +17,7 @@
 
 """Access to circuit data."""
 import logging
+from pathlib import Path
 
 from cached_property import cached_property
 
@@ -41,7 +42,7 @@ class Circuit:
         Returns:
             Circuit: A Circuit object.
         """
-        self._circuit_config_path = config
+        self._circuit_config_path = str(Path(config).absolute())
         self._config = CircuitConfig.from_config(config)
 
         if self.partial_config:
