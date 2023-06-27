@@ -21,9 +21,7 @@ TEST_DATA_DIR = TEST_DIR / "data"
 # Pickle size tests often fail when run locally. At the moment, the only thing affecting the
 # pickled size is the path length. this is to estimate a safe offset for the size limit
 # based on the pickled sizes of the Path objects of the test data directories
-PICKLED_SIZE_OFFSET = len(pickle.dumps(TEST_DATA_DIR)) - len(
-    pickle.dumps(Path("home/runner/work/snap/snap/tests/data"))
-)
+PICKLED_SIZE_ADJUSTMENT = len(pickle.dumps(str(TEST_DATA_DIR.absolute())))
 
 
 @contextmanager

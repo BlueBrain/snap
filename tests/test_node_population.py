@@ -22,7 +22,7 @@ from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Node
 from bluepysnap.utils import IDS_DTYPE
 
 from utils import (
-    PICKLED_SIZE_OFFSET,
+    PICKLED_SIZE_ADJUSTMENT,
     TEST_DATA_DIR,
     assert_array_equal_strict,
     create_node_population,
@@ -644,7 +644,7 @@ class TestNodePopulation:
         with open(pickle_path, "rb") as fd:
             test_obj = pickle.load(fd)
 
-        assert pickle_path.stat().st_size < 210 + PICKLED_SIZE_OFFSET
+        assert pickle_path.stat().st_size < 130 + PICKLED_SIZE_ADJUSTMENT
         assert test_obj.size == 3
 
     def test_filter_properties(self):
