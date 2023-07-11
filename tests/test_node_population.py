@@ -339,6 +339,13 @@ class TestNodePopulation:
         assert _call().shape == (3, 12)
         assert _call(0, Cell.MTYPE) == "L2_X"
         assert _call(CircuitNodeId("default", 0), Cell.MTYPE) == "L2_X"
+
+        # Unknown property filters
+        assert _call({"no-such-property": "no-value"}, raise_missing_property=False).empty
+        with pytest.raises(BluepySnapError) as e:
+            _call({"no-such-property": "no-value"})
+        assert "Unknown node properties" in e.value.args[0]
+
         assert _call(np.int32(0), Cell.MTYPE) == "L2_X"
         pdt.assert_frame_equal(
             _call([1, 2], properties=[Cell.X, Cell.MTYPE, Cell.HOLDING_CURRENT]),
