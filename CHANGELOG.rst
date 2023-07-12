@@ -8,6 +8,7 @@ Breaking Changes
 ~~~~~~~~~~~~~~~~
 - ``nodes.get`` and ``edges.get`` (and ``network.get``) no longer return a dataframe
   - returns a generator yielding tuples of ``(<population_name>, <dataframe>)`` instead
+  - to get the previous behavior (all in one dataframe): ``pd.concat(df for _, df in circuit.nodes.get(*args, **kwargs))``
 - Removed ``Network.property_dtypes``, ``CircuitIds.index_schema``
 
 Bug Fixes
