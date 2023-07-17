@@ -111,9 +111,9 @@ def _circuit_mask(data, population_name, population_type, queries):
     """Handle the population, node ID queries."""
     populations = queries.pop(POPULATION_KEY, None)
     types = queries.pop(POPULATION_TYPE_KEY, None)
-    if populations is not None and population_name not in set(utils.ensure_list(populations)):
+    if populations is not None and population_name not in utils.ensure_list(populations):
         ids = []
-    elif types is not None and population_type not in set(utils.ensure_list(types)):
+    elif types is not None and population_type not in utils.ensure_list(types):
         ids = []
     else:
         ids = queries.pop(NODE_ID_KEY, queries.pop(EDGE_ID_KEY, None))
