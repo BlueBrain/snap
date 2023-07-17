@@ -15,7 +15,7 @@ from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 
-from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 class TestEdges:
@@ -182,6 +182,31 @@ class TestEdges:
         tested = self.test_obj.ids({"population": ["default", "default2"], "@target_node": [1]})
         expected = CircuitEdgeIds.from_dict({"default": [1, 2, 3], "default2": [1, 2, 3]})
         assert tested == expected
+
+        # Test querying with the population type
+        with copy_test_data() as (_, config_path):
+            with edit_config(config_path) as config:
+                config["networks"]["edges"][0]["populations"]["default"]["type"] = "electrical"
+
+            circuit = Circuit(config_path)
+
+            tested = circuit.edges.ids({"population_type": "electrical"})
+            expected = CircuitEdgeIds.from_arrays(4 * ["default"], [0, 1, 2, 3])
+            assert tested == expected
+
+            tested = circuit.edges.ids({"population_type": "chemical"})
+            expected = CircuitEdgeIds.from_arrays(4 * ["default2"], [0, 1, 2, 3])
+            assert tested == expected
+
+            tested = circuit.edges.ids(
+                {"population_type": ["electrical", "chemical"], "node_id": [0]}
+            )
+            expected = CircuitEdgeIds.from_tuples([("default", 0), ("default2", 0)])
+            assert tested == expected
+
+            tested = circuit.edges.ids({"population_type": "fake"})
+            expected = CircuitEdgeIds.from_arrays([], [])
+            assert tested == expected
 
     def test_get(self):
         with pytest.raises(BluepySnapError, match="You need to set edge_ids in get."):

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v3.0.1
+--------------
+
+New Features
+~~~~~~~~~~~~
+- Added the possibility to query Edge IDs and Node IDs based on edge/node population type using query key ``population_type``
+
+
 Version v3.0.0
 --------------
 

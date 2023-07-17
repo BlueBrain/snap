@@ -14,12 +14,21 @@ from bluepysnap.exceptions import BluepySnapError
 NODE_ID_KEY = "node_id"
 EDGE_ID_KEY = "edge_id"
 POPULATION_KEY = "population"
+POPULATION_TYPE_KEY = "population_type"
 OR_KEY = "$or"
 AND_KEY = "$and"
 REGEX_KEY = "$regex"
 NODE_SET_KEY = "$node_set"
 VALUE_KEYS = {REGEX_KEY}
-ALL_KEYS = {NODE_ID_KEY, EDGE_ID_KEY, POPULATION_KEY, OR_KEY, AND_KEY, NODE_SET_KEY} | VALUE_KEYS
+ALL_KEYS = {
+    NODE_ID_KEY,
+    EDGE_ID_KEY,
+    POPULATION_KEY,
+    POPULATION_TYPE_KEY,
+    OR_KEY,
+    AND_KEY,
+    NODE_SET_KEY,
+} | VALUE_KEYS
 
 
 def _logical_and(masks):
@@ -98,23 +107,26 @@ def _positional_mask(data, ids):
     return mask
 
 
-def _circuit_mask(data, population_name, queries):
+def _circuit_mask(data, population_name, population_type, queries):
     """Handle the population, node ID queries."""
     populations = queries.pop(POPULATION_KEY, None)
+    types = queries.pop(POPULATION_TYPE_KEY, None)
     if populations is not None and population_name not in set(utils.ensure_list(populations)):
+        ids = []
+    elif types is not None and population_type not in set(utils.ensure_list(types)):
         ids = []
     else:
         ids = queries.pop(NODE_ID_KEY, queries.pop(EDGE_ID_KEY, None))
     return queries, _positional_mask(data, ids)
 
 
-def _properties_mask(data, population_name, queries):
+def _properties_mask(data, population_name, population_type, queries):
     """Return mask of IDs matching `props` dict."""
     unknown_props = set(queries) - set(data.columns) - ALL_KEYS
     if unknown_props:
         return False
 
-    queries, mask = _circuit_mask(data, population_name, queries)
+    queries, mask = _circuit_mask(data, population_name, population_type, queries)
     if mask is False or isinstance(mask, np.ndarray) and not mask.any():
         # Avoid fail and/or processing time if wrong population or no nodes
         return False
@@ -202,7 +214,7 @@ def resolve_nodesets(node_sets, population, queries, raise_missing_prop):
     return resolved_queries
 
 
-def resolve_ids(data, population_name, queries):
+def resolve_ids(data, population_name, population_type, queries):
     """Returns an index mask of `data` for given `queries`.
 
     Args:
@@ -229,7 +241,7 @@ def resolve_ids(data, population_name, queries):
             queries[queries_key] = _logical_and(children_mask)
         else:
             queries[queries_key] = _properties_mask(
-                data, population_name, {queries_key: queries[queries_key]}
+                data, population_name, population_type, {queries_key: queries[queries_key]}
             )
 
     queries = deepcopy(queries)

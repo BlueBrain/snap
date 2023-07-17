@@ -371,7 +371,7 @@ class NodePopulation:
             self._check_properties(properties)
         # load all the properties needed to execute the query, excluding the unknown properties
         data = self._get_data(properties & self.property_names)
-        idx = query.resolve_ids(data, self.name, queries)
+        idx = query.resolve_ids(data, self.name, self.type, queries)
         return idx.nonzero()[0]
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):
