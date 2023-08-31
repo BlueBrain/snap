@@ -26,6 +26,14 @@
       "amp_start": 190.0,
       "delay": 100.0,
       "duration": 800.0
+    },
+    "spikes_1":{
+        "input_type": "spikes",
+        "module": "synapse_replay",
+        "delay": 800,
+        "duration": 100,
+        "node_set": "Layer23",
+        "spike_file": "input_spikes.h5"
     }
   },
 

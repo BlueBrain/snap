@@ -41,6 +41,8 @@ def test_all():
     assert simulation.conditions.celsius == 34.0
     assert simulation.conditions.v_init == -80
 
+    assert isinstance(simulation.input, dict)
+
     assert isinstance(simulation.node_sets, NodeSets)
     assert simulation.node_sets.content == {"Layer23": {"layer": [2, 3]}}
     assert isinstance(simulation.spikes, SpikeReport)
