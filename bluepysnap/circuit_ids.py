@@ -58,7 +58,11 @@ class CircuitIds(abc.ABC):
     @property
     def index_schema(self):
         """Return an empty index with the same names of the wrapped index."""
-        return pd.MultiIndex.from_tuples([], names=self.index.names)
+        # Since pandas v2.1.0, need to set dtypes explicitly
+        levels = [np.array([], dtype=dtype) for dtype in self.index.dtypes]
+        codes = len(levels) * [[]]
+
+        return pd.MultiIndex(levels=levels, codes=codes, names=self.index.names)
 
     @classmethod
     def _instance(cls, index, sort_index=True):
