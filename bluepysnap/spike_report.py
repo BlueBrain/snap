@@ -158,7 +158,7 @@ class FilteredSpikeReport:
             pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
             different timestamps and the columns are ids and population names.
         """
-        res = pd.DataFrame()
+        dfs = []
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
             try:
@@ -167,9 +167,16 @@ class FilteredSpikeReport:
                 continue
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
-            res = pd.concat([res, data])
-        if not res.empty:
-            res["population"] = res["population"].astype("category")
+
+            if not data.empty:
+                dfs.append(data)
+
+        if len(dfs) == 0:
+            return pd.DataFrame()
+
+        res = pd.concat(dfs)
+        res["population"] = res["population"].astype("category")
+
         return res.sort_index()
 
     # pylint: disable=protected-access
