@@ -432,6 +432,13 @@ def test_wrong_datatype(field):
         assert f"incorrect datatype 'int16' for '{field}'" in errors[0].message
 
 
+def test__get_reference_resolver():
+    expected = {"const": "test_value"}
+    schema = {"$mock_reference": expected}
+    resolver = test_module._get_reference_resolver(schema)
+    assert resolver.lookup("#/$mock_reference").contents == expected
+
+
 def test_nodes_schema_types():
     property_types, dynamics_params = test_module.nodes_schema_types("biophysical")
     assert "x" in property_types
