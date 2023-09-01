@@ -2,9 +2,9 @@
 from pathlib import Path
 
 import h5py
+import importlib_resources
 import jsonschema
 import numpy as np
-import pkg_resources
 import referencing
 import yaml
 
@@ -14,11 +14,10 @@ DEFINITIONS = "definitions"
 def _load_schema_file(*args):
     """Load one of the predefined YAML schema files."""
     filename = str(Path(*args).with_suffix(".yaml"))
-    filepath = pkg_resources.resource_filename(__name__, filename)
-    if not Path(filepath).is_file():
+    filepath = importlib_resources.files(__package__) / filename
+    if not filepath.is_file():
         raise FileNotFoundError(f"Schema file {filepath} not found")
-    with open(filepath, encoding="utf-8") as fd:
-        return yaml.safe_load(fd)
+    return yaml.safe_load(filepath.read_text())
 
 
 def _parse_path(path, join_str):
