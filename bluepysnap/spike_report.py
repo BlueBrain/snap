@@ -161,20 +161,17 @@ class FilteredSpikeReport:
         dfs = []
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
-            try:
-                ids = spikes.nodes.ids(group=self.group)
-            except BluepySnapError:
-                continue
+            ids = spikes.nodes.ids(group=self.group, raise_missing_property=False)
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
 
-            if not data.empty:
-                dfs.append(data)
+            dfs.append(data)
 
-        if len(dfs) == 0:
-            return pd.DataFrame()
+        if all(df.empty for df in dfs):
+            res = dfs[0][:0]
+        else:
+            res = pd.concat([df for df in dfs if not df.empty])
 
-        res = pd.concat(dfs)
         res["population"] = res["population"].astype("category")
 
         return res.sort_index()
