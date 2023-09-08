@@ -29,7 +29,7 @@ from bluepysnap import query, utils
 from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
-from bluepysnap.utils import IDS_DTYPE, Deprecate
+from bluepysnap.utils import IDS_DTYPE
 
 
 def _is_empty(xs):
@@ -186,10 +186,6 @@ class EdgePopulation:
         """Get an array of edge IDs or DataFrame with edge properties."""
         edge_ids = utils.ensure_ids(selection.flatten())
         if properties is None:
-            Deprecate.warn(
-                "Returning ids with get/properties is deprecated and will be removed in 1.0.0. "
-                "Please use EdgePopulation.ids instead."
-            )
             return edge_ids
 
         if utils.is_iterable(properties):
@@ -311,16 +307,6 @@ class EdgePopulation:
         edge_ids = self.ids(edge_ids)
         selection = libsonata.Selection(edge_ids)
         return self._get(selection, properties)
-
-    def properties(self, edge_ids, properties):
-        """Doc is overridden below."""
-        Deprecate.warn(
-            "EdgePopulation.properties function is deprecated and will be removed in 1.0.0. "
-            "Please use EdgePopulation.get instead."
-        )
-        return self.get(edge_ids, properties)
-
-    properties.__doc__ = get.__doc__
 
     def positions(self, edge_ids, side, kind):
         """Edge positions as a pandas DataFrame.

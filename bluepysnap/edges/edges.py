@@ -24,7 +24,6 @@ from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
 from bluepysnap.edges import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
-from bluepysnap.utils import Deprecate
 
 
 class Edges(
@@ -102,22 +101,8 @@ class Edges(
         if edge_ids is None:
             raise BluepySnapError("You need to set edge_ids in get.")
         if properties is None:
-            Deprecate.warn(
-                "Returning ids with get/properties is deprecated and will be removed in 1.0.0. "
-                "Please use Edges.ids instead."
-            )
             return edge_ids
         return super().get(edge_ids, properties)
-
-    def properties(self, edge_ids, properties):
-        """Doc is overridden below."""
-        Deprecate.warn(
-            "Edges.properties function is deprecated and will be removed in 1.0.0. "
-            "Please use Edges.get instead."
-        )
-        return self.get(edge_ids, properties)
-
-    properties.__doc__ = get.__doc__
 
     def afferent_nodes(self, target, unique=True):
         """Get afferent CircuitNodeIDs for given target ``node_id``.

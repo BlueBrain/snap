@@ -12,12 +12,14 @@ Improvements
 ~~~~~~~~~~~~
 - Node set resolution is done by libsonata
 - Added kwarg: `raise_missing_property` to `NodePopulation.get`
+- Undeprecated calling ``Edges.get`` and ``EdgePopulation.get`` with ``properties=None``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - ``Circuit.node_sets``, ``Simulation.node_sets`` returns ``NodeSets`` object initialized with empty dict when node sets file is not present
 - ``NodeSet.resolved`` is no longer available
 - ``FrameReport.node_set`` returns node_set name instead of resolved node set query
+- Removed ``Edges.properties``, ``EdgePopulation.properties`` that were already supposed to be removed in v1.0.0
 
 
 Version v1.0.7

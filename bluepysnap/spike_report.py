@@ -158,18 +158,22 @@ class FilteredSpikeReport:
             pandas.DataFrame: A DataFrame containing the data from the report. Row's indices are the
             different timestamps and the columns are ids and population names.
         """
-        res = pd.DataFrame()
+        dfs = []
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
-            try:
-                ids = spikes.nodes.ids(group=self.group)
-            except BluepySnapError:
-                continue
+            ids = spikes.nodes.ids(group=self.group, raise_missing_property=False)
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
-            res = pd.concat([res, data])
-        if not res.empty:
-            res["population"] = res["population"].astype("category")
+
+            dfs.append(data)
+
+        if all(df.empty for df in dfs):
+            res = dfs[0][:0]
+        else:
+            res = pd.concat([df for df in dfs if not df.empty])
+
+        res["population"] = res["population"].astype("category")
+
         return res.sort_index()
 
     # pylint: disable=protected-access

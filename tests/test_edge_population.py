@@ -244,24 +244,11 @@ class TestEdgePopulation:
         with pytest.raises(BluepySnapError):
             self.test_obj.get([0], "no-such-property")
 
-    def test_get_without_properties_deprecated(self):
+    def test_get_without_properties(self):
         edge_ids = [0, 1]
-        with pytest.deprecated_call(
-            match="Returning ids with get/properties is deprecated and will be removed in 1.0.0"
-        ):
-            actual = self.test_obj.get(edge_ids, None)
+        actual = self.test_obj.get(edge_ids, None)
         expected = np.asarray(edge_ids, dtype=np.int64)
         npt.assert_equal(actual, expected)
-
-    def test_properties_deprecated(self):
-        ids = [0, 1, 2, 3]
-        properties = ["@target_node", "@source_node"]
-        with pytest.deprecated_call(
-            match="EdgePopulation.properties function is deprecated and will be removed in 1.0.0"
-        ):
-            actual = self.test_obj.properties(ids, properties=properties)
-        expected = self.test_obj.get(ids, properties=properties)
-        pdt.assert_frame_equal(actual, expected, check_exact=False)
 
     def test_get_all_edge_ids_types(self):
         assert self.test_obj.get(0, Synapse.PRE_GID).tolist() == [2]
@@ -289,10 +276,6 @@ class TestEdgePopulation:
             ).tolist()
             == []
         )
-
-    def test_get_no_properties(self):
-        with pytest.deprecated_call():
-            self.test_obj.get(0, properties=None)
 
     def test_positions_1(self):
         actual = self.test_obj.positions([0], "afferent", "center")
