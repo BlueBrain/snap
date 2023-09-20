@@ -89,6 +89,23 @@ class NodeSets:
         """Create NodeSets instance from a dict."""
         return cls.from_string(json.dumps(content))
 
+    @property
+    def to_libsonata(self):
+        """Libsonata instance of the NodeSets."""
+        return self._instance
+
+    def update(self, node_sets):
+        """Update the contents of the node set."""
+        if not isinstance(node_sets, NodeSets):
+            raise BluepySnapError(
+                f"Unexpected type: '{type(node_sets).__name__}' "
+                f"(expected: '{self.__class__.__name__}')"
+            )
+
+        overwritten = self._instance.update(node_sets.to_libsonata)
+        self.content.update(node_sets.content)
+        return overwritten
+
     def __contains__(self, name):
         """Check if node set exists."""
         if isinstance(name, str):
