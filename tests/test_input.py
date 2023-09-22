@@ -3,6 +3,7 @@ import numpy.testing as npt
 import pytest
 
 import bluepysnap.input as test_module
+from bluepysnap.exceptions import BluepySnapError
 
 from utils import TEST_DATA_DIR
 
@@ -32,22 +33,15 @@ class TestSynapseReplay:
             self.test_obj.no_such_attribute
 
 
-class TestInput:
-    def setup_method(self):
-        simulation = libsonata.SimulationConfig.from_file(TEST_DATA_DIR / "simulation_config.json")
-        self.test_obj = test_module.Input(simulation)
-        self.as_dict = test_module.Input.as_dict(simulation)
+def test_get_simulation_inputs():
+    simulation = libsonata.SimulationConfig.from_file(TEST_DATA_DIR / "simulation_config.json")
+    inputs = test_module.get_simulation_inputs(simulation)
 
-    def test_all(self):
-        input_obj = self.test_obj
-        assert input_obj.keys() == {"spikes_1", "current_clamp_1"}
+    assert isinstance(inputs, dict)
+    assert inputs.keys() == {"spikes_1", "current_clamp_1"}
 
-        assert isinstance(input_obj["spikes_1"], test_module.SynapseReplay)
-        assert isinstance(input_obj["current_clamp_1"], libsonata._libsonata.Linear)
+    assert isinstance(inputs["spikes_1"], test_module.SynapseReplay)
+    assert isinstance(inputs["current_clamp_1"], libsonata._libsonata.Linear)
 
-        input_dict = self.as_dict
-        assert isinstance(input_dict, dict)
-        assert set(input_dict) == set(input_obj.keys())
-
-        assert isinstance(input_dict["spikes_1"], test_module.SynapseReplay)
-        assert isinstance(input_dict["current_clamp_1"], libsonata._libsonata.Linear)
+    with pytest.raises(BluepySnapError, match="Unexpected type for 'simulation': str"):
+        test_module.get_simulation_inputs("fail_me")

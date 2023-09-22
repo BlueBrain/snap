@@ -17,6 +17,8 @@
 """Simulation input access."""
 import libsonata
 
+from bluepysnap import BluepySnapError
+
 
 class SynapseReplay:
     """Wrapper class for libsonata.SynapseReplay to provide the reader as a property."""
@@ -44,31 +46,25 @@ class SynapseReplay:
         return libsonata.SpikeReader(self.spike_file)
 
 
-class Input:
-    """Class providing access to simulation inputs."""
+def get_simulation_inputs(simulation):
+    """Get simulation inputs as a dictionary.
 
-    def __init__(self, simulation):
-        """Initialize input from libsonata simulation instance.
+    Args:
+        simulation (libsonata.SimulationConfig): libsonata Simulation instance
 
-        Args:
-            simulation(libsonata.SimulationConfig): libsonata simulation instance
-        """
-        self._simulation = simulation
+    Returns:
+        dict: inputs with input names as keys and corresponding objects as values
+    """
 
-    def keys(self):
-        """Return the input names."""
-        return self._simulation.list_input_names
-
-    def __getitem__(self, name):
-        """Have dict-like access to the inputs."""
-        item = self._simulation.input(name)
+    def _get_input(name):
+        """Helper function to wrap certain objects."""
+        item = simulation.input(name)
 
         if item.module.name == "synapse_replay":
-            item = SynapseReplay(item)
-
+            return SynapseReplay(item)
         return item
 
-    @staticmethod
-    def as_dict(simulation):
-        """Return inputs as a dictionary."""
-        return dict(Input(simulation))
+    if isinstance(simulation, libsonata.SimulationConfig):
+        return {name: _get_input(name) for name in simulation.list_input_names}
+
+    raise BluepySnapError(f"Unexpected type for 'simulation': {simulation.__class__.__name__}")
