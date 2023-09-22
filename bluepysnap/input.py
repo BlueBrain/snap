@@ -29,10 +29,10 @@ class SynapseReplay:
         """
         self._instance = instance
 
-        # To provide the available public attributes (e.g., when `dir()` is used)
-        for i in dir(instance):
-            if not i.startswith("_"):
-                setattr(self, i, getattr(instance, i))
+    def __dir__(self):
+        """Provide wrapped SynapseReplay instance's public attributes in dir."""
+        public_attrs_instance = {attr for attr in dir(self._instance) if not attr.startswith("_")}
+        return list(set(super().__dir__()) | public_attrs_instance)
 
     def __getattr__(self, name):
         """Retrieve attributes from the wrapped object."""

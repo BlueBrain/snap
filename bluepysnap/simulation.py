@@ -87,7 +87,7 @@ class Simulation:
         return self.to_libsonata.output
 
     @property
-    def input(self):
+    def inputs(self):
         """Access the output section."""
         return Input.as_dict(self.to_libsonata)
 
