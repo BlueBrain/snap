@@ -11,7 +11,6 @@ from utils import TEST_DATA_DIR
 class TestSynapseReplay:
     def setup_method(self):
         simulation = libsonata.SimulationConfig.from_file(TEST_DATA_DIR / "simulation_config.json")
-        self.simulation = simulation
         self.test_obj = test_module.SynapseReplay(simulation.input("spikes_1"))
 
     def test_all(self):
