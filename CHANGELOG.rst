@@ -7,8 +7,8 @@ Version v1.1.0
 New Features
 ~~~~~~~~~~~~
 - ``NodeSets`` object can be instantiated with three methods: ``from_file``, ``from_string``, ``from_dict``
-- Simulation inputs are now accessible with ``Simulation.input``
-- ``libsonata`` reader of ``synapse_replay`` files can now be accessed with ``simulation.input["<input_name>"].reader``
+- Simulation inputs are now accessible with ``Simulation.inputs``
+- ``libsonata`` reader of ``synapse_replay`` files can now be accessed with ``simulation.inputs["<input_name>"].reader``
 
   - only ``h5`` format is supported
 
