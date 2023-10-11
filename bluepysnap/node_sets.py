@@ -63,7 +63,8 @@ class NodeSets:
         """Initializes a node set object from a node sets file.
 
         Args:
-            filepath (str/Path): Path to a SONATA node sets file.
+            content (dict): Node sets as a dictionary.
+            instance (libsonata.NodeSets): ``libsonata`` node sets instance.
 
         Returns:
             NodeSets: A NodeSets object.
@@ -101,7 +102,14 @@ class NodeSets:
         return self._instance
 
     def update(self, node_sets):
-        """Update the contents of the node set."""
+        """Update the contents of the node set.
+
+        Args:
+            node_sets (bluepysnap.NodeSets): The node set to extend this node set with.
+
+        Returns:
+            set: Names of any overwritten node sets.
+        """
         if isinstance(node_sets, NodeSets):
             overwritten = self._instance.update(node_sets.to_libsonata)
             self._content.update(node_sets.content)

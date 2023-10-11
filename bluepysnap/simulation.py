@@ -137,14 +137,13 @@ class Simulation:
     def node_sets(self):
         """Returns the NodeSets object bound to the simulation."""
         try:
-            path = self.circuit.to_libsonata.node_sets_path
-        except BluepySnapError:
-            path = ""
-
-        node_sets = NodeSets.from_file(path) if path else NodeSets.from_dict({})
+            node_sets = NodeSets.from_file(self.circuit.to_libsonata.node_sets_path)
+        except BluepySnapError:  # Error raised if circuit can not be instantiated
+            node_sets = NodeSets.from_dict({})
 
         if path := self.to_libsonata.node_sets_file:
-            _warn_on_overwritten_node_sets(node_sets.update(NodeSets.from_file(path)))
+            overwritten = node_sets.update(NodeSets.from_file(path))
+            _warn_on_overwritten_node_sets(overwritten)
 
         return node_sets
 
