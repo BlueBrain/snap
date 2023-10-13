@@ -1,4 +1,5 @@
 import json
+import re
 from unittest.mock import patch
 
 import libsonata
@@ -56,6 +57,29 @@ class TestNodeSets:
     def test_from_dict(self):
         res = test_module.NodeSets.from_dict(self.test_obj.content)
         assert res.content == self.test_obj.content
+
+    def test_update(self):
+        # update all keys
+        tested = test_module.NodeSets.from_file(str(TEST_DATA_DIR / "node_sets_file.json"))
+        res = tested.update(tested)
+
+        # should return all keys as replaced
+        assert res == {*self.test_obj}
+        assert tested.content == self.test_obj.content
+
+        # actually add a new node set
+        additional = {"test": {"test_property": ["test_value"]}}
+        res = tested.update(test_module.NodeSets.from_dict(additional))
+        expected_content = {**self.test_obj.content, **additional}
+
+        # None of the keys should be replaced
+        assert res == set()
+        assert tested.content == expected_content
+
+        with pytest.raises(
+            BluepySnapError, match=re.escape("Unexpected type: 'str' (expected: 'NodeSets')")
+        ):
+            tested.update("")
 
     def test_contains(self):
         assert "Layer23" in self.test_obj
