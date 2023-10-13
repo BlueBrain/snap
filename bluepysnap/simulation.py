@@ -23,6 +23,7 @@ from cached_property import cached_property
 
 from bluepysnap.config import SimulationConfig
 from bluepysnap.exceptions import BluepySnapError
+from bluepysnap.input import get_simulation_inputs
 from bluepysnap.node_sets import NodeSets
 
 
@@ -95,6 +96,11 @@ class Simulation:
     def output(self):
         """Access the output section."""
         return self.to_libsonata.output
+
+    @property
+    def inputs(self):
+        """Access the inputs section."""
+        return get_simulation_inputs(self.to_libsonata)
 
     @property
     def run(self):

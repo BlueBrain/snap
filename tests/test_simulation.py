@@ -66,6 +66,7 @@ def test_all():
     }
     assert simulation.node_sets.content == expected_content
 
+    assert isinstance(simulation.inputs, dict)
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 

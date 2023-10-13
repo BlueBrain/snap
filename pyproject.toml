@@ -15,8 +15,9 @@ known_local_folder  =  [
 
 [tool.coverage.run]
 omit = [
-    "bluepysnap/_version.py",
+    'bluepysnap/_version.py',
 ]
+
 [tool.pylint.main]
 # Files or directories to be skipped. They should be base names, not paths.
 ignore = ["CVS", "_version.py"]
