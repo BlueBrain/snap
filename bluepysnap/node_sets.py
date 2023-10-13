@@ -21,6 +21,7 @@ For more information see:
 https://github.com/AllenInstitute/sonata/blob/master/docs/SONATA_DEVELOPER_GUIDE.md#node-sets-file
 """
 
+import copy
 import json
 
 import libsonata
@@ -62,12 +63,13 @@ class NodeSets:
         """Initializes a node set object from a node sets file.
 
         Args:
-            filepath (str/Path): Path to a SONATA node sets file.
+            content (dict): Node sets as a dictionary.
+            instance (libsonata.NodeSets): ``libsonata`` node sets instance.
 
         Returns:
             NodeSets: A NodeSets object.
         """
-        self.content = content
+        self._content = content
         self._instance = instance
 
     @classmethod
@@ -88,6 +90,35 @@ class NodeSets:
     def from_dict(cls, content):
         """Create NodeSets instance from a dict."""
         return cls.from_string(json.dumps(content))
+
+    @property
+    def content(self):
+        """Access (a copy of) the node sets contents."""
+        return copy.deepcopy(self._content)
+
+    @property
+    def to_libsonata(self):
+        """Libsonata instance of the NodeSets."""
+        return self._instance
+
+    def update(self, node_sets):
+        """Update the contents of the node set.
+
+        Args:
+            node_sets (bluepysnap.NodeSets): The node set to extend this node set with.
+
+        Returns:
+            set: Names of any overwritten node sets.
+        """
+        if isinstance(node_sets, NodeSets):
+            overwritten = self._instance.update(node_sets.to_libsonata)
+            self._content.update(node_sets.content)
+            return overwritten
+
+        raise BluepySnapError(
+            f"Unexpected type: '{type(node_sets).__name__}' "
+            f"(expected: '{self.__class__.__name__}')"
+        )
 
     def __contains__(self, name):
         """Check if node set exists."""

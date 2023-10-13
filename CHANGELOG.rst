@@ -11,7 +11,10 @@ New Features
 Improvements
 ~~~~~~~~~~~~
 - Node set resolution is done by libsonata
-- Added kwarg: `raise_missing_property` to `NodePopulation.get`
+- Simulation node set extends Circuit node set
+
+  - A warning is raised if any of the circuit's node sets is overwritten
+- Added kwarg: ``raise_missing_property`` to ``NodePopulation.get``
 - Undeprecated calling ``Edges.get`` and ``EdgePopulation.get`` with ``properties=None``
 
 Breaking Changes

@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Simulation access."""
 
+import warnings
 from pathlib import Path
 
 from cached_property import cached_property
@@ -44,6 +45,16 @@ def _collect_frame_reports(sim):
 
         res[name] = cls(sim, name)
     return res
+
+
+def _warn_on_overwritten_node_sets(overwritten, print_max=10):
+    """Helper function to warn and print overwritten nodesets."""
+    if (n := len(overwritten)) > 0:
+        names = ", ".join(list(overwritten)[:print_max]) + (", ..." if n > print_max else "")
+        warnings.warn(
+            f"Simulation node sets overwrite {n} node set(s) in Circuit node sets: {names}",
+            RuntimeWarning,
+        )
 
 
 class Simulation:
@@ -125,8 +136,16 @@ class Simulation:
     @cached_property
     def node_sets(self):
         """Returns the NodeSets object bound to the simulation."""
-        path = self.to_libsonata.node_sets_file
-        return NodeSets.from_file(path) if path else NodeSets.from_dict({})
+        try:
+            node_sets = NodeSets.from_file(self.circuit.to_libsonata.node_sets_path)
+        except BluepySnapError:  # Error raised if circuit can not be instantiated
+            node_sets = NodeSets.from_dict({})
+
+        if path := self.to_libsonata.node_sets_file:
+            overwritten = node_sets.update(NodeSets.from_file(path))
+            _warn_on_overwritten_node_sets(overwritten)
+
+        return node_sets
 
     @cached_property
     def spikes(self):

@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+import warnings
 
 import libsonata
 import pytest
@@ -18,6 +19,21 @@ from bluepysnap.node_sets import NodeSets
 from bluepysnap.spike_report import PopulationSpikeReport, SpikeReport
 
 from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
+
+
+def test__warn_on_overwritten_node_sets():
+    test_module._warn_on_overwritten_node_sets
+
+    # No warnings if no overwritten
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        test_module._warn_on_overwritten_node_sets(set())
+
+    with pytest.warns(RuntimeWarning, match="Simulation node sets overwrite 3 .*: a, b, c"):
+        test_module._warn_on_overwritten_node_sets(["a", "b", "c"])
+
+    with pytest.warns(RuntimeWarning, match=r"Simulation node sets overwrite 3 .*: a, b, \.\.\."):
+        test_module._warn_on_overwritten_node_sets(["a", "b", "c"], print_max=2)
 
 
 def test_all():
@@ -41,8 +57,15 @@ def test_all():
     assert simulation.conditions.celsius == 34.0
     assert simulation.conditions.v_init == -80
 
-    assert isinstance(simulation.node_sets, NodeSets)
-    assert simulation.node_sets.content == {"Layer23": {"layer": [2, 3]}}
+    with pytest.warns(RuntimeWarning, match="Simulation node sets overwrite 1 .* Layer23"):
+        assert isinstance(simulation.node_sets, NodeSets)
+
+    expected_content = {
+        **json.loads((TEST_DATA_DIR / "node_sets.json").read_text()),
+        "Layer23": {"layer": [2, 3]},
+    }
+    assert simulation.node_sets.content == expected_content
+
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
