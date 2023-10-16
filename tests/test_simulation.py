@@ -22,8 +22,6 @@ from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_c
 
 
 def test__warn_on_overwritten_node_sets():
-    test_module._warn_on_overwritten_node_sets
-
     # No warnings if no overwritten
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -81,6 +79,30 @@ def test_all():
     rep = simulation.reports["section_report"]
     assert set(rep.population_names) == {"default", "default2"}
     assert isinstance(rep["default"], PopulationCompartmentReport)
+
+
+def test_no_warning_when_shared_node_sets_path():
+    with copy_test_data(config="simulation_config.json") as (_, config_path):
+        circuit = test_module.Simulation(config_path).circuit
+        circuit_node_sets_path = circuit.to_libsonata.node_sets_path
+
+        # set simulation node set path = circuit node set path
+        with edit_config(config_path) as config:
+            config["node_sets_file"] = circuit_node_sets_path
+
+        # Should not raise
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            test_module.Simulation(config_path).node_sets
+
+        # if node_sets_file is not defined, libsonata should use the same path as the circuit
+        with edit_config(config_path) as config:
+            config.pop("node_sets_file")
+
+        # Should not raise either
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            test_module.Simulation(config_path).node_sets
 
 
 def test_unknown_report():
