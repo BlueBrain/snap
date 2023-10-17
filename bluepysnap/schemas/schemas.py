@@ -8,6 +8,8 @@ import numpy as np
 import referencing
 import yaml
 
+from bluepysnap.exceptions import BluepySnapValidationError as Error
+
 DEFINITIONS = "definitions"
 
 
@@ -45,7 +47,6 @@ def _wrap_errors(filepath, schema_errors, join_str):
     """
     # NOTE: would probably make more sense to have different parser for circuit,
     # as datatype and attributes only exists in the case of h5 files.
-    from bluepysnap.circuit_validation import Error
 
     warnings = []
     errors = []

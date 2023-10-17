@@ -17,7 +17,6 @@
 
 """Circuit ids."""
 import abc
-from collections import namedtuple
 
 import numpy as np
 import pandas as pd
@@ -26,8 +25,8 @@ from bluepysnap import utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.exceptions import BluepySnapError
 
-CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
-CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
+CircuitNodeId = utils.CircuitNodeId
+CircuitEdgeId = utils.CircuitEdgeId
 
 
 class CircuitIds(abc.ABC):

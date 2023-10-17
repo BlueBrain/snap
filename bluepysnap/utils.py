@@ -19,11 +19,11 @@
 
 import json
 import warnings
+from collections import namedtuple
 from collections.abc import Iterable
 
 import numpy as np
 
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import (
     BluepySnapDeprecationError,
     BluepySnapDeprecationWarning,
@@ -35,6 +35,9 @@ from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 # https://github.com/numpy/numpy/issues/15084 numpy problem. This type needs to be used for
 # all returned node or edge ids.
 IDS_DTYPE = np.int64
+
+CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
+CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
 
 
 class Deprecate:

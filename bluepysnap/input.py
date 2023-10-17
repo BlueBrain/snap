@@ -17,7 +17,7 @@
 """Simulation input access."""
 import libsonata
 
-from bluepysnap import BluepySnapError
+from bluepysnap.exceptions import BluepySnapError
 
 
 class SynapseReplay:

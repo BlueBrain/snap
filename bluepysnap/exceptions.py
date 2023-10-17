@@ -27,3 +27,37 @@ class BluepySnapDeprecationError(Exception):
 
 class BluepySnapDeprecationWarning(DeprecationWarning):
     """SNAP deprecation warning."""
+
+
+class BluepySnapValidationError:
+    """Error used for reporting of validation errors."""
+
+    FATAL = "FATAL"
+    WARNING = "WARNING"
+    INFO = "INFO"
+
+    def __init__(self, level, message=None):
+        """Error.
+
+        Args:
+            level (str): error level
+            message (str|None): message
+        """
+        self.level = level
+        self.message = message
+
+    def __str__(self):
+        """Returns only message by default."""
+        return str(self.message)
+
+    __repr__ = __str__
+
+    def __eq__(self, other):
+        """Two errors are equal if inherit from Error and their level, message are equal."""
+        if not isinstance(other, BluepySnapValidationError):
+            return False
+        return self.level == other.level and self.message == other.message
+
+    def __hash__(self):
+        """Hash. Errors with the same level and message give the same hash."""
+        return hash(self.level) ^ hash(self.message)
