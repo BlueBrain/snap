@@ -307,7 +307,7 @@ class NodePopulation:
             The is_present argument forces the unique() even on the categorical fields.
         """
         res = self.get(properties=prop)
-        if pd.api.types.is_categorical_dtype(res) and not is_present:
+        if isinstance(res.dtype, pd.CategoricalDtype) and not is_present:
             return set(res.cat.categories)
         return set(res.unique())
 

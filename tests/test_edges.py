@@ -188,10 +188,7 @@ class TestEdges:
             self.test_obj.get(properties=["other2"])
 
         ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
-        with pytest.deprecated_call(
-            match="Returning ids with get/properties is deprecated and will be removed in 1.0.0"
-        ):
-            tested = self.test_obj.get(ids, None)
+        tested = self.test_obj.get(ids, None)
         assert tested == ids
 
         tested = self.test_obj.get(ids, properties=self.test_obj.property_names)
@@ -333,25 +330,6 @@ class TestEdges:
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             next(self.test_obj.get(ids, properties="unknown"))
-
-        with pytest.deprecated_call(
-            match=(
-                "Returning ids with get/properties is deprecated and will be removed in 1.0.0. "
-                "Please use Edges.ids instead."
-            )
-        ):
-            self.test_obj.get(ids)
-
-    def test_properties_deprecated(self):
-        ids = CircuitEdgeIds.from_dict({"default": [0, 1, 2, 3], "default2": [0, 1, 2, 3]})
-        with pytest.deprecated_call(
-            match="Edges.properties function is deprecated and will be removed in 1.0.0"
-        ):
-            tested = self.test_obj.properties(ids, properties=["other2", "@source_node"])
-        expected = self.test_obj.get(ids, properties=["other2", "@source_node"])
-        tested = pd.concat(df for _, df in tested)
-        expected = pd.concat(df for _, df in expected)
-        pdt.assert_frame_equal(tested, expected, check_exact=False)
 
     def test_afferent_nodes(self):
         assert self.test_obj.afferent_nodes(0) == CircuitNodeIds.from_arrays(["default"], [2])

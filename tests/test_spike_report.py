@@ -107,6 +107,8 @@ class TestSpikeReport:
 
         filtered = self.test_obj.filter(group={"population": "default3"}, t_start=0.3, t_stop=0.6)
         assert len(filtered.report) == 0
+        assert set(filtered.report.columns) == {"ids", "population"}
+        assert filtered.report.index.name == "times"
 
         ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 2])
         filtered = self.test_obj.filter(group=ids)

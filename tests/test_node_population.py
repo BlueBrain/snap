@@ -11,7 +11,6 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 from numpy import dtype
-from pandas.api.types import is_categorical_dtype
 
 from bluepysnap.bbp import Cell
 from bluepysnap.circuit import Circuit
@@ -420,7 +419,7 @@ class TestNodePopulation:
         )
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
-        assert is_categorical_dtype(res["categorical"])
+        assert isinstance(res["categorical"].dtype, pd.CategoricalDtype)
         assert res["categorical"].tolist() == ["A", "A", "B", "A", "A", "A", "A"]
         assert res["categorical"].cat.categories.tolist() == ["A", "B", "C"]
         assert res["categorical"].cat.codes.tolist() == [0, 0, 1, 0, 0, 0, 0]
@@ -434,7 +433,7 @@ class TestNodePopulation:
         )
         assert test_obj.property_names == {"categorical", "string", "int", "float"}
         res = test_obj.get(properties=["categorical", "string", "int", "float"])
-        assert not is_categorical_dtype(res["categorical"])
+        assert not isinstance(res["categorical"].dtype, pd.CategoricalDtype)
         assert res["categorical"].tolist() == ["A", "A", "B", "A"]
         assert res["string"].tolist() == ["AA", "BB", "CC", "DD"]
         assert res["int"].tolist() == [0, 0, 1, 0]

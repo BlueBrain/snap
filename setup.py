@@ -45,8 +45,10 @@ setup(
     install_requires=[
         "cached_property>=1.0",
         "h5py>=3.0.1,<4.0.0",
-        "jsonschema>=4.0.0,<5.0.0",
-        "libsonata>=0.1.21,<1.0.0",
+        "importlib_resources>=5.0.0",
+        "jsonschema>=4.18.0,<5.0.0",
+        "referencing>=0.28.4",
+        "libsonata>=0.1.24,<1.0.0",
         "morphio>=3.0.0,<4.0.0",
         "morph-tool>=2.4.3,<3.0.0",
         "numpy>=1.8",

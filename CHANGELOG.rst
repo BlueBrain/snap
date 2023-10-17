@@ -21,17 +21,26 @@ Version v1.1.0
 New Features
 ~~~~~~~~~~~~
 - ``NodeSets`` object can be instantiated with three methods: ``from_file``, ``from_string``, ``from_dict``
+- Simulation inputs are now accessible with ``Simulation.inputs``
+- ``libsonata`` reader of ``synapse_replay`` files can now be accessed with ``simulation.inputs["<input_name>"].reader``
+
+  - only ``h5`` format is supported
 
 Improvements
 ~~~~~~~~~~~~
 - Node set resolution is done by libsonata
-- Added kwarg: `raise_missing_property` to `NodePopulation.get`
+- Simulation node set extends Circuit node set
+
+  - A warning is raised if any of the circuit's node sets is overwritten
+- Added kwarg: ``raise_missing_property`` to ``NodePopulation.get``
+- Undeprecated calling ``Edges.get`` and ``EdgePopulation.get`` with ``properties=None``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - ``Circuit.node_sets``, ``Simulation.node_sets`` returns ``NodeSets`` object initialized with empty dict when node sets file is not present
 - ``NodeSet.resolved`` is no longer available
 - ``FrameReport.node_set`` returns node_set name instead of resolved node set query
+- Removed ``Edges.properties``, ``EdgePopulation.properties`` that were already supposed to be removed in v1.0.0
 
 
 Version v1.0.7

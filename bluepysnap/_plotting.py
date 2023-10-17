@@ -123,7 +123,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
         if y_axis is None:
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
-        elif pd.api.types.is_categorical_dtype(spikes.nodes.property_dtypes[y_axis]):
+        elif isinstance(spikes.nodes.property_dtypes[y_axis], pd.CategoricalDtype):
             props["categorical_values"].update(spikes.nodes.property_values(y_axis))
         else:
             props["ymin"] = min(props["ymin"], spikes.nodes.get(properties=y_axis).min())
@@ -133,7 +133,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
 
     # use np.int64 if displaying node_ids
     dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis] if y_axis else IDS_DTYPE
-    if pd.api.types.is_categorical_dtype(dtype):
+    if isinstance(dtype, pd.CategoricalDtype):
         # this is to prevent the problems when concatenating categoricals with unknown categories
         dtype = str
     data = pd.Series(index=report.index, dtype=dtype)

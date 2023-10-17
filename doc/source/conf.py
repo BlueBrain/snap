@@ -6,14 +6,14 @@
 
 # -- Path setup --------------------------------------------------------------
 
-from pkg_resources import get_distribution
+import importlib
 
 # -- Project information -----------------------------------------------------
 
 project = "Blue Brain SNAP"
 author = "Blue Brain Project, EPFL"
 
-release = get_distribution("bluepysnap").version
+release = importlib.metadata.distribution("bluepysnap").version
 version = release
 
 # -- General configuration ---------------------------------------------------

@@ -2,9 +2,10 @@
 from pathlib import Path
 
 import h5py
+import importlib_resources
 import jsonschema
 import numpy as np
-import pkg_resources
+import referencing
 import yaml
 
 DEFINITIONS = "definitions"
@@ -13,11 +14,10 @@ DEFINITIONS = "definitions"
 def _load_schema_file(*args):
     """Load one of the predefined YAML schema files."""
     filename = str(Path(*args).with_suffix(".yaml"))
-    filepath = pkg_resources.resource_filename(__name__, filename)
-    if not Path(filepath).is_file():
+    filepath = importlib_resources.files(__package__) / filename
+    if not filepath.is_file():
         raise FileNotFoundError(f"Schema file {filepath} not found")
-    with open(filepath, encoding="utf-8") as fd:
-        return yaml.safe_load(fd)
+    return yaml.safe_load(filepath.read_text())
 
 
 def _parse_path(path, join_str):
@@ -216,7 +216,7 @@ def _resolve_types(resolver, types):
 
     def _resolve_type(type_):
         if type_ not in cache:
-            type_ = resolver.resolve(type_)[1]["properties"]["datatype"]["const"]
+            type_ = resolver.lookup(type_).contents["properties"]["datatype"]["const"]
             if hasattr(np, type_):
                 cache[type_] = getattr(np, type_)
             elif type_ == "utf-8":
@@ -227,8 +227,17 @@ def _resolve_types(resolver, types):
     return {k: _resolve_type(v["$ref"]) for k, v in types.items()}
 
 
+def _get_reference_resolver(schema):
+    """Get reference resolver for the given schema."""
+    resource = referencing.Resource(
+        contents=schema,
+        specification=referencing.jsonschema.DRAFT202012,
+    )
+    return referencing.Registry().with_resource("", resource=resource).resolver()
+
+
 def nodes_schema_types(nodes_type):
-    """Get the datatypes of the attribute for nodes.
+    """Get the datatypes of the attributes for nodes.
 
     Args:
         nodes_type (str): node type (e.g., "biophysical")
@@ -237,7 +246,7 @@ def nodes_schema_types(nodes_type):
         dict: name -> type of column
     """
     schema = _parse_schema("node", nodes_type)
-    resolver = jsonschema.validators.RefResolver("", schema)
+    resolver = _get_reference_resolver(schema)
 
     schema = schema["$node_file_defs"]["nodes_file_root"]["properties"]["nodes"]
     schema = schema["patternProperties"][""]["properties"]["0"]["properties"]
@@ -249,7 +258,7 @@ def nodes_schema_types(nodes_type):
 
 
 def edges_schema_types(edges_type, virtual):
-    """Get the datatypes of the attribute for nodes.
+    """Get the datatypes of the attributes for edges.
 
     Args:
         edges_type (str): edges type (e.g., "chemical")
@@ -262,7 +271,7 @@ def edges_schema_types(edges_type, virtual):
         edges_type += "_virtual"
 
     schema = _parse_schema("edge", edges_type)
-    resolver = jsonschema.validators.RefResolver("", schema)
+    resolver = _get_reference_resolver(schema)
 
     schema = schema["$edge_file_defs"]["edges_file_root"]["properties"]["edges"]
     schema = schema["patternProperties"][""]["properties"]["0"]["properties"]
