@@ -55,14 +55,6 @@ class CircuitIds(abc.ABC):
             index = index.sortlevel()[0]
         self.index = index
 
-    @property
-    def index_schema(self):
-        """Return an empty index with the same names and dtypes of the wrapped index."""
-        # NOTE: Since pandas 2.1.0, the index needs to contain the explicit dtypes. In pd.concat,
-        # the dtypes of multi-index are coerced to 'object' if any dataframe has indices with
-        # dtype='object'
-        return self.index[:0]
-
     @classmethod
     def _instance(cls, index, sort_index=True):
         """The instance returned by the functions."""

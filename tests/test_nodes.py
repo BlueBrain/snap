@@ -79,60 +79,6 @@ class TestNodes:
         assert self.test_obj.property_values("mtype") == {"L2_X", "L7_X", "L9_Z", "L8_Y", "L6_Y"}
         assert self.test_obj.property_values("other2") == {10, 11, 12, 13}
 
-    def test_property_dtypes(self):
-        expected = pd.Series(
-            data=[
-                dtype("int64"),
-                dtype("O"),
-                dtype("O"),
-                dtype("O"),
-                dtype("O"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("float64"),
-                dtype("O"),
-                dtype("int64"),
-            ],
-            index=[
-                "layer",
-                "model_template",
-                "model_type",
-                "morphology",
-                "mtype",
-                "rotation_angle_xaxis",
-                "rotation_angle_yaxis",
-                "rotation_angle_zaxis",
-                "x",
-                "y",
-                "z",
-                "@dynamics:holding_current",
-                "other1",
-                "other2",
-            ],
-        ).sort_index()
-        pdt.assert_series_equal(self.test_obj.property_dtypes.sort_index(), expected)
-
-    def test_property_dtypes_fail(self):
-        a = pd.Series(
-            data=[dtype("int64"), dtype("O")], index=["layer", "model_template"]
-        ).sort_index()
-        b = pd.Series(
-            data=[dtype("int32"), dtype("O")], index=["layer", "model_template"]
-        ).sort_index()
-
-        with patch(
-            "bluepysnap.nodes.NodePopulation.property_dtypes", new_callable=PropertyMock
-        ) as mock:
-            mock.side_effect = [a, b]
-            circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
-            test_obj = test_module.Nodes(circuit)
-            with pytest.raises(BluepySnapError):
-                test_obj.property_dtypes.sort_index()
-
     def test_ids(self):
         np.random.seed(0)
 
@@ -291,6 +237,7 @@ class TestNodes:
     def test_get(self):
         # return all properties for all the ids
         tested = self.test_obj.get()
+        tested = pd.concat(df for _, df in tested)
         assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
 
         # put NaN for the undefined values : only values for default2 in dropna
@@ -305,6 +252,7 @@ class TestNodes:
 
         # tested columns
         tested = self.test_obj.get(properties=["other2", "other1", "layer"])
+        tested = pd.concat(df for _, df in tested)
         expected = pd.DataFrame(
             {
                 "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
@@ -324,7 +272,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
-        pdt.assert_frame_equal(tested, expected)
+        pdt.assert_frame_equal(tested[expected.columns], expected)
 
         tested = self.test_obj.get(
             group={"population": "default2"}, properties=["other2", "other1", "layer"]
@@ -345,6 +293,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(KeyError, match="'default'"):
@@ -355,8 +304,6 @@ class TestNodes:
         )
         expected = pd.DataFrame(
             {
-                "other2": np.array([np.NaN, np.NaN, np.NaN], dtype=float),
-                "other1": np.array([np.NaN, np.NaN, np.NaN], dtype=object),
                 "layer": np.array([2, 6, 6], dtype=int),
             },
             index=pd.MultiIndex.from_tuples(
@@ -368,6 +315,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="layer")
@@ -388,6 +336,7 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         tested = self.test_obj.get(properties="other2")
@@ -408,13 +357,14 @@ class TestNodes:
                 names=["population", "node_ids"],
             ),
         )
+        tested = pd.concat(df for _, df in tested)
         pdt.assert_frame_equal(tested, expected)
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
-            self.test_obj.get(properties=["other2", "unknown"])
+            next(self.test_obj.get(properties=["other2", "unknown"]))
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
-            self.test_obj.get(properties="unknown")
+            next(self.test_obj.get(properties="unknown"))
 
     def test_functionality_with_separate_node_set(self):
         with pytest.raises(BluepySnapError, match="Undefined node set"):
@@ -427,12 +377,11 @@ class TestNodes:
         )
 
         with pytest.raises(BluepySnapError, match="Undefined node set"):
-            self.test_obj.get("ExtraLayer2")
+            next(self.test_obj.get("ExtraLayer2"))
 
-        pdt.assert_frame_equal(
-            self.test_obj.get(node_sets["ExtraLayer2"]),
-            self.test_obj.get("Layer2"),
-        )
+        tested = pd.concat(df for _, df in self.test_obj.get(node_sets["ExtraLayer2"]))
+        expected = pd.concat(df for _, df in self.test_obj.get("Layer2"))
+        pdt.assert_frame_equal(tested, expected)
 
     def test_pickle(self, tmp_path):
         pickle_path = tmp_path / "pickle.pkl"
@@ -440,7 +389,6 @@ class TestNodes:
         # trigger some cached properties, to makes sure they aren't being pickeld
         self.test_obj.size
         self.test_obj.property_names
-        self.test_obj.property_dtypes
 
         with open(pickle_path, "wb") as fd:
             pickle.dump(self.test_obj, fd)

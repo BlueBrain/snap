@@ -81,12 +81,6 @@ class TestCircuitNodeIds:
 
         assert isinstance(self.test_obj_sorted, self.ids_cls)
 
-    def test_index_schema(self):
-        schema = self.test_obj_unsorted.index_schema
-        index = self.test_obj_unsorted.index
-        npt.assert_array_equal(schema.dtypes, index.dtypes)
-        npt.assert_array_equal(schema.names, index.names)
-
     def test_from_arrays(self):
         tested = self.ids_cls.from_arrays(["a", "b"], [0, 1])
         pdt.assert_index_equal(tested.index, self._circuit_ids(["a", "b"], [0, 1]))
