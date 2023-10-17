@@ -8,9 +8,9 @@ import pytest
 
 import bluepysnap.neuron_models as test_module
 from bluepysnap.circuit import Circuit, CircuitConfig
-from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
+from bluepysnap.utils import CircuitNodeId
 
 from utils import TEST_DATA_DIR, copy_config, copy_test_data, create_node_population, edit_config
 

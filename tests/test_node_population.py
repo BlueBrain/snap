@@ -14,11 +14,11 @@ from numpy import dtype
 
 from bluepysnap.bbp import Cell
 from bluepysnap.circuit import Circuit
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Node
-from bluepysnap.utils import IDS_DTYPE
+from bluepysnap.utils import IDS_DTYPE, CircuitNodeId
 
 from utils import (
     PICKLED_SIZE_ADJUSTMENT,

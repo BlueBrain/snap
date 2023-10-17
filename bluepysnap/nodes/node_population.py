@@ -68,7 +68,7 @@ from cached_property import cached_property
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSet
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Node
@@ -429,7 +429,7 @@ class NodePopulation:
         else:
             result = utils.ensure_list(group)
             # test if first value is a CircuitNodeId all values are all CircuitNodeId
-            if isinstance(first(result, None), CircuitNodeId):
+            if isinstance(first(result, None), utils.CircuitNodeId):
                 try:
                     result = [cid.id for cid in result if cid.population == self.name]
                 except AttributeError as e:
@@ -526,7 +526,7 @@ class NodePopulation:
         if group is not None:
             if isinstance(group, (int, np.integer)):
                 self._check_id(group)
-            elif isinstance(group, CircuitNodeId):
+            elif isinstance(group, utils.CircuitNodeId):
                 group = self.ids(group, raise_missing_property=raise_missing_property)[0]
             else:
                 group = self.ids(group, raise_missing_property=raise_missing_property)

@@ -7,9 +7,9 @@ import pytest
 
 import bluepysnap.morph as test_module
 from bluepysnap.circuit import Circuit
-from bluepysnap.circuit_ids import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
+from bluepysnap.utils import CircuitNodeId
 
 from utils import TEST_DATA_DIR, copy_test_data, create_node_population, edit_config
 

@@ -10,10 +10,10 @@ from numpy import dtype
 
 import bluepysnap.nodes as test_module
 from bluepysnap.circuit import Circuit
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
-from bluepysnap.utils import IDS_DTYPE
+from bluepysnap.utils import IDS_DTYPE, CircuitNodeId
 
 from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR
 

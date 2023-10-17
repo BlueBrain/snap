@@ -25,9 +25,6 @@ from bluepysnap import utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.exceptions import BluepySnapError
 
-CircuitNodeId = utils.CircuitNodeId
-CircuitEdgeId = utils.CircuitEdgeId
-
 
 class CircuitIds(abc.ABC):
     """High performances CircuitID container.
@@ -323,11 +320,11 @@ class CircuitNodeIds(
     def __iter__(self):
         """Iterator on the CircuitNodeIds."""
         for index in self.index:
-            yield CircuitNodeId(*index)
+            yield utils.CircuitNodeId(*index)
 
     def __getitem__(self, item):
         """Getter on the CircuitNodeIds."""
-        return CircuitNodeId(*self.index[item])
+        return utils.CircuitNodeId(*self.index[item])
 
 
 class CircuitEdgeIds(
@@ -352,8 +349,8 @@ class CircuitEdgeIds(
     def __iter__(self):
         """Iterator on the CircuitEdgeIds."""
         for index in self.index:
-            yield CircuitEdgeId(*index)
+            yield utils.CircuitEdgeId(*index)
 
     def __getitem__(self, item):
         """Getter on the CircuitEdgeIds."""
-        return CircuitEdgeId(*self.index[item])
+        return utils.CircuitEdgeId(*self.index[item])

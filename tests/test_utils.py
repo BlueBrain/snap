@@ -3,15 +3,41 @@ import numpy.testing as npt
 import pytest
 
 import bluepysnap.utils as test_module
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import (
     BluepySnapDeprecationError,
     BluepySnapDeprecationWarning,
     BluepySnapError,
 )
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
+from bluepysnap.utils import CircuitEdgeId, CircuitNodeId
 
 from utils import TEST_DATA_DIR
+
+
+class TestCircuitNodeId:
+    def setup_method(self):
+        self.test_obj = test_module.CircuitNodeId("pop", 1)
+
+    def test_init(self):
+        assert isinstance(self.test_obj, test_module.CircuitNodeId)
+        assert isinstance(self.test_obj, tuple)
+
+    def test_accessors(self):
+        assert self.test_obj.population == "pop"
+        assert self.test_obj.id == 1
+
+
+class TestCircuitEdgeId:
+    def setup_method(self):
+        self.test_obj = test_module.CircuitEdgeId("pop", 1)
+
+    def test_init(self):
+        assert isinstance(self.test_obj, test_module.CircuitEdgeId)
+        assert isinstance(self.test_obj, tuple)
+
+    def test_accessors(self):
+        assert self.test_obj.population == "pop"
+        assert self.test_obj.id == 1
 
 
 def test_load_json():
