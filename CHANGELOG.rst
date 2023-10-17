@@ -1,21 +1,7 @@
 Changelog
 =========
 
-Version v1.2.0
---------------
-
-Breaking Changes
-~~~~~~~~~~~~~~~~
-- ``nodes.get`` and ``edges.get`` (and ``network.get``) no longer return a dataframe
-  - returns a generator yielding tuples of ``(<population_name>, <dataframe>)`` instead
-  - to get the previous behavior (all in one dataframe): ``pd.concat(df for _, df in circuit.nodes.get(*args, **kwargs))``
-- Removed ``Network.property_dtypes``, ``CircuitIds.index_schema``
-
-Bug Fixes
-~~~~~~~~~
-- Fixed the `Same property with different dtype` issue with ``nodes.get``, ``edges.get``
-
-Version v1.1.0
+Version v2.0.0
 --------------
 
 New Features
@@ -35,8 +21,16 @@ Improvements
 - Added kwarg: ``raise_missing_property`` to ``NodePopulation.get``
 - Undeprecated calling ``Edges.get`` and ``EdgePopulation.get`` with ``properties=None``
 
+Bug Fixes
+~~~~~~~~~
+- Fixed the `Same property with different dtype` issue with ``nodes.get``, ``edges.get``
+
 Breaking Changes
 ~~~~~~~~~~~~~~~~
+- ``nodes.get`` and ``edges.get`` (and ``network.get``) no longer return a dataframe
+  - returns a generator yielding tuples of ``(<population_name>, <dataframe>)`` instead
+  - to get the previous behavior (all in one dataframe): ``pd.concat(df for _, df in circuit.nodes.get(*args, **kwargs))``
+- Removed ``Network.property_dtypes``, ``CircuitIds.index_schema``
 - ``Circuit.node_sets``, ``Simulation.node_sets`` returns ``NodeSets`` object initialized with empty dict when node sets file is not present
 - ``NodeSet.resolved`` is no longer available
 - ``FrameReport.node_set`` returns node_set name instead of resolved node set query
