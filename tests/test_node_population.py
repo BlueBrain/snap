@@ -303,7 +303,10 @@ class TestNodePopulation:
             _call([CircuitNodeId("default", 1), CircuitNodeId("default2", 1), ("default2", 1)])
 
     def test_node_ids_by_filter_complex_query(self):
-        test_obj = create_node_population(str(TEST_DATA_DIR / "nodes.h5"), "default")
+        test_obj = create_node_population(
+            str(TEST_DATA_DIR / "nodes.h5"), "default", node_sets=NodeSets.from_dict({})
+        )
+
         data = pd.DataFrame(
             {
                 Cell.MTYPE: ["L23_MC", "L4_BP", "L6_BP", "L6_BPC"],

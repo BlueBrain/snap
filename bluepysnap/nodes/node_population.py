@@ -350,19 +350,9 @@ class NodePopulation:
             raise BluepySnapError(f"Unknown node properties: {sorted(unknown_props)}")
 
     def _resolve_nodesets(self, queries, raise_missing_prop):
-        def _resolve(queries, queries_key):
-            if queries_key == query.NODE_SET_KEY:
-                if query.AND_KEY not in queries:
-                    queries[query.AND_KEY] = []
-                node_set = self._node_sets[queries[queries_key]]
-                queries[query.AND_KEY].append(
-                    {query.NODE_ID_KEY: node_set.get_ids(self._population, raise_missing_prop)}
-                )
-                del queries[queries_key]
-
-        resolved_queries = deepcopy(queries)
-        query.traverse_queries_bottom_up(resolved_queries, _resolve)
-        return resolved_queries
+        return query.resolve_nodesets(
+            self._node_sets, self._population, queries, raise_missing_prop
+        )
 
     def _node_ids_by_filter(self, queries, raise_missing_prop):
         """Return node IDs if their properties match the `queries` dict.

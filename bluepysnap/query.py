@@ -172,6 +172,33 @@ def get_properties(queries):
     return props
 
 
+def resolve_nodesets(node_sets, population, queries, raise_missing_prop):
+    """Resolve node sets in queries.
+
+    Args:
+        node_sets (bluepysnap.NodeSets): node sets instance
+        population (libsonata.NodePopulation): node population
+        queries (dict): queries to resolve
+        raise_missing_prop (bool): raise if property not present in population
+
+    Returns:
+        dict: queries with resolved node sets
+    """
+
+    def _resolve(queries, queries_key):
+        if queries_key == NODE_SET_KEY:
+            if AND_KEY not in queries:
+                queries[AND_KEY] = []
+            node_set = node_sets[queries[queries_key]]
+            queries[AND_KEY].append({NODE_ID_KEY: node_set.get_ids(population, raise_missing_prop)})
+            del queries[queries_key]
+
+    resolved_queries = deepcopy(queries)
+    traverse_queries_bottom_up(resolved_queries, _resolve)
+
+    return resolved_queries
+
+
 def resolve_ids(data, population_name, queries):
     """Returns an index mask of `data` for given `queries`.
 
