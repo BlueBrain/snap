@@ -205,9 +205,7 @@ def test_validate_config_error(to_remove_list, expected):
         errors = test_module.validate_circuit_schema(str(config_copy_path), config)
 
         assert len(errors) == 1
-        assert errors[0] == BluepySnapValidationError(
-            BluepySnapValidationError.FATAL, f"{config_copy_path}:\n\t{expected}"
-        )
+        assert errors[0] == BluepySnapValidationError.fatal(f"{config_copy_path}:\n\t{expected}")
 
 
 def test_validate_nodes_ok():
@@ -317,8 +315,8 @@ def test_missing_edge_population():
             del h5f["edges/default"]
         errors = test_module.validate_edges_schema(str(edges_file), "chemical", virtual=False)
         assert len(errors) == 1
-        assert errors[0] == BluepySnapValidationError(
-            BluepySnapValidationError.FATAL, f"{str(edges_file)}:\n\tedges: too few properties"
+        assert errors[0] == BluepySnapValidationError.fatal(
+            f"{str(edges_file)}:\n\tedges: too few properties"
         )
 
 
@@ -329,8 +327,8 @@ def test_missing_node_population():
             del h5f["nodes/default"]
         errors = test_module.validate_nodes_schema(str(nodes_file), "biophysical")
         assert len(errors) == 1
-        assert errors[0] == BluepySnapValidationError(
-            BluepySnapValidationError.FATAL, f"{str(nodes_file)}:\n\tnodes: too few properties"
+        assert errors[0] == BluepySnapValidationError.fatal(
+            f"{str(nodes_file)}:\n\tnodes: too few properties"
         )
 
 

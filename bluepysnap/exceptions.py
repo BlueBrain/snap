@@ -61,3 +61,27 @@ class BluepySnapValidationError:
     def __hash__(self):
         """Hash. Errors with the same level and message give the same hash."""
         return hash(self.level) ^ hash(self.message)
+
+    @classmethod
+    def warning(cls, message):
+        """Shortcut for a warning.
+
+        Args:
+            message (str): text message
+
+        Returns:
+            Error: Error with level WARNING
+        """
+        return cls(cls.WARNING, message)
+
+    @classmethod
+    def fatal(cls, message):
+        """Shortcut for a fatal error.
+
+        Args:
+            message (str): text message
+
+        Returns:
+            Error: Error with level FATAL
+        """
+        return cls(cls.FATAL, message)

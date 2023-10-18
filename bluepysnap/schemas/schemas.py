@@ -80,10 +80,10 @@ def _wrap_errors(filepath, schema_errors, join_str):
 
     if len(warnings) > 0:
         message = filepath + ":\n\t" + "\n\t".join(warnings)
-        ret_errors.append(BluepySnapValidationError(BluepySnapValidationError.WARNING, message))
+        ret_errors.append(BluepySnapValidationError.warning(message))
     if len(errors) > 0:
         message = filepath + ":\n\t" + "\n\t".join(errors)
-        ret_errors.append(BluepySnapValidationError(BluepySnapValidationError.FATAL, message))
+        ret_errors.append(BluepySnapValidationError.fatal(message))
 
     return ret_errors
 

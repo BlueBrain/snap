@@ -21,30 +21,6 @@ L = logging.getLogger("brainbuilder")
 MAX_MISSING_FILES_DISPLAY = 10
 
 
-def fatal(message):
-    """Shortcut for a fatal error.
-
-    Args:
-        message (str): text message
-
-    Returns:
-        Error: Error with level FATAL
-    """
-    return BluepySnapValidationError(BluepySnapValidationError.FATAL, message)
-
-
-def warning(message):
-    """Shortcut for a warning.
-
-    Args:
-        message (str): text message
-
-    Returns:
-        Error: Error with level WARNING
-    """
-    return BluepySnapValidationError(BluepySnapValidationError.WARNING, message)
-
-
 def _check_partial_circuit_config(config):
     return config.get("metadata", {}).get("status") == "partial"
 
@@ -61,7 +37,7 @@ def _check_components_dir(name, components):
     """
     dirpath = components.get(name)
     if not dirpath or not Path(dirpath).is_dir():
-        return [fatal(f'Invalid components "{name}": {dirpath}')]
+        return [BluepySnapValidationError.fatal(f'Invalid components "{name}": {dirpath}')]
     return []
 
 
@@ -88,7 +64,11 @@ def _check_files(name, files):
     if missing:
         filenames = "".join(f"\t{m.name}\n" for m in missing)
 
-        return [warning(f"missing at least {len(missing)} files in group {name}:\n{filenames}")]
+        return [
+            BluepySnapValidationError.warning(
+                f"missing at least {len(missing)} files in group {name}:\n{filenames}"
+            )
+        ]
 
     return []
 
@@ -116,7 +96,9 @@ def _check_duplicate_populations(networks, key):
         for population in network.get("populations", {}):
             if population in seen:
                 errors.append(
-                    fatal(f'Already have population "{population}" in config for type "{key}"')
+                    BluepySnapValidationError.fatal(
+                        f'Already have population "{population}" in config for type "{key}"'
+                    )
                 )
             seen.add(population)
 
@@ -230,7 +212,7 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
 
     if "morphologies_dir" not in population and "alternate_morphologies" not in population:
         errors.append(
-            fatal(
+            BluepySnapValidationError.fatal(
                 "at least one of 'morphologies_dir' or 'alternate_morphologies' "
                 f"must to be defined for 'biophysical' population '{population_name}'"
             )
@@ -259,7 +241,9 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
         )
     else:
         errors.append(
-            fatal(f"'biophysical_neuron_models_dir' not defined for population '{population_name}'")
+            BluepySnapValidationError.fatal(
+                f"'biophysical_neuron_models_dir' not defined for population '{population_name}'"
+            )
         )
     return errors
 
@@ -281,7 +265,7 @@ def _check_nodes_group(group_df, group, population, population_name):
     errors = []
     if "model_type" in group_df and group_df["model_type"][0] != population["type"]:
         errors.append(
-            warning(
+            BluepySnapValidationError.warning(
                 f"Population '{population_name}' type mismatch: "
                 f"'{group_df['model_type'][0]}' (nodes_file), "
                 f"'{population['type']}' (config)"
@@ -311,7 +295,9 @@ def validate_node_population(nodes_file, population_dict, name):
 
         # special case in which there are populations but not the one expected
         if name not in h5f["nodes"]:
-            return [fatal(f"population '{name}' not found in {nodes_file}")]
+            return [
+                BluepySnapValidationError.fatal(f"population '{name}' not found in {nodes_file}")
+            ]
 
         population = h5f[f"nodes/{name}"]
 
@@ -365,7 +351,7 @@ def _check_edges_node_ids(nodes_ds, nodes):
 
     nodes_dict = _find_nodes_population(node_population_name, nodes)
     if not nodes_dict:
-        return [fatal(f'No node population for "{nodes_ds.name}"')]
+        return [BluepySnapValidationError.fatal(f'No node population for "{nodes_ds.name}"')]
 
     if "nodes_file" not in nodes_dict or not Path(nodes_dict["nodes_file"]).is_file():
         return []
@@ -377,10 +363,16 @@ def _check_edges_node_ids(nodes_ds, nodes):
             missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
             if missing_ids:
                 errors.append(
-                    fatal(f"{nodes_ds.name} misses node ids in its node population: {missing_ids}")
+                    BluepySnapValidationError.fatal(
+                        f"{nodes_ds.name} misses node ids in its node population: {missing_ids}"
+                    )
                 )
         elif f"nodes/{node_population_name}" in h5f:
-            errors.append(fatal((f"{nodes_ds.name} does not have node ids in its node population")))
+            errors.append(
+                BluepySnapValidationError.fatal(
+                    (f"{nodes_ds.name} does not have node ids in its node population")
+                )
+            )
 
     return errors
 
@@ -410,7 +402,7 @@ def _check_edges_indices(population):
                 edge_node_ids = list(set(nodes_ds[edges_range[0] : edges_range[1]]))
                 if len(edge_node_ids) > 1 or edge_node_ids[0] != node_id:
                     errors.append(
-                        fatal(
+                        BluepySnapValidationError.fatal(
                             f"Population {population.file.filename} edges {edge_node_ids} have "
                             f"node ids {edges_range} instead of single id {node_id}"
                         )
@@ -423,10 +415,18 @@ def _check_edges_indices(population):
 
     # These are "optional" (not mentioned in our spec) but better to at least give a warning
     if not source_to_target:
-        errors.append(warning(f'No "source_to_target" in {population.file.filename}'))
+        errors.append(
+            BluepySnapValidationError.warning(
+                f'No "source_to_target" in {population.file.filename}'
+            )
+        )
 
     if not target_to_source:
-        errors.append(warning(f'No "target_to_source" in {population.file.filename}'))
+        errors.append(
+            BluepySnapValidationError.warning(
+                f'No "target_to_source" in {population.file.filename}'
+            )
+        )
 
     if target_to_source and source_to_target:
         if "source_node_id" in population:
@@ -460,7 +460,9 @@ def _check_edge_population_data(population, nodes):
     if "indices" in population:
         errors += _check_edges_indices(population)
     else:  # "optional" (not mentioned in our spec) but better to at least give a warning
-        errors.append(warning(f'No "indices" in {population.file.filename}'))
+        errors.append(
+            BluepySnapValidationError.warning(f'No "indices" in {population.file.filename}')
+        )
 
     return errors
 
@@ -482,7 +484,9 @@ def validate_edge_population(edges_file, name, nodes):
 
         # special case in which there are populations but not the one expected
         if name not in h5f["edges"]:
-            return [fatal(f"population '{name}' not found in {edges_file}")]
+            return [
+                BluepySnapValidationError.fatal(f"population '{name}' not found in {edges_file}")
+            ]
 
         population = h5f[f"edges/{name}"]
 
@@ -533,7 +537,7 @@ def validate_edges_dict(edges_dict, nodes, skip_slow):
             if not skip_slow:
                 errors += validate_edge_population(edges_file, name, nodes)
         else:
-            errors.append(fatal(f'Invalid "edges_file": {edges_file}'))
+            errors.append(BluepySnapValidationError.fatal(f'Invalid "edges_file": {edges_file}'))
 
     return errors
 
@@ -558,7 +562,7 @@ def validate_nodes_dict(nodes_dict, components):
             errors = schemas.validate_nodes_schema(nodes_file, population["type"])
             errors += validate_node_population(nodes_file, population, pop_name)
         else:
-            errors.append(fatal(f'Invalid "nodes_file": {nodes_file}'))
+            errors.append(BluepySnapValidationError.fatal(f'Invalid "nodes_file": {nodes_file}'))
 
     return errors
 
@@ -609,8 +613,7 @@ def validate(config_file, skip_slow, only_errors=False, print_errors=True):
             "for partial configs as it depends on the intended use. "
         )
         L.warning(message)
-        errors.append(warning(message))
-
+        errors.append(BluepySnapValidationError.warning(message))
     if only_errors:
         errors = [e for e in errors if e.level == BluepySnapValidationError.FATAL]
 

@@ -21,7 +21,7 @@ def validate(s, *mocks, print_errors=False):
 
 
 def test_error_comparison():
-    err = BluepySnapValidationError(BluepySnapValidationError.WARNING, "hello")
+    err = BluepySnapValidationError.warning("hello")
     assert err != "hello"
 
 
@@ -62,9 +62,7 @@ def test_only_errors():
             only_errors=True,
         )
         assert len(errors) == 1
-        assert list(errors)[0] == BluepySnapValidationError(
-            BluepySnapValidationError.FATAL, "fatal_error"
-        )
+        assert list(errors)[0] == BluepySnapValidationError.fatal("fatal_error")
 
 
 def test_print_errors(capsys):
@@ -114,20 +112,16 @@ def test_missing_data_config_no_population_for_edge(to_remove):
             del c[to_remove[-1]]
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 'No node population for "/edges/default/source_node_id"',
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 'No node population for "/edges/default/target_node_id"',
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 'No node population for "/edges/default2/source_node_id"',
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 'No node population for "/edges/default2/target_node_id"',
             ),
         }
@@ -140,8 +134,7 @@ def test_nodes_population_not_found_in_h5():
             config["networks"]["nodes"][0]["populations"]["fake_population"] = {}
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 f"population 'fake_population' not found in {nodes_file}",
             )
         }
@@ -154,8 +147,7 @@ def test_edges_population_not_found_in_h5():
             config["networks"]["edges"][0]["populations"]["fake_population"] = {}
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 f"population 'fake_population' not found in {edges_file}",
             )
         }
@@ -188,8 +180,7 @@ def test_population_type_mismatch():
             config["networks"]["nodes"][0]["populations"]["default"]["type"] = fake_type
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 (
                     "Population 'default' type mismatch: "
                     f"'biophysical' (nodes_file), '{fake_type}' (config)"
@@ -220,9 +211,7 @@ def test_invalid_config_nodes_file():
         with edit_config(config_copy_path) as config:
             config["networks"]["nodes"][0]["nodes_file"] = "/"
         errors = validate(str(config_copy_path))
-        assert errors == {
-            BluepySnapValidationError(BluepySnapValidationError.FATAL, 'Invalid "nodes_file": /')
-        }
+        assert errors == {BluepySnapValidationError.fatal('Invalid "nodes_file": /')}
 
 
 def test_invalid_config_edges_file():
@@ -230,9 +219,7 @@ def test_invalid_config_edges_file():
         with edit_config(config_copy_path) as config:
             config["networks"]["edges"][0]["edges_file"] = "/"
         errors = validate(str(config_copy_path))
-        assert errors == {
-            BluepySnapValidationError(BluepySnapValidationError.FATAL, 'Invalid "edges_file": /')
-        }
+        assert errors == {BluepySnapValidationError.fatal('Invalid "edges_file": /')}
 
 
 @pytest.mark.parametrize(
@@ -299,23 +286,19 @@ def test_no_bio_component_dirs():
                 del config["components"][dir_]
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "'biophysical_neuron_models_dir' not defined for population 'default'",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 (
                     "at least one of 'morphologies_dir' or 'alternate_morphologies' "
                     "must to be defined for 'biophysical' population 'default'"
                 ),
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "'biophysical_neuron_models_dir' not defined for population 'default2'",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 (
                     "at least one of 'morphologies_dir' or 'alternate_morphologies' "
                     "must to be defined for 'biophysical' population 'default2'"
@@ -334,9 +317,7 @@ def test_invalid_bio_alternate_morphology_dir():
             }
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL, f'Invalid components "{component}": {fake_path}'
-            )
+            BluepySnapValidationError.fatal(f'Invalid components "{component}": {fake_path}')
         }
 
 
@@ -348,8 +329,7 @@ def test_no_morph_files():
             h5f["nodes/default/0/morphology"][0] = "noname"
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
             )
         }
@@ -364,8 +344,7 @@ def test_no_alternate_morph_files():
             }
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tmorph-A.asc\n",
             )
         }
@@ -385,8 +364,7 @@ def test_no_morph_library_files():
             grp.create_dataset("morphology", shape=shape, fillvalue=0, dtype=int)
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 f"missing at least 1 files in group morphology: default/0[{nodes_file}]:\n\tnoname.swc\n",
             )
         }
@@ -399,8 +377,7 @@ def test_no_template_files():
             h5f["nodes/default/0/model_template"][0] = "hoc:noname"
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
             )
         }
@@ -420,8 +397,7 @@ def test_no_template_library_files():
             grp.create_dataset("model_template", shape=shape, fillvalue=0, dtype=int)
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 f"missing at least 1 files in group model_template: default/0[{nodes_file}]:\n\tnoname.hoc\n",
             )
         }
@@ -474,9 +450,7 @@ def test_no_edge_indices():
             del h5f["edges/default/indices"]
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING, f'No "indices" in {edges_file}'
-            ),
+            BluepySnapValidationError.warning(f'No "indices" in {edges_file}'),
         }
 
 
@@ -488,12 +462,8 @@ def test_no_edge_source_to_target():
             del h5f["edges/default/indices/target_to_source"]
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING, f'No "source_to_target" in {edges_file}'
-            ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING, f'No "target_to_source" in {edges_file}'
-            ),
+            BluepySnapValidationError.warning(f'No "source_to_target" in {edges_file}'),
+            BluepySnapValidationError.warning(f'No "target_to_source" in {edges_file}'),
         }
 
 
@@ -504,20 +474,16 @@ def test_no_edge_all_node_ids():
             del h5f["nodes/default/0"]
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "/edges/default/source_node_id does not have node ids in its node population",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "/edges/default/target_node_id does not have node ids in its node population",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "/edges/default2/source_node_id does not have node ids in its node population",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "/edges/default2/target_node_id does not have node ids in its node population",
             ),
         }
@@ -531,21 +497,17 @@ def test_invalid_edge_node_ids():
             h5f["edges/default/target_node_id"][0] = 99999
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "/edges/default/source_node_id misses node ids in its node population: [99999]",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 "/edges/default/target_node_id misses node ids in its node population: [99999]",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 f"Population {edges_file} edges [99999] have node ids [0 1] instead of "
                 "single id 2",
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 f"Population {edges_file} edges [99999] have node ids [0 1] instead of "
                 "single id 0",
             ),
@@ -567,12 +529,10 @@ def test_no_duplicate_population_names():
             config["networks"]["nodes"].append(config["networks"]["nodes"][0])
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 'Already have population "default" in config for type "nodes"',
             ),
-            BluepySnapValidationError(
-                BluepySnapValidationError.FATAL,
+            BluepySnapValidationError.fatal(
                 'Already have population "default2" in config for type "nodes"',
             ),
         }
@@ -584,8 +544,7 @@ def test_partial_config_warning():
             config["metadata"] = {"status": "partial"}
         errors = validate(str(config_copy_path))
         assert errors == {
-            BluepySnapValidationError(
-                BluepySnapValidationError.WARNING,
+            BluepySnapValidationError.warning(
                 (
                     "The Circuit config is partial. Validity cannot be established "
                     "for partial configs as it depends on the intended use. "
