@@ -12,7 +12,7 @@ import pandas as pd
 
 from bluepysnap import schemas
 from bluepysnap.config import Parser
-from bluepysnap.exceptions import BluepySnapValidationError as Error
+from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.morph import EXTENSIONS_MAPPING
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DEFAULT_NODE_TYPE
 from bluepysnap.utils import load_json
@@ -30,7 +30,19 @@ def fatal(message):
     Returns:
         Error: Error with level FATAL
     """
-    return Error(Error.FATAL, message)
+    return BluepySnapValidationError(BluepySnapValidationError.FATAL, message)
+
+
+def warning(message):
+    """Shortcut for a warning.
+
+    Args:
+        message (str): text message
+
+    Returns:
+        Error: Error with level WARNING
+    """
+    return BluepySnapValidationError(BluepySnapValidationError.WARNING, message)
 
 
 def _check_partial_circuit_config(config):
@@ -53,7 +65,7 @@ def _check_components_dir(name, components):
     return []
 
 
-def _check_files(name, files, level):
+def _check_files(name, files):
     """Checks for existence of files within an h5 group.
 
     Args:
@@ -76,19 +88,21 @@ def _check_files(name, files, level):
     if missing:
         filenames = "".join(f"\t{m.name}\n" for m in missing)
 
-        return [
-            Error(level, f"missing at least {len(missing)} files in group {name}:\n{filenames}")
-        ]
+        return [warning(f"missing at least {len(missing)} files in group {name}:\n{filenames}")]
 
     return []
 
 
 def _print_errors(errors):
     """Some fancy errors printing."""
-    colors = {Error.WARNING: "yellow", Error.FATAL: "red", Error.INFO: "green"}
+    colors = {
+        BluepySnapValidationError.WARNING: "yellow",
+        BluepySnapValidationError.FATAL: "red",
+        BluepySnapValidationError.INFO: "green",
+    }
 
     if not errors:
-        print(click.style("No Error: Success.", fg=colors[Error.INFO]))
+        print(click.style("No Error: Success.", fg=colors[BluepySnapValidationError.INFO]))
 
     for error in errors:
         print(click.style(error.level + ": ", fg=colors[error.level]) + str(error))
@@ -229,7 +243,6 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
             errors += _check_files(
                 f"morphology: {group_name}[{group.file.filename}]",
                 (Path(morph_path, m + "." + extension) for m in group_df["morphology"].unique()),
-                Error.WARNING,
             )
 
     if "biophysical_neuron_models_dir" in population:
@@ -243,7 +256,6 @@ def _check_bio_nodes_group(group_df, group, population, population_name):
                 bio_path / _get_model_template_file(m)
                 for m in group_df.get("model_template", pd.Series(dtype="object")).unique()
             ),
-            Error.WARNING,
         )
     else:
         errors.append(
@@ -268,12 +280,13 @@ def _check_nodes_group(group_df, group, population, population_name):
 
     errors = []
     if "model_type" in group_df and group_df["model_type"][0] != population["type"]:
-        message = (
-            f"Population '{population_name}' type mismatch: "
-            f"'{group_df['model_type'][0]}' (nodes_file), "
-            f"'{population['type']}' (config)"
+        errors.append(
+            warning(
+                f"Population '{population_name}' type mismatch: "
+                f"'{group_df['model_type'][0]}' (nodes_file), "
+                f"'{population['type']}' (config)"
+            )
         )
-        errors.append(Error(Error.WARNING, message))
 
     if population["type"] == "biophysical":
         return errors + _check_bio_nodes_group(group_df, group, population, population_name)
@@ -410,10 +423,10 @@ def _check_edges_indices(population):
 
     # These are "optional" (not mentioned in our spec) but better to at least give a warning
     if not source_to_target:
-        errors.append(Error(Error.WARNING, f'No "source_to_target" in {population.file.filename}'))
+        errors.append(warning(f'No "source_to_target" in {population.file.filename}'))
 
     if not target_to_source:
-        errors.append(Error(Error.WARNING, f'No "target_to_source" in {population.file.filename}'))
+        errors.append(warning(f'No "target_to_source" in {population.file.filename}'))
 
     if target_to_source and source_to_target:
         if "source_node_id" in population:
@@ -447,7 +460,7 @@ def _check_edge_population_data(population, nodes):
     if "indices" in population:
         errors += _check_edges_indices(population)
     else:  # "optional" (not mentioned in our spec) but better to at least give a warning
-        errors.append(Error(Error.WARNING, f'No "indices" in {population.file.filename}'))
+        errors.append(warning(f'No "indices" in {population.file.filename}'))
 
     return errors
 
@@ -596,10 +609,10 @@ def validate(config_file, skip_slow, only_errors=False, print_errors=True):
             "for partial configs as it depends on the intended use. "
         )
         L.warning(message)
-        errors.append(Error(Error.WARNING, message))
+        errors.append(warning(message))
 
     if only_errors:
-        errors = [e for e in errors if e.level == Error.FATAL]
+        errors = [e for e in errors if e.level == BluepySnapValidationError.FATAL]
 
     if print_errors:
         _print_errors(errors)

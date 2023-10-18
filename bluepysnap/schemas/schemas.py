@@ -8,7 +8,7 @@ import numpy as np
 import referencing
 import yaml
 
-from bluepysnap.exceptions import BluepySnapValidationError as Error
+from bluepysnap.exceptions import BluepySnapValidationError
 
 DEFINITIONS = "definitions"
 
@@ -80,10 +80,10 @@ def _wrap_errors(filepath, schema_errors, join_str):
 
     if len(warnings) > 0:
         message = filepath + ":\n\t" + "\n\t".join(warnings)
-        ret_errors.append(Error(Error.WARNING, message))
+        ret_errors.append(BluepySnapValidationError(BluepySnapValidationError.WARNING, message))
     if len(errors) > 0:
         message = filepath + ":\n\t" + "\n\t".join(errors)
-        ret_errors.append(Error(Error.FATAL, message))
+        ret_errors.append(BluepySnapValidationError(BluepySnapValidationError.FATAL, message))
 
     return ret_errors
 
