@@ -121,7 +121,7 @@ class Nodes(
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
     def get(self, group=None, properties=None):  # pylint: disable=arguments-differ
-        """Node properties as a pandas DataFrame.
+        """Node properties by iterating populations.
 
         Args:
             group (CircuitNodeIds/int/sequence/str/mapping/None): Which nodes will have their

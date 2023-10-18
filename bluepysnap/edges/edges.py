@@ -82,7 +82,7 @@ class Edges(
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
     def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed
-        """Edge properties as pandas DataFrame.
+        """Edge properties by iterating populations.
 
         Args:
             edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): same as Edges.ids().
