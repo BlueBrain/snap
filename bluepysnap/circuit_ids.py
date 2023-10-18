@@ -23,6 +23,7 @@ import pandas as pd
 
 from bluepysnap import utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
+from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 
 
@@ -320,11 +321,11 @@ class CircuitNodeIds(
     def __iter__(self):
         """Iterator on the CircuitNodeIds."""
         for index in self.index:
-            yield utils.CircuitNodeId(*index)
+            yield CircuitNodeId(*index)
 
     def __getitem__(self, item):
         """Getter on the CircuitNodeIds."""
-        return utils.CircuitNodeId(*self.index[item])
+        return CircuitNodeId(*self.index[item])
 
 
 class CircuitEdgeIds(
@@ -349,8 +350,8 @@ class CircuitEdgeIds(
     def __iter__(self):
         """Iterator on the CircuitEdgeIds."""
         for index in self.index:
-            yield utils.CircuitEdgeId(*index)
+            yield CircuitEdgeId(*index)
 
     def __getitem__(self, item):
         """Getter on the CircuitEdgeIds."""
-        return utils.CircuitEdgeId(*self.index[item])
+        return CircuitEdgeId(*self.index[item])

@@ -8,8 +8,8 @@ import pandas.testing as pdt
 import pytest
 
 import bluepysnap.circuit_ids as test_module
+from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 
 from utils import setup_tempdir
 
