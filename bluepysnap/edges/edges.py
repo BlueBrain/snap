@@ -90,9 +90,8 @@ class Edges(
                 If set to None ids are returned.
 
         Returns:
-            generator: yields tuples of ``(<population_name>, pandas.DataFrame|pandas.Series)``:
-                - Series indexed by edge IDs if ``properties`` is scalar.
-                - DataFrame indexed by edge IDs if ``properties`` is list.
+            generator: yields tuples of ``(<population_name>, pandas.DataFrame)``:
+                - DataFrame indexed by CircuitEdgeIds containing the properties from ``properties``.
 
         Notes:
             The Edges.property_names function will give you all the usable properties

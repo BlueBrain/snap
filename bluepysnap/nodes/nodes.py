@@ -133,7 +133,7 @@ class Nodes(
 
         Returns:
             generator: yields tuples of ``(<population_name>, pandas.DataFrame)``:
-                - DataFrame indexed by NodeCircuitIds containing the properties from ``properties``.
+                - DataFrame indexed by CircuitNodeIds containing the properties from ``properties``.
 
         Notes:
             The NodePopulation.property_names function will give you all the usable properties
