@@ -12,10 +12,10 @@ import pytest
 import bluepysnap.edges.edge_population as test_module
 from bluepysnap.bbp import Synapse
 from bluepysnap.circuit import Circuit
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds, CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
+from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
-from bluepysnap.utils import IDS_DTYPE
 
 from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 

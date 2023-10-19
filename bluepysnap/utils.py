@@ -23,18 +23,13 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitNodeId
+from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import (
     BluepySnapDeprecationError,
     BluepySnapDeprecationWarning,
     BluepySnapError,
 )
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
-
-# dtypes for the different node and edge ids. We are using np.int64 to avoid the infamous
-# https://github.com/numpy/numpy/issues/15084 numpy problem. This type needs to be used for
-# all returned node or edge ids.
-IDS_DTYPE = np.int64
 
 
 class Deprecate:

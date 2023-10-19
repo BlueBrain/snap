@@ -20,8 +20,9 @@
 import numpy as np
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
-from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeId, CircuitNodeIds
-from bluepysnap.edges import EdgePopulation
+from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
+from bluepysnap.circuit_ids_types import CircuitNodeId
+from bluepysnap.edges.edge_population import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
 

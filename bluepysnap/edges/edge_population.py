@@ -26,10 +26,10 @@ from cached_property import cached_property
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitEdgeIds
+from bluepysnap.circuit_ids import CircuitEdgeIds
+from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
-from bluepysnap.utils import IDS_DTYPE
 
 
 def _is_empty(xs):

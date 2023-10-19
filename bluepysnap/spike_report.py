@@ -25,8 +25,8 @@ from cached_property import cached_property
 from libsonata import SonataError, SpikeReader
 
 import bluepysnap._plotting
+from bluepysnap.circuit_ids_types import IDS_DTYPE
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.utils import IDS_DTYPE
 
 
 def _get_reader(config):

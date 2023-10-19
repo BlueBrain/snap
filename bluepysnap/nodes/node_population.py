@@ -68,7 +68,8 @@ from cached_property import cached_property
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap.circuit_ids import CircuitNodeId, CircuitNodeIds
+from bluepysnap.circuit_ids import CircuitNodeIds
+from bluepysnap.circuit_ids_types import CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSet
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Node

@@ -23,7 +23,7 @@ from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
-from bluepysnap.nodes import NodePopulation
+from bluepysnap.nodes.node_population import NodePopulation
 
 
 class Nodes(

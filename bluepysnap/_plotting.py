@@ -21,9 +21,9 @@ import numpy as np
 import pandas as pd
 from more_itertools import roundrobin
 
+from bluepysnap.circuit_ids_types import IDS_DTYPE
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import Node
-from bluepysnap.utils import IDS_DTYPE
 
 L = logging.getLogger(__name__)
 

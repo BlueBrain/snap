@@ -17,17 +17,14 @@
 
 """Circuit ids."""
 import abc
-from collections import namedtuple
 
 import numpy as np
 import pandas as pd
 
 from bluepysnap import utils
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
+from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
-
-CircuitNodeId = namedtuple("CircuitNodeId", ("population", "id"))
-CircuitEdgeId = namedtuple("CircuitEdgeId", ("population", "id"))
 
 
 class CircuitIds(abc.ABC):

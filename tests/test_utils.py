@@ -3,7 +3,7 @@ import numpy.testing as npt
 import pytest
 
 import bluepysnap.utils as test_module
-from bluepysnap.circuit_ids import CircuitEdgeId, CircuitNodeId
+from bluepysnap.circuit_ids_types import CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import (
     BluepySnapDeprecationError,
     BluepySnapDeprecationWarning,
