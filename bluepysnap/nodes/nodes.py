@@ -121,7 +121,7 @@ class Nodes(
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
     def get(self, group=None, properties=None):  # pylint: disable=arguments-differ
-        """Node properties as a pandas DataFrame.
+        """Node properties by iterating populations.
 
         Args:
             group (CircuitNodeIds/int/sequence/str/mapping/None): Which nodes will have their
@@ -132,8 +132,8 @@ class Nodes(
                 Otherwise return all properties.
 
         Returns:
-            pandas.DataFrame: Return a pandas DataFrame indexed by NodeCircuitIds containing the
-                properties from ``properties``.
+            generator: yields tuples of ``(<population_name>, pandas.DataFrame)``:
+                - DataFrame indexed by CircuitNodeIds containing the properties from ``properties``.
 
         Notes:
             The NodePopulation.property_names function will give you all the usable properties

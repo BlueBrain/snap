@@ -83,7 +83,7 @@ class Edges(
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
     def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed
-        """Edge properties as pandas DataFrame.
+        """Edge properties by iterating populations.
 
         Args:
             edge_ids (int/CircuitEdgeId/CircuitEdgeIds/sequence): same as Edges.ids().
@@ -91,9 +91,8 @@ class Edges(
                 If set to None ids are returned.
 
         Returns:
-            pandas.Series/pandas.DataFrame:
-                - A pandas Series indexed by edge IDs if ``properties`` is scalar.
-                - A pandas DataFrame indexed by edge IDs if ``properties`` is list.
+            generator: yields tuples of ``(<population_name>, pandas.DataFrame)``:
+                - DataFrame indexed by CircuitEdgeIds containing the properties from ``properties``.
 
         Notes:
             The Edges.property_names function will give you all the usable properties
