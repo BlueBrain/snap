@@ -207,7 +207,9 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):
     if binsize is not None and binsize <= 0:
         raise BluepySnapError(f"Invalid binsize = {binsize}. Should be > 0.")
 
-    gb = filtered_report.report.groupby(["ids", "population"], observed=False)
+    # Added `observed=True` to silence pandas warning about changing default value.
+    # However, report should not contain categories that are not in the dataframe.
+    gb = filtered_report.report.groupby(["ids", "population"], observed=True)
     values = np.concatenate([np.diff(node_spikes.index.to_numpy()) for _, node_spikes in gb])
 
     if len(values) == 0:

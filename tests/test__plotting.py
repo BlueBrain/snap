@@ -27,18 +27,6 @@ def test__get_pyplot():
     assert plt_test is matplotlib.pyplot
 
 
-def get_report(dlen=100):
-    rng = np.random.default_rng(seed=42)
-    return pd.DataFrame(
-        {
-            "population": dlen * ["default"],
-            "property": pd.Series(dlen * ["value"], dtype="category"),
-            "ids": rng.integers(1, 100, dlen),
-        },
-        index=rng.integers(1, 100, dlen),
-    )
-
-
 def _get_filtered_spike_report():
     return Simulation(TEST_DATA_DIR / "simulation_config.json").spikes.filter()
 
@@ -93,12 +81,6 @@ def test_spikes_isi():
     with pytest.raises(BluepySnapError, match="Invalid binsize"):
         test_module.spikes_isi(filtered_report=None, binsize=0)
 
-    with pytest.raises(BluepySnapError, match="No data to display"):
-        filtered_report = Mock(FilteredSpikeReport)
-        filtered_report.group = "fake"
-        filtered_report.report = get_report(dlen=1)
-        test_module.spikes_isi(filtered_report)
-
     filtered_report = _get_filtered_spike_report()
 
     ax = test_module.spikes_isi(filtered_report)
@@ -114,6 +96,10 @@ def test_spikes_isi():
     ax = test_module.spikes_isi(filtered_report, use_frequency=True, binsize=42, ax=ax)
     assert ax.xaxis.label.get_text() == "Fake X"
     assert ax.yaxis.label.get_text() == "Fake Y"
+
+    with patch.object(test_module.np, "concatenate", Mock(return_value=[])):
+        with pytest.raises(BluepySnapError, match="No data to display"):
+            test_module.spikes_isi(filtered_report)
 
 
 def test_spikes_firing_animation(tmp_path):
