@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Frame report access."""
 import logging
+from collections.abc import Mapping
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,7 @@ from cached_property import cached_property
 from libsonata import ElementReportReader, SonataError
 
 import bluepysnap._plotting
+from bluepysnap import query
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.utils import ensure_ids
 
@@ -33,6 +35,16 @@ def _collect_population_reports(frame_report, cls):
     return {
         population: cls(frame_report, population) for population in frame_report.population_names
     }
+
+
+def _resolve_nodesets(group, node_sets, node_pop, raise_missing_property=True):
+    """Resolve nodesets from group."""
+    if isinstance(group, str):
+        return node_sets[group]
+    elif isinstance(group, Mapping):
+        return query.resolve_nodesets(node_sets, node_pop, group, raise_missing_property)
+
+    return group
 
 
 class PopulationFrameReport:
@@ -162,8 +174,12 @@ class FilteredFrameReport:
             - (population_name, node_id) for the SomaReport
         """
         dataframes = {}
+        node_sets = self.frame_report.simulation.node_sets
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
+            group = _resolve_nodesets(
+                self.group, node_sets, frames.nodes._population, raise_missing_property=False
+            )
             ids = frames.nodes.ids(group=self.group, raise_missing_property=False)
             df = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
             dataframes[population] = df
@@ -291,6 +307,11 @@ class FrameReport:
 class PopulationCompartmentReport(PopulationFrameReport):
     """Access to PopulationCompartmentsReport data."""
 
+    @property
+    def _node_sets(self):
+        """Access to simulation node sets."""
+        return self.frame_report.simulation.node_sets
+
     @cached_property
     def nodes(self):
         """Returns the NodePopulation corresponding to this report."""
@@ -298,6 +319,7 @@ class PopulationCompartmentReport(PopulationFrameReport):
 
     def _resolve(self, group):
         """Transform a group into a node_id array."""
+        group = _resolve_nodesets(group, self._node_sets, self.nodes._population)
         return self.nodes.ids(group=group)
 
 
