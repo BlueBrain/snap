@@ -226,6 +226,12 @@ class TestPopulationSpikeReport:
             self.test_obj.get(group="Layer23"), _create_series([0, 0], [0.2, 1.3])
         )
 
+        # test that simulation node_set is used
+        pdt.assert_series_equal(
+            self.test_obj.get("test_nodes"),
+            _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]),
+        )
+
         # no 0.1, 0.7 from  ("default2", 2)
         ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 2])
         npt.assert_array_equal(self.test_obj.get(ids), _create_series([0, 1, 0], [0.2, 0.3, 1.3]))

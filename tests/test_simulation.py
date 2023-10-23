@@ -61,6 +61,7 @@ def test_all():
     expected_content = {
         **json.loads((TEST_DATA_DIR / "node_sets.json").read_text()),
         "Layer23": {"layer": [2, 3]},
+        "test_nodes": {"node_id": [0, 2]},
     }
     assert simulation.node_sets.content == expected_content
 

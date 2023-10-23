@@ -328,6 +328,9 @@ class TestPopulationCompartmentReport:
         ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 2, 1])
         _assert_frame_equal(self.test_obj.get(group=ids, t_step=t_step), self.df.loc[:, [0, 2]])
 
+        # test that simulation node_set is used
+        _assert_frame_equal(self.test_obj.get("test_nodes", t_step=t_step), self.df.loc[:, [0, 2]])
+
         with pytest.raises(
             BluepySnapError, match="All node IDs must be >= 0 and < 3 for population 'default'"
         ):

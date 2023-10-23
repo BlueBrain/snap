@@ -1,5 +1,8 @@
 {
   "Layer23": {
     "layer": [2,3]
+  },
+  "test_nodes": {
+    "node_id": [0,2]
   }
 }
