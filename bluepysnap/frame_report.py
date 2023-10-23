@@ -309,7 +309,7 @@ class PopulationCompartmentReport(PopulationFrameReport):
             group = self._node_sets[group]
         elif isinstance(group, Mapping):
             group = query.resolve_nodesets(
-                self._node_sets, self.nodes._population, group, raise_missing_property
+                self._node_sets, self.nodes, group, raise_missing_property
             )
         return self.nodes.ids(group=group, raise_missing_property=raise_missing_property)
 

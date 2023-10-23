@@ -687,7 +687,7 @@ class TestNodePopulation:
             assert actual_item == expected_item
 
     def test_get_values_from_sonata(self):
-        nodes = self.test_obj._population
+        nodes = self.test_obj.to_libsonata
 
         # valid attributes
         result = self.test_obj._get_values_from_sonata(nodes, "mtype", [0, 1])

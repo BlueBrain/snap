@@ -59,7 +59,6 @@ Examples:
 """
 import inspect
 from collections.abc import Mapping, Sequence
-from copy import deepcopy
 
 import libsonata
 import numpy as np
@@ -181,7 +180,7 @@ class NodePopulation:
         cached_columns = properties_set.intersection(result.columns)
         if len(cached_columns) < len(properties_set):
             # some requested properties miss from the cache
-            nodes = self._population
+            nodes = self.to_libsonata
             # insert columns at the correct position
             for n, (loc, name) in enumerate(
                 self._iter_selected_properties(existing=result.columns, desired=properties_set)
@@ -196,7 +195,7 @@ class NodePopulation:
         return self._circuit.to_libsonata.node_population_properties(self.name)
 
     @property
-    def _population(self):
+    def to_libsonata(self):
         """Libsonata node population.
 
         Not cached because it would keep the hdf5 file open.
@@ -206,7 +205,7 @@ class NodePopulation:
     @cached_property
     def size(self):
         """Node population size."""
-        return self._population.size
+        return self.to_libsonata.size
 
     @property
     def type(self):
@@ -215,11 +214,11 @@ class NodePopulation:
 
     @cached_property
     def _property_names(self):
-        return set(self._population.attribute_names)
+        return set(self.to_libsonata.attribute_names)
 
     @cached_property
     def _dynamics_params_names(self):
-        return set(utils.add_dynamic_prefix(self._population.dynamics_attribute_names))
+        return set(utils.add_dynamic_prefix(self.to_libsonata.dynamics_attribute_names))
 
     @cached_property
     def _ordered_property_names(self):
@@ -350,9 +349,7 @@ class NodePopulation:
             raise BluepySnapError(f"Unknown node properties: {sorted(unknown_props)}")
 
     def _resolve_nodesets(self, queries, raise_missing_prop):
-        return query.resolve_nodesets(
-            self._node_sets, self._population, queries, raise_missing_prop
-        )
+        return query.resolve_nodesets(self._node_sets, self, queries, raise_missing_prop)
 
     def _node_ids_by_filter(self, queries, raise_missing_prop):
         """Return node IDs if their properties match the `queries` dict.
@@ -410,7 +407,7 @@ class NodePopulation:
         if group is None:
             result = np.arange(self.size)
         elif isinstance(group, NodeSet):
-            result = group.get_ids(self._population, raise_missing_property)
+            result = group.get_ids(self.to_libsonata, raise_missing_property)
         elif isinstance(group, Mapping):
             result = self._node_ids_by_filter(group, raise_missing_property)
         elif isinstance(group, np.ndarray):

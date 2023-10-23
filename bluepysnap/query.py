@@ -177,7 +177,7 @@ def resolve_nodesets(node_sets, population, queries, raise_missing_prop):
 
     Args:
         node_sets (bluepysnap.NodeSets): node sets instance
-        population (libsonata.NodePopulation): node population
+        population (bluepysnap.NodePopulation): node population
         queries (dict): queries to resolve
         raise_missing_prop (bool): raise if property not present in population
 
@@ -190,7 +190,9 @@ def resolve_nodesets(node_sets, population, queries, raise_missing_prop):
             if AND_KEY not in queries:
                 queries[AND_KEY] = []
             node_set = node_sets[queries[queries_key]]
-            queries[AND_KEY].append({NODE_ID_KEY: node_set.get_ids(population, raise_missing_prop)})
+            queries[AND_KEY].append(
+                {NODE_ID_KEY: node_set.get_ids(population.to_libsonata, raise_missing_prop)}
+            )
             del queries[queries_key]
 
     resolved_queries = deepcopy(queries)
