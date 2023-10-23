@@ -64,7 +64,7 @@ class PopulationFrameReport:
         """Access to the population name."""
         return self._population_name
 
-    def _resolve(self, group, raise_missing_property=True):
+    def resolve_nodes(self, group, raise_missing_property=True):
         """Transform a group into ids array.
 
         Notes:
@@ -98,7 +98,7 @@ class PopulationFrameReport:
         if t_stride < 1:
             msg = f"Invalid {t_step=}. It should be None or a multiple of {self.frame_report.dt}."
             raise BluepySnapError(msg)
-        ids = self._resolve(group).tolist()
+        ids = self.resolve_nodes(group).tolist()
         try:
             view = self._frame_population.get(
                 node_ids=ids, tstart=t_start, tstop=t_stop, tstride=t_stride
@@ -164,10 +164,9 @@ class FilteredFrameReport:
             - (population_name, node_id) for the SomaReport
         """
         dataframes = {}
-        node_sets = self.frame_report.simulation.node_sets
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
-            ids = frames._resolve(self.group, raise_missing_property=False)
+            ids = frames.resolve_nodes(self.group, raise_missing_property=False)
             df = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
             dataframes[population] = df
         # optimize when there is at most one non-empty df: use copy=False, and no need to sort
@@ -304,7 +303,7 @@ class PopulationCompartmentReport(PopulationFrameReport):
         """Returns the NodePopulation corresponding to this report."""
         return self.frame_report.simulation.circuit.nodes[self._population_name]
 
-    def _resolve(self, group, raise_missing_property=True):
+    def resolve_nodes(self, group, raise_missing_property=True):
         """Transform a group into a node_id array."""
         if isinstance(group, str):
             group = self._node_sets[group]

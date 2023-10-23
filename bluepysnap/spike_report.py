@@ -90,7 +90,7 @@ class PopulationSpikeReport:
         """Return the NodePopulation corresponding to this spike report."""
         return self.spike_report.simulation.circuit.nodes[self._population_name]
 
-    def _resolve_nodes(self, group, raise_missing_property=True):
+    def resolve_nodes(self, group, raise_missing_property=True):
         """Transform a node group into a node_id array."""
         if isinstance(group, str):
             group = self._node_sets[group]
@@ -111,7 +111,7 @@ class PopulationSpikeReport:
         Returns:
             pandas.Series: return spiking node_ids indexed by sorted spike time.
         """
-        node_ids = self._resolve_nodes(group).tolist()
+        node_ids = self.resolve_nodes(group).tolist()
 
         series_name = "ids"
         try:
@@ -174,7 +174,7 @@ class FilteredSpikeReport:
         dfs = []
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
-            ids = spikes._resolve_nodes(self.group, raise_missing_property=False)
+            ids = spikes.resolve_nodes(self.group, raise_missing_property=False)
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
 

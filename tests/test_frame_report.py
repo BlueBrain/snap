@@ -223,7 +223,7 @@ class TestPopulationFrameReport:
 
     def test__resolve(self):
         with pytest.raises(NotImplementedError):
-            self.test_obj._resolve([1])
+            self.test_obj.resolve_nodes([1])
 
 
 class TestPopulationCompartmentReport:
@@ -241,9 +241,9 @@ class TestPopulationCompartmentReport:
         return self.df.iloc[:0, :0]
 
     def test__resolve(self):
-        npt.assert_array_equal(self.test_obj._resolve({Cell.MTYPE: "L6_Y"}), [1, 2])
-        assert self.test_obj._resolve({Cell.MTYPE: "L2_X"}) == [0]
-        npt.assert_array_equal(self.test_obj._resolve("Node12_L6_Y"), [1, 2])
+        npt.assert_array_equal(self.test_obj.resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
+        assert self.test_obj.resolve_nodes({Cell.MTYPE: "L2_X"}) == [0]
+        npt.assert_array_equal(self.test_obj.resolve_nodes("Node12_L6_Y"), [1, 2])
 
     def test_nodes(self):
         assert self.test_obj.nodes.get(group=2, properties=Cell.MTYPE) == "L6_Y"
@@ -351,11 +351,13 @@ class TestPopulationCompartmentReport:
             self.test_obj.get(t_step=t_step)
 
     def test_get_partially_not_in_report(self):
-        with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([0, 4])):
+        with patch.object(
+            self.test_obj.__class__, "resolve_nodes", return_value=np.asarray([0, 4])
+        ):
             pdt.assert_frame_equal(self.test_obj.get([0, 4]), self.df.loc[:, [0]])
 
     def test_get_not_in_report(self):
-        with patch.object(self.test_obj.__class__, "_resolve", return_value=np.asarray([4])):
+        with patch.object(self.test_obj.__class__, "resolve_nodes", return_value=np.asarray([4])):
             pdt.assert_frame_equal(self.test_obj.get([4]), self.empty_df)
 
     def test_node_ids(self):

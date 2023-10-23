@@ -153,9 +153,9 @@ class TestPopulationSpikeReport:
             test_obj.nodes
 
     def test__resolve_nodes(self):
-        npt.assert_array_equal(self.test_obj._resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
-        assert self.test_obj._resolve_nodes({Cell.MTYPE: "L2_X"}) == [0]
-        npt.assert_array_equal(self.test_obj._resolve_nodes("Node12_L6_Y"), [1, 2])
+        npt.assert_array_equal(self.test_obj.resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
+        assert self.test_obj.resolve_nodes({Cell.MTYPE: "L2_X"}) == [0]
+        npt.assert_array_equal(self.test_obj.resolve_nodes("Node12_L6_Y"), [1, 2])
 
     def test_get(self):
         tested = self.test_obj.get()
@@ -254,13 +254,13 @@ class TestPopulationSpikeReport:
         )
 
     @patch(
-        test_module.__name__ + ".PopulationSpikeReport._resolve_nodes", return_value=np.asarray([4])
+        test_module.__name__ + ".PopulationSpikeReport.resolve_nodes", return_value=np.asarray([4])
     )
     def test_get_not_in_report(self, mock):
         pdt.assert_series_equal(self.test_obj.get(4), _create_series([], []))
 
     @patch(
-        test_module.__name__ + ".PopulationSpikeReport._resolve_nodes",
+        test_module.__name__ + ".PopulationSpikeReport.resolve_nodes",
         return_value=np.asarray([0, 4]),
     )
     def test_get_not_in_report(self, mock):
