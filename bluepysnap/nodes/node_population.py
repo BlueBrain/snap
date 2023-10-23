@@ -348,9 +348,6 @@ class NodePopulation:
         if unknown_props:
             raise BluepySnapError(f"Unknown node properties: {sorted(unknown_props)}")
 
-    def _resolve_nodesets(self, queries, raise_missing_prop):
-        return query.resolve_nodesets(self._node_sets, self, queries, raise_missing_prop)
-
     def _node_ids_by_filter(self, queries, raise_missing_prop):
         """Return node IDs if their properties match the `queries` dict.
 
@@ -368,7 +365,7 @@ class NodePopulation:
             >>>                              { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
 
         """
-        queries = self._resolve_nodesets(queries, raise_missing_prop)
+        queries = query.resolve_nodesets(self._node_sets, self, queries, raise_missing_prop)
         properties = query.get_properties(queries)
         if raise_missing_prop:
             self._check_properties(properties)
