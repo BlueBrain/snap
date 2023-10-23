@@ -90,20 +90,15 @@ class PopulationSpikeReport:
         """Return the NodePopulation corresponding to this spike report."""
         return self.spike_report.simulation.circuit.nodes[self._population_name]
 
-    def _resolve_nodesets(self, group, raise_missing_property=True):
-        """Resolve nodesets from group."""
+    def _resolve_nodes(self, group, raise_missing_property=True):
+        """Transform a node group into a node_id array."""
         if isinstance(group, str):
-            return self._node_sets[group]
+            group = self._node_sets[group]
         elif isinstance(group, Mapping):
-            return query.resolve_nodesets(
+            group = query.resolve_nodesets(
                 self._node_sets, self.nodes._population, group, raise_missing_property
             )
-
-        return group
-
-    def _resolve_nodes(self, group):
-        """Transform a node group into a node_id array."""
-        return self.nodes.ids(group=self._resolve_nodesets(group))
+        return self.nodes.ids(group=group, raise_missing_property=raise_missing_property)
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch spikes from the report.
@@ -179,8 +174,7 @@ class FilteredSpikeReport:
         dfs = []
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
-            group = spikes._resolve_nodesets(self.group, raise_missing_property=False)
-            ids = spikes.nodes.ids(group=group, raise_missing_property=False)
+            ids = spikes._resolve_nodes(self.group, raise_missing_property=False)
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
 

@@ -37,16 +37,6 @@ def _collect_population_reports(frame_report, cls):
     }
 
 
-def _resolve_nodesets(group, node_sets, node_pop, raise_missing_property=True):
-    """Resolve nodesets from group."""
-    if isinstance(group, str):
-        return node_sets[group]
-    elif isinstance(group, Mapping):
-        return query.resolve_nodesets(node_sets, node_pop, group, raise_missing_property)
-
-    return group
-
-
 class PopulationFrameReport:
     """Access to PopulationFrameReport data."""
 
@@ -74,7 +64,7 @@ class PopulationFrameReport:
         """Access to the population name."""
         return self._population_name
 
-    def _resolve(self, group):
+    def _resolve(self, group, raise_missing_property=True):
         """Transform a group into ids array.
 
         Notes:
@@ -177,10 +167,7 @@ class FilteredFrameReport:
         node_sets = self.frame_report.simulation.node_sets
         for population in self.frame_report.population_names:
             frames = self.frame_report[population]
-            group = _resolve_nodesets(
-                self.group, node_sets, frames.nodes._population, raise_missing_property=False
-            )
-            ids = frames.nodes.ids(group=self.group, raise_missing_property=False)
+            ids = frames._resolve(self.group, raise_missing_property=False)
             df = frames.get(group=ids, t_start=self.t_start, t_stop=self.t_stop)
             dataframes[population] = df
         # optimize when there is at most one non-empty df: use copy=False, and no need to sort
@@ -317,10 +304,15 @@ class PopulationCompartmentReport(PopulationFrameReport):
         """Returns the NodePopulation corresponding to this report."""
         return self.frame_report.simulation.circuit.nodes[self._population_name]
 
-    def _resolve(self, group):
+    def _resolve(self, group, raise_missing_property=True):
         """Transform a group into a node_id array."""
-        group = _resolve_nodesets(group, self._node_sets, self.nodes._population)
-        return self.nodes.ids(group=group)
+        if isinstance(group, str):
+            group = self._node_sets[group]
+        elif isinstance(group, Mapping):
+            group = query.resolve_nodesets(
+                self._node_sets, self.nodes._population, group, raise_missing_property
+            )
+        return self.nodes.ids(group=group, raise_missing_property=raise_missing_property)
 
 
 class CompartmentReport(FrameReport):
