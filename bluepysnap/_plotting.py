@@ -40,7 +40,7 @@ def _get_pyplot():
     return plt
 
 
-def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  # pragma: no cover
+def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):
     """Spike firing rate histogram.
 
     This plot shows the number of nodes firing during a range of time.
@@ -88,7 +88,7 @@ def spikes_firing_rate_histogram(filtered_report, time_binsize=None, ax=None):  
     return ax
 
 
-def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
+def spike_raster(filtered_report, y_axis=None, ax=None):
     """Spike raster plot.
 
     Shows a global overview of the circuit's firing nodes. The y axis can project either the
@@ -119,11 +119,14 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
         "ymax": -np.inf,
     }
 
+    def _is_categorical_or_object(dtype):
+        return pd.api.types.is_object_dtype(dtype) or isinstance(dtype, pd.CategoricalDtype)
+
     def _update_raster_properties():
         if y_axis is None:
             props["node_id_offset"] += spikes.nodes.size
             props["pop_separators"].append(props["node_id_offset"])
-        elif isinstance(spikes.nodes.property_dtypes[y_axis], pd.CategoricalDtype):
+        elif _is_categorical_or_object(spikes.nodes.property_dtypes[y_axis]):
             props["categorical_values"].update(spikes.nodes.property_values(y_axis))
         else:
             props["ymin"] = min(props["ymin"], spikes.nodes.get(properties=y_axis).min())
@@ -133,7 +136,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
 
     # use np.int64 if displaying node_ids
     dtype = spike_report[population_names[0]].nodes.property_dtypes[y_axis] if y_axis else IDS_DTYPE
-    if isinstance(dtype, pd.CategoricalDtype):
+    if _is_categorical_or_object(dtype):
         # this is to prevent the problems when concatenating categoricals with unknown categories
         dtype = str
     data = pd.Series(index=report.index, dtype=dtype)
@@ -163,7 +166,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
             ax.set_ylim(0, props["node_id_offset"])
             ax.set_ylabel("nodes")
         else:
-            if np.issubdtype(type(data.iloc[0]), np.number):
+            if np.issubdtype(data.dtype, np.number):
                 # automatically expended by plt if ymin == ymax
                 ax.set_ylim(props["ymin"], props["ymax"])
             else:
@@ -181,7 +184,7 @@ def spike_raster(filtered_report, y_axis=None, ax=None):  # pragma: no cover
     return ax
 
 
-def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # pragma: no cover
+def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):
     # pylint: disable=too-many-locals
     """Interspike interval histogram.
 
@@ -204,7 +207,9 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
     if binsize is not None and binsize <= 0:
         raise BluepySnapError(f"Invalid binsize = {binsize}. Should be > 0.")
 
-    gb = filtered_report.report.groupby(["ids", "population"])
+    # Added `observed=True` to silence pandas warning about changing default value.
+    # However, report should not contain categories that are not in the dataframe.
+    gb = filtered_report.report.groupby(["ids", "population"], observed=True)
     values = np.concatenate([np.diff(node_spikes.index.to_numpy()) for _, node_spikes in gb])
 
     if len(values) == 0:
@@ -232,9 +237,7 @@ def spikes_isi(filtered_report, use_frequency=False, binsize=None, ax=None):  # 
     return ax
 
 
-def spikes_firing_animation(
-    filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20, ax=None
-):  # pragma: no cover
+def spikes_firing_animation(filtered_report, x_axis=Node.X, y_axis=Node.Y, dt=20, ax=None):
     # pylint: disable=too-many-locals,too-many-arguments,anomalous-backslash-in-string
     """Simple animation of simulation spikes.
 
@@ -332,7 +335,7 @@ def spikes_firing_animation(
     return anim, ax
 
 
-def frame_trace(filtered_report, plot_type="mean", ax=None):  # pragma: no cover
+def frame_trace(filtered_report, plot_type="mean", ax=None):
     """Returns a plot displaying the voltage of a node or a compartment as a function of time.
 
     Args:
