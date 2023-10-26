@@ -28,6 +28,7 @@ from more_itertools import first
 from bluepysnap import query, utils
 from bluepysnap.circuit_ids import CircuitEdgeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
+from bluepysnap.edges.edge_population_stats import StatsHelper
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
 
@@ -146,6 +147,11 @@ class EdgePopulation:
             pandas.Series: series indexed by field name with the corresponding dtype as value.
         """
         return self.get([0], list(self.property_names)).dtypes.sort_index()
+
+    @cached_property
+    def stats(self):
+        """Access edge population stats methods."""
+        return StatsHelper(self)
 
     def container_property_names(self, container):
         """Lists the ConstContainer properties shared with the EdgePopulation.

@@ -11,6 +11,7 @@ New Features
 - Added an alias ``validate-circuit`` for the old ``validate`` subcommand
 
   - deprecated ``validate``
+- Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
 
 
 Breaking Changes
