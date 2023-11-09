@@ -5,7 +5,6 @@ import h5py
 import importlib_resources
 import jsonschema
 import numpy as np
-import referencing
 import yaml
 
 from bluepysnap.exceptions import BluepySnapValidationError
@@ -217,7 +216,7 @@ def _resolve_types(resolver, types):
 
     def _resolve_type(type_):
         if type_ not in cache:
-            type_ = resolver.lookup(type_).contents["properties"]["datatype"]["const"]
+            type_ = resolver.resolve(type_)[1]["properties"]["datatype"]["const"]
             if hasattr(np, type_):
                 cache[type_] = getattr(np, type_)
             elif type_ == "utf-8":
@@ -230,11 +229,7 @@ def _resolve_types(resolver, types):
 
 def _get_reference_resolver(schema):
     """Get reference resolver for the given schema."""
-    resource = referencing.Resource(
-        contents=schema,
-        specification=referencing.jsonschema.DRAFT202012,
-    )
-    return referencing.Registry().with_resource("", resource=resource).resolver()
+    return jsonschema.validators.RefResolver("", schema)
 
 
 def nodes_schema_types(nodes_type):

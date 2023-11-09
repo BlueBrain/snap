@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v2.0.2
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Readded compatibility with ``jsonschema<4.18``
+
+
 Version v2.0.1
 --------------
 
