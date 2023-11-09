@@ -228,7 +228,7 @@ class TestPopulationSpikeReport:
 
         # test that simulation node_set is used
         pdt.assert_series_equal(
-            self.test_obj.get("test_nodes"),
+            self.test_obj.get("only_exists_in_simulation"),
             _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]),
         )
 
