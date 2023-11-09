@@ -440,7 +440,7 @@ def test__get_reference_resolver():
     expected = {"const": "test_value"}
     schema = {"$mock_reference": expected}
     resolver = test_module._get_reference_resolver(schema)
-    assert resolver.lookup("#/$mock_reference").contents == expected
+    assert resolver.resolve("#/$mock_reference")[1] == expected
 
 
 def test_nodes_schema_types():

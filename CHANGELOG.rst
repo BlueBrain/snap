@@ -1,6 +1,24 @@
 Changelog
 =========
 
+Version v2.0.2
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Readded compatibility with ``jsonschema<4.18``
+
+
+Version v2.0.1
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fixed pylint ``cyclic-import`` issues
+- Fixed docstrings of ``Nodes.get``, ``Edges.get``
+- Added basic testing to ``_plotting.py``
+
+
 Version v2.0.0
 --------------
 
@@ -28,9 +46,11 @@ Bug Fixes
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - ``nodes.get`` and ``edges.get`` (and ``network.get``) no longer return a dataframe
+
   - returns a generator yielding tuples of ``(<population_name>, <dataframe>)`` instead
   - to get the previous behavior (all in one dataframe): ``pd.concat(df for _, df in circuit.nodes.get(*args, **kwargs))``
 - Removed ``Network.property_dtypes``, ``CircuitIds.index_schema``
+
 - ``Circuit.node_sets``, ``Simulation.node_sets`` returns ``NodeSets`` object initialized with empty dict when node sets file is not present
 - ``NodeSet.resolved`` is no longer available
 - ``FrameReport.node_set`` returns node_set name instead of resolved node set query
