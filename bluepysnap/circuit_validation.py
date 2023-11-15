@@ -15,7 +15,7 @@ from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.morph import EXTENSIONS_MAPPING
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, DEFAULT_NODE_TYPE
-from bluepysnap.utils import load_json
+from bluepysnap.utils import load_json, print_validation_errors
 
 L = logging.getLogger("brainbuilder")
 MAX_MISSING_FILES_DISPLAY = 10
@@ -71,21 +71,6 @@ def _check_files(name, files):
         ]
 
     return []
-
-
-def _print_errors(errors):
-    """Some fancy errors printing."""
-    colors = {
-        BluepySnapValidationError.WARNING: "yellow",
-        BluepySnapValidationError.FATAL: "red",
-        BluepySnapValidationError.INFO: "green",
-    }
-
-    if not errors:
-        print(click.style("No Error: Success.", fg=colors[BluepySnapValidationError.INFO]))
-
-    for error in errors:
-        print(click.style(error.level + ": ", fg=colors[error.level]) + str(error))
 
 
 def _check_duplicate_populations(networks, key):
@@ -599,7 +584,7 @@ def validate(config_file, skip_slow, only_errors=False, print_errors=True):
         print_errors (bool): print errors
 
     Returns:
-        list: List of errors, empty if no errors
+        set: set of errors, empty if no errors
     """
     config = Parser.parse(load_json(config_file), str(Path(config_file).parent))
     errors = schemas.validate_circuit_schema(config_file, config)
@@ -618,6 +603,6 @@ def validate(config_file, skip_slow, only_errors=False, print_errors=True):
         errors = [e for e in errors if e.level == BluepySnapValidationError.FATAL]
 
     if print_errors:
-        _print_errors(errors)
+        print_validation_errors(errors)
 
     return set(errors)

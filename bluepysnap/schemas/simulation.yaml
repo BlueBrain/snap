@@ -1,0 +1,229 @@
+title: SONATA Simulation Config
+description: schema for BBP SONATA simulation config
+required:
+  - run
+properties:
+  version:
+    type: number
+  manifest:
+    type: object
+  network:
+    type: string
+  target_simulator:
+    type: string
+  node_sets_file:
+    type: string
+  node_set:
+    type: string
+  run:
+    type: object
+    required:
+      - tstop
+      - dt
+      - random_seed
+    properties:
+      tstop:
+        type: number
+      dt:
+        $ref: "#/$simulation_defs/positive_float"
+      random_seed:
+        $ref: "#/$simulation_defs/non_negative_integer"
+      spike_threshold:
+        type: integer
+      integration_method:
+        type: string
+        enum:
+          - "0"
+          - "1"
+          - "2"
+      stimulus_seed:
+        $ref: "#/$simulation_defs/non_negative_integer"
+      ionchannel_seed:
+        $ref: "#/$simulation_defs/non_negative_integer"
+      minis_seed:
+        $ref: "#/$simulation_defs/non_negative_integer"
+      synapse_seed:
+        $ref: "#/$simulation_defs/non_negative_integer"
+      electrodes_file:
+        type: string
+  output:
+    type: object
+    properties:
+      output_dir:
+        type: string
+      log_file:
+        type: string
+      spikes_file:
+        type: string
+      spikes_sort_order:
+        type: string
+        enum:
+          - "by_id"
+          - "by_time"
+          - "none"
+  conditions:
+    type: object
+    properties:
+      celsius:
+        type: number
+      v_init:
+        type: number
+      spike_location:
+        type: string
+        enum:
+          - "AIS"
+          - "soma"
+      extracellular_calcium:
+        type: number
+      randomize_gaba_rise_time:
+        type: boolean
+      mechanisms:
+        type: object
+        patternProperties:
+          # "" is used as a wild card for suffix names of mod files
+          "":
+            type: object
+      modifications:
+        type: object
+        patternProperties:
+          # "" is used as a wild card for modification names
+          "":
+            type: object
+            required:
+              - node_set
+              - type
+            properties:
+              node_set:
+                type: string
+              type:
+                type: string
+                enum:
+                  - "ConfigureAllSections"
+                  - "TTX"
+              section_configure:
+                type: string
+            # if type == "ConfigureAllSections", section_configure is mandatory
+            if:
+              properties:
+                type:
+                  const: "ConfigureAllSections"
+              # if type is not required here, too, we get an error that 'section_configure' is required if type is not specified
+              required:
+                - type
+            then:
+              required:
+                - section_configure
+  inputs:
+    type: object
+    patternProperties:
+      # "" is used as a wild card for input name
+      "":
+        allOf:
+          - $ref: "#/$input_defs/modules/linear"
+          - $ref: "#/$input_defs/modules/relative_linear"
+          - $ref: "#/$input_defs/modules/pulse"
+          - $ref: "#/$input_defs/modules/subthreshold"
+          - $ref: "#/$input_defs/modules/hyperpolarizing"
+          - $ref: "#/$input_defs/modules/synapse_replay"
+          - $ref: "#/$input_defs/modules/seclamp"
+          - $ref: "#/$input_defs/modules/noise"
+          - $ref: "#/$input_defs/modules/shot_noise"
+          - $ref: "#/$input_defs/modules/absolute_shot_noise"
+          - $ref: "#/$input_defs/modules/relative_shot_noise"
+          - $ref: "#/$input_defs/modules/ornstein_uhlenbeck"
+          - $ref: "#/$input_defs/modules/relative_ornstein_uhlenbeck"
+  reports:
+    type: object
+    patternProperties:
+      # "" is used as a wild card for report name
+      "":
+        required:
+          - type
+          - variable_name
+          - dt
+          - start_time
+          - end_time
+        properties:
+          cells:
+            type: string
+          sections:
+            type: string
+            enum:
+              - "all"
+              - "apic"
+              - "axon"
+              - "dend"
+              - "soma"
+          type:
+            type: string
+            enum:
+              - "compartment"
+              - "lfp"
+              - "summation"
+              - "synapse"
+          scaling:
+            type: string
+            enum:
+              - "area"
+              - "none"
+          compartments:
+            type: string
+            enum:
+              - "all"
+              - "center"
+          variable_name:
+            type: string
+          unit:
+            type: string
+          dt:
+            $ref: "#/$simulation_defs/positive_float"
+          start_time:
+            type: number
+          end_time:
+            type: number
+          file_name:
+            type: string
+          enabled:
+            type: boolean
+  connection_overrides:
+    type: array
+    items:
+      type: object
+      required:
+        - name
+        - source
+        - target
+      properties:
+        name:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        weight:
+          type: number
+        spont_minis:
+          type: number
+        synapse_configure:
+          type: string
+        modoverride:
+          type: string
+        synapse_delay_override:
+          type: number
+        delay:
+          type: number
+        neuromodulation_dtc:
+          type: number
+        neuromodulation_strength:
+          type: number
+  metadata:
+    type: object
+  beta_features:
+    type: object
+$simulation_defs:
+  non_negative_integer:
+    type: integer
+    minimum: 0
+  positive_float:
+    type: number
+    exclusiveMinimum: 0

@@ -3,4 +3,5 @@ from bluepysnap.schemas.schemas import (
     validate_circuit_schema,
     validate_edges_schema,
     validate_nodes_schema,
+    validate_simulation_schema,
 )

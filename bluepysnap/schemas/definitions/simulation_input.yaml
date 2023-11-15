@@ -1,0 +1,308 @@
+title: SONATA Simulation Input definitions
+description: schemas for different rules based on the input module
+$input_defs:
+  base:
+    type: object
+    required:
+      - module
+      - input_type
+      - delay
+      - duration
+      - node_set
+    properties:
+      module:
+        type: string
+        enum:
+          - "linear"
+          - "relative_linear"
+          - "pulse"
+          - "subthreshold"
+          - "hyperpolarizing"
+          - "synapse_replay"
+          - "seclamp"
+          - "noise"
+          - "shot_noise"
+          - "relative_shot_noise"
+          - "absolute_shot_noise"
+          - "ornstein_uhlenbeck"
+          - "relative_ornstein_uhlenbeck"
+      input_type:
+        type: string
+        enum:
+          - "spikes"
+          - "extracellular_stimulation"
+          - "current_clamp"
+          - "voltage_clamp"
+          - "conductance"
+      delay:
+        type: number
+      duration:
+        type: number
+      node_set:
+        type: string
+      amp_cv:
+        type: number
+      amp_end:
+        type: number
+      amp_mean:
+        type: number
+      amp_start:
+        type: number
+      amp_var:
+        type: number
+      decay_time:
+        type: number
+      dt:
+        $ref: "#/$simulation_defs/positive_float"
+      frequency:
+        type: number
+      mean:
+        type: number
+      mean_percent:
+        type: number
+      percent_end:
+        type: number
+      percent_less:
+        type: integer
+      percent_start:
+        type: number
+      random_seed:
+        $ref: "#/$simulation_defs/non_negative_integer"
+      rate:
+        type: number
+      reversal:
+        type: number
+      rise_time:
+        type: number
+      sd_percent:
+        type: number
+      series_resistance:
+        type: number
+      sigma:
+        type: number
+      spike_file:
+        type: string
+      source:
+        type: string
+      tau:
+        type: number
+      variance:
+        type: number
+      voltage:
+        type: number
+      width:
+        type: number
+  modules:
+    linear:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "linear"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "current_clamp"
+        required:
+          - amp_start
+    relative_linear:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "relative_linear"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "current_clamp"
+        required:
+          - percent_start
+    pulse:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "pulse"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "current_clamp"
+        required:
+          - amp_start
+          - width
+          - frequency
+    subthreshold:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "subthreshold"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "current_clamp"
+        required:
+          - percent_less
+    hyperpolarizing:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "hyperpolarizing"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "current_clamp"
+    synapse_replay:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "synapse_replay"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "spikes"
+        required:
+          - spike_file
+    seclamp:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "seclamp"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "voltage_clamp"
+        required:
+          - voltage
+    noise:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "noise"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            const: "current_clamp"
+        oneOf:
+          - required: [mean]
+          - required: [mean_percent]
+        messages:
+          oneOf: "either 'mean' or 'mean_percent' is required (not both)"
+    shot_noise:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "shot_noise"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            enum:
+             - "current_clamp"
+             - "conductance"
+        required:
+          - rise_time
+          - decay_time
+          - rate
+          - amp_mean
+          - amp_var
+    absolute_shot_noise:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "absolute_shot_noise"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            enum:
+             - "current_clamp"
+             - "conductance"
+        required:
+          - rise_time
+          - decay_time
+          - rate
+          - amp_cv
+          - mean
+          - sigma
+    relative_shot_noise:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "relative_shot_noise"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            enum:
+             - "current_clamp"
+             - "conductance"
+        required:
+          - rise_time
+          - decay_time
+          - rate
+          - amp_cv
+          - mean_percent
+          - sd_percent
+    ornstein_uhlenbeck:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "ornstein_uhlenbeck"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            enum:
+             - "current_clamp"
+             - "conductance"
+        required:
+          - tau
+          - mean
+          - sigma
+    relative_ornstein_uhlenbeck:
+      $ref: "#/$input_defs/base"
+      if:
+        properties:
+          module:
+            const: "relative_ornstein_uhlenbeck"
+        required:
+          - module
+      then:
+        properties:
+          input_type:
+            enum:
+             - "current_clamp"
+             - "conductance"
+        required:
+          - tau
+          - mean_percent
+          - sd_percent

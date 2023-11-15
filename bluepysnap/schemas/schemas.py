@@ -57,7 +57,11 @@ def _wrap_errors(filepath, schema_errors, join_str):
             path = _parse_path(list(e.path)[:-1], join_str)
             warnings.append(f"incorrect datatype '{e.instance}' for '{path}': {e.message}")
         else:
-            if e.schema_path[-1] in ("maxProperties", "minProperties"):
+            if e.schema_path[-1] in e.schema.get("messages", {}):
+                path = _parse_path(e.path, join_str)
+                message = e.schema["messages"][e.schema_path[-1]]
+                message = f"{path}: {message}"
+            elif e.schema_path[-1] in ("maxProperties", "minProperties"):
                 path = _parse_path(e.path, join_str)
                 many_or_few = "many" if e.schema_path[-1] == "maxProperties" else "few"
                 message = f"{path}: too {many_or_few} properties"
@@ -73,7 +77,8 @@ def _wrap_errors(filepath, schema_errors, join_str):
             else:
                 path = _parse_path(e.path, join_str)
                 message = f"{path}: {e.message}"
-            errors.append(message)
+            if message not in errors:
+                errors.append(message)
 
     ret_errors = []
 
@@ -98,7 +103,7 @@ def _parse_schema(object_type, sub_type=None):
     """Parses the schema from partial schemas for given object type.
 
     Args:
-        object_type (str): Type of the object. Accepts "edge", "node" and "circuit".
+        object_type (str): Type of the object. Accepts "edge", "node", "circuit" and "simulation".
         sub_type (str): Sub type of object. E.g., "biophysical".
 
     Returns:
@@ -106,6 +111,10 @@ def _parse_schema(object_type, sub_type=None):
     """
     if object_type == "circuit":
         return _load_schema_file(object_type)
+    elif object_type == "simulation":
+        schema = _load_schema_file(DEFINITIONS, "simulation_input")
+        schema.update(_load_schema_file(object_type))
+        return schema
     elif object_type not in ("edge", "node"):
         raise RuntimeError(f"Unknown object type: {object_type}")
 
@@ -153,6 +162,21 @@ def _get_h5_structure_as_dict(h5):
             properties[key] = value
 
     return properties
+
+
+def validate_simulation_schema(path, config):
+    """Validates a simulation config against a schema.
+
+    Args:
+        path (str): path to the config (for error messages)
+        config (dict): resolved bluepysnap config
+
+    Returns:
+        list: List of errors, empty if no errors
+    """
+    errors = _validate_schema_for_dict(_parse_schema("simulation"), config)
+
+    return _wrap_errors(path, errors, ".")
 
 
 def validate_circuit_schema(path, config):

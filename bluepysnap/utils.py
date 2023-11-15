@@ -21,6 +21,7 @@ import json
 import warnings
 from collections.abc import Iterable
 
+import click
 import numpy as np
 
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
@@ -28,6 +29,7 @@ from bluepysnap.exceptions import (
     BluepySnapDeprecationError,
     BluepySnapDeprecationWarning,
     BluepySnapError,
+    BluepySnapValidationError,
 )
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX
 
@@ -167,3 +169,18 @@ def quaternion2mat(aqw, aqx, aqy, aqz):
     )
 
     return [mm[..., i] for i in range(len(aq))]
+
+
+def print_validation_errors(errors):
+    """Some fancy errors printing."""
+    colors = {
+        BluepySnapValidationError.WARNING: "yellow",
+        BluepySnapValidationError.FATAL: "red",
+        BluepySnapValidationError.INFO: "green",
+    }
+
+    if not errors:
+        print(click.style("No Error: Success.", fg=colors[BluepySnapValidationError.INFO]))
+
+    for error in errors:
+        print(click.style(error.level + ": ", fg=colors[error.level]) + str(error))
