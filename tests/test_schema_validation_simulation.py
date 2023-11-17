@@ -87,7 +87,7 @@ def _remove_from_config(config, to_remove):
 
 @pytest.mark.parametrize("config", [MINIMUM_MANDATORY, MANDATORY_FOR_OPTIONALS])
 def test_all_mandatory_fields_pass(config):
-    """Check that the defined mandatories pass"""
+    """Check that the globally defined mandatory fields pass validation."""
     assert _validate(config) == []
 
 
@@ -228,8 +228,7 @@ def test_inputs_expected_values(input_data):
 
         removed = entry[-1]
 
-        # in the case of `noise` either `mean` or `mean_percent` is required. If neither is given
-        # message reports that the input definition is not valid under any of the schemas.
+        # noise module requires either mean or mean percent
         if module == "noise" and removed in ("mean", "mean_percent"):
             assert "either 'mean' or 'mean_percent' is required (not both)" in res[0].message
         else:
@@ -240,8 +239,7 @@ def test_inputs_expected_values(input_data):
     res = _validate(conf)
     assert len(res) == 1
 
-    # if there's multiple possible input types for a module the message reports that
-    # [...].input_type: 'fake_type' is not valid under any of the given schemas
+    # modules *shot_noise, *ornstein_uhlenbeck have two possible input types
     if "shot_noise" in module or "ornstein_uhlenbeck" in module:
         assert (
             f"input_type: '{wrong_type}' is not one of ['current_clamp', 'conductance']"
