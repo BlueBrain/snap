@@ -23,3 +23,11 @@ def test_cli_no_config():
     result = runner.invoke(cli, ["validate"])
     assert result.exit_code == 2
     assert "Missing argument 'CONFIG_FILE'" in result.stdout
+
+
+def test_cli_validate_simulation_correct():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["validate-simulation", str(TEST_DATA_DIR / "simulation_config.json")]
+    )
+    assert result.exit_code == 0

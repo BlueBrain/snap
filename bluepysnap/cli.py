@@ -3,7 +3,9 @@ import logging
 
 import click
 
-from bluepysnap import circuit_validation
+from bluepysnap import circuit_validation, simulation_validation
+
+CLICK_EXISTING_FILE = click.Path(exists=True, file_okay=True, dir_okay=False)
 
 
 @click.group()
@@ -19,7 +21,7 @@ def cli(verbose):
 
 
 @cli.command()
-@click.argument("config_file", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.argument("config_file", type=CLICK_EXISTING_FILE)
 @click.option(
     "--skip-slow/--no-skip-slow",
     default=True,
@@ -30,7 +32,7 @@ def cli(verbose):
 )
 @click.option("--only-errors", is_flag=True, help="Only print fatal errors (ignore warnings)")
 def validate(config_file, skip_slow, only_errors):
-    """Validate of Sonata circuit based on config file.
+    """Validate Sonata circuit based on config file.
 
     Args:
         config_file (str): path to Sonata circuit config file
@@ -38,3 +40,14 @@ def validate(config_file, skip_slow, only_errors):
         only_errors (bool): only print fatal errors
     """
     circuit_validation.validate(config_file, skip_slow, only_errors)
+
+
+@cli.command()
+@click.argument("config_file", type=CLICK_EXISTING_FILE)
+def validate_simulation(config_file):
+    """Validate Sonata simulation based on config file.
+
+    Args:
+        config_file (str): path to Sonata simulation config file
+    """
+    simulation_validation.validate(config_file)
