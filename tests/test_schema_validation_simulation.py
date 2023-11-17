@@ -387,3 +387,55 @@ def test_inputs():
     res = _validate(config)
     assert len(res) == 1
     assert "fake_input: either 'mean' or 'mean_percent' is required (not both)" in res[0].message
+
+
+def test_rest_of_config():
+    config = {
+        **MINIMUM_MANDATORY,
+        "version": 1.1,
+        "manifest": {"fake_path_key": "fake_path_value"},
+        "network": "fake_circuit_path",
+        "target_simulator": "NEURON",
+        "node_sets_file": "fake_node_sets_file",
+        "node_set": "fake_node_set",
+        "metadata": {
+            "fake_meta_key_0": "fake_string",
+            "fake_meta_key_1": -0.1,
+            "fake_meta_key_2": {},
+            "fake_meta_key_3": [],
+        },
+        "beta_features": {
+            "fake_beta_key_0": "fake_string",
+            "fake_beta_key_1": -0.1,
+            "fake_beta_key_2": {},
+            "fake_beta_key_3": [],
+        },
+    }
+
+    assert _validate(config) == []
+
+    config["target_simulator"] = "fail"
+
+    res = _validate(config)
+    assert "target_simulator: 'fail' is not one of ['CORENEURON', 'NEURON']" in res[0].message
+
+
+def test_type_definitions():
+    config = deepcopy(MINIMUM_MANDATORY)
+    config["run"].update(
+        {
+            "dt": 0,
+            "spike_threshold": 0.1,
+            "random_seed": -1,
+            "tstop": "1",
+            "electrodes_file": 1,
+        }
+    )
+
+    res = _validate(config)
+
+    assert "dt: 0 is less than or equal to the minimum of 0" in res[0].message
+    assert "spike_threshold: 0.1 is not of type 'integer'" in res[0].message
+    assert "random_seed: -1 is less than the minimum of 0" in res[0].message
+    assert "tstop: '1' is not of type 'number'" in res[0].message
+    assert "electrodes_file: 1 is not of type 'string'" in res[0].message
