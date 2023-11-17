@@ -11,6 +11,9 @@ properties:
     type: string
   target_simulator:
     type: string
+    enum:
+      - "CORENEURON"
+      - "NEURON"
   node_sets_file:
     type: string
   node_set:
