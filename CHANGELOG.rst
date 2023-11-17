@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version v2.1.0
+--------------
+
+New Features
+~~~~~~~~~~~~
+- Added simulation config validation
+- Added a new  commandline subcommand: ``validate-simulation``
+
+
 Version v2.0.2
 --------------
 

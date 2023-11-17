@@ -5,7 +5,6 @@ The idea here is to not depend on libsonata if possible, so we can use this in a
 import logging
 from pathlib import Path
 
-import click
 import h5py
 import numpy as np
 import pandas as pd

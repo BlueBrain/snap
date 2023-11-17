@@ -1,3 +1,4 @@
+"""Standalone module that validates Sonata simulation. See ``validate-simulation`` function."""
 from pathlib import Path
 
 from bluepysnap import schemas
