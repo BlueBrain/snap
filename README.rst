@@ -62,7 +62,7 @@ This functionality is provided by either the cli function:
 
 .. code-block:: shell
 
-    bluepysnap validate my/circuit/path/circuit_config.json
+    bluepysnap validate-circuit my/circuit/path/circuit_config.json
 
 
 Or a python free function:
