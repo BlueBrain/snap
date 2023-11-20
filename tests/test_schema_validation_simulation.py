@@ -126,16 +126,7 @@ def test_all_mandatory_fields_missing(to_remove):
         {"module": "noise", "input_type": "current_clamp", "mean_percent": 0.1},
         {
             "module": "shot_noise",
-            "input_type": "current_clamp",
-            "rise_time": 0.1,
-            "decay_time": 0.1,
-            "rate": 0.1,
-            "amp_mean": 0.1,
-            "amp_var": 0.1,
-        },
-        {
-            "module": "shot_noise",
-            "input_type": "conductance",
+            "input_type": ["current_clamp", "conductance"],
             "rise_time": 0.1,
             "decay_time": 0.1,
             "rate": 0.1,
@@ -144,17 +135,7 @@ def test_all_mandatory_fields_missing(to_remove):
         },
         {
             "module": "absolute_shot_noise",
-            "input_type": "current_clamp",
-            "rise_time": 0.1,
-            "decay_time": 0.1,
-            "rate": 0.1,
-            "amp_cv": 0.1,
-            "mean": 0.1,
-            "sigma": 0.1,
-        },
-        {
-            "module": "absolute_shot_noise",
-            "input_type": "conductance",
+            "input_type": ["current_clamp", "conductance"],
             "rise_time": 0.1,
             "decay_time": 0.1,
             "rate": 0.1,
@@ -164,17 +145,7 @@ def test_all_mandatory_fields_missing(to_remove):
         },
         {
             "module": "relative_shot_noise",
-            "input_type": "current_clamp",
-            "rise_time": 0.1,
-            "decay_time": 0.1,
-            "rate": 0.1,
-            "amp_cv": 0.1,
-            "mean_percent": 0.1,
-            "sd_percent": 0.1,
-        },
-        {
-            "module": "relative_shot_noise",
-            "input_type": "conductance",
+            "input_type": ["current_clamp", "conductance"],
             "rise_time": 0.1,
             "decay_time": 0.1,
             "rate": 0.1,
@@ -184,28 +155,14 @@ def test_all_mandatory_fields_missing(to_remove):
         },
         {
             "module": "ornstein_uhlenbeck",
-            "input_type": "current_clamp",
-            "tau": 0.1,
-            "mean": 0.1,
-            "sigma": 0.1,
-        },
-        {
-            "module": "ornstein_uhlenbeck",
-            "input_type": "conductance",
+            "input_type": ["current_clamp", "conductance"],
             "tau": 0.1,
             "mean": 0.1,
             "sigma": 0.1,
         },
         {
             "module": "relative_ornstein_uhlenbeck",
-            "input_type": "current_clamp",
-            "tau": 0.1,
-            "mean_percent": 0.1,
-            "sd_percent": 0.1,
-        },
-        {
-            "module": "relative_ornstein_uhlenbeck",
-            "input_type": "conductance",
+            "input_type": ["current_clamp", "conductance"],
             "tau": 0.1,
             "mean_percent": 0.1,
             "sd_percent": 0.1,
@@ -214,39 +171,44 @@ def test_all_mandatory_fields_missing(to_remove):
 )
 def test_inputs_expected_values(input_data):
     """Test that error is reported on missing mandatory fields and on wrong `input_type`."""
-    tested = _get_fake_inputs(input_data)
-    module, input_type = input_data["module"], input_data["input_type"]
+    input_types = input_data.pop("input_type")
+    input_types = [input_types] if isinstance(input_types, str) else input_types
 
-    config = {**MINIMUM_MANDATORY, **tested}
-    assert _validate(config) == []
+    for input_type in input_types:
+        tested = _get_fake_inputs({**input_data, "input_type": input_type})
 
-    for entry in _get_remove_paths(tested):
-        conf = deepcopy(config)
-        _remove_from_config(conf, entry)
+        config = {**MINIMUM_MANDATORY, **tested}
+        assert _validate(config) == []
+
+        module = input_data["module"]
+
+        for entry in _get_remove_paths(tested):
+            conf = deepcopy(config)
+            _remove_from_config(conf, entry)
+            res = _validate(conf)
+            assert len(res) == 1
+
+            removed = entry[-1]
+
+            # noise module requires either mean or mean percent
+            if module == "noise" and removed in ("mean", "mean_percent"):
+                assert "either 'mean' or 'mean_percent' is required (not both)" in res[0].message
+            else:
+                assert f"'{removed}' is a required property" in res[0].message
+
+        wrong_type = "extracellular_stimulation"
+        conf = {**MINIMUM_MANDATORY, **_get_fake_inputs({**input_data, "input_type": wrong_type})}
         res = _validate(conf)
         assert len(res) == 1
 
-        removed = entry[-1]
-
-        # noise module requires either mean or mean percent
-        if module == "noise" and removed in ("mean", "mean_percent"):
-            assert "either 'mean' or 'mean_percent' is required (not both)" in res[0].message
+        # modules *shot_noise, *ornstein_uhlenbeck have two possible input types
+        if "shot_noise" in module or "ornstein_uhlenbeck" in module:
+            assert (
+                f"input_type: '{wrong_type}' is not one of ['current_clamp', 'conductance']"
+                in res[0].message
+            )
         else:
-            assert f"'{removed}' is a required property" in res[0].message
-
-    wrong_type = "extracellular_stimulation"
-    conf = {**MINIMUM_MANDATORY, **_get_fake_inputs({**input_data, "input_type": wrong_type})}
-    res = _validate(conf)
-    assert len(res) == 1
-
-    # modules *shot_noise, *ornstein_uhlenbeck have two possible input types
-    if "shot_noise" in module or "ornstein_uhlenbeck" in module:
-        assert (
-            f"input_type: '{wrong_type}' is not one of ['current_clamp', 'conductance']"
-            in res[0].message
-        )
-    else:
-        assert f"input_type: '{input_type}' was expected" in res[0].message
+            assert f"input_type: '{input_type}' was expected" in res[0].message
 
 
 def test_run():
