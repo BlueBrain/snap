@@ -62,7 +62,7 @@ This functionality is provided by either the cli function:
 
 .. code-block:: shell
 
-    bluepysnap validate my/circuit/path/circuit_config.json
+    bluepysnap validate-circuit my/circuit/path/circuit_config.json
 
 
 Or a python free function:
@@ -71,6 +71,31 @@ Or a python free function:
 
     from bluepysnap.circuit_validation import validate
     errors = validate("my/circuit/path/circuit_config.json")
+
+
+Simulation Validation
+~~~~~~~~~~~~~~~~~~~~~
+
+Similarly to circuit validation, Blue Brain SNAP also provides a SONATA simulation validator for verifying simulation configs.
+
+Currently, the validator only verifies that:
+
+- all the mandatory fields are present in the config file
+- all the properties in the `simulation config specification <https://sonata-extension.readthedocs.io/en/latest/sonata_simulation.html>`__ have correct data types and accepted values
+
+This functionality is provided by either the cli function:
+
+.. code-block:: shell
+
+    bluepysnap validate-simulation my/circuit/path/simulation_config.json
+
+
+Or a python free function:
+
+.. code-block:: python3
+
+    from bluepysnap.simulation_validation import validate
+    errors = validate("my/circuit/path/simulation_config.json")
 
 
 Acknowledgements
