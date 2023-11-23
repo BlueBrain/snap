@@ -3,8 +3,21 @@ import numpy.testing as npt
 import pandas as pd
 import pytest
 
-from bluepysnap import BluepySnapError
-from bluepysnap.query import _circuit_mask, _logical_and, _logical_or, _positional_mask, resolve_ids
+from bluepysnap import BluepySnapError, Circuit
+from bluepysnap.node_sets import NodeSets
+from bluepysnap.query import (
+    AND_KEY,
+    NODE_ID_KEY,
+    NODE_SET_KEY,
+    _circuit_mask,
+    _logical_and,
+    _logical_or,
+    _positional_mask,
+    resolve_ids,
+    resolve_nodesets,
+)
+
+from utils import TEST_DATA_DIR
 
 
 def test_positional_mask():
@@ -32,6 +45,60 @@ def test_population_mask():
     queries, mask = _circuit_mask(data, "default", {"other": "val"})
     assert queries == {"other": "val"}
     npt.assert_array_equal(mask, [True, True, True])
+
+
+@pytest.mark.parametrize(
+    "query,expected",
+    [
+        (
+            {NODE_SET_KEY: "Node12_L6_Y", NODE_ID_KEY: 1},
+            {NODE_ID_KEY: 1, AND_KEY: [{NODE_ID_KEY: [1, 2]}]},
+        ),
+        (
+            {NODE_SET_KEY: "Layer23", "any_query": "any_value"},
+            {"any_query": "any_value", AND_KEY: [{NODE_ID_KEY: [0]}]},
+        ),
+        (
+            {NODE_SET_KEY: "Empty_nodes"},
+            {AND_KEY: [{NODE_ID_KEY: []}]},
+        ),
+        (
+            {"any_query": "any_value"},
+            {"any_query": "any_value"},
+        ),
+        (
+            {AND_KEY: [{NODE_SET_KEY: "Node12_L6_Y"}, {NODE_SET_KEY: "Layer23"}]},
+            {AND_KEY: [{AND_KEY: [{NODE_ID_KEY: [1, 2]}]}, {AND_KEY: [{NODE_ID_KEY: [0]}]}]},
+        ),
+    ],
+)
+def test_resolve_nodesets_success(query, expected):
+    circuit = Circuit(str(TEST_DATA_DIR / "circuit_config.json"))
+    population, node_sets = circuit.nodes["default"], circuit.node_sets
+
+    res = resolve_nodesets(node_sets, population, query, raise_missing_prop=True)
+    npt.assert_equal(res, expected)
+
+
+def test_resolve_nodesets_exceptions():
+    population = Circuit(str(TEST_DATA_DIR / "circuit_config.json")).nodes["default"]
+    node_sets = NodeSets.from_dict({"fake_set": {"missing_property": "fake"}})
+
+    query = {NODE_SET_KEY: "fake_set"}
+    res = resolve_nodesets(node_sets, population, query, raise_missing_prop=False)
+    expected = {AND_KEY: [{NODE_ID_KEY: []}]}
+    npt.assert_equal(res, expected)
+
+    with pytest.raises(BluepySnapError, match="No such attribute: 'missing_property'"):
+        resolve_nodesets(node_sets, population, query, raise_missing_prop=True)
+
+    query = {NODE_SET_KEY: "missing_set"}
+    with pytest.raises(BluepySnapError, match="Undefined node set: 'missing_set'"):
+        resolve_nodesets(node_sets, population, query, raise_missing_prop=True)
+
+    query = {NODE_SET_KEY: ["Node12_L6_Y", "Layer23"]}
+    with pytest.raises(BluepySnapError, match=r"Unexpected type: 'list' \(expected: 'str'\)"):
+        resolve_nodesets(node_sets, population, query, raise_missing_prop=True)
 
 
 def test_resolve_ids():

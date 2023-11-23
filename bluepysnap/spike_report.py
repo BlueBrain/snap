@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 """Spike report access."""
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from cached_property import cached_property
 from libsonata import SonataError, SpikeReader
 
 import bluepysnap._plotting
+from bluepysnap import query
 from bluepysnap.circuit_ids_types import IDS_DTYPE
 from bluepysnap.exceptions import BluepySnapError
 
@@ -59,6 +61,11 @@ class PopulationSpikeReport:
         self._population_name = population_name
 
     @property
+    def _node_sets(self):
+        """Access to simulation node sets."""
+        return self.spike_report.simulation.node_sets
+
+    @property
     def _sorted_by(self):
         """Access to the sorting attribute.
 
@@ -83,9 +90,15 @@ class PopulationSpikeReport:
         """Return the NodePopulation corresponding to this spike report."""
         return self.spike_report.simulation.circuit.nodes[self._population_name]
 
-    def _resolve_nodes(self, group):
+    def resolve_nodes(self, group, raise_missing_property=True):
         """Transform a node group into a node_id array."""
-        return self.nodes.ids(group=group)
+        if isinstance(group, str):
+            group = self._node_sets[group]
+        elif isinstance(group, Mapping):
+            group = query.resolve_nodesets(
+                self._node_sets, self.nodes, group, raise_missing_property
+            )
+        return self.nodes.ids(group=group, raise_missing_property=raise_missing_property)
 
     def get(self, group=None, t_start=None, t_stop=None):
         """Fetch spikes from the report.
@@ -98,7 +111,7 @@ class PopulationSpikeReport:
         Returns:
             pandas.Series: return spiking node_ids indexed by sorted spike time.
         """
-        node_ids = self._resolve_nodes(group).tolist()
+        node_ids = self.resolve_nodes(group).tolist()
 
         series_name = "ids"
         try:
@@ -161,7 +174,7 @@ class FilteredSpikeReport:
         dfs = []
         for population in self.spike_report.population_names:
             spikes = self.spike_report[population]
-            ids = spikes.nodes.ids(group=self.group, raise_missing_property=False)
+            ids = spikes.resolve_nodes(self.group, raise_missing_property=False)
             data = spikes.get(group=ids, t_start=self.t_start, t_stop=self.t_stop).to_frame()
             data["population"] = np.full(len(data), population)
 

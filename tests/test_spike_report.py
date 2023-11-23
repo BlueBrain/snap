@@ -153,9 +153,9 @@ class TestPopulationSpikeReport:
             test_obj.nodes
 
     def test__resolve_nodes(self):
-        npt.assert_array_equal(self.test_obj._resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
-        assert self.test_obj._resolve_nodes({Cell.MTYPE: "L2_X"}) == [0]
-        npt.assert_array_equal(self.test_obj._resolve_nodes("Node12_L6_Y"), [1, 2])
+        npt.assert_array_equal(self.test_obj.resolve_nodes({Cell.MTYPE: "L6_Y"}), [1, 2])
+        assert self.test_obj.resolve_nodes({Cell.MTYPE: "L2_X"}) == [0]
+        npt.assert_array_equal(self.test_obj.resolve_nodes("Node12_L6_Y"), [1, 2])
 
     def test_get(self):
         tested = self.test_obj.get()
@@ -226,6 +226,12 @@ class TestPopulationSpikeReport:
             self.test_obj.get(group="Layer23"), _create_series([0, 0], [0.2, 1.3])
         )
 
+        # test that simulation node_set is used
+        pdt.assert_series_equal(
+            self.test_obj.get("only_exists_in_simulation"),
+            _create_series([2, 0, 2, 0], [0.1, 0.2, 0.7, 1.3]),
+        )
+
         # no 0.1, 0.7 from  ("default2", 2)
         ids = CircuitNodeIds.from_arrays(["default", "default", "default2"], [0, 1, 2])
         npt.assert_array_equal(self.test_obj.get(ids), _create_series([0, 1, 0], [0.2, 0.3, 1.3]))
@@ -254,13 +260,13 @@ class TestPopulationSpikeReport:
         )
 
     @patch(
-        test_module.__name__ + ".PopulationSpikeReport._resolve_nodes", return_value=np.asarray([4])
+        test_module.__name__ + ".PopulationSpikeReport.resolve_nodes", return_value=np.asarray([4])
     )
     def test_get_not_in_report(self, mock):
         pdt.assert_series_equal(self.test_obj.get(4), _create_series([], []))
 
     @patch(
-        test_module.__name__ + ".PopulationSpikeReport._resolve_nodes",
+        test_module.__name__ + ".PopulationSpikeReport.resolve_nodes",
         return_value=np.asarray([0, 4]),
     )
     def test_get_not_in_report(self, mock):
