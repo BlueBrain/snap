@@ -21,7 +21,6 @@ import numpy as np
 
 from bluepysnap._doctools import AbstractDocSubstitutionMeta
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
-from bluepysnap.circuit_ids_types import CircuitNodeId
 from bluepysnap.edges.edge_population import EdgePopulation
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.network import NetworkObject
@@ -222,36 +221,15 @@ class Edges(
         )
 
     @staticmethod
-    def _add_circuit_ids(its, source, target):
-        """Generator comprehension adding the CircuitIds to the iterator.
-
-        Notes:
-            Using closures or lambda functions would result in override functions and so the
-            source and target would be the same for all the populations.
-        """
-        return (
-            (CircuitNodeId(source, source_id), CircuitNodeId(target, target_id), count)
-            for source_id, target_id, count in its
-        )
-
-    @staticmethod
-    def _add_edge_ids(its, source, target, pop_name):
+    def _add_edge_ids(its, pop_name):
         """Generator comprehension adding the CircuitIds to the iterator."""
         return (
             (
-                CircuitNodeId(source, source_id),
-                CircuitNodeId(target, target_id),
+                source_id,
+                target_id,
                 CircuitEdgeIds.from_dict({pop_name: edge_id}),
             )
             for source_id, target_id, edge_id in its
-        )
-
-    @staticmethod
-    def _omit_edge_count(its, source, target):
-        """Generator comprehension adding the CircuitIds to the iterator."""
-        return (
-            (CircuitNodeId(source, source_id), CircuitNodeId(target, target_id))
-            for source_id, target_id in its
         )
 
     def iter_connections(
@@ -283,14 +261,10 @@ class Edges(
                 return_edge_ids=return_edge_ids,
                 return_edge_count=return_edge_count,
             )
-            source_pop = pop.source.name
-            target_pop = pop.target.name
-            if return_edge_count:
-                yield from self._add_circuit_ids(it, source_pop, target_pop)
-            elif return_edge_ids:
-                yield from self._add_edge_ids(it, source_pop, target_pop, name)
+            if return_edge_ids:
+                yield from self._add_edge_ids(it, name)
             else:
-                yield from self._omit_edge_count(it, source_pop, target_pop)
+                yield from it
 
     def __getstate__(self):
         """Make Edges pickle-able, without storing state of caches."""

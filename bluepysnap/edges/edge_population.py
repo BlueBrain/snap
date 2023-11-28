@@ -26,7 +26,7 @@ from cached_property import cached_property
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap.circuit_ids import CircuitEdgeIds
+from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeId
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
@@ -554,7 +554,17 @@ class EdgePopulation:
         source_node_ids = self._resolve_node_ids(self.source, source)
         target_node_ids = self._resolve_node_ids(self.target, target)
 
-        it = self._iter_connections(source_node_ids, target_node_ids, unique_node_ids, shuffle)
+        # completing CircuitNodeIds
+        it = (
+            (
+                CircuitNodeId(population=self.source.name, id=x[0]),
+                CircuitNodeId(population=self.target.name, id=x[1]),
+                x[2],
+            )
+            for x in self._iter_connections(
+                source_node_ids, target_node_ids, unique_node_ids, shuffle
+            )
+        )
 
         if return_edge_count:
             return it
