@@ -78,10 +78,13 @@ Simulation Validation
 
 Similarly to circuit validation, Blue Brain SNAP also provides a SONATA simulation validator for verifying simulation configs.
 
-Currently, the validator only verifies that:
+Currently, the validator verifies that:
 
 - all the mandatory fields are present in the config file
 - all the properties in the `simulation config specification <https://sonata-extension.readthedocs.io/en/latest/sonata_simulation.html>`__ have correct data types and accepted values
+- paths specified in the config exist
+- node sets specified in the config exist
+- neurodamus helpers and variables exist (requires ``neurodamus`` to be available in the environment)
 
 This functionality is provided by either the cli function:
 
