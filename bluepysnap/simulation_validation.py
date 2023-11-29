@@ -64,7 +64,7 @@ def _add_validation_parameters(config, config_path):
 @contextlib.contextmanager
 def _silent_neurodamus():
     """Yield a no-log, no-output (unless error) NeurodamusCore instance."""
-    # No need to init MPI since we're not running anything. This also supresses some output.
+    # No need to init MPI since we're not running anything. This also supresses some log output.
     os.environ["NEURON_INIT_MPI"] = "0"
 
     # Log errors only, don't save log to a file
@@ -84,76 +84,68 @@ def _warn_on_no_neurodamus(prefix):
     return [BluepySnapValidationError.warning(message)]
 
 
-def _validate_file_exists(path, fatal=True, prefix=None):
+def _validate_file_exists(path, prefix, fatal=True):
     """Validates the existence of a file.
 
     Note: Error is the same if ``path`` is a directory.
     """
     error = BluepySnapValidationError.fatal if fatal else BluepySnapValidationError.warning
-    msg = f"{prefix}: " if prefix else ""
-    return [] if _file_exists(path) else [error(f"{msg}No such file: {path}")]
+    return [] if _file_exists(path) else [error(f"{prefix}: No such file: {path}")]
 
 
-def _validate_node_set_exists(config, node_set, prefix=None):
+def _validate_node_set_exists(config, node_set, prefix):
     """Validates the existence of a node set."""
     node_sets = config["_node_sets_instance"]
-    msg = f"{prefix}: " if prefix else ""
     if node_set not in node_sets:
-        return [BluepySnapValidationError.fatal(f"{msg}Unknown node set: '{node_set}'")]
+        return [BluepySnapValidationError.fatal(f"{prefix}: Unknown node set: '{node_set}'")]
 
     return []
 
 
-def _validate_mechanism_variables(name, mechanism, prefix):
+def _validate_mechanism_variables(suffix, mechanism):
     """Check that mechanism name (=suffix) and corresponding variables are defined in neurodamus."""
-    nd_prefix = f"{prefix}.{name}: neurodamus"
+    prefix = f"conditions.mechanisms.{suffix}: neurodamus"
 
     with _silent_neurodamus() as nd:
         nd_attrs = dir(nd.h)
 
-    if name not in nd_attrs:
-        return [BluepySnapValidationError.fatal(f"{nd_prefix}: Unknown SUFFIX: {name}")]
+    if suffix not in nd_attrs:
+        return [BluepySnapValidationError.fatal(f"{prefix}: Unknown SUFFIX: {suffix}")]
 
     errors = []
     for variable in mechanism:
-        if (suffix_name := f"{variable}_{name}") not in nd_attrs:
-            message = f"{nd_prefix}: Unknown variable: {suffix_name}"
+        if (suffixed_var := f"{variable}_{suffix}") not in nd_attrs:
+            message = f"{prefix}: Unknown variable: {suffixed_var}"
             errors += [BluepySnapValidationError.fatal(message)]
 
     return errors
 
 
-def _validate_mechanisms(mechanisms, prefix):
+def _validate_mechanisms(mechanisms):
     """Validate the 'conditions.mechanisms' section in the config."""
     if NEURODAMUS_PRESENT:
         errors = []
         for name, mechanism in mechanisms.items():
-            errors += _validate_mechanism_variables(name, mechanism, prefix)
+            errors += _validate_mechanism_variables(name, mechanism)
 
         return errors
 
-    return _warn_on_no_neurodamus(prefix)
+    return _warn_on_no_neurodamus("conditions.mechanisms")
 
 
 def validate_conditions(config):
     """Validate the 'conditions' section in the config."""
-    key = "conditions"
-    node_set_key = "node_set"
-    mech_key = "mechanisms"
-    mod_key = "modifications"
-    conditions = config.get(key, {})
+    conditions = config.get("conditions", {})
+    modifications = conditions.get("modifications", {})
     errors = []
 
-    for mod_name, mod_config in conditions.get(mod_key, {}).items():
-        if node_set_key in mod_config:
-            errors += _validate_node_set_exists(
-                config,
-                mod_config[node_set_key],
-                prefix=f"{key}.{mod_key}.{mod_name}.{node_set_key}",
-            )
+    for mod_name, mod_config in modifications.items():
+        if "node_set" in mod_config:
+            prefix = f"conditions.modifications.{mod_name}.node_set"
+            errors += _validate_node_set_exists(config, mod_config["node_set"], prefix=prefix)
 
-    if mech_key in conditions:
-        errors += _validate_mechanisms(conditions[mech_key], prefix=f"{key}.{mech_key}")
+    if (mechanisms := conditions.get("mechanisms")) is not None:
+        errors += _validate_mechanisms(mechanisms)
 
     return errors
 
@@ -200,25 +192,24 @@ def validate_connection_overrides(config):
 
 def _validate_input(name, input_, config):
     """Helper function to validate a single input."""
-    key = "inputs"
-    node_set_key = "node_set"
     errors = []
 
-    if (node_set := input_.get(node_set_key)) is not None:
-        errors += _validate_node_set_exists(config, node_set, prefix=f"{key}.{name}.{node_set_key}")
+    if (key := "node_set") in input_:
+        prefix = f"inputs.{name}.{key}"
+        errors += _validate_node_set_exists(config, input_[key], prefix)
 
     if input_.get("module") == "synapse_replay":
-        spike_key = "spike_file"
-        if (spike_path := input_.get(spike_key)) is not None:
-            if not Path(spike_path).is_absolute():
-                spike_path = config["_config_dir"] / spike_path
-            errors += _validate_file_exists(spike_path, prefix=f"{key}.{name}.{spike_key}")
+        if (key := "spike_file") in input_:
+            spike_path = Path(input_[key])
 
-        node_set_key = "source"
-        if (node_set := input_.get(node_set_key)) is not None:
-            errors += _validate_node_set_exists(
-                config, node_set, prefix=f"{key}.{name}.{node_set_key}"
-            )
+            if not spike_path.is_absolute():
+                spike_path = config["_config_dir"] / spike_path
+
+            errors += _validate_file_exists(spike_path, prefix=f"inputs.{name}.{key}")
+
+        if (key := "source") in input_:
+            prefix = f"inputs.{name}.{key}"
+            errors += _validate_node_set_exists(config, input_[key], prefix=prefix)
 
     return errors
 
@@ -236,8 +227,10 @@ def validate_inputs(config):
 def validate_network(config):
     """Validate the 'network' section in the config."""
     key = "network"
+
     if key in config:
         return _validate_file_exists(config[key], prefix=key)
+
     return [BluepySnapValidationError.warning(f"{key}: circuit path not specified")]
 
 
@@ -254,6 +247,7 @@ def validate_node_set(config):
 def validate_node_sets_file(config):
     """Validate the 'node_sets_file' section in the config."""
     key = "node_sets_file"
+
     if key in config:
         return _validate_file_exists(config[key], prefix=key)
 
@@ -262,43 +256,37 @@ def validate_node_sets_file(config):
 
 def validate_output(config):
     """Validate the 'output' section in the config."""
-    key = "output"
-    output = config.get(key, {})
+    output = config.get("output", {})
     output_dir = config["_output_dir"]
 
-    if output_dir.is_dir():
-        # TODO: Should the warnings be also added when the output folder is missing? Likely, yes.
-        errors = []
+    errors = []
+    if not output_dir.is_dir():
+        message = f"output.output_dir: No such directory: {output_dir}"
+        errors += [BluepySnapValidationError.warning(message)]
 
-        prop = "log_file"
-        if prop in output:
-            # Only test for file existence if log file given; default is to write to STDOUT
-            log_path = output_dir / output[prop]
-            errors += _validate_file_exists(log_path, fatal=False, prefix=f"{key}.{prop}")
+    # Only test for file existence if log file given; default is to write to STDOUT
+    if (key := "log_file") in output:
+        log_path = output_dir / output[key]
+        errors += _validate_file_exists(log_path, prefix=f"output.{key}", fatal=False)
 
-        prop = "spikes_file"
-        spike_path = output_dir / output.get(prop, "out.h5")
-        errors += _validate_file_exists(spike_path, fatal=False, prefix=f"{key}.{prop}")
+    spike_path = output_dir / output.get("spikes_file", "out.h5")
+    errors += _validate_file_exists(spike_path, prefix="output.spikes_file", fatal=False)
 
-        return errors
-
-    return [BluepySnapValidationError.warning(f"{key}.output_dir: No such directory: {output_dir}")]
+    return errors
 
 
 def _validate_report(name, report, config):
     """Helper function to validate a single report."""
-    key = "reports"
-    node_set_key = "cells"
     errors = []
 
-    if (node_set := report.get(node_set_key)) is not None:
-        errors += _validate_node_set_exists(config, node_set, prefix=f"{key}.{name}.{node_set_key}")
+    if (key := "cells") in report:
+        prefix = f"reports.{name}.{key}"
+        errors += _validate_node_set_exists(config, report[key], prefix)
 
-    file_key = "file_name"
-    report_file = report.get(file_key, f"{name}.h5")
+    report_file = report.get("file_name", f"{name}.h5")
     report_file = f"{report_file}.h5" if not report_file.endswith(".h5") else report_file
     report_file = config["_output_dir"] / report_file
-    errors += _validate_file_exists(report_file, fatal=False, prefix=f"{key}.{name}.{file_key}")
+    errors += _validate_file_exists(report_file, prefix=f"reports.{name}.file_name", fatal=False)
 
     return errors
 

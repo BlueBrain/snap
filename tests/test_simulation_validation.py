@@ -90,32 +90,29 @@ def test__silent_neurodamus():
 
 def test__validate_file_exists():
     file_path = TEST_DATA_DIR / "simulation_config.json"
-    assert test_module._validate_file_exists(file_path) == []
+    prefix = "fake"
+    assert test_module._validate_file_exists(file_path, prefix) == []
 
     file_path = TEST_DATA_DIR / "non_existent.file"
-    message = f"No such file: {file_path}"
+    message = f"{prefix}: No such file: {file_path}"
     expected = [BluepySnapValidationError.fatal(message)]
-    assert test_module._validate_file_exists(file_path) == expected
+    assert test_module._validate_file_exists(file_path, prefix) == expected
 
-    prefix = "test"
-    expected = [BluepySnapValidationError.warning(f"{prefix}: {message}")]
-    assert test_module._validate_file_exists(file_path, fatal=False, prefix=prefix) == expected
+    expected = [BluepySnapValidationError.warning(message)]
+    assert test_module._validate_file_exists(file_path, prefix, fatal=False) == expected
 
 
 def test__validate_node_set_exists():
     node_set = "fake_node_set"
+    prefix = "fake"
     config = {"_node_sets_instance": [node_set]}
 
-    assert test_module._validate_node_set_exists(config, node_set) == []
+    assert test_module._validate_node_set_exists(config, node_set, prefix) == []
 
     node_set = "fail_node_set"
-    message = f"Unknown node set: '{node_set}'"
+    message = f"{prefix}: Unknown node set: '{node_set}'"
     expected = [BluepySnapValidationError.fatal(message)]
-    assert test_module._validate_node_set_exists(config, node_set) == expected
-
-    prefix = "test"
-    expected = [BluepySnapValidationError.fatal(f"{prefix}: {message}")]
-    assert test_module._validate_node_set_exists(config, node_set, prefix=prefix) == expected
+    assert test_module._validate_node_set_exists(config, node_set, prefix) == expected
 
 
 def test__validate_mechanism_variables():
@@ -127,28 +124,25 @@ def test__validate_mechanism_variables():
     with patch.object(test_module, "_silent_neurodamus", new=fake_nd):
         name = "TEST_MECH_NOT_FOUND"
         mechanism = {"var_not_found": "fake_value", "var_found": "fake_value"}
-        prefix = "fake_prefix"
-        expected = [
-            BluepySnapValidationError.fatal(f"{prefix}.{name}: neurodamus: Unknown SUFFIX: {name}")
-        ]
-        assert test_module._validate_mechanism_variables(name, mechanism, prefix) == expected
+
+        expected_message = f"conditions.mechanisms.{name}: neurodamus: Unknown SUFFIX: {name}"
+        expected = [BluepySnapValidationError.fatal(expected_message)]
+        assert test_module._validate_mechanism_variables(name, mechanism) == expected
 
         name = "MECH_FOUND"
-        expected = [
-            BluepySnapValidationError.fatal(
-                f"{prefix}.{name}: neurodamus: Unknown variable: var_not_found_{name}"
-            )
-        ]
-        assert test_module._validate_mechanism_variables(name, mechanism, prefix) == expected
+        expected_message = (
+            f"conditions.mechanisms.{name}: neurodamus: Unknown variable: var_not_found_{name}"
+        )
+        expected = [BluepySnapValidationError.fatal(expected_message)]
+        assert test_module._validate_mechanism_variables(name, mechanism) == expected
 
 
 def test__validate_mechanisms_no_neurodamus():
-    expected = [
-        BluepySnapValidationError.warning(
-            "test: Can not validate: Neurodamus not found in environment"
-        )
-    ]
-    assert test_module._validate_mechanisms(mechanisms={}, prefix="test") == expected
+    expected_message = (
+        "conditions.mechanisms: Can not validate: Neurodamus not found in environment"
+    )
+    expected = [BluepySnapValidationError.warning(expected_message)]
+    assert test_module._validate_mechanisms(mechanisms={}) == expected
 
 
 @patch.object(test_module, "NEURODAMUS_PRESENT", new=True)
@@ -160,14 +154,13 @@ def test__validate_mechanisms(mock_validate_mechanism_variables):
         "fake_mech_0": {"fake_field_0": "fake_value_0"},
         "fake_mech_1": {"fake_field_1": "fake_value_1"},
     }
-    prefix = "fake_prefix"
-    res = test_module._validate_mechanisms(mechanisms, prefix)
+    res = test_module._validate_mechanisms(mechanisms)
 
     assert res == ["fake_mech_0", "fake_mech_1"]
     mock_validate_mechanism_variables.assert_has_calls(
         [
-            call("fake_mech_0", mechanisms["fake_mech_0"], prefix),
-            call("fake_mech_1", mechanisms["fake_mech_1"], prefix),
+            call("fake_mech_0", mechanisms["fake_mech_0"]),
+            call("fake_mech_1", mechanisms["fake_mech_1"]),
         ]
     )
 
@@ -198,11 +191,8 @@ def test_validate_conditions():
 
 
 def test__validate_mod_override_no_neurodamus():
-    expected = [
-        BluepySnapValidationError.warning(
-            "test: Can not validate: Neurodamus not found in environment"
-        )
-    ]
+    expected_message = "test: Can not validate: Neurodamus not found in environment"
+    expected = [BluepySnapValidationError.warning(expected_message)]
     test_module._validate_mod_override("fake", prefix="test") == expected
 
 
@@ -427,7 +417,8 @@ def test_validate_output_defaults(tmp_path):
 
     output_dir.rmdir()
     expected = [
-        BluepySnapValidationError.warning(f"output.output_dir: No such directory: {output_dir}")
+        BluepySnapValidationError.warning(f"output.output_dir: No such directory: {output_dir}"),
+        BluepySnapValidationError.warning(f"output.spikes_file: No such file: {spikes_file}"),
     ]
 
     assert test_module.validate_output(config) == expected
@@ -473,7 +464,9 @@ def test_validate_output_defined_values(tmp_path):
 
     output_dir.rmdir()
     expected = [
-        BluepySnapValidationError.warning(f"output.output_dir: No such directory: {output_dir}")
+        BluepySnapValidationError.warning(f"output.output_dir: No such directory: {output_dir}"),
+        BluepySnapValidationError.warning(f"output.log_file: No such file: {log_file}"),
+        BluepySnapValidationError.warning(f"output.spikes_file: No such file: {spikes_file}"),
     ]
 
     assert test_module.validate_output(config) == expected
