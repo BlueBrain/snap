@@ -82,11 +82,9 @@ class Edges(
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
-    def get(self, 
-            edge_ids=None, 
-            properties=None, 
-            include_empty=False
-        ):  # pylint: disable=arguments-renamed
+    def get(
+        self, edge_ids=None, properties=None, include_empty=False
+    ):  # pylint: disable=arguments-renamed
         """Edge properties by iterating populations.
 
         Args:
@@ -152,13 +150,7 @@ class Edges(
             result.unique(inplace=True)
         return result
 
-    def pathway_edges(
-        self, 
-        source=None, 
-        target=None, 
-        properties=None, 
-        include_empty=False
-    ):
+    def pathway_edges(self, source=None, target=None, properties=None, include_empty=False):
         """Get edges corresponding to ``source`` -> ``target`` connections.
 
         Args:

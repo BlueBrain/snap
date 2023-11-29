@@ -473,10 +473,7 @@ class TestEdges:
         )
 
         # check that 'include_empty' kwarg works
-        tested = self.test_obj.pathway_edges(
-            source=[1], 
-            properties=properties, 
-            include_empty=True)
+        tested = self.test_obj.pathway_edges(source=[1], properties=properties, include_empty=True)
 
         expected = pd.DataFrame(
             {prop: [] for prop in properties},

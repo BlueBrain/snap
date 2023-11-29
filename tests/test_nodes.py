@@ -365,24 +365,18 @@ class TestNodes:
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             next(self.test_obj.get(properties="unknown"))
-    
-        tested = pd.concat([
-            df for _, df in self.test_obj.get({'layer': 10}, include_empty=True)
-        ])
+
+        tested = pd.concat([df for _, df in self.test_obj.get({"layer": 10}, include_empty=True)])
         expected = pd.DataFrame(
             {p: [] for p in list(self.test_obj.property_names)},
-            index=pd.MultiIndex.from_tuples(
-                [], 
-                names=["population", "node_ids"]
-            )
+            index=pd.MultiIndex.from_tuples([], names=["population", "node_ids"]),
         )
         pdt.assert_frame_equal(
-            tested.sort_index(axis=1), 
-            expected.sort_index(axis=1), 
-            check_dtype=False, 
-            check_index_type=False
+            tested.sort_index(axis=1),
+            expected.sort_index(axis=1),
+            check_dtype=False,
+            check_index_type=False,
         )
-
 
     def test_functionality_with_separate_node_set(self):
         with pytest.raises(BluepySnapError, match="Undefined node set"):

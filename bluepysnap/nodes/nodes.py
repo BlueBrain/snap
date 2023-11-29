@@ -120,7 +120,9 @@ class Nodes(
         fun = lambda x: (x.ids(group, raise_missing_property=False), x.name)
         return self._get_ids_from_pop(fun, CircuitNodeIds, sample=sample, limit=limit)
 
-    def get(self, group=None, properties=None, include_empty=False):  # pylint: disable=arguments-differ
+    def get(
+        self, group=None, properties=None, include_empty=False
+    ):  # pylint: disable=arguments-differ
         """Node properties by iterating populations.
 
         Args:
@@ -130,7 +132,7 @@ class Nodes(
 
             properties (str/list): If specified, return only the properties in the list.
                 Otherwise return all properties.
-                
+
             include_empty: whether to include populations for which the query is empty
 
         Returns:
