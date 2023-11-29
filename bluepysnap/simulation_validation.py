@@ -1,4 +1,7 @@
 """Standalone module that validates Sonata simulation. See ``validate-simulation`` function."""
+import contextlib
+import io
+import os
 from pathlib import Path
 
 from bluepysnap import schemas
@@ -6,6 +9,12 @@ from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.node_sets import NodeSets
 from bluepysnap.utils import load_json, print_validation_errors
+
+try:
+    NEURODAMUS_PRESENT = True
+    import neurodamus
+except ImportError:
+    NEURODAMUS_PRESENT = False
 
 
 def _parse_config(path):
@@ -52,6 +61,29 @@ def _add_validation_parameters(config, config_path):
     return config
 
 
+@contextlib.contextmanager
+def _silent_neurodamus():
+    """Yield a no-log, no-output (unless error) NeurodamusCore instance."""
+    # No need to init MPI since we're not running anything. This also supresses some output.
+    os.environ["NEURON_INIT_MPI"] = "0"
+
+    # Log errors only, don't save log to a file
+    log_level_error_only = neurodamus.core.configuration.LogLevel.ERROR_ONLY
+    neurodamus.core.configuration.GlobalConfig.verbosity = log_level_error_only
+    neurodamus.core.NeurodamusCore.init(log_filename=os.devnull)
+
+    # Suppress any console output (e.g., from Neuron)
+    with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stderr(io.StringIO()):
+            yield neurodamus.core.NeurodamusCore
+
+
+def _warn_on_no_neurodamus(prefix):
+    """A little helper to have consistent warning when neurodamus is not found."""
+    message = f"{prefix}: Can not validate: Neurodamus not found in environment"
+    return [BluepySnapValidationError.warning(message)]
+
+
 def _validate_file_exists(path, fatal=True, prefix=None):
     """Validates the existence of a file.
 
@@ -72,6 +104,37 @@ def _validate_node_set_exists(config, node_set, prefix=None):
     return []
 
 
+def _validate_mechanism_variables(name, mechanism, prefix):
+    """Check that mechanism name (=suffix) and corresponding variables are defined in neurodamus."""
+    nd_prefix = f"{prefix}.{name}: neurodamus"
+
+    with _silent_neurodamus() as nd:
+        nd_attrs = dir(nd.h)
+
+    if name not in nd_attrs:
+        return [BluepySnapValidationError.fatal(f"{nd_prefix}: Unknown SUFFIX: {name}")]
+
+    errors = []
+    for variable in mechanism:
+        if (suffix_name := f"{variable}_{name}") not in nd_attrs:
+            message = f"{nd_prefix}: Unknown variable: {suffix_name}"
+            errors += [BluepySnapValidationError.fatal(message)]
+
+    return errors
+
+
+def _validate_mechanisms(mechanisms, prefix):
+    """Validate the 'conditions.mechanisms' section in the config."""
+    if NEURODAMUS_PRESENT:
+        errors = []
+        for name, mechanism in mechanisms.items():
+            errors += _validate_mechanism_variables(name, mechanism, prefix)
+
+        return errors
+
+    return _warn_on_no_neurodamus(prefix)
+
+
 def validate_conditions(config):
     """Validate the 'conditions' section in the config."""
     key = "conditions"
@@ -90,11 +153,22 @@ def validate_conditions(config):
             )
 
     if mech_key in conditions:
-        # TODO: figure out how to do this smoothly
-        message = f"{key}.{mech_key}: Validating existence of '{mech_key}' files is not implemented"
-        errors += [BluepySnapValidationError.warning(message)]
+        errors += _validate_mechanisms(conditions[mech_key], prefix=f"{key}.{mech_key}")
 
     return errors
+
+
+def _validate_mod_override(mod_override, prefix):
+    if NEURODAMUS_PRESENT:
+        with _silent_neurodamus() as nd:
+            try:
+                nd.load_hoc(f"{mod_override}Helper")
+            except RuntimeError as e:
+                return [BluepySnapValidationError.fatal(f"{prefix}: neurodamus: {e.args[0]}")]
+
+        return []
+
+    return _warn_on_no_neurodamus(prefix)
 
 
 def _validate_override(idx, item, config):
@@ -102,14 +176,12 @@ def _validate_override(idx, item, config):
     errors = []
     prefix = f"connection_overrides[{idx}]"
 
-    if (node_set := item.get("source")) is not None:
-        errors += _validate_node_set_exists(config, node_set, prefix=prefix)
-    if (node_set := item.get("target")) is not None:
-        errors += _validate_node_set_exists(config, node_set, prefix=prefix)
+    if (key := "source") in item:
+        errors += _validate_node_set_exists(config, item[key], prefix=f"{prefix}.{key}")
+    if (key := "target") in item:
+        errors += _validate_node_set_exists(config, item[key], prefix=f"{prefix}.{key}")
     if (key := "modoverride") in item:
-        # TODO: figure out how to do this smoothly
-        message = f"{prefix}: Validating existence of '{key}' files is not implemented"
-        errors += [BluepySnapValidationError.warning(message)]
+        errors += _validate_mod_override(item[key], prefix=f"{prefix}.{key}")
 
     return errors
 

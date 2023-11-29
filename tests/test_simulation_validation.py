@@ -1,6 +1,9 @@
+import contextlib
+import io
 import json
+import sys
 from pathlib import Path
-from unittest.mock import Mock, call, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import bluepysnap.simulation_validation as test_module
 from bluepysnap.exceptions import BluepySnapValidationError
@@ -56,6 +59,35 @@ def test__add_validation_parameters():
     assert config["_node_sets_instance"].content == {}
 
 
+def test__silent_neurodamus():
+    neurodamus = MagicMock()
+    setattr(test_module, "neurodamus", neurodamus)
+
+    # Sanity check to check that testing methodology is valid
+    stderr = io.StringIO()
+    stdout = io.StringIO()
+    with contextlib.redirect_stderr(stderr):
+        with contextlib.redirect_stdout(stdout):
+            print("test_stdout", flush=True)
+            print("test_stderr", flush=True, file=sys.stderr)
+
+    assert stdout.getvalue() == "test_stdout\n"
+    assert stderr.getvalue() == "test_stderr\n"
+
+    # Check that any output to stdout, stderr is capture
+    stderr = io.StringIO()
+    stdout = io.StringIO()
+    with contextlib.redirect_stderr(stderr):
+        with contextlib.redirect_stdout(stdout):
+            with test_module._silent_neurodamus() as nd:
+                assert nd == neurodamus.core.NeurodamusCore
+                print("test_stdout", flush=True)
+                print("test_stderr", flush=True, file=sys.stderr)
+
+    assert stdout.getvalue() == ""
+    assert stderr.getvalue() == ""
+
+
 def test__validate_file_exists():
     file_path = TEST_DATA_DIR / "simulation_config.json"
     assert test_module._validate_file_exists(file_path) == []
@@ -86,6 +118,60 @@ def test__validate_node_set_exists():
     assert test_module._validate_node_set_exists(config, node_set, prefix=prefix) == expected
 
 
+def test__validate_mechanism_variables():
+    @contextlib.contextmanager
+    def fake_nd(*_, **__):
+        attrs = ["MECH_FOUND", "var_found_MECH_FOUND"]
+        yield Mock(h=Mock(__dir__=Mock(return_value=attrs)))
+
+    with patch.object(test_module, "_silent_neurodamus", new=fake_nd):
+        name = "TEST_MECH_NOT_FOUND"
+        mechanism = {"var_not_found": "fake_value", "var_found": "fake_value"}
+        prefix = "fake_prefix"
+        expected = [
+            BluepySnapValidationError.fatal(f"{prefix}.{name}: neurodamus: Unknown SUFFIX: {name}")
+        ]
+        assert test_module._validate_mechanism_variables(name, mechanism, prefix) == expected
+
+        name = "MECH_FOUND"
+        expected = [
+            BluepySnapValidationError.fatal(
+                f"{prefix}.{name}: neurodamus: Unknown variable: var_not_found_{name}"
+            )
+        ]
+        assert test_module._validate_mechanism_variables(name, mechanism, prefix) == expected
+
+
+def test__validate_mechanisms_no_neurodamus():
+    expected = [
+        BluepySnapValidationError.warning(
+            "test: Can not validate: Neurodamus not found in environment"
+        )
+    ]
+    assert test_module._validate_mechanisms(mechanisms={}, prefix="test") == expected
+
+
+@patch.object(test_module, "NEURODAMUS_PRESENT", new=True)
+@patch.object(test_module, "_validate_mechanism_variables")
+def test__validate_mechanisms(mock_validate_mechanism_variables):
+    mock_validate_mechanism_variables.side_effect = lambda x, *_: [x]
+
+    mechanisms = {
+        "fake_mech_0": {"fake_field_0": "fake_value_0"},
+        "fake_mech_1": {"fake_field_1": "fake_value_1"},
+    }
+    prefix = "fake_prefix"
+    res = test_module._validate_mechanisms(mechanisms, prefix)
+
+    assert res == ["fake_mech_0", "fake_mech_1"]
+    mock_validate_mechanism_variables.assert_has_calls(
+        [
+            call("fake_mech_0", mechanisms["fake_mech_0"], prefix),
+            call("fake_mech_1", mechanisms["fake_mech_1"], prefix),
+        ]
+    )
+
+
 def test_validate_conditions():
     assert test_module.validate_conditions({}) == []
     config = {
@@ -95,7 +181,7 @@ def test_validate_conditions():
                 "fake_mod": {"node_set": "fake_node_set"},
                 "fail_mod": {"node_set": "fail_node_set"},
             },
-            "mechanisms": "warning",
+            "mechanisms": {"test": {"test_attr": "test_value"}},
         },
     }
 
@@ -104,11 +190,37 @@ def test_validate_conditions():
             "conditions.modifications.fail_mod.node_set: Unknown node set: 'fail_node_set'"
         ),
         BluepySnapValidationError.warning(
-            "conditions.mechanisms: Validating existence of 'mechanisms' files is not implemented"
+            "conditions.mechanisms: Can not validate: Neurodamus not found in environment"
         ),
     ]
 
     assert test_module.validate_conditions(config) == expected
+
+
+def test__validate_mod_override_no_neurodamus():
+    expected = [
+        BluepySnapValidationError.warning(
+            "test: Can not validate: Neurodamus not found in environment"
+        )
+    ]
+    test_module._validate_mod_override("fake", prefix="test") == expected
+
+
+@patch.object(test_module, "NEURODAMUS_PRESENT", new=True)
+def test__validate_mod_override_with_neurodamus():
+    with patch.object(test_module, "_silent_neurodamus"):
+        assert test_module._validate_mod_override("fake_override", prefix="fake_prefix") == []
+
+    msg = "neurodamus raised runtime error"
+
+    @contextlib.contextmanager
+    def fake_nd(*_, **__):
+        yield Mock(load_hoc=Mock(side_effect=RuntimeError(msg)))
+
+    with patch.object(test_module, "_silent_neurodamus", fake_nd):
+        res = test_module._validate_mod_override("fake_override", prefix="fake_prefix")
+
+    assert res == [BluepySnapValidationError.fatal(f"fake_prefix: neurodamus: {msg}")]
 
 
 @patch.object(test_module, "_validate_node_set_exists")
@@ -119,8 +231,8 @@ def test__validate_override_unittest(mock_validate_node_set_exists):
     assert test_module._validate_override(666, override, {}) == ["fake_source", "fake_target"]
     mock_validate_node_set_exists.assert_has_calls(
         [
-            call({}, "fake_source", prefix="connection_overrides[666]"),
-            call({}, "fake_target", prefix="connection_overrides[666]"),
+            call({}, "fake_source", prefix="connection_overrides[666].source"),
+            call({}, "fake_target", prefix="connection_overrides[666].target"),
         ]
     )
 
@@ -131,10 +243,11 @@ def test__validate_override():
     assert test_module._validate_override(0, override, config) == []
 
     config = {"_node_sets_instance": NodeSets.from_dict({})}
-    msg = "connection_overrides[0]: Unknown node set:"
+    prefix = "connection_overrides[0]"
+    msg = "Unknown node set:"
     expected = [
-        BluepySnapValidationError.fatal(f"{msg} '{override['source']}'"),
-        BluepySnapValidationError.fatal(f"{msg} '{override['target']}'"),
+        BluepySnapValidationError.fatal(f"{prefix}.source: {msg} '{override['source']}'"),
+        BluepySnapValidationError.fatal(f"{prefix}.target: {msg} '{override['target']}'"),
     ]
 
     assert test_module._validate_override(0, override, config) == expected
@@ -142,7 +255,7 @@ def test__validate_override():
     override = {"modoverride": "test"}
     expected = [
         BluepySnapValidationError.warning(
-            "connection_overrides[0]: Validating existence of 'modoverride' files is not implemented"
+            f"{prefix}.modoverride: Can not validate: Neurodamus not found in environment"
         ),
     ]
 
