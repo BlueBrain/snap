@@ -132,7 +132,7 @@ class NetworkObject(abc.ABC):
         """Resolves the ids of the NetworkObject."""
 
     @abc.abstractmethod
-    def get(self, group=None, properties=None):
+    def get(self, group=None, properties=None, include_empty=False):
         """Yields the properties of the NetworkObject."""
         ids = self.ids(group)
         properties = utils.ensure_list(properties)
@@ -147,7 +147,7 @@ class NetworkObject(abc.ABC):
             # since ids is sorted, global_pop_ids should be sorted as well
             global_pop_ids = ids.filter_population(name)
             pop_ids = global_pop_ids.get_ids()
-            if len(pop_ids) > 0:
+            if len(pop_ids) > 0 or include_empty:
                 pop_properties = properties_set & pop.property_names
                 # Since the columns are passed as Series, index cannot be specified directly.
                 # However, it's a bit more performant than converting the Series to numpy arrays.
