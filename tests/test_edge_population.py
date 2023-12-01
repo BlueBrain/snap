@@ -574,12 +574,12 @@ class TestEdgePopulation:
                 (
                     CircuitNodeId(population="default", id=0),
                     CircuitNodeId(population="default", id=1),
-                    [1, 2],
+                    CircuitEdgeIds.from_dict({"default": [1, 2]}),
                 ),
                 (
                     CircuitNodeId(population="default", id=2),
                     CircuitNodeId(population="default", id=1),
-                    [3],
+                    CircuitEdgeIds.from_dict({"default": [3]}),
                 ),
             ],
         )

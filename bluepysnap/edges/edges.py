@@ -220,18 +220,6 @@ class Edges(
             source=source_node_id, target=target_node_id, properties=properties
         )
 
-    @staticmethod
-    def _add_edge_ids(its, pop_name):
-        """Generator comprehension adding the CircuitIds to the iterator."""
-        return (
-            (
-                source_id,
-                target_id,
-                CircuitEdgeIds.from_dict({pop_name: edge_id}),
-            )
-            for source_id, target_id, edge_id in its
-        )
-
     def iter_connections(
         self, source=None, target=None, return_edge_ids=False, return_edge_count=False
     ):
@@ -254,17 +242,13 @@ class Edges(
             raise BluepySnapError(
                 "`return_edge_count` and `return_edge_ids` are mutually exclusive"
             )
-        for name, pop in self.items():
-            it = pop.iter_connections(
+        for pop in self.values():
+            yield from pop.iter_connections(
                 source=source,
                 target=target,
                 return_edge_ids=return_edge_ids,
                 return_edge_count=return_edge_count,
             )
-            if return_edge_ids:
-                yield from self._add_edge_ids(it, name)
-            else:
-                yield from it
 
     def __getstate__(self):
         """Make Edges pickle-able, without storing state of caches."""
