@@ -518,13 +518,37 @@ class EdgePopulation:
                     secondary_node_ids_used.add(conn_node_id)
                     break
 
-    def _complete_circuit_node_ids(self, connections):
-        for connection in connections:
-            yield (
-                CircuitNodeId(population=self.source.name, id=connection[0]),
-                CircuitNodeId(population=self.target.name, id=connection[1]),
-                connection[2],
+    def _add_circuit_ids(self, its):
+        """Generator comprehension adding the CircuitIds to the iterator."""
+        return (
+            (
+                CircuitNodeId(self.source.name, source_id),
+                CircuitNodeId(self.target.name, target_id),
+                count,
             )
+            for source_id, target_id, count in its
+        )
+
+    def _add_edge_ids(self, its):
+        """Generator comprehension adding the CircuitIds to the iterator."""
+        return (
+            (
+                CircuitNodeId(self.source.name, source_id),
+                CircuitNodeId(self.target.name, target_id),
+                CircuitEdgeIds.from_dict({self.name: self.pair_edges(source_id, target_id)}),
+            )
+            for source_id, target_id, _ in its
+        )
+
+    def _omit_edge_count(self, its):
+        """Generator comprehension adding the CircuitIds to the iterator."""
+        return (
+            (
+                CircuitNodeId(self.source.name, source_id),
+                CircuitNodeId(self.target.name, target_id),
+            )
+            for source_id, target_id, _ in its
+        )
 
     def iter_connections(
         self,
@@ -562,22 +586,14 @@ class EdgePopulation:
         source_node_ids = self._resolve_node_ids(self.source, source)
         target_node_ids = self._resolve_node_ids(self.target, target)
 
-        it = self._complete_circuit_node_ids(
-            self._iter_connections(source_node_ids, target_node_ids, unique_node_ids, shuffle)
-        )
+        it = self._iter_connections(source_node_ids, target_node_ids, unique_node_ids, shuffle)
 
         if return_edge_count:
-            return it
+            return self._add_circuit_ids(it)
         elif return_edge_ids:
-            add_edge_ids = lambda x: (
-                x[0],
-                x[1],
-                CircuitEdgeIds.from_dict({self.name: self.pair_edges(x[0], x[1])}),
-            )
-            return map(add_edge_ids, it)
+            return self._add_edge_ids(it)
         else:
-            omit_edge_count = lambda x: x[:2]
-            return map(omit_edge_count, it)
+            return self._omit_edge_count(it)
 
     @property
     def h5_filepath(self):
