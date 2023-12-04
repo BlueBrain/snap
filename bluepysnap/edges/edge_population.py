@@ -519,7 +519,8 @@ class EdgePopulation:
                     break
 
     def _add_circuit_ids(self, its):
-        """Generator comprehension completing the CircuitNodeId."""
+        """Completes the CircuitNodeId."""
+
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
@@ -530,8 +531,8 @@ class EdgePopulation:
         )
 
     def _add_edge_ids(self, its):
-        """Generator comprehension completing the CircuitNodeId
-        and adding the CircuitEdgeIds to the iterator."""
+        """Completes the CircuitNodeId and adds the CircuitEdgeIds."""
+
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
@@ -542,8 +543,8 @@ class EdgePopulation:
         )
 
     def _omit_edge_count(self, its):
-        """Generator comprehension completing the CircuitNodeId
-        and removing the edge count."""
+        """Completes the CircuitNodeId and removes the edge count."""
+
         return (
             (
                 CircuitNodeId(self.source.name, source_id),
