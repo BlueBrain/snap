@@ -1,12 +1,12 @@
 Changelog
 =========
 
-Version v2.2.0~dev0
+Version v3.0.0
 --------------
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
-- Edge populations' ``iter_connections`` returns ``CircuitNodeId``s instead of ``int``s
+- Edge populations' ``iter_connections`` returns ``CircuitNodeId`` instead of ``int``
 
 
 Version v2.1.0
