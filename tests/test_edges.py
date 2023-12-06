@@ -472,6 +472,19 @@ class TestEdges:
             check_dtype=False,
         )
 
+        # check that 'include_empty' kwarg works
+        tested = self.test_obj.pathway_edges(source=[1], properties=properties, include_empty=True)
+
+        expected = pd.DataFrame(
+            {prop: [] for prop in properties},
+            index=pd.MultiIndex.from_tuples(
+                [],
+                names=["population", "edge_ids"],
+            ),
+        )
+        tested = pd.concat([df for _, df in tested])
+        pdt.assert_frame_equal(tested, expected, check_dtype=False, check_index_type=False)
+
         # use global mapping for nodes
         assert self.test_obj.pathway_edges(
             source={"mtype": "L6_Y"}, target={"mtype": "L2_X"}

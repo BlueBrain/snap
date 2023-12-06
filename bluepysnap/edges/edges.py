@@ -82,7 +82,9 @@ class Edges(
         fun = lambda x: (x.ids(group), x.name)
         return self._get_ids_from_pop(fun, CircuitEdgeIds, sample=sample, limit=limit)
 
-    def get(self, edge_ids=None, properties=None):  # pylint: disable=arguments-renamed
+    def get(
+        self, edge_ids=None, properties=None, include_empty=False
+    ):  # pylint: disable=arguments-renamed
         """Edge properties by iterating populations.
 
         Args:
@@ -102,7 +104,7 @@ class Edges(
             raise BluepySnapError("You need to set edge_ids in get.")
         if properties is None:
             return edge_ids
-        return super().get(edge_ids, properties)
+        return super().get(edge_ids, properties, include_empty=include_empty)
 
     def afferent_nodes(self, target, unique=True):
         """Get afferent CircuitNodeIDs for given target ``node_id``.
@@ -148,13 +150,14 @@ class Edges(
             result.unique(inplace=True)
         return result
 
-    def pathway_edges(self, source=None, target=None, properties=None):
+    def pathway_edges(self, source=None, target=None, properties=None, include_empty=False):
         """Get edges corresponding to ``source`` -> ``target`` connections.
 
         Args:
             source: source node group
             target: target node group
             properties: None / edge property name / list of edge property names
+            include_empty: whether to include populations for which the query is empty
 
         Returns:
             - CircuitEdgeIDs, if ``properties`` is None;
@@ -172,7 +175,7 @@ class Edges(
         )
 
         if properties:
-            return self.get(result, properties)
+            return self.get(result, properties, include_empty=include_empty)
         return result
 
     def afferent_edges(self, node_id, properties=None):
