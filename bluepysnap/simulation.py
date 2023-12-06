@@ -32,22 +32,17 @@ def _collect_frame_reports(sim):
     res = {}
     for name in sim.to_libsonata.list_report_names:
         report = sim.to_libsonata.report(name)
-        report_type = report.type.name
-        if report_type == "lfp":
+        report_type = report.sections.name
+        if report_type == "all" or report.type.name == "lfp":
             from bluepysnap.frame_report import CompartmentReport
+
             cls = CompartmentReport
+        elif report_type == "soma":
+            from bluepysnap.frame_report import SomaReport
+
+            cls = SomaReport
         else:
-            report_sections = report.sections.name
-            if report_sections == "soma":
-                from bluepysnap.frame_report import SomaReport
-
-                cls = SomaReport
-            elif report_sections == "all":
-                from bluepysnap.frame_report import CompartmentReport
-
-                cls = CompartmentReport
-            else:
-                raise BluepySnapError(f"Report {name}: format {report_sections} not yet supported.")
+            raise BluepySnapError(f"Report {name}: format {report_type} not yet supported.")
 
         res[name] = cls(sim, name)
     return res
