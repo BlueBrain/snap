@@ -5,11 +5,24 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, call, patch
 
+import numpy.testing as npt
+import pandas as pd
+import pytest
+
 import bluepysnap.simulation_validation as test_module
 from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.node_sets import NodeSets
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
+
+
+def test__resolve_path():
+    config = {"_config_dir": "/fake_root_path"}
+    test_path = "/abs/path/config.json"
+    assert test_module._resolve_path(test_path, config) == Path(test_path)
+
+    test_path = "relative_config_path.json"
+    assert test_module._resolve_path(test_path, config) == Path(f"/fake_root_path/{test_path}")
 
 
 def test__file_exists():
@@ -48,6 +61,16 @@ def test__get_output_dir(tmp_path):
 
     config = {"_config_dir": tmp_path, "output": {"output_dir": "/tmp/test_dir"}}
     assert test_module._get_output_dir(config) == Path("/tmp/test_dir")
+
+
+def test__get_circuit_path():
+    assert test_module._get_circuit_path({}) == ""
+
+    config = {"network": "fake", "_config_dir": "/fake_dir"}
+    assert test_module._get_circuit_path(config) == Path("/fake_dir/fake")
+
+    config = {"network": "/absolute_fake", "_config_dir": "/fake_dir"}
+    assert test_module._get_circuit_path(config) == Path("/absolute_fake")
 
 
 def test__add_validation_parameters():
@@ -266,41 +289,157 @@ def test_validate_connection_overrides(mock_validate_override):
     )
 
 
-def test__validate_input():
-    node_sets = NodeSets.from_dict({"fake_node_set": []})
-    assert test_module._validate_input("test", {}, {}) == []
+def test__get_ids_from_spike_file(tmp_path):
+    spike_path = tmp_path / "spikes.dat"
+    pd.DataFrame({"/scatter": [1]}).to_csv(spike_path, sep="\t")
 
-    input_config = {
-        "node_set": "fake_node_set",
-        "module": "synapse_replay",
-        "source": "fake_node_set",
-        "spike_file": TEST_DATA_DIR / "circuit_config.json",  # any existing path is fine
+    assert test_module._get_ids_from_spike_file(spike_path) == {0}
+
+    spike_path = TEST_DATA_DIR / "input_spikes.h5"
+    assert test_module._get_ids_from_spike_file(spike_path) == {"default": {0}}
+
+    with pytest.raises(IOError, match=r"Unknown file type: '.fake' \(supported: '.h5', '.dat'\)"):
+        test_module._get_ids_from_spike_file("fake_spikes.fake")
+
+
+def test__get_ids_from_node_set():
+    config = {
+        "_circuit_config": TEST_DATA_DIR / "circuit_config.json",
+        "_node_sets_instance": NodeSets.from_dict({"fake_node_set": {"node_id": [0, 1, 2]}}),
     }
-    config = {"_node_sets_instance": node_sets}
 
-    assert test_module._validate_input("test", input_config, config) == []
+    res = test_module._get_ids_from_node_set("fake_node_set", config)
+    expected = {"default": [0, 1, 2], "default2": [0, 1, 2]}
+    npt.assert_equal(res, expected)
+
+    # Don't raise if missing properties
+    config["_node_sets_instance"] = NodeSets.from_dict(
+        {"fake_node_set": {"fake_prop": "fake_value"}}
+    )
+    res = test_module._get_ids_from_node_set("fake_node_set", config)
+    expected = {"default": [], "default2": []}
+    npt.assert_equal(res, expected)
+
+
+def test__get_missing_ids():
+    nodeset_ids = {"test": [1, 2, 3], "test2": [4, 5]}
+    spike_ids_from_dat = {1, 2, 3, 4, 5}
+    assert test_module._get_missing_ids(spike_ids_from_dat, nodeset_ids) == []
+
+    spike_ids_from_dat = {1, 3, 5}
+    assert test_module._get_missing_ids(spike_ids_from_dat, nodeset_ids) == []
+
+    spike_ids_from_dat.add(6)
+    assert test_module._get_missing_ids(spike_ids_from_dat, nodeset_ids) == [6]
+
+    spike_ids_from_h5 = {"test": {1, 2, 3}, "test2": {4, 5}}
+    assert test_module._get_missing_ids(spike_ids_from_h5, nodeset_ids) == []
+
+    spike_ids_from_h5 = {"test": {1, 3}, "test2": {5}}
+    assert test_module._get_missing_ids(spike_ids_from_h5, nodeset_ids) == []
+
+    spike_ids_from_h5 = {"test": {1, 3, 4}, "test2": {2, 5}}
+    expected = [("test", 4), ("test2", 2)]
+    assert test_module._get_missing_ids(spike_ids_from_h5, nodeset_ids) == expected
+
+    spike_ids_from_h5 = {"test": {1}, "test2": {5}, "test3": {1, 5}}
+    expected = [("test3", 1), ("test3", 5)]
+    assert test_module._get_missing_ids(spike_ids_from_h5, nodeset_ids) == expected
+
+
+@patch.object(test_module, "_get_ids_from_node_set", new=Mock())
+@patch.object(test_module, "_resolve_path", new=Mock())
+@patch.object(test_module, "_get_ids_from_spike_file")
+@patch.object(test_module, "_get_missing_ids")
+def test__validate_spike_file_contents(mock_missing_ids, mock_ids_from_spikes):
+    input_config = {"source": "fake_node_set", "spike_file": "fake_spikes.h5"}
+
+    mock_missing_ids.return_value = []
+    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="")
+    expected = []
+    assert res == expected
+
+    mock_missing_ids.return_value = [0, 1, 2]
+    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
+    msg = "fake_prefix: 3 id(s) not found in node set 'fake_node_set': 0, 1, 2"
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert res == expected
+
+    mock_missing_ids.return_value = [*range(15)]
+    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
+    msg = (
+        "fake_prefix: 15 id(s) not found in node set 'fake_node_set': "
+        "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..."
+    )
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert res == expected
+
+    mock_missing_ids.return_value = [("fake_population", id_) for id_ in [0, 1, 2]]
+    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
+    msg = (
+        "fake_prefix: 3 id(s) not found in node set 'fake_node_set': "
+        "('fake_population', 0), ('fake_population', 1), ('fake_population', 2)"
+    )
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert res == expected
+
+    mock_ids_from_spikes.side_effect = IOError("Unknown", "IOError")
+    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
+    msg = "fake_prefix: Unknown IOError"
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert res == expected
+
+
+def test__validate_spike_input():
+    node_sets = NodeSets.from_dict({"fake_node_set": {"node_id": [0]}})
+
     input_config = {
-        "node_set": "fail_node_set",
-        "module": "synapse_replay",
+        "source": "fake_node_set",
+        "spike_file": TEST_DATA_DIR / "input_spikes.h5",
+    }
+    config = {
+        "_node_sets_instance": node_sets,
+        "_circuit_config": TEST_DATA_DIR / "circuit_config.json",
+    }
+
+    assert test_module._validate_spike_input("test", input_config, config) == []
+
+    input_config = {
         "source": "fail_node_set",
         "spike_file": TEST_DATA_DIR / "non_existent.file",
     }
 
     expected_error_messages = [
-        "inputs.test.node_set: Unknown node set: 'fail_node_set'",
-        f"inputs.test.spike_file: No such file: {input_config['spike_file']}",
         "inputs.test.source: Unknown node set: 'fail_node_set'",
+        f"inputs.test.spike_file: No such file: {input_config['spike_file']}",
+        "inputs.test.spike_file: Can not validate file contents",
     ]
 
     expected = [BluepySnapValidationError.fatal(msg) for msg in expected_error_messages]
 
-    assert test_module._validate_input("test", input_config, config) == expected
+    assert test_module._validate_spike_input("test", input_config, config) == expected
 
-    input_config["module"] = "not_synapse_replay"
-    expected = [
-        BluepySnapValidationError.fatal("inputs.test.node_set: Unknown node set: 'fail_node_set'")
-    ]
-    assert test_module._validate_input("test", input_config, config) == expected
+
+@patch.object(test_module, "_validate_node_set_exists")
+@patch.object(test_module, "_validate_spike_input")
+def test__validate_input(mock_validate_spike, mock_validate_node_set):
+    mock_validate_spike.return_value = ["fake_spike_error"]
+    mock_validate_node_set.return_value = ["fake_nodeset_error"]
+
+    assert test_module._validate_input("test", {}, {}) == []
+
+    input_config = {"node_set": ""}
+    assert test_module._validate_input("test", input_config, {}) == ["fake_nodeset_error"]
+
+    input_config = {"module": "synapse_replay"}
+    assert test_module._validate_input("test", input_config, {}) == ["fake_spike_error"]
+
+    input_config = {"module": "not_synapse_replay"}
+    assert test_module._validate_input("test", input_config, {}) == []
+
+    input_config = {"node_set": "", "module": "synapse_replay"}
+    expected = ["fake_nodeset_error", "fake_spike_error"]
+    assert test_module._validate_input("test", input_config, {}) == expected
 
 
 @patch.object(test_module, "_validate_input")
@@ -323,15 +462,19 @@ def test_validate_inputs_unittest(mock_validate_input):
 
 
 def test_validate_inputs():
-    node_sets = NodeSets.from_dict({"fake_node_set": []})
-    mock_spike_file = TEST_DATA_DIR / "circuit_config.json"  # any existing file
-    fail_spike_file = TEST_DATA_DIR / "non_existent.file"  # any existing file
+    node_sets = NodeSets.from_dict({"fake_node_set": {"node_id": [0]}})
+    fail_spike_file = TEST_DATA_DIR / "non_existent.file"
     config = {
         "_node_sets_instance": node_sets,
+        "_circuit_config": TEST_DATA_DIR / "circuit_config.json",
         "inputs": {
             "pass_0": {"module": "test_module", "node_set": "fake_node_set"},
             "pass_1": {"module": "synapse_replay", "source": "fake_node_set"},
-            "pass_2": {"module": "synapse_replay", "spike_file": mock_spike_file},
+            "pass_2": {
+                "module": "synapse_replay",
+                "source": "fake_node_set",
+                "spike_file": TEST_DATA_DIR / "input_spikes.h5",
+            },
             "pass_3": {"module": "not_synapse_replay", "source": "fail_node_set"},
             "pass_4": {"module": "not_synapse_replay", "spike_file": fail_spike_file},
             "fail_0": {"module": "test_module", "node_set": "fail_node_set"},
@@ -344,6 +487,7 @@ def test_validate_inputs():
         "inputs.fail_0.node_set: Unknown node set: 'fail_node_set'",
         "inputs.fail_1.source: Unknown node set: 'fail_node_set'",
         f"inputs.fail_2.spike_file: No such file: {fail_spike_file}",
+        f"inputs.fail_2.spike_file: Can not validate file contents",
     ]
 
     expected = [BluepySnapValidationError.fatal(msg) for msg in expected_error_messages]
@@ -352,16 +496,23 @@ def test_validate_inputs():
 
 
 def test_validate_network():
+    base_config = {"_config_dir": TEST_DATA_DIR}
+
+    path = "circuit_config.json"
+    config = {**base_config, "network": path}
+    assert test_module.validate_network(config) == []
+
     path = TEST_DATA_DIR / "circuit_config.json"
+    config = {**base_config, "network": path}
+    assert test_module.validate_network(config) == []
 
-    assert test_module.validate_network({"network": path}) == []
+    path = "fake_path"
+    config = {**base_config, "network": path}
+    expected = [BluepySnapValidationError.fatal(f"network: No such file: {TEST_DATA_DIR/path}")]
+    assert test_module.validate_network(config) == expected
 
-    path = "./fake_path"
-    expected = [BluepySnapValidationError.fatal(f"network: No such file: {path}")]
-    assert test_module.validate_network({"network": path}) == expected
-
-    expected = [BluepySnapValidationError.warning(f"network: circuit path not specified")]
-    assert test_module.validate_network({}) == expected
+    expected = [BluepySnapValidationError.warning("network: circuit path not specified")]
+    assert test_module.validate_network(base_config) == expected
 
 
 @patch.object(test_module, "_validate_node_set_exists")

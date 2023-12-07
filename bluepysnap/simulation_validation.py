@@ -4,7 +4,12 @@ import io
 import os
 from pathlib import Path
 
+import libsonata
+import numpy as np
+import pandas as pd
+
 from bluepysnap import schemas
+from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.config import Parser
 from bluepysnap.exceptions import BluepySnapValidationError
 from bluepysnap.node_sets import NodeSets
@@ -15,6 +20,15 @@ try:
     import neurodamus
 except ImportError:
     NEURODAMUS_PRESENT = False
+
+
+def _resolve_path(path, config):
+    path = Path(path)
+
+    if path.is_absolute():
+        return path
+
+    return config["_config_dir"] / path
 
 
 def _parse_config(path):
@@ -48,14 +62,23 @@ def _get_node_sets(config):
 
 def _get_output_dir(config):
     """Resolve output directory from the config."""
-    output_dir = Path(config.get("output", {}).get("output_dir", "output"))
-    return output_dir if output_dir.is_absolute() else config["_config_dir"] / output_dir
+    output_dir = config.get("output", {}).get("output_dir", "output")
+    return _resolve_path(output_dir, config)
+
+
+def _get_circuit_path(config):
+    """Resolve circuit config path from the config."""
+    if path := config.get("network", ""):
+        return _resolve_path(path, config)
+
+    return ""
 
 
 def _add_validation_parameters(config, config_path):
     """Add helper parameters to the config."""
     config["_config_dir"] = Path(config_path).parent.absolute()
     config["_output_dir"] = _get_output_dir(config)
+    config["_circuit_config"] = _get_circuit_path(config)
     config["_node_sets_instance"] = _get_node_sets(config)
 
     return config
@@ -190,6 +213,82 @@ def validate_connection_overrides(config):
     return errors
 
 
+def _get_ids_from_spike_file(file_):
+    """Get unique gids from an input spikes file."""
+    file_ = Path(file_)
+    suffix = file_.suffix
+    if suffix == ".dat":
+        spikes = pd.read_csv(file_, delimiter=r"\s+")
+        return set(spikes["/scatter"].values - 1)
+    elif suffix == ".h5":
+        spikes = libsonata.SpikeReader(file_)
+        populations = spikes.get_population_names()
+        return {pop: set(spikes[pop].get_dict()["node_ids"]) for pop in populations}
+
+    raise IOError(f"Unknown file type: '{suffix}' (supported: '.h5', '.dat')")
+
+
+def _get_ids_from_node_set(node_set, config):
+    """Get unique gids per population from a node set."""
+    circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
+    node_set = config["_node_sets_instance"][node_set]
+    populations = [circuit.node_population(p) for p in circuit.node_populations]
+
+    return {pop.name: node_set.get_ids(pop, raise_missing_property=False) for pop in populations}
+
+
+def _get_missing_ids(spike_ids, nodeset_ids):
+    """Return ids missing from a nodeset but found in spikes."""
+    if isinstance(spike_ids, set):
+        nodeset_ids = set(np.concatenate([*nodeset_ids.values()]))
+        return list(spike_ids - nodeset_ids)
+
+    # list conversion required by CircuitNodeIds.from_dict
+    missing_per_pop = {p: list(spike_ids[p] - set(nodeset_ids.get(p, []))) for p in spike_ids}
+
+    return CircuitNodeIds.from_dict(missing_per_pop).tolist()
+
+
+def _validate_spike_file_contents(input_, config, prefix):
+    try:
+        spike_ids = _get_ids_from_spike_file(_resolve_path(input_["spike_file"], config))
+    except IOError as e:
+        return [BluepySnapValidationError.fatal(f"{prefix}: {' '.join(map(str,e.args))}")]
+
+    nodeset_ids = _get_ids_from_node_set(input_["source"], config)
+    missing_ids = _get_missing_ids(spike_ids, nodeset_ids)
+
+    if n_misses := len(missing_ids):
+        ids_str = ", ".join(map(str, missing_ids[:10]))
+        ids_str += ", ..." if n_misses > 10 else ""
+        message = f"{n_misses} id(s) not found in node set '{input_['source']}': {ids_str}"
+
+        return [BluepySnapValidationError.fatal(f"{prefix}: {message}")]
+
+    return []
+
+
+def _validate_spike_input(name, input_, config):
+    errors = []
+
+    if (key := "source") in input_:
+        prefix = f"inputs.{name}.{key}"
+        errors += _validate_node_set_exists(config, input_[key], prefix=prefix)
+
+    if (key := "spike_file") in input_:
+        spike_path = _resolve_path(input_[key], config)
+
+        prefix = f"inputs.{name}.{key}"
+        errors += _validate_file_exists(spike_path, prefix=prefix)
+
+        if len(errors) > 0 or "source" not in input_ or not _file_exists(config["_circuit_config"]):
+            errors += [BluepySnapValidationError.fatal(f"{prefix}: Can not validate file contents")]
+        else:
+            errors += _validate_spike_file_contents(input_, config, prefix)
+
+    return errors
+
+
 def _validate_input(name, input_, config):
     """Helper function to validate a single input."""
     errors = []
@@ -199,17 +298,7 @@ def _validate_input(name, input_, config):
         errors += _validate_node_set_exists(config, input_[key], prefix)
 
     if input_.get("module") == "synapse_replay":
-        if (key := "spike_file") in input_:
-            spike_path = Path(input_[key])
-
-            if not spike_path.is_absolute():
-                spike_path = config["_config_dir"] / spike_path
-
-            errors += _validate_file_exists(spike_path, prefix=f"inputs.{name}.{key}")
-
-        if (key := "source") in input_:
-            prefix = f"inputs.{name}.{key}"
-            errors += _validate_node_set_exists(config, input_[key], prefix=prefix)
+        errors += _validate_spike_input(name, input_, config)
 
     return errors
 
@@ -228,8 +317,8 @@ def validate_network(config):
     """Validate the 'network' section in the config."""
     key = "network"
 
-    if key in config:
-        return _validate_file_exists(config[key], prefix=key)
+    if path := config.get(key, ""):
+        return _validate_file_exists(_resolve_path(path, config), prefix=key)
 
     return [BluepySnapValidationError.warning(f"{key}: circuit path not specified")]
 
