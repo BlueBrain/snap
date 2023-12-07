@@ -312,13 +312,11 @@ def test__get_ids_from_node_set():
     expected = {"default": [0, 1, 2], "default2": [0, 1, 2]}
     npt.assert_equal(res, expected)
 
-    # Don't raise if missing properties
+    # Don't raise if missing properties, expect no populations or ids in result
     config["_node_sets_instance"] = NodeSets.from_dict(
         {"fake_node_set": {"fake_prop": "fake_value"}}
     )
-    res = test_module._get_ids_from_node_set("fake_node_set", config)
-    expected = {"default": [], "default2": []}
-    npt.assert_equal(res, expected)
+    assert test_module._get_ids_from_node_set("fake_node_set", config) == {}
 
 
 def test__get_missing_ids():
@@ -420,11 +418,32 @@ def test__validate_spike_input():
     assert test_module._validate_spike_input("test", input_config, config) == expected
 
 
+def test__validate_input_resistance_in_nodes():
+    config = {
+        "_circuit_config": TEST_DATA_DIR / "circuit_config.json",
+        "_node_sets_instance": NodeSets.from_dict({"fake_node_set": {"population": ["default"]}}),
+    }
+    input_ = {
+        "node_set": "fake_node_set",
+    }
+
+    res = test_module._validate_input_resistance_in_nodes(input_, config, prefix="fake_prefix")
+    assert res == []
+
+    config["_node_sets_instance"] = NodeSets.from_dict({"fake_node_set": {"node_id": [0]}})
+    message = "fake_prefix: '@dynamics_params/input_resistance' not found for population 'default2'"
+    expected = [BluepySnapValidationError.fatal(message)]
+    res = test_module._validate_input_resistance_in_nodes(input_, config, prefix="fake_prefix")
+    assert res == expected
+
+
 @patch.object(test_module, "_validate_node_set_exists")
 @patch.object(test_module, "_validate_spike_input")
-def test__validate_input(mock_validate_spike, mock_validate_node_set):
+@patch.object(test_module, "_validate_input_resistance_in_nodes")
+def test__validate_input(mock_validate_resistance, mock_validate_spike, mock_validate_node_set):
     mock_validate_spike.return_value = ["fake_spike_error"]
     mock_validate_node_set.return_value = ["fake_nodeset_error"]
+    mock_validate_resistance.return_value = ["fake_input_resistance_error"]
 
     assert test_module._validate_input("test", {}, {}) == []
 
@@ -434,12 +453,37 @@ def test__validate_input(mock_validate_spike, mock_validate_node_set):
     input_config = {"module": "synapse_replay"}
     assert test_module._validate_input("test", input_config, {}) == ["fake_spike_error"]
 
-    input_config = {"module": "not_synapse_replay"}
-    assert test_module._validate_input("test", input_config, {}) == []
-
     input_config = {"node_set": "", "module": "synapse_replay"}
     expected = ["fake_nodeset_error", "fake_spike_error"]
     assert test_module._validate_input("test", input_config, {}) == expected
+
+    # check for "can't validate" error if issues with node set validation
+    error_msg = "Can not validate presence of '@dynamics_params/input_resistance' in nodes files"
+    input_config = {"node_set": "", "module": "shot_noise"}
+    expected = [
+        "fake_nodeset_error",
+        BluepySnapValidationError.fatal(f"inputs.test.shot_noise: {error_msg}"),
+    ]
+    assert test_module._validate_input("test", input_config, {}) == expected
+
+    # Check that same error is given if no node set is defined
+    input_config = {"module": "shot_noise"}
+    expected = [BluepySnapValidationError.fatal(f"inputs.test.shot_noise: {error_msg}")]
+    assert test_module._validate_input("test", input_config, {}) == expected
+
+    # Check that all relevant modules are checked for input resistance
+    modules = [
+        "shot_noise",
+        "absolute_shot_noise",
+        "relative_shot_noise",
+        "ornstein_uhlenbeck",
+        "relative_ornstein_uhlenbeck ",
+    ]
+    mock_validate_node_set.return_value = []
+    for module in modules:
+        input_config = {"node_set": "", "module": module}
+        expected = ["fake_input_resistance_error"]
+        assert test_module._validate_input("test", input_config, {}) == expected
 
 
 @patch.object(test_module, "_validate_input")

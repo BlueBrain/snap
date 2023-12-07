@@ -233,8 +233,13 @@ def _get_ids_from_node_set(node_set, config):
     circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
     node_set = config["_node_sets_instance"][node_set]
     populations = [circuit.node_population(p) for p in circuit.node_populations]
+    ids_per_population = {}
 
-    return {pop.name: node_set.get_ids(pop, raise_missing_property=False) for pop in populations}
+    for population in populations:
+        if len(ids := node_set.get_ids(population, raise_missing_property=False)):
+            ids_per_population[population.name] = ids
+
+    return ids_per_population
 
 
 def _get_missing_ids(spike_ids, nodeset_ids):
@@ -289,6 +294,20 @@ def _validate_spike_input(name, input_, config):
     return errors
 
 
+def _validate_input_resistance_in_nodes(_input, config, prefix):
+    circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
+    node_set = _input["node_set"]
+    required = "@dynamics_params/input_resistance"
+    errors = []
+
+    for pop_name, _ in _get_ids_from_node_set(node_set, config).items():
+        if "input_resistance" not in circuit.node_population(pop_name).dynamics_attribute_names:
+            message = f"'{required}' not found for population '{pop_name}'"
+            errors += [BluepySnapValidationError.fatal(f"{prefix}: {message}")]
+
+    return errors
+
+
 def _validate_input(name, input_, config):
     """Helper function to validate a single input."""
     errors = []
@@ -297,8 +316,18 @@ def _validate_input(name, input_, config):
         prefix = f"inputs.{name}.{key}"
         errors += _validate_node_set_exists(config, input_[key], prefix)
 
-    if input_.get("module") == "synapse_replay":
+    module = input_.get("module", "")
+    if module == "synapse_replay":
         errors += _validate_spike_input(name, input_, config)
+    elif "shot_noise" in module or "ornstein_uhlenbeck" in module:
+        prefix = f"inputs.{name}.{module}"
+        if len(errors) or "node_set" not in input_:
+            message = (
+                "Can not validate presence of '@dynamics_params/input_resistance' in nodes files"
+            )
+            errors += [BluepySnapValidationError.fatal(f"{prefix}: {message}")]
+        else:
+            errors += _validate_input_resistance_in_nodes(input_, config, prefix)
 
     return errors
 

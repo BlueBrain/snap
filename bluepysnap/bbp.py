@@ -34,6 +34,7 @@ class Cell(Node):
     SYNAPSE_CLASS = "synapse_class"  #:
     HOLDING_CURRENT = DYNAMICS_PREFIX + "holding_current"  #:
     THRESHOLD_CURRENT = DYNAMICS_PREFIX + "threshold_current"  #:
+    INPUT_RESISTANCE = DYNAMICS_PREFIX + "input_resistance"  #:
 
 
 class Synapse(Edge):
