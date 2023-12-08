@@ -294,6 +294,11 @@ def test_reports():
     )
     assert _validate(config) == []
 
+    config["reports"]["fake"]["type"] = "lfp"
+    config["run"]["electrodes_file"] = "fake_file"
+
+    assert _validate(config) == []
+
     config["reports"]["fake"]["sections"] = "fail_0"
     config["reports"]["fake"]["scaling"] = "fail_1"
     config["reports"]["fake"]["compartments"] = "fail_2"
@@ -305,6 +310,14 @@ def test_reports():
     )
     assert "scaling: 'fail_1' is not one of ['area', 'none']" in res[0].message
     assert "compartments: 'fail_2' is not one of ['all', 'center']" in res[0].message
+
+    # Sanity check to make sure that required properties aren't overwritten but extended
+    del config["run"]["dt"]
+
+    del config["run"]["electrodes_file"]
+    res = _validate(config)
+    assert "run: 'electrodes_file' is a required property" in res[0].message
+    assert "run: 'dt' is a required property" in res[0].message
 
 
 def test_inputs():
