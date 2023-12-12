@@ -4,6 +4,7 @@ import io
 import os
 from pathlib import Path
 
+import h5py
 import libsonata
 import numpy as np
 import pandas as pd
@@ -242,16 +243,31 @@ def _get_ids_from_node_set(node_set, config):
     return ids_per_population
 
 
-def _get_missing_ids(spike_ids, nodeset_ids):
-    """Return ids missing from a nodeset but found in spikes."""
-    if isinstance(spike_ids, set):
-        nodeset_ids = set(np.concatenate([*nodeset_ids.values()]))
-        return list(spike_ids - nodeset_ids)
+def _get_missing_ids(sub_ids, super_ids):
+    """Get `sub_ids` ids missing from `super_ids`."""
+    if isinstance(sub_ids, set):
+        # if sub_ids is a set, any population having such id suffices
+        super_ids = set(np.concatenate([*super_ids.values()]))
+        return list(sub_ids - super_ids)
 
     # list conversion required by CircuitNodeIds.from_dict
-    missing_per_pop = {p: list(spike_ids[p] - set(nodeset_ids.get(p, []))) for p in spike_ids}
+    missing_per_pop = {p: list(set(sub_ids[p]) - set(super_ids.get(p, []))) for p in sub_ids}
 
     return CircuitNodeIds.from_dict(missing_per_pop).tolist()
+
+
+def _compare_ids(sub_ids, super_ids, super_source, prefix):
+    """Check that `sub_ids` are found in `super_ids`."""
+    missing_ids = _get_missing_ids(sub_ids, super_ids)
+
+    if n_misses := len(missing_ids):
+        ids_str = ", ".join(map(str, missing_ids[:10]))
+        ids_str += ", ..." if n_misses > 10 else ""
+        message = f"{n_misses} id(s) not found in {super_source}: {ids_str}"
+
+        return [BluepySnapValidationError.fatal(f"{prefix}: {message}")]
+
+    return []
 
 
 def _validate_spike_file_contents(input_, config, prefix):
@@ -261,16 +277,9 @@ def _validate_spike_file_contents(input_, config, prefix):
         return [BluepySnapValidationError.fatal(f"{prefix}: {' '.join(map(str,e.args))}")]
 
     nodeset_ids = _get_ids_from_node_set(input_["source"], config)
-    missing_ids = _get_missing_ids(spike_ids, nodeset_ids)
+    source = f"node set '{input_['source']}'"
 
-    if n_misses := len(missing_ids):
-        ids_str = ", ".join(map(str, missing_ids[:10]))
-        ids_str += ", ..." if n_misses > 10 else ""
-        message = f"{n_misses} id(s) not found in node set '{input_['source']}': {ids_str}"
-
-        return [BluepySnapValidationError.fatal(f"{prefix}: {message}")]
-
-    return []
+    return _compare_ids(spike_ids, nodeset_ids, source, prefix)
 
 
 def _validate_spike_input(name, input_, config):
@@ -419,12 +428,46 @@ def validate_reports(config):
     return errors
 
 
+def _get_ids_from_non_virtual_pops(config):
+    """Get ids of all non-virtual populations."""
+    circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
+
+    return {
+        pop: circuit.node_population(pop).select_all().flatten()
+        for pop in circuit.node_populations
+        if circuit.node_population_properties(pop).type != "virtual"
+    }
+
+
+def _validate_electrodes_file(path, config):
+    """Validate the ids for each of the populations in `electrodes_file` can be found."""
+    prefix = "run.electrodes_file"
+    errors = _validate_file_exists(path, prefix=prefix)
+
+    if len(errors) or not _file_exists(config["_circuit_config"]):
+        message = f"{prefix}: Can not validate file contents"
+        return errors + [BluepySnapValidationError.fatal(message)]
+
+    with h5py.File(path, "r") as h5:
+        # root level contains population groups (per their name) and group "electrodes"
+        population_names = set(h5) - {"electrodes"}
+        elec_ids = {pop: np.array(h5[pop]["node_ids"]) for pop in population_names}
+
+    if node_set := config.get("node_set"):
+        source = f"node set '{node_set}'"
+        sim_ids = _get_ids_from_node_set(node_set, config)
+    else:
+        source = "non-virtual populations"
+        sim_ids = _get_ids_from_non_virtual_pops(config)
+
+    return _compare_ids(elec_ids, sim_ids, source, prefix)
+
+
 def validate_run(config):
     """Validate the 'run' section in the config."""
-    key = "run"
-    prop = "electrodes_file"
-    if key in config and prop in config[key]:
-        return _validate_file_exists(config[key][prop], prefix=f"{key}.{prop}")
+    if electrodes_file := config.get("run", {}).get("electrodes_file", ""):
+        electrodes_file = _resolve_path(electrodes_file, config)
+        return _validate_electrodes_file(electrodes_file, config)
 
     return []
 
