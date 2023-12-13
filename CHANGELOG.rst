@@ -12,6 +12,9 @@ New Features
 
   - deprecated ``validate``
 
+Improvements
+~~~~~~~~~~~~
+- If ``synapse_replay.source`` is missing, check the all the ids in the ``h5`` spike file
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~

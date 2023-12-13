@@ -323,6 +323,22 @@ def test__get_ids_from_node_set():
     assert test_module._get_ids_from_node_set("fake_node_set", config) == {}
 
 
+def test__get_ids_from_populations():
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as circuit_config:
+            circuit_config["networks"]["nodes"][0]["populations"]["default2"]["type"] = "virtual"
+
+        config = {"_circuit_config": TEST_DATA_DIR / "circuit_config.json"}
+        res = test_module._get_ids_from_populations(config)
+        expected = {"default": [0, 1, 2], "default2": [0, 1, 2, 3]}
+        npt.assert_equal(res, expected)
+
+        config = {"_circuit_config": config_path}
+        res = test_module._get_ids_from_populations(config, only_non_virtual=True)
+        expected = {"default": [0, 1, 2]}
+        npt.assert_equal(res, expected)
+
+
 def test__get_missing_ids():
     nodeset_ids = {"test": [1, 2, 3], "test2": [4, 5]}
     spike_ids_from_dat = {1, 2, 3, 4, 5}
@@ -367,37 +383,59 @@ def test__compare_ids(mock_missing_ids):
     assert test_module._compare_ids(None, None, source, prefix) == expected
 
 
-@patch.object(test_module, "_get_ids_from_node_set", new=Mock())
-@patch.object(test_module, "_resolve_path", new=Mock())
 @patch.object(test_module, "_get_ids_from_spike_file")
-@patch.object(test_module, "_get_missing_ids")
-def test__validate_spike_file_contents(mock_missing_ids, mock_ids_from_spikes):
-    input_config = {"source": "fake_node_set", "spike_file": "fake_spikes.h5"}
+@pytest.mark.parametrize(
+    "input_config,expected_message,spike_ids_side_effect",
+    [
+        [{"spike_file": "fake_spikes.h5"}, None, lambda *_: {0, 1}],
+        [
+            {"source": "fake_node_set", "spike_file": "fake_spikes.h5"},
+            "3 ids not found in node set 'fake_node_set': 5, 6, 7",
+            lambda *_: {5, 6, 7},
+        ],
+        [
+            {"spike_file": "fake_spikes.h5"},
+            (
+                "3 id(s) not found in node populations: "
+                "('fake_population', 0), ('fake_population', 1), ('fake_population', 2)"
+            ),
+            lambda *_: {"fake_population": [0, 1, 2]},
+        ],
+        [{"source": "fake_node_set", "spike_file": "fake_spikes.h5"}, None, lambda *_: {0, 1}],
+        [
+            {"spike_file": "fake_spikes.h5"},
+            "3 id(s) not found in node populations: 5, 6, 7",
+            lambda *_: {5, 6, 7},
+        ],
+        [
+            {"source": "fake_node_set", "spike_file": "fake_spikes.h5"},
+            (
+                "3 id(s) not found in node set 'fake_node_set': "
+                "('fake_population', 0), ('fake_population', 1), ('fake_population', 2)"
+            ),
+            lambda *_: {"fake_population": [0, 1, 2]},
+        ],
+        [{"spike_file": "fake_spikes.h5"}, "Unknown IOError", IOError("Unknown", "IOError")],
+    ],
+)
+def test__validate_spike_file_contents(
+    mock_ids_from_spikes, input_config, expected_message, spike_ids_side_effect
+):
+    config = {
+        "_config_dir": TEST_DATA_DIR,
+        "_circuit_config": TEST_DATA_DIR / "circuit_config.json",
+        "_node_sets_instance": NodeSets.from_dict(
+            {"fake_node_set": {"population": ["default"], "node_id": [0, 1]}}
+        ),
+    }
+    prefix = "fake"
+    mock_ids_from_spikes.side_effect = spike_ids_side_effect
+    if expected_message is not None:
+        expected = [BluepySnapValidationError.fatal(f"{prefix}: {expected_message}")]
+    else:
+        expected = []
+    res = test_module._validate_spike_file_contents(input_config, config, prefix)
 
-    mock_missing_ids.return_value = []
-    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="")
-    expected = []
-    assert res == expected
-
-    mock_missing_ids.return_value = [0, 1, 2]
-    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
-    msg = "fake_prefix: 3 id(s) not found in node set 'fake_node_set': 0, 1, 2"
-    expected = [BluepySnapValidationError.fatal(msg)]
-    assert res == expected
-
-    mock_missing_ids.return_value = [("fake_population", id_) for id_ in [0, 1, 2]]
-    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
-    msg = (
-        "fake_prefix: 3 id(s) not found in node set 'fake_node_set': "
-        "('fake_population', 0), ('fake_population', 1), ('fake_population', 2)"
-    )
-    expected = [BluepySnapValidationError.fatal(msg)]
-    assert res == expected
-
-    mock_ids_from_spikes.side_effect = IOError("Unknown", "IOError")
-    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
-    msg = "fake_prefix: Unknown IOError"
-    expected = [BluepySnapValidationError.fatal(msg)]
     assert res == expected
 
 
@@ -761,27 +799,12 @@ def test_validate_reports(tmp_path):
     assert test_module.validate_reports(config) == expected
 
 
-def test__get_ids_from_non_virtual_pops():
-    config = {"_circuit_config": TEST_DATA_DIR / "circuit_config.json"}
-    res = test_module._get_ids_from_non_virtual_pops(config)
-    expected = {"default": [0, 1, 2], "default2": [0, 1, 2, 3]}
-    npt.assert_equal(res, expected)
-
-    with copy_test_data() as (_, config_path):
-        with edit_config(config_path) as circuit_config:
-            circuit_config["networks"]["nodes"][0]["populations"]["default2"]["type"] = "virtual"
-
-        config = {"_circuit_config": config_path}
-        res = test_module._get_ids_from_non_virtual_pops(config)
-        expected = {"default": [0, 1, 2]}
-        npt.assert_equal(res, expected)
-
-
 def test__validate_electrodes_file():
     path = "./fake_path"
+    prefix = "run.electrodes_file"
     expected = [
-        BluepySnapValidationError.fatal(f"run.electrodes_file: No such file: {TEST_DATA_DIR/path}"),
-        BluepySnapValidationError.fatal(f"run.electrodes_file: Can not validate file contents"),
+        BluepySnapValidationError.fatal(f"{prefix}: No such file: {TEST_DATA_DIR/path}"),
+        BluepySnapValidationError.fatal(f"{prefix}: Can not validate file contents"),
     ]
     config = {"run": {"electrodes_file": path}, "_config_dir": TEST_DATA_DIR}
     assert test_module.validate_run(config) == expected
@@ -794,9 +817,9 @@ def test__validate_electrodes_file():
     }
     assert test_module.validate_run(config) == []
 
-    with patch.object(test_module, "_get_ids_from_non_virtual_pops") as patched:
+    with patch.object(test_module, "_get_ids_from_populations") as patched:
         patched.return_value = {"default": {0}}
-        msg = "run.electrodes_file: 1 id(s) not found in non-virtual populations: ('default', 1)"
+        msg = f"{prefix}: 1 id(s) not found in non-virtual node populations: ('default', 1)"
         expected = [BluepySnapValidationError.fatal(msg)]
         assert test_module.validate_run(config) == expected
 
@@ -805,12 +828,12 @@ def test__validate_electrodes_file():
     assert test_module.validate_run(config) == []
 
     config["node_set"] = "Layer23"
-    msg = "run.electrodes_file: 1 id(s) not found in node set 'Layer23': ('default', 1)"
+    msg = f"{prefix}: 1 id(s) not found in node set 'Layer23': ('default', 1)"
     expected = [BluepySnapValidationError.fatal(msg)]
     assert test_module.validate_run(config) == expected
 
     config["_circuit_config"] = ""
-    msg = "run.electrodes_file: Can not validate file contents"
+    msg = f"{prefix}: Can not validate file contents"
     expected = [BluepySnapValidationError.fatal(msg)]
     assert test_module.validate_run(config) == expected
 
