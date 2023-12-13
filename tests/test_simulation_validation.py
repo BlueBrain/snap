@@ -345,6 +345,24 @@ def test__get_missing_ids():
     assert test_module._get_missing_ids(spike_ids_from_h5, nodeset_ids) == expected
 
 
+@patch.object(test_module, "_get_missing_ids")
+def test__compare_ids(mock_missing_ids):
+    mock_missing_ids.return_value = []
+    assert test_module._compare_ids(None, None, None, None) == []
+
+    source = "fake_superset"
+    prefix = "fake_prefix"
+    mock_missing_ids.return_value = [0, 1]
+    msg = f"{prefix}: 2 id(s) not found in {source}: 0, 1"
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert test_module._compare_ids(None, None, source, prefix) == expected
+
+    mock_missing_ids.return_value = [*range(15)]
+    msg = f"{prefix}: 15 id(s) not found in {source}: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..."
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert test_module._compare_ids(None, None, source, prefix) == expected
+
+
 @patch.object(test_module, "_get_ids_from_node_set", new=Mock())
 @patch.object(test_module, "_resolve_path", new=Mock())
 @patch.object(test_module, "_get_ids_from_spike_file")
@@ -360,15 +378,6 @@ def test__validate_spike_file_contents(mock_missing_ids, mock_ids_from_spikes):
     mock_missing_ids.return_value = [0, 1, 2]
     res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
     msg = "fake_prefix: 3 id(s) not found in node set 'fake_node_set': 0, 1, 2"
-    expected = [BluepySnapValidationError.fatal(msg)]
-    assert res == expected
-
-    mock_missing_ids.return_value = [*range(15)]
-    res = test_module._validate_spike_file_contents(input_config, config=None, prefix="fake_prefix")
-    msg = (
-        "fake_prefix: 15 id(s) not found in node set 'fake_node_set': "
-        "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..."
-    )
     expected = [BluepySnapValidationError.fatal(msg)]
     assert res == expected
 
@@ -744,16 +753,72 @@ def test_validate_reports(tmp_path):
     assert test_module.validate_reports(config) == expected
 
 
-def test_validate_run():
+def test__get_ids_from_non_virtual_pops():
+    config = {"_circuit_config": TEST_DATA_DIR / "circuit_config.json"}
+    res = test_module._get_ids_from_non_virtual_pops(config)
+    expected = {"default": [0, 1, 2], "default2": [0, 1, 2, 3]}
+    npt.assert_equal(res, expected)
+
+    with copy_test_data() as (_, config_path):
+        with edit_config(config_path) as circuit_config:
+            circuit_config["networks"]["nodes"][0]["populations"]["default2"]["type"] = "virtual"
+
+        config = {"_circuit_config": config_path}
+        res = test_module._get_ids_from_non_virtual_pops(config)
+        expected = {"default": [0, 1, 2]}
+        npt.assert_equal(res, expected)
+
+
+def test__validate_electrodes_file():
+    path = "./fake_path"
+    expected = [
+        BluepySnapValidationError.fatal(f"run.electrodes_file: No such file: {TEST_DATA_DIR/path}"),
+        BluepySnapValidationError.fatal(f"run.electrodes_file: Can not validate file contents"),
+    ]
+    config = {"run": {"electrodes_file": path}, "_config_dir": TEST_DATA_DIR}
+    assert test_module.validate_run(config) == expected
+
+    path = "mock_electrodes_file.h5"
+    config = {
+        "run": {"electrodes_file": path},
+        "_config_dir": TEST_DATA_DIR,
+        "_circuit_config": TEST_DATA_DIR / "circuit_config.json",
+    }
+    assert test_module.validate_run(config) == []
+
+    with patch.object(test_module, "_get_ids_from_non_virtual_pops") as patched:
+        patched.return_value = {"default": {0}}
+        msg = "run.electrodes_file: 1 id(s) not found in non-virtual populations: ('default', 1)"
+        expected = [BluepySnapValidationError.fatal(msg)]
+        assert test_module.validate_run(config) == expected
+
+    config["node_set"] = "Node2012"
+    config["_node_sets_instance"] = NodeSets.from_file(TEST_DATA_DIR / "node_sets.json")
+    assert test_module.validate_run(config) == []
+
+    config["node_set"] = "Layer23"
+    msg = "run.electrodes_file: 1 id(s) not found in node set 'Layer23': ('default', 1)"
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert test_module.validate_run(config) == expected
+
+    config["_circuit_config"] = ""
+    msg = "run.electrodes_file: Can not validate file contents"
+    expected = [BluepySnapValidationError.fatal(msg)]
+    assert test_module.validate_run(config) == expected
+
+
+@patch.object(test_module, "_validate_electrodes_file")
+def test_validate_run(mock_validate_file):
+    mock_validate_file.return_value = []
+
+    assert test_module.validate_run({}) == []
+    mock_validate_file.assert_not_called()
+
     # test with any existing file
     path = TEST_DATA_DIR / "node_sets.json"
-
-    assert test_module.validate_run({"run": {"electrodes_file": path}}) == []
-    assert test_module.validate_run({}) == []
-
-    path = "./fake_path"
-    expected = [BluepySnapValidationError.fatal(f"run.electrodes_file: No such file: {path}")]
-    assert test_module.validate_run({"run": {"electrodes_file": path}}) == expected
+    config = {"run": {"electrodes_file": path}}
+    assert test_module.validate_run(config) == []
+    mock_validate_file.assert_called_once_with(path, config)
 
 
 @patch.dict(test_module.VALIDATORS)
