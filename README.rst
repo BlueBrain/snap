@@ -84,6 +84,8 @@ Currently, the validator verifies that:
 - all the properties in the `simulation config specification <https://sonata-extension.readthedocs.io/en/latest/sonata_simulation.html>`__ have correct data types and accepted values
 - paths specified in the config exist
 - node sets specified in the config exist
+- input spike file's node IDs are found in the ``source`` node set
+- electrodes file's node IDs are found in the simulation's ``node_set`` (if set) or in non-virtual populations
 - neurodamus helpers and variables exist (requires ``neurodamus`` to be available in the environment)
 
 This functionality is provided by either the cli function:
