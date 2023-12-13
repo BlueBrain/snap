@@ -219,8 +219,8 @@ def _get_ids_from_spike_file(file_):
     file_ = Path(file_)
     suffix = file_.suffix
     if suffix == ".dat":
-        spikes = pd.read_csv(file_, delimiter=r"\s+")
-        return set(spikes["/scatter"].values - 1)
+        spikes = pd.read_csv(file_, delimiter=r"\s+", skiprows=1, header=None, names=["t", "id"])
+        return set(spikes["id"].values - 1)
     elif suffix == ".h5":
         spikes = libsonata.SpikeReader(file_)
         populations = spikes.get_population_names()
