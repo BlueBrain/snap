@@ -390,7 +390,7 @@ def test__compare_ids(mock_missing_ids):
         [{"spike_file": "fake_spikes.h5"}, None, lambda *_: {0, 1}],
         [
             {"source": "fake_node_set", "spike_file": "fake_spikes.h5"},
-            "3 ids not found in node set 'fake_node_set': 5, 6, 7",
+            "3 id(s) not found in node set 'fake_node_set': 5, 6, 7",
             lambda *_: {5, 6, 7},
         ],
         [
