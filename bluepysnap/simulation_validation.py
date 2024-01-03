@@ -69,7 +69,7 @@ def _get_output_dir(config):
 
 def _get_circuit_path(config):
     """Resolve circuit config path from the config."""
-    if path := config.get("network", ""):
+    if path := config.get("network", "circuit_config.json"):
         return _resolve_path(path, config)
 
     return ""
@@ -355,7 +355,7 @@ def validate_network(config):
     """Validate the 'network' section in the config."""
     key = "network"
 
-    if path := config.get(key, ""):
+    if path := config.get(key, "circuit_config.json"):
         return _validate_file_exists(_resolve_path(path, config), prefix=key)
 
     return [BluepySnapValidationError.warning(f"{key}: circuit path not specified")]

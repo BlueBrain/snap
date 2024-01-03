@@ -64,7 +64,11 @@ def test__get_output_dir(tmp_path):
 
 
 def test__get_circuit_path():
-    assert test_module._get_circuit_path({}) == ""
+    config = {"_config_dir": "/fake_dir"}
+    assert test_module._get_circuit_path(config) == Path("/fake_dir/circuit_config.json")
+
+    config = {"_config_dir": "/fake_dir", "network": ""}
+    assert test_module._get_circuit_path(config) == ""
 
     config = {"network": "fake", "_config_dir": "/fake_dir"}
     assert test_module._get_circuit_path(config) == Path("/fake_dir/fake")
@@ -551,6 +555,9 @@ def test_validate_inputs():
 def test_validate_network():
     base_config = {"_config_dir": TEST_DATA_DIR}
 
+    # Test default network
+    assert test_module.validate_network(base_config) == []
+
     path = "circuit_config.json"
     config = {**base_config, "network": path}
     assert test_module.validate_network(config) == []
@@ -564,8 +571,9 @@ def test_validate_network():
     expected = [BluepySnapValidationError.fatal(f"network: No such file: {TEST_DATA_DIR/path}")]
     assert test_module.validate_network(config) == expected
 
+    empty_network = {**base_config, "network": ""}
     expected = [BluepySnapValidationError.warning("network: circuit path not specified")]
-    assert test_module.validate_network(base_config) == expected
+    assert test_module.validate_network(empty_network) == expected
 
 
 @patch.object(test_module, "_validate_node_set_exists")
