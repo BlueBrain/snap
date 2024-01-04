@@ -245,7 +245,6 @@ $input_defs:
         required:
           - rise_time
           - decay_time
-          - rate
           - amp_cv
           - mean
           - sigma
@@ -266,7 +265,6 @@ $input_defs:
         required:
           - rise_time
           - decay_time
-          - rate
           - amp_cv
           - mean_percent
           - sd_percent

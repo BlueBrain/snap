@@ -73,6 +73,7 @@ class TestNodes:
             "other1",
             "other2",
             "@dynamics:holding_current",
+            "@dynamics:input_resistance",
         }
 
     def test_property_value(self):
@@ -240,8 +241,15 @@ class TestNodes:
         tested = pd.concat(df for _, df in tested)
         assert tested.shape == (self.test_obj.size, len(self.test_obj.property_names))
 
-        # put NaN for the undefined values : only values for default2 in dropna
-        assert len(tested.dropna()) == 4
+        # put NaN for the undefined values :
+        # empty: "other1", "other2" missing in default and "input_resistance" in "default2'
+        assert len(tested.dropna()) == 0
+
+        cols = tested.columns.difference(["@dynamics:input_resistance"])
+        assert len(tested[cols].dropna()) == 4
+
+        cols = tested.columns.difference(["other1", "other2"])
+        assert len(tested[cols].dropna()) == 3
 
         # the index of the dataframe is the index from all the NodeCircuitIds
         pdt.assert_index_equal(tested.index, self.test_obj.ids().index)

@@ -223,6 +223,23 @@ properties:
     type: object
   beta_features:
     type: object
+# require "run: electrodes_file" if any of the reports is of type "lfp"
+if:
+  # need to require reports here, otherwise 'electrodes_file' is required if no reports defined
+  required:
+    - reports
+  properties:
+    reports:
+      patternProperties:
+        "":
+          properties:
+            type:
+              const: "lfp"
+then:
+  properties:
+    run:
+      required:
+        - electrodes_file
 $simulation_defs:
   non_negative_integer:
     type: integer

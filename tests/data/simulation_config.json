@@ -33,6 +33,7 @@
         "delay": 800,
         "duration": 100,
         "node_set": "Layer23",
+        "source": "Layer23",
         "spike_file": "input_spikes.h5"
     }
   },
