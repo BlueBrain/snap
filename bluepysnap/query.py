@@ -101,6 +101,8 @@ def _positional_mask(data, ids):
         return True
     if isinstance(ids, int):
         ids = [ids]
+    elif len(ids) == 0:
+        return False
     mask = np.full(len(data), fill_value=False)
     indices = data.index.get_indexer(ids)
     mask[indices[indices > -1]] = True
