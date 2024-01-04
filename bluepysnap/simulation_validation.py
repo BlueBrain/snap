@@ -7,7 +7,6 @@ from pathlib import Path
 import h5py
 import libsonata
 import numpy as np
-import pandas as pd
 
 from bluepysnap import schemas
 from bluepysnap.circuit_ids import CircuitNodeIds
@@ -218,15 +217,12 @@ def _get_ids_from_spike_file(file_):
     """Get unique gids from an input spikes file."""
     file_ = Path(file_)
     suffix = file_.suffix
-    if suffix == ".dat":
-        spikes = pd.read_csv(file_, delimiter=r"\s+", skiprows=1, header=None, names=["t", "id"])
-        return set(spikes["id"].values - 1)
-    elif suffix == ".h5":
+    if suffix == ".h5":
         spikes = libsonata.SpikeReader(file_)
         populations = spikes.get_population_names()
         return {pop: set(spikes[pop].get_dict()["node_ids"]) for pop in populations}
 
-    raise IOError(f"Unknown file type: '{suffix}' (supported: '.h5', '.dat')")
+    raise IOError(f"Unsupported file type: '{suffix}' (supported: '.h5')")
 
 
 def _get_ids_from_node_set(node_set, config):

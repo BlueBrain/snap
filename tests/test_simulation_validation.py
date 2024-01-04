@@ -294,16 +294,11 @@ def test_validate_connection_overrides(mock_validate_override):
 
 
 def test__get_ids_from_spike_file(tmp_path):
-    spike_path = tmp_path / "spikes.dat"
-    pd.DataFrame({"/scatter": [1]}).to_csv(spike_path, sep="\t")
-
-    assert test_module._get_ids_from_spike_file(spike_path) == {0}
-
     spike_path = TEST_DATA_DIR / "input_spikes.h5"
     assert test_module._get_ids_from_spike_file(spike_path) == {"default": {0}}
 
-    with pytest.raises(IOError, match=r"Unknown file type: '.fake' \(supported: '.h5', '.dat'\)"):
-        test_module._get_ids_from_spike_file("fake_spikes.fake")
+    with pytest.raises(IOError, match=r"Unsupported file type: '.dat' \(supported: '.h5'\)"):
+        test_module._get_ids_from_spike_file(tmp_path / "spikes.dat")
 
 
 def test__get_ids_from_node_set():

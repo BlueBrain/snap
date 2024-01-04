@@ -19,6 +19,7 @@ Improvements
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 - Deprecated the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
+- Removed support for the input spikes' ``.dat`` file format
 
 
 Version v2.0.2
