@@ -220,6 +220,7 @@ def resolve_ids(data, population_name, population_type, queries):
     Args:
         data (pd.DataFrame): data
         population_name (str): population name of `data`
+        population_type (str): population type
         queries (dict): queries
 
     Returns:
