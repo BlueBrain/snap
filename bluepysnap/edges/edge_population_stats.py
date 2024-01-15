@@ -17,6 +17,7 @@ class StatsHelper:
 
         Calculate the divergence based on number of `"connections"` or `"synapses"` each `source`
         cell shares with the cells specified in `target`.
+
         * `connections`: number of unique target cells each source cell shares a connection with
         * `synapses`: number of unique synapses between a source cell and its target cells
 
@@ -55,6 +56,7 @@ class StatsHelper:
 
         Calculate the convergence based on number of `"connections"` or `"synapses"` each `target`
         cell shares with the cells specified in `source`.
+
         * `connections`: number of unique source cells each target cell shares a connection with
         * `synapses`: number of unique synapses between a target cell and its source cells
 
