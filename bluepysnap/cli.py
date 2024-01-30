@@ -1,4 +1,5 @@
 """The project's command line launcher."""
+
 import functools
 import logging
 

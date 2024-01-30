@@ -1,4 +1,5 @@
 """Standalone module that validates Sonata simulation. See ``validate-simulation`` function."""
+
 import contextlib
 import io
 import os

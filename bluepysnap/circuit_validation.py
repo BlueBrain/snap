@@ -2,6 +2,7 @@
 
 The idea here is to not depend on libsonata if possible, so we can use this in all situations
 """
+
 import logging
 from pathlib import Path
 
