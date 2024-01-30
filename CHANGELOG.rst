@@ -10,7 +10,7 @@ New Features
 - Added a new  commandline subcommand: ``validate-simulation``
 - Added an alias ``validate-circuit`` for the old ``validate`` subcommand
 
-  - deprecated ``validate``
+  - removed ``validate``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
