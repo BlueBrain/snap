@@ -4,14 +4,6 @@ Changelog
 Version v3.0.0
 --------------
 
-Breaking Changes
-~~~~~~~~~~~~~~~~
-- Edge populations' ``iter_connections`` returns ``CircuitNodeId`` instead of ``int``
-
-
-Version v2.1.0
---------------
-
 New Features
 ~~~~~~~~~~~~
 - Added simulation config validation
@@ -20,10 +12,10 @@ New Features
 
   - deprecated ``validate``
 
-
 Breaking Changes
 ~~~~~~~~~~~~~~~~
-- Deprecated the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
+- Edge populations' ``iter_connections`` returns ``CircuitNodeId`` instead of ``int``
+- Removed the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
 
 
 Version v2.0.2

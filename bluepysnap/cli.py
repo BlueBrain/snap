@@ -45,27 +45,6 @@ def circuit_validation_params(func):
 
 @cli.command()
 @circuit_validation_params
-def validate(config_file, skip_slow, only_errors):
-    """[DEPRECATED] Validate Sonata circuit based on config file.
-
-    Args:
-        config_file (str): path to Sonata circuit config file
-        skip_slow (bool): skip slow tests
-        only_errors (bool): only print fatal errors
-    """
-    with warnings.catch_warnings():
-        # Making sure the warning is shown
-        warnings.simplefilter("always", DeprecationWarning)
-        Deprecate.warn(
-            "Calling circuit validation with 'validate' is deprecated. "
-            "Please use 'validate-circuit' instead."
-        )
-
-    circuit_validation.validate(config_file, skip_slow, only_errors)
-
-
-@cli.command()
-@circuit_validation_params
 def validate_circuit(config_file, skip_slow, only_errors):
     """Validate Sonata circuit based on config file.
 
