@@ -1,12 +1,10 @@
 """The project's command line launcher."""
 import functools
 import logging
-import warnings
 
 import click
 
 from bluepysnap import circuit_validation, simulation_validation
-from bluepysnap.utils import Deprecate
 
 CLICK_EXISTING_FILE = click.Path(exists=True, file_okay=True, dir_okay=False)
 
