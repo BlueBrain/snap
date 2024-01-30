@@ -69,9 +69,10 @@ def test_all():
     assert isinstance(simulation.spikes, SpikeReport)
     assert isinstance(simulation.spikes["default"], PopulationSpikeReport)
 
-    assert set(simulation.reports) == {"soma_report", "section_report"}
+    assert set(simulation.reports) == {"soma_report", "section_report", "lfp_report"}
     assert isinstance(simulation.reports["soma_report"], SomaReport)
     assert isinstance(simulation.reports["section_report"], CompartmentReport)
+    assert isinstance(simulation.reports["lfp_report"], CompartmentReport)
 
     rep = simulation.reports["soma_report"]
     assert set(rep.population_names) == {"default", "default2"}

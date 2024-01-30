@@ -38,6 +38,7 @@ class TestNodePopulation:
         assert self.test_obj.type == DEFAULT_NODE_TYPE
         assert sorted(self.test_obj.property_names) == [
             Cell.HOLDING_CURRENT,
+            Cell.INPUT_RESISTANCE,
             Cell.LAYER,
             Cell.MODEL_TEMPLATE,
             Cell.MODEL_TYPE,
@@ -87,6 +88,7 @@ class TestNodePopulation:
                 dtype("float64"),
                 dtype("float64"),
                 dtype("float64"),
+                dtype("float32"),
             ],
             index=[
                 "layer",
@@ -101,6 +103,7 @@ class TestNodePopulation:
                 "y",
                 "z",
                 "@dynamics:holding_current",
+                "@dynamics:input_resistance",
             ],
         ).sort_index()
 
@@ -114,6 +117,7 @@ class TestNodePopulation:
                 "Z",
                 "MORPHOLOGY",
                 "HOLDING_CURRENT",
+                "INPUT_RESISTANCE",
                 "ROTATION_ANGLE_X",
                 "ROTATION_ANGLE_Y",
                 "ROTATION_ANGLE_Z",
@@ -338,7 +342,7 @@ class TestNodePopulation:
 
     def test_get(self):
         _call = self.test_obj.get
-        assert _call().shape == (3, 12)
+        assert _call().shape == (3, 13)
         assert _call(0, Cell.MTYPE) == "L2_X"
         assert _call(CircuitNodeId("default", 0), Cell.MTYPE) == "L2_X"
 
@@ -670,6 +674,7 @@ class TestNodePopulation:
             "y",
             "z",
             "@dynamics:holding_current",
+            "@dynamics:input_resistance",
         ]
         existing = ["morphology", "mtype", "y"]
         desired = {"@dynamics:holding_current", "z", "x", "y", "model_type", "layer", "mtype"}
