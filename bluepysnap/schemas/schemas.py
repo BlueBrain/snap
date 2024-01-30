@@ -1,4 +1,5 @@
 """Functions for schema based validation of circuit files."""
+
 from pathlib import Path
 
 import h5py
