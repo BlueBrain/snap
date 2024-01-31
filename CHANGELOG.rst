@@ -7,10 +7,7 @@ Version v3.0.0
 New Features
 ~~~~~~~~~~~~
 - Added simulation config validation
-- Added a new  commandline subcommand: ``validate-simulation``
-- Added an alias ``validate-circuit`` for the old ``validate`` subcommand
-
-  - removed ``validate``
+- Added a new  commandline subcommands: ``validate-simulation``, ``validate-circuit``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
