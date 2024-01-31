@@ -1,12 +1,11 @@
 """The project's command line launcher."""
+
 import functools
 import logging
-import warnings
 
 import click
 
 from bluepysnap import circuit_validation, simulation_validation
-from bluepysnap.utils import Deprecate
 
 CLICK_EXISTING_FILE = click.Path(exists=True, file_okay=True, dir_okay=False)
 
@@ -41,27 +40,6 @@ def circuit_validation_params(func):
         return func(*args, **kwargs)
 
     return wrapper
-
-
-@cli.command()
-@circuit_validation_params
-def validate(config_file, skip_slow, only_errors):
-    """[DEPRECATED] Validate Sonata circuit based on config file.
-
-    Args:
-        config_file (str): path to Sonata circuit config file
-        skip_slow (bool): skip slow tests
-        only_errors (bool): only print fatal errors
-    """
-    with warnings.catch_warnings():
-        # Making sure the warning is shown
-        warnings.simplefilter("always", DeprecationWarning)
-        Deprecate.warn(
-            "Calling circuit validation with 'validate' is deprecated. "
-            "Please use 'validate-circuit' instead."
-        )
-
-    circuit_validation.validate(config_file, skip_slow, only_errors)
 
 
 @cli.command()

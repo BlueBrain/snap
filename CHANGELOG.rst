@@ -1,21 +1,18 @@
 Changelog
 =========
 
-Version v2.1.0
+Version v3.0.0
 --------------
 
 New Features
 ~~~~~~~~~~~~
 - Added simulation config validation
-- Added a new  commandline subcommand: ``validate-simulation``
-- Added an alias ``validate-circuit`` for the old ``validate`` subcommand
-
-  - deprecated ``validate``
-
+- Added a new  commandline subcommands: ``validate-simulation``, ``validate-circuit``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
-- Deprecated the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
+- Edge populations' ``iter_connections`` returns ``CircuitNodeId`` instead of ``int``
+- Removed the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
 
 
 Version v2.0.2

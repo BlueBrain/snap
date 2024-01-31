@@ -1,4 +1,5 @@
 """Module to process search queries of nodes/edges."""
+
 import operator
 from collections.abc import Mapping
 from copy import deepcopy

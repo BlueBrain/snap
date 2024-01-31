@@ -26,7 +26,7 @@ from cached_property import cached_property
 from more_itertools import first
 
 from bluepysnap import query, utils
-from bluepysnap.circuit_ids import CircuitEdgeIds
+from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeId
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DYNAMICS_PREFIX, ConstContainer, Edge
@@ -518,6 +518,41 @@ class EdgePopulation:
                     secondary_node_ids_used.add(conn_node_id)
                     break
 
+    def _add_circuit_ids(self, its):
+        """Completes the CircuitNodeId."""
+
+        return (
+            (
+                CircuitNodeId(self.source.name, source_id),
+                CircuitNodeId(self.target.name, target_id),
+                count,
+            )
+            for source_id, target_id, count in its
+        )
+
+    def _add_edge_ids(self, its):
+        """Completes the CircuitNodeId and adds the CircuitEdgeIds."""
+
+        return (
+            (
+                CircuitNodeId(self.source.name, source_id),
+                CircuitNodeId(self.target.name, target_id),
+                CircuitEdgeIds.from_dict({self.name: self.pair_edges(source_id, target_id)}),
+            )
+            for source_id, target_id, _ in its
+        )
+
+    def _omit_edge_count(self, its):
+        """Completes the CircuitNodeId and removes the edge count."""
+
+        return (
+            (
+                CircuitNodeId(self.source.name, source_id),
+                CircuitNodeId(self.target.name, target_id),
+            )
+            for source_id, target_id, _ in its
+        )
+
     def iter_connections(
         self,
         source=None,
@@ -557,13 +592,11 @@ class EdgePopulation:
         it = self._iter_connections(source_node_ids, target_node_ids, unique_node_ids, shuffle)
 
         if return_edge_count:
-            return it
+            return self._add_circuit_ids(it)
         elif return_edge_ids:
-            add_edge_ids = lambda x: (x[0], x[1], self.pair_edges(x[0], x[1]))
-            return map(add_edge_ids, it)
+            return self._add_edge_ids(it)
         else:
-            omit_edge_count = lambda x: x[:2]
-            return map(omit_edge_count, it)
+            return self._omit_edge_count(it)
 
     @property
     def h5_filepath(self):
