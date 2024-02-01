@@ -48,6 +48,8 @@ Examples:
     >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
     >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
     >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+    >>> # returns list of IDs of biophysical node populations
+    >>> nodes.ids(group={ "population_type": "biophysical"})
     >>> # returns list of IDs matching one of the queries inside the 'or' list
     >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
     >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
