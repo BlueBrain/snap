@@ -24,6 +24,7 @@ try:
     Conditions = libsonata._libsonata.Conditions
 except AttributeError:
     from libsonata._libsonata import SimulationConfig
+
     Run = SimulationConfig.Run
     Conditions = SimulationConfig.Conditions
 

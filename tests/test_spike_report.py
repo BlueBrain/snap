@@ -21,6 +21,7 @@ try:
     Output = libsonata._libsonata.Output
 except AttributeError:
     from libsonata._libsonata import SimulationConfig
+
     Output = SimulationConfig.Output
 
 

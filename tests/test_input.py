@@ -45,6 +45,7 @@ def test_get_simulation_inputs():
         Linear = libsonata._libsonata.Linear
     except AttributeError:
         from libsonata._libsonata import SimulationConfig
+
         Linear = SimulationConfig.Linear
 
     assert isinstance(inputs["current_clamp_1"], Linear)
