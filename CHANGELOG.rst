@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version v3.0.1
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fixed a bug causing some iterables (e.g., tuples) in queries not to work as expected
+
+
 Version v3.0.0
 --------------
 

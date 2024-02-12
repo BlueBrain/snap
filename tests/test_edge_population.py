@@ -206,6 +206,11 @@ class TestEdgePopulation:
         # if sample > population.size --> sample = population.size
         npt.assert_equal(len(self.test_obj.ids(sample=25)), 4)
 
+        # check iterables in queries
+        npt.assert_equal(self.test_obj.ids({"@target_node": [0, 1]}), [0, 1, 2, 3])
+        npt.assert_equal(self.test_obj.ids({"@target_node": (0, 1)}), [0, 1, 2, 3])
+        npt.assert_equal(self.test_obj.ids({"@target_node": map(int, [0, 1])}), [0, 1, 2, 3])
+
     def test_get_1(self):
         properties = [
             Synapse.PRE_GID,
