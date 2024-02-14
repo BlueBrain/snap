@@ -4,7 +4,6 @@ import pickle
 import sys
 from unittest import mock
 
-import libsonata
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
