@@ -10,12 +10,11 @@ import pandas.testing as pdt
 import pytest
 
 import bluepysnap.edges.edge_population as test_module
-from bluepysnap.bbp import Synapse
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
-from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
+from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge, Synapse
 
 from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
@@ -87,6 +86,10 @@ class TestEdgePopulation:
     def test_container_properties(self):
         expected = sorted(
             [
+                "DELAY",
+                "G_SYNX",
+                "PRE_GID",
+                "POST_GID",
                 "PRE_Y_SURFACE",
                 "PRE_Z_SURFACE",
                 "PRE_X_CENTER",
@@ -110,6 +113,7 @@ class TestEdgePopulation:
             ]
         )
         assert sorted(self.test_obj.container_property_names(Edge)) == expected
+        assert sorted(self.test_obj.container_property_names(Synapse)) == expected
         with pytest.raises(BluepySnapError):
             mapping = {"X": "x"}
             self.test_obj.container_property_names(mapping)

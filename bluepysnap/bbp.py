@@ -17,45 +17,21 @@
 
 """BBP cell / synapse attribute namespace."""
 
-from bluepysnap.sonata_constants import DYNAMICS_PREFIX, Edge, Node
+import warnings
 
-NODE_TYPES = {"biophysical", "virtual", "astrocyte", "single_compartment"}
-EDGE_TYPES = {"chemical", "electrical", "synapse_astrocyte", "endfoot"}
+from bluepysnap import sonata_constants
+from bluepysnap.sonata_constants import (  # pylint: disable=unused-import
+    EDGE_TYPES,
+    NODE_TYPES,
+    Cell,
+    Synapse,
+)
+from bluepysnap.utils import Deprecate
 
-
-class Cell(Node):
-    """Cell property names."""
-
-    ME_COMBO = "me_combo"  #:
-    MTYPE = "mtype"  #:
-    ETYPE = "etype"  #:
-    LAYER = "layer"  #:
-    REGION = "region"  #:
-    SYNAPSE_CLASS = "synapse_class"  #:
-    HOLDING_CURRENT = DYNAMICS_PREFIX + "holding_current"  #:
-    THRESHOLD_CURRENT = DYNAMICS_PREFIX + "threshold_current"  #:
-    INPUT_RESISTANCE = DYNAMICS_PREFIX + "input_resistance"  #:
-
-
-class Synapse(Edge):
-    """Synapse property names."""
-
-    PRE_GID = Edge.SOURCE_NODE_ID  #:
-    POST_GID = Edge.TARGET_NODE_ID  #:
-
-    D_SYN = "depression_time"  #:
-    DTC = "decay_time"  #:
-    F_SYN = "facilitation_time"  #:
-    G_SYNX = "conductance"  #:
-    NRRP = "NRRP"  #:
-    TYPE = "syn_type_id"  #:
-    U_SYN = "u_syn"  #:
-    SPINE_LENGTH = "spine_length"  #:
-
-    PRE_SEGMENT_ID = "efferent_segment_id"  #:
-    PRE_SEGMENT_OFFSET = "efferent_segment_offset"  #:
-    PRE_MORPH_ID = "efferent_morphology_id"  #:
-
-    POST_SEGMENT_ID = "afferent_segment_id"  #:
-    POST_SEGMENT_OFFSET = "afferent_segment_offset"  #:
-    POST_BRANCH_TYPE = "afferent_section_type"  #:
+with warnings.catch_warnings():
+    # Making sure the warning is shown
+    warnings.simplefilter("default", DeprecationWarning)
+    Deprecate.warn(
+        f"'{__name__}' is deprecated and will be removed in future versions. "
+        f"Please use '{sonata_constants.__name__}' instead."
+    )

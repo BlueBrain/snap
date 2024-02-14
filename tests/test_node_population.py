@@ -12,13 +12,12 @@ import pandas.testing as pdt
 import pytest
 from numpy import dtype
 
-from bluepysnap.bbp import Cell
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
-from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Node
+from bluepysnap.sonata_constants import DEFAULT_NODE_TYPE, Cell, Node
 
 from utils import (
     PICKLED_SIZE_ADJUSTMENT,
@@ -128,19 +127,6 @@ class TestNodePopulation:
             ]
         )
         assert sorted(self.test_obj.container_property_names(Cell)) == expected
-        expected = sorted(
-            [
-                "X",
-                "Y",
-                "Z",
-                "MORPHOLOGY",
-                "ROTATION_ANGLE_X",
-                "ROTATION_ANGLE_Y",
-                "ROTATION_ANGLE_Z",
-                "MODEL_TEMPLATE",
-                "MODEL_TYPE",
-            ]
-        )
         assert sorted(self.test_obj.container_property_names(Node)) == expected
 
         with pytest.raises(BluepySnapError):

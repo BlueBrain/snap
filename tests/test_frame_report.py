@@ -7,11 +7,11 @@ import pandas.testing as pdt
 import pytest
 
 import bluepysnap.frame_report as test_module
-from bluepysnap.bbp import Cell
 from bluepysnap.circuit_ids import CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
+from bluepysnap.sonata_constants import Cell
 
 from utils import TEST_DATA_DIR
 
