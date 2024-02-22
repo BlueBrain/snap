@@ -288,7 +288,7 @@ class EdgePopulation:
             result = result[:limit]
         return utils.ensure_ids(result)
 
-    def get(self, edge_ids, properties):
+    def get(self, edge_ids, properties=None):
         """Edge properties as pandas DataFrame.
 
         Args:

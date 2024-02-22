@@ -1,6 +1,17 @@
 Changelog
 =========
 
+Version v3.1.0
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Made ``Edges`` and ``EdgePopulation`` ``get`` functions more consistent
+
+  - Both now return ``self.ids(query)`` if ``properties=None``
+  - ``properties`` is now a keyword argument in ``EdgePopulation.get``
+
+
 Version v3.0.1
 --------------
 
