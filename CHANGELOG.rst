@@ -11,6 +11,7 @@ Improvements
   - Both now return ``self.ids(query)`` if ``properties=None``
   - ``properties`` is now a keyword argument in ``EdgePopulation.get``
 - Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
+- Added new notebooks covering node sets as well as node and edge queries
 
 
 Version v3.0.1

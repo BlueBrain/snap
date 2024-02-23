@@ -20,6 +20,8 @@ Blue Brain SNAP can be installed using ``pip``::
 Usage
 -----
 
+For a full in-depth usage quide, there's a series of jupyter notebooks available in `doc/source/notebooks <doc/source/notebooks/>`_ subfolder.
+
 There are two main interface classes provided by Blue Brain SNAP:
 
 |circuit| corresponds to the *static* structure of a neural network, that is:
