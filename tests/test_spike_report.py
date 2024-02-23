@@ -17,6 +17,13 @@ from bluepysnap.simulation import Simulation
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
 
+try:
+    Output = libsonata._libsonata.Output
+except AttributeError:
+    from libsonata._libsonata import SimulationConfig
+
+    Output = SimulationConfig.Output
+
 
 def _create_series(node_ids, index, name="ids"):
     def _get_index(ids):
@@ -34,7 +41,7 @@ class TestSpikeReport:
         self.test_obj = test_module.SpikeReport(self.simulation)
 
     def test_config(self):
-        assert isinstance(self.test_obj.config, libsonata._libsonata.Output)
+        assert isinstance(self.test_obj.config, Output)
         assert self.test_obj.config.output_dir == str(TEST_DATA_DIR / "reporting")
         assert self.test_obj.config.log_file == "log_spikes.log"
         assert self.test_obj.config.spikes_file == "spikes.h5"

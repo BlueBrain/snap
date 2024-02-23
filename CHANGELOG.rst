@@ -1,25 +1,33 @@
 Changelog
 =========
 
-Version v2.1.0
+Improvements
+~~~~~~~~~~~~
+- Update simulation validation to conform to the SONATA spec
+
+  - ``synapse_replay.source`` and ``.dat`` spike input files are no longer supported
+
+
+Version v3.0.1
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fixed a bug causing some iterables (e.g., tuples) in queries not to work as expected
+
+
+Version v3.0.0
 --------------
 
 New Features
 ~~~~~~~~~~~~
 - Added simulation config validation
-- Added a new  commandline subcommand: ``validate-simulation``
-- Added an alias ``validate-circuit`` for the old ``validate`` subcommand
-
-  - deprecated ``validate``
-
-Improvements
-~~~~~~~~~~~~
-- If ``synapse_replay.source`` is missing, check the all the ids in the ``h5`` spike file
+- Added a new  commandline subcommands: ``validate-simulation``, ``validate-circuit``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
-- Deprecated the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
-- Removed support for the input spikes' ``.dat`` file format
+- Edge populations' ``iter_connections`` returns ``CircuitNodeId`` instead of ``int``
+- Removed the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
 
 
 Version v2.0.2

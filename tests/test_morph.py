@@ -44,6 +44,17 @@ class TestMorphHelper:
             circuit = Circuit(str(config_copy_path))
             assert isinstance(circuit.nodes["default"].morph, test_module.MorphHelper)
 
+    def test_get_morphology_dir(self):
+        with pytest.raises(
+            BluepySnapError, match="'neurolucida-asc' is not defined in 'alternate_morphologies'"
+        ):
+            self.test_obj.get_morphology_dir("asc")
+
+        with pytest.raises(BluepySnapError, match="Unsupported extension: fake"):
+            self.test_obj.get_morphology_dir("fake")
+
+        assert self.test_obj.get_morphology_dir("swc") == str(TEST_DATA_DIR / "morphologies")
+
     def test_get_filepath(self):
         node_id = 0
         assert self.nodes.get(node_id, properties="morphology") == "morph-A"
@@ -74,14 +85,6 @@ class TestMorphHelper:
 
         with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get_filepath([0, 1])
-
-        with pytest.raises(
-            BluepySnapError, match="'neurolucida-asc' is not defined in 'alternate_morphologies'"
-        ):
-            self.test_obj.get_filepath(0, "asc")
-
-        with pytest.raises(BluepySnapError, match="Unsupported extension: fake"):
-            self.test_obj.get_filepath(0, "fake")
 
     def test_alternate_morphology(self):
         alternate_morphs = {"h5v1": str(self.morph_path)}

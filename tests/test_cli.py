@@ -14,34 +14,18 @@ from utils import TEST_DATA_DIR
 @patch("bluepysnap.schemas.validate_nodes_schema", Mock(return_value=[]))
 @patch("bluepysnap.schemas.validate_edges_schema", Mock(return_value=[]))
 @patch("bluepysnap.schemas.validate_circuit_schema", Mock(return_value=[]))
-def test_cli_correct():
-    runner = CliRunner()
-
-    with pytest.warns(
-        BluepySnapDeprecationWarning,
-        match="Calling circuit validation with 'validate' is deprecated",
-    ):
-        result = runner.invoke(cli, ["validate", str(TEST_DATA_DIR / "circuit_config.json")])
-
-    assert result.exit_code == 0
-    assert click.style("No Error: Success.", fg="green") in result.stdout
-
-
-def test_cli_no_config():
-    runner = CliRunner()
-    result = runner.invoke(cli, ["validate"])
-    assert result.exit_code == 2
-    assert "Missing argument 'CONFIG_FILE'" in result.stdout
-
-
-@patch("bluepysnap.schemas.validate_nodes_schema", Mock(return_value=[]))
-@patch("bluepysnap.schemas.validate_edges_schema", Mock(return_value=[]))
-@patch("bluepysnap.schemas.validate_circuit_schema", Mock(return_value=[]))
 def test_cli_validate_circuit_correct():
     runner = CliRunner()
     result = runner.invoke(cli, ["validate-circuit", str(TEST_DATA_DIR / "circuit_config.json")])
     assert result.exit_code == 0
     assert click.style("No Error: Success.", fg="green") in result.stdout
+
+
+def test_cli_validate_circuit_no_config():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["validate-circuit"])
+    assert result.exit_code == 2
+    assert "Missing argument 'CONFIG_FILE'" in result.stdout
 
 
 def test_cli_validate_simulation_correct():
@@ -51,3 +35,10 @@ def test_cli_validate_simulation_correct():
     )
     assert result.exit_code == 0
     assert click.style("No Error: Success.", fg="green") in result.stdout
+
+
+def test_cli_validate_simulation_no_config():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["validate-simulation"])
+    assert result.exit_code == 2
+    assert "Missing argument 'CONFIG_FILE'" in result.stdout

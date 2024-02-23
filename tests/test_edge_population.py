@@ -13,7 +13,7 @@ import bluepysnap.edges.edge_population as test_module
 from bluepysnap.bbp import Synapse
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
-from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId
+from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
 
@@ -205,6 +205,11 @@ class TestEdgePopulation:
         npt.assert_equal(len(self.test_obj.ids(sample=2)), 2)
         # if sample > population.size --> sample = population.size
         npt.assert_equal(len(self.test_obj.ids(sample=25)), 4)
+
+        # check iterables in queries
+        npt.assert_equal(self.test_obj.ids({"@target_node": [0, 1]}), [0, 1, 2, 3])
+        npt.assert_equal(self.test_obj.ids({"@target_node": (0, 1)}), [0, 1, 2, 3])
+        npt.assert_equal(self.test_obj.ids({"@target_node": map(int, [0, 1])}), [0, 1, 2, 3])
 
     def test_get_1(self):
         properties = [
@@ -519,18 +524,29 @@ class TestEdgePopulation:
 
     def test_iter_connections_1(self):
         it = self.test_obj.iter_connections([0, 2], [1])
-        assert next(it) == (0, 1)
-        assert next(it) == (2, 1)
+        assert next(it) == (
+            CircuitNodeId(population="default", id=0),
+            CircuitNodeId(population="default", id=1),
+        )
+        assert next(it) == (
+            CircuitNodeId(population="default", id=2),
+            CircuitNodeId(population="default", id=1),
+        )
         with pytest.raises(StopIteration):
             next(it)
 
     def test_iter_connections_2(self):
         it = self.test_obj.iter_connections([0, 2], [1], unique_node_ids=True)
-        assert list(it) == [(0, 1)]
+        assert list(it) == [
+            (CircuitNodeId(population="default", id=0), CircuitNodeId(population="default", id=1)),
+        ]
 
     def test_iter_connections_3(self):
         it = self.test_obj.iter_connections([0, 2], [1], shuffle=True)
-        assert sorted(it) == [(0, 1), (2, 1)]
+        assert sorted(it) == [
+            (CircuitNodeId(population="default", id=0), CircuitNodeId(population="default", id=1)),
+            (CircuitNodeId(population="default", id=2), CircuitNodeId(population="default", id=1)),
+        ]
 
     def test_iter_connections_4(self):
         it = self.test_obj.iter_connections(None, None)
@@ -539,11 +555,17 @@ class TestEdgePopulation:
 
     def test_iter_connections_5(self):
         it = self.test_obj.iter_connections(None, [1])
-        assert list(it) == [(0, 1), (2, 1)]
+        assert list(it) == [
+            (CircuitNodeId(population="default", id=0), CircuitNodeId(population="default", id=1)),
+            (CircuitNodeId(population="default", id=2), CircuitNodeId(population="default", id=1)),
+        ]
 
     def test_iter_connections_6(self):
         it = self.test_obj.iter_connections([2], None)
-        assert list(it) == [(2, 0), (2, 1)]
+        assert list(it) == [
+            (CircuitNodeId(population="default", id=2), CircuitNodeId(population="default", id=0)),
+            (CircuitNodeId(population="default", id=2), CircuitNodeId(population="default", id=1)),
+        ]
 
     def test_iter_connections_7(self):
         it = self.test_obj.iter_connections([], [0, 1, 2])
@@ -551,11 +573,36 @@ class TestEdgePopulation:
 
     def test_iter_connections_8(self):
         it = self.test_obj.iter_connections([0, 2], [1], return_edge_ids=True)
-        npt.assert_equal(list(it), [(0, 1, [1, 2]), (2, 1, [3])])
+        npt.assert_equal(
+            list(it),
+            [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=1),
+                    CircuitEdgeIds.from_dict({"default": [1, 2]}),
+                ),
+                (
+                    CircuitNodeId(population="default", id=2),
+                    CircuitNodeId(population="default", id=1),
+                    CircuitEdgeIds.from_dict({"default": [3]}),
+                ),
+            ],
+        )
 
     def test_iter_connections_9(self):
         it = self.test_obj.iter_connections([0, 2], [1], return_edge_count=True)
-        assert list(it) == [(0, 1, 2), (2, 1, 1)]
+        assert list(it) == [
+            (
+                CircuitNodeId(population="default", id=0),
+                CircuitNodeId(population="default", id=1),
+                2,
+            ),
+            (
+                CircuitNodeId(population="default", id=2),
+                CircuitNodeId(population="default", id=1),
+                1,
+            ),
+        ]
 
     def test_iter_connections_10(self):
         with pytest.raises(BluepySnapError):
@@ -577,25 +624,104 @@ class TestEdgePopulation:
             test_obj = TestEdgePopulation.get_edge_population(config_path, "default")
 
             it = test_obj.iter_connections([0, 1, 2], [0, 1, 2])
-            assert sorted(it) == [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=1),
+                ),
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=2),
+                ),
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=0),
+                ),
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=2),
+                ),
+                (
+                    CircuitNodeId(population="default", id=2),
+                    CircuitNodeId(population="default", id=0),
+                ),
+                (
+                    CircuitNodeId(population="default", id=2),
+                    CircuitNodeId(population="default", id=1),
+                ),
+            ]
 
             it = test_obj.iter_connections([0, 1, 2], [0, 1, 2], unique_node_ids=True)
-            assert sorted(it) == [(0, 1), (1, 0)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=1),
+                ),
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=0),
+                ),
+            ]
 
             it = test_obj.iter_connections([0, 1, 2], [0, 2], unique_node_ids=True)
-            assert sorted(it) == [(0, 2), (1, 0)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=2),
+                ),
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=0),
+                ),
+            ]
 
             it = test_obj.iter_connections([0, 2], [0, 2], unique_node_ids=True)
-            assert sorted(it) == [(0, 2), (2, 0)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=2),
+                ),
+                (
+                    CircuitNodeId(population="default", id=2),
+                    CircuitNodeId(population="default", id=0),
+                ),
+            ]
 
             it = test_obj.iter_connections([0, 1, 2], [0, 2, 1], unique_node_ids=True)
-            assert sorted(it) == [(0, 1), (1, 0)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=1),
+                ),
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=0),
+                ),
+            ]
 
             it = test_obj.iter_connections([1, 2], [0, 1, 2], unique_node_ids=True)
-            assert sorted(it) == [(1, 0), (2, 1)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=0),
+                ),
+                (
+                    CircuitNodeId(population="default", id=2),
+                    CircuitNodeId(population="default", id=1),
+                ),
+            ]
 
             it = test_obj.iter_connections([0, 1, 2], [1, 2], unique_node_ids=True)
-            assert sorted(it) == [(0, 1), (1, 2)]
+            assert sorted(it) == [
+                (
+                    CircuitNodeId(population="default", id=0),
+                    CircuitNodeId(population="default", id=1),
+                ),
+                (
+                    CircuitNodeId(population="default", id=1),
+                    CircuitNodeId(population="default", id=2),
+                ),
+            ]
 
     def test_h5_filepath_from_config(self):
         assert self.test_obj.h5_filepath == str(TEST_DATA_DIR / "edges.h5")
