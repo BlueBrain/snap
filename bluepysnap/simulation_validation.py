@@ -1,4 +1,5 @@
 """Standalone module that validates Sonata simulation. See ``validate-simulation`` function."""
+
 import contextlib
 import io
 import os
@@ -297,10 +298,6 @@ def _validate_spike_file_contents(input_, config, prefix):
 
 def _validate_spike_input(name, input_, config):
     errors = []
-
-    if (key := "source") in input_:
-        prefix = f"inputs.{name}.{key}"
-        errors += _validate_node_set_exists(config, input_[key], prefix=prefix)
 
     if (key := "spike_file") in input_:
         spike_path = _resolve_path(input_[key], config)

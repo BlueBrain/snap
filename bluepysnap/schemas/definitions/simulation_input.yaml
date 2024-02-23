@@ -82,8 +82,6 @@ $input_defs:
         type: number
       spike_file:
         type: string
-      source:
-        type: string
       tau:
         type: number
       variance:
