@@ -438,7 +438,6 @@ def test__validate_spike_input():
     node_sets = NodeSets.from_dict({"fake_node_set": {"node_id": [0]}})
 
     input_config = {
-        "source": "fake_node_set",
         "spike_file": TEST_DATA_DIR / "input_spikes.h5",
     }
     config = {
@@ -454,7 +453,6 @@ def test__validate_spike_input():
     }
 
     expected_error_messages = [
-        "inputs.test.source: Unknown node set: 'fail_node_set'",
         f"inputs.test.spike_file: No such file: {input_config['spike_file']}",
         "inputs.test.spike_file: Can not validate file contents",
     ]
@@ -568,16 +566,14 @@ def test_validate_inputs():
             "pass_3": {"module": "not_synapse_replay", "source": "fail_node_set"},
             "pass_4": {"module": "not_synapse_replay", "spike_file": fail_spike_file},
             "fail_0": {"module": "test_module", "node_set": "fail_node_set"},
-            "fail_1": {"module": "synapse_replay", "source": "fail_node_set"},
-            "fail_2": {"module": "synapse_replay", "spike_file": fail_spike_file},
+            "fail_1": {"module": "synapse_replay", "spike_file": fail_spike_file},
         },
     }
 
     expected_error_messages = [
         "inputs.fail_0.node_set: Unknown node set: 'fail_node_set'",
-        "inputs.fail_1.source: Unknown node set: 'fail_node_set'",
-        f"inputs.fail_2.spike_file: No such file: {fail_spike_file}",
-        f"inputs.fail_2.spike_file: Can not validate file contents",
+        f"inputs.fail_1.spike_file: No such file: {fail_spike_file}",
+        f"inputs.fail_1.spike_file: Can not validate file contents",
     ]
 
     expected = [BluepySnapValidationError.fatal(msg) for msg in expected_error_messages]
