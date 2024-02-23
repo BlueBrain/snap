@@ -1,12 +1,10 @@
 import pickle
-from unittest.mock import PropertyMock, patch
 
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pandas.testing as pdt
 import pytest
-from numpy import dtype
 
 import bluepysnap.nodes as test_module
 from bluepysnap.circuit import Circuit

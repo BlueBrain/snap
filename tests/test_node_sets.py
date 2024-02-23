@@ -1,6 +1,5 @@
 import json
 import re
-from unittest.mock import patch
 
 import libsonata
 import pytest
