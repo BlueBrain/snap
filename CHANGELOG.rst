@@ -10,6 +10,7 @@ Improvements
 
   - Both now return ``self.ids(query)`` if ``properties=None``
   - ``properties`` is now a keyword argument in ``EdgePopulation.get``
+- Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
 
 
 Version v3.0.1

@@ -14,6 +14,7 @@ from bluepysnap.bbp import Synapse
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
+from bluepysnap.edges.edge_population_stats import StatsHelper
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
 
@@ -41,6 +42,7 @@ class TestEdgePopulation:
         assert self.test_obj.source.name == "default"
         assert self.test_obj.target.name == "default"
         assert self.test_obj.size, 4
+        assert isinstance(self.test_obj.stats, StatsHelper)
         assert sorted(self.test_obj.property_names) == sorted(
             [
                 Synapse.SOURCE_NODE_ID,
