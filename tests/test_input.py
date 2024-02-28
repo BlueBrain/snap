@@ -40,7 +40,15 @@ def test_get_simulation_inputs():
     assert inputs.keys() == {"spikes_1", "current_clamp_1"}
 
     assert isinstance(inputs["spikes_1"], test_module.SynapseReplay)
-    assert isinstance(inputs["current_clamp_1"], libsonata._libsonata.Linear)
+
+    try:
+        Linear = libsonata._libsonata.Linear
+    except AttributeError:
+        from libsonata._libsonata import SimulationConfig
+
+        Linear = SimulationConfig.Linear
+
+    assert isinstance(inputs["current_clamp_1"], Linear)
 
     with pytest.raises(BluepySnapError, match="Unexpected type for 'simulation': str"):
         test_module.get_simulation_inputs("fail_me")

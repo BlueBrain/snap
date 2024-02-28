@@ -91,3 +91,13 @@ extension-pkg-whitelist = [
 ignored-modules = [
     'numpy',
 ]
+
+[tool.pylint.tests]
+disable = [
+    'all',
+]
+enable = [
+    'unused-import',
+    'unused-variable',
+    'unused-argument',
+]

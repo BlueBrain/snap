@@ -1,22 +1,38 @@
 Changelog
 =========
 
-Version v2.1.0
+Version v3.1.0
+--------------
+
+Improvements
+~~~~~~~~~~~~
+- Made ``Edges`` and ``EdgePopulation`` ``get`` functions more consistent
+
+  - Both now return ``self.ids(query)`` if ``properties=None``
+  - ``properties`` is now a keyword argument in ``EdgePopulation.get``
+- Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
+
+
+Version v3.0.1
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fixed a bug causing some iterables (e.g., tuples) in queries not to work as expected
+
+
+Version v3.0.0
 --------------
 
 New Features
 ~~~~~~~~~~~~
 - Added simulation config validation
-- Added a new  commandline subcommand: ``validate-simulation``
-- Added an alias ``validate-circuit`` for the old ``validate`` subcommand
-
-  - deprecated ``validate``
-- Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
-
+- Added a new  commandline subcommands: ``validate-simulation``, ``validate-circuit``
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
-- Deprecated the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
+- Edge populations' ``iter_connections`` returns ``CircuitNodeId`` instead of ``int``
+- Removed the commandline subcommand ``validate`` in favor of new ``validate-circuit`` command
 
 
 Version v2.0.2

@@ -1,6 +1,4 @@
-import re
 from collections.abc import Iterable
-from pathlib import Path
 
 import h5py
 import numpy as np
@@ -187,8 +185,8 @@ def test_validate_config_ok_missing_optional_fields(to_remove):
             [["networks", "edges", 0, "populations"]],
             "networks.edges[0]: 'populations' is a required property",
         ),
-        ([["networks", "nodes", 0]], "networks.nodes: [] is too short"),
-        ([["networks", "edges", 0]], "networks.edges: [] is too short"),
+        ([["networks", "nodes", 0]], "networks.nodes: [] should be non-empty"),
+        ([["networks", "edges", 0]], "networks.edges: [] should be non-empty"),
         ([["networks", "nodes"]], "networks: 'nodes' is a required property"),
         ([["networks", "edges"]], "networks: 'edges' is a required property"),
         ([["networks"]], "'networks' is a required property"),
@@ -248,7 +246,7 @@ def test_validate_edges_ok():
     ),
 )
 def test_validate_nodes_biophysical_missing_required(missing):
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, _):
         nodes_file = circuit_copy_path / "nodes_single_pop.h5"
         with h5py.File(nodes_file, "r+") as h5f:
             del h5f[missing]
@@ -299,7 +297,7 @@ def test_validate_nodes_biophysical_missing_required(missing):
     ),
 )
 def test_validate_edges_chemical_missing_required(missing):
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, _):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f[missing]
@@ -394,7 +392,7 @@ def test_virtual_node_population_error():
 
 def test_validate_edges_missing_attributes_field():
     # has no attributes at all
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, _):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/source_node_id"].attrs["node_population"]
@@ -405,7 +403,7 @@ def test_validate_edges_missing_attributes_field():
 
 def test_validate_edges_missing_attribute():
     # has attributes but not the required ones
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, _):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f["edges/default/source_node_id"].attrs["node_population"]
@@ -425,7 +423,7 @@ def test_validate_edges_missing_attribute():
     ),
 )
 def test_wrong_datatype(field):
-    with copy_test_data() as (circuit_copy_path, config_copy_path):
+    with copy_test_data() as (circuit_copy_path, _):
         edges_file = circuit_copy_path / "edges_single_pop.h5"
         with h5py.File(edges_file, "r+") as h5f:
             del h5f[field]
@@ -444,7 +442,7 @@ def test__get_reference_resolver():
 
 
 def test_nodes_schema_types():
-    property_types, dynamics_params = test_module.nodes_schema_types("biophysical")
+    property_types, _ = test_module.nodes_schema_types("biophysical")
     assert "x" in property_types
     assert property_types["x"] == np.float32
 

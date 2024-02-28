@@ -1,4 +1,5 @@
 """Taken from the libsonata lib."""
+
 import h5py
 import numpy as np
 
