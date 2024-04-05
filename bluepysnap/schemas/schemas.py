@@ -35,7 +35,7 @@ def _parse_path(path, join_str):
     return join_str.join(error_path)
 
 
-def _wrap_errors(filepath, schema_errors, join_str):
+def _wrap_errors(filepath, schema_errors, join_str, ignore_datatype_errors):
     """Handles parsing of schema errors into more meaningful messages.
 
     Also wraps all the warngings and errors to single Error instances.
@@ -55,8 +55,9 @@ def _wrap_errors(filepath, schema_errors, join_str):
         if not e.path:
             errors.append(e.message)
         elif e.path[-1] == "datatype":
-            path = _parse_path(list(e.path)[:-1], join_str)
-            warnings.append(f"incorrect datatype '{e.instance}' for '{path}': {e.message}")
+            if not ignore_datatype_errors:
+                path = _parse_path(list(e.path)[:-1], join_str)
+                warnings.append(f"incorrect datatype '{e.instance}' for '{path}': {e.message}")
         else:
             if e.schema_path[-1] in e.schema.get("messages", {}):
                 path = _parse_path(e.path, join_str)
@@ -165,7 +166,7 @@ def _get_h5_structure_as_dict(h5):
     return properties
 
 
-def validate_simulation_schema(path, config):
+def validate_simulation_schema(path, config, ignore_datatype_errors):
     """Validates a simulation config against a schema.
 
     Args:
@@ -177,10 +178,10 @@ def validate_simulation_schema(path, config):
     """
     errors = _validate_schema_for_dict(_parse_schema("simulation"), config)
 
-    return _wrap_errors(path, errors, ".")
+    return _wrap_errors(path, errors, ".", ignore_datatype_errors)
 
 
-def validate_circuit_schema(path, config):
+def validate_circuit_schema(path, config, ignore_datatype_errors):
     """Validates a circuit config against a schema.
 
     Args:
@@ -192,10 +193,10 @@ def validate_circuit_schema(path, config):
     """
     errors = _validate_schema_for_dict(_parse_schema("circuit"), config)
 
-    return _wrap_errors(path, errors, ".")
+    return _wrap_errors(path, errors, ".", ignore_datatype_errors)
 
 
-def validate_nodes_schema(path, nodes_type):
+def validate_nodes_schema(path, nodes_type, ignore_datatype_errors):
     """Validates a nodes file against a schema.
 
     Args:
@@ -210,10 +211,10 @@ def validate_nodes_schema(path, nodes_type):
 
     errors = _validate_schema_for_dict(_parse_schema("node", nodes_type), nodes_h5_dict)
 
-    return _wrap_errors(path, errors, "/")
+    return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 
 
-def validate_edges_schema(path, edges_type, virtual):
+def validate_edges_schema(path, edges_type, virtual, ignore_datatype_errors):
     """Validates an edges file against a schema.
 
     Args:
@@ -232,7 +233,7 @@ def validate_edges_schema(path, edges_type, virtual):
 
     errors = _validate_schema_for_dict(_parse_schema("edge", edges_type), edges_h5_dict)
 
-    return _wrap_errors(path, errors, "/")
+    return _wrap_errors(path, errors, "/", ignore_datatype_errors)
 
 
 def _resolve_types(resolver, types):

@@ -15,6 +15,7 @@ Improvements
 - Added the possibility to query Edge IDs and Node IDs based on edge/node population type using query key ``population_type``
 
   - the types conform to `node types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#populations>`_ and `edge types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#id4>`_ defined in the sonata specification
+- teach the `bluepysnap validate-circuit` and `bluepysnap validate-simulation` the ability to `--ignore-datatype-errors` so that mismatches of datatypes to the specification are ignored
 
 
 Version v3.0.1
