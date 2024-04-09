@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 import bluepysnap.circuit_validation as test_module
-from bluepysnap.exceptions import BluepySnapError, BluepySnapValidationError
+from bluepysnap.exceptions import BluepySnapValidationError
 
 from utils import TEST_DATA_DIR, copy_test_data, edit_config
 

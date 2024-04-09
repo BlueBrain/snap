@@ -6,6 +6,7 @@
    :maxdepth: 2
 
    Home <self>
+   notebooks
    api
    changelog
 

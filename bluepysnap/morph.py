@@ -51,7 +51,7 @@ class MorphHelper:
         self._alternate_morphologies = alternate_morphologies or {}
         self._population = population
 
-    def _get_morph_dir(self, extension):
+    def get_morphology_dir(self, extension):
         """Return morphology directory based on a given extension."""
         if extension == "swc":
             if not self._morph_dir:
@@ -79,7 +79,7 @@ class MorphHelper:
             raise BluepySnapError("node_id must be a int or a CircuitNodeId")
         name = self._population.get(node_id, Node.MORPHOLOGY)
 
-        return Path(self._get_morph_dir(extension), f"{name}.{extension}")
+        return Path(self.get_morphology_dir(extension), f"{name}.{extension}")
 
     def get(self, node_id, transform=False, extension="swc"):
         """Return MorphIO morphology object corresponding to `node_id`.

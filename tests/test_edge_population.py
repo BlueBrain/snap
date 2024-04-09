@@ -14,6 +14,7 @@ from bluepysnap.bbp import Synapse
 from bluepysnap.circuit import Circuit
 from bluepysnap.circuit_ids import CircuitEdgeIds, CircuitNodeIds
 from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitEdgeId, CircuitNodeId
+from bluepysnap.edges.edge_population_stats import StatsHelper
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.sonata_constants import DEFAULT_EDGE_TYPE, Edge
 
@@ -41,6 +42,7 @@ class TestEdgePopulation:
         assert self.test_obj.source.name == "default"
         assert self.test_obj.target.name == "default"
         assert self.test_obj.size, 4
+        assert isinstance(self.test_obj.stats, StatsHelper)
         assert sorted(self.test_obj.property_names) == sorted(
             [
                 Synapse.SOURCE_NODE_ID,
@@ -205,6 +207,11 @@ class TestEdgePopulation:
         npt.assert_equal(len(self.test_obj.ids(sample=2)), 2)
         # if sample > population.size --> sample = population.size
         npt.assert_equal(len(self.test_obj.ids(sample=25)), 4)
+
+        # check iterables in queries
+        npt.assert_equal(self.test_obj.ids({"@target_node": [0, 1]}), [0, 1, 2, 3])
+        npt.assert_equal(self.test_obj.ids({"@target_node": (0, 1)}), [0, 1, 2, 3])
+        npt.assert_equal(self.test_obj.ids({"@target_node": map(int, [0, 1])}), [0, 1, 2, 3])
 
     def test_get_1(self):
         properties = [

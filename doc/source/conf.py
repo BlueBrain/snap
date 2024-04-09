@@ -7,6 +7,7 @@
 # -- Path setup --------------------------------------------------------------
 
 import importlib
+import subprocess
 
 # -- Project information -----------------------------------------------------
 
@@ -25,6 +26,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
 ]
@@ -75,3 +77,13 @@ autosummary_generate = True
 suppress_warnings = [
     "autosectionlabel.*",
 ]
+
+# generate the link to the notebooks on GitHub
+_base_url = "https://github.com/BlueBrain/snap"
+_git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+extlinks = {
+    "notebooks_source": (
+        f"{_base_url}/blob/{_git_commit}/doc/source/notebooks/%s.ipynb",
+        "Notebook: %s",
+    )
+}

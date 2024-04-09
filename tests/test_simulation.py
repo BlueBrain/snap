@@ -5,7 +5,6 @@ import warnings
 
 import libsonata
 import pytest
-from libsonata import SonataError
 
 import bluepysnap.simulation as test_module
 from bluepysnap.exceptions import BluepySnapError
@@ -19,6 +18,15 @@ from bluepysnap.node_sets import NodeSets
 from bluepysnap.spike_report import PopulationSpikeReport, SpikeReport
 
 from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
+
+try:
+    Run = libsonata._libsonata.Run
+    Conditions = libsonata._libsonata.Conditions
+except AttributeError:
+    from libsonata._libsonata import SimulationConfig
+
+    Run = SimulationConfig.Run
+    Conditions = SimulationConfig.Conditions
 
 
 def test__warn_on_overwritten_node_sets():
@@ -40,7 +48,8 @@ def test_all():
     assert set(simulation.circuit.nodes) == {"default", "default2"}
     assert set(simulation.circuit.edges) == {"default", "default2"}
 
-    assert isinstance(simulation.run, libsonata._libsonata.Run)
+    assert isinstance(simulation.run, Run)
+
     assert simulation.run.tstop == 1000.0
     assert simulation.run.dt == 0.01
     assert simulation.run.spike_threshold == -15
@@ -51,7 +60,7 @@ def test_all():
     assert simulation.time_units == "ms"
 
     assert simulation.simulator == "CORENEURON"
-    assert isinstance(simulation.conditions, libsonata._libsonata.Conditions)
+    assert isinstance(simulation.conditions, Conditions)
     assert simulation.conditions.celsius == 34.0
     assert simulation.conditions.v_init == -80
 

@@ -140,7 +140,7 @@ def _properties_mask(data, population_name, population_type, queries):
             prop_mask = np.logical_and(prop >= v1, prop <= v2)
         elif isinstance(values, Mapping):
             prop_mask = _complex_query(prop, values)
-        elif isinstance(values, list):
+        elif utils.is_iterable(values):
             prop_mask = prop.isin(values)
         else:
             prop_mask = prop == values

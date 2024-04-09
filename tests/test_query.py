@@ -129,6 +129,18 @@ def test_resolve_ids():
     assert [False, False, False] == resolve_ids(data, "", "", {"$or": []}).tolist()
     assert [True, True, True] == resolve_ids(data, "", "", {"$and": []}).tolist()
 
+    # Test that iterables are handled correctly
+    expected = [False, True, True]
+    iterables = [
+        ["eight", "nine"],
+        ("eight", "nine"),
+        map(str, ["eight", "nine"]),
+        pd.Series(["eight", "nine"]),
+        {"eight", "nine"},
+    ]
+    for it in iterables:
+        assert expected == resolve_ids(data, "", {"str": it}).tolist()
+
     with pytest.raises(BluepySnapError) as e:
         resolve_ids(data, "", "", {"str": {"$regex": "*.some", "edge_id": 2}})
     assert "Value operators can't be used with plain values" in e.value.args[0]

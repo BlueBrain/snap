@@ -1,12 +1,9 @@
-import warnings
 from unittest.mock import Mock, patch
 
 import click
-import pytest
 from click.testing import CliRunner
 
 from bluepysnap.cli import cli
-from bluepysnap.exceptions import BluepySnapDeprecationWarning
 
 from utils import TEST_DATA_DIR
 

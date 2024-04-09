@@ -1,14 +1,28 @@
 Changelog
 =========
 
-Version v3.0.1
+Version v3.1.0
 --------------
 
-New Features
+Improvements
 ~~~~~~~~~~~~
+- Made ``Edges`` and ``EdgePopulation`` ``get`` functions more consistent
+
+  - Both now return ``self.ids(query)`` if ``properties=None``
+  - ``properties`` is now a keyword argument in ``EdgePopulation.get``
+- Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
+- Added new notebooks covering node sets as well as node and edge queries
 - Added the possibility to query Edge IDs and Node IDs based on edge/node population type using query key ``population_type``
 
   - the types conform to `node types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#populations>`_ and `edge types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#id4>`_ defined in the sonata specification
+
+
+Version v3.0.1
+--------------
+
+Bug Fixes
+~~~~~~~~~
+- Fixed a bug causing some iterables (e.g., tuples) in queries not to work as expected
 
 
 Version v3.0.0

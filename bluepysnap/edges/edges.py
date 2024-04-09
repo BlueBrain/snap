@@ -100,7 +100,7 @@ class Edges(
         if edge_ids is None:
             raise BluepySnapError("You need to set edge_ids in get.")
         if properties is None:
-            return edge_ids
+            return self.ids(edge_ids)
         return super().get(edge_ids, properties)
 
     def afferent_nodes(self, target, unique=True):

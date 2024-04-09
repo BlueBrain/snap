@@ -4,7 +4,6 @@ import pickle
 import sys
 from unittest import mock
 
-import libsonata
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -215,6 +214,8 @@ class TestNodePopulation:
         # same query with a $and operator
         npt.assert_equal(_call({"$and": [{Cell.MTYPE: "L6_Y"}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         npt.assert_equal(_call({Cell.MORPHOLOGY: ["morph-A", "morph-B"]}), [0, 1])
+        npt.assert_equal(_call({Cell.MORPHOLOGY: ("morph-A", "morph-B")}), [0, 1])
+        npt.assert_equal(_call({Cell.MORPHOLOGY: map(str, ["morph-A", "morph-B"])}), [0, 1])
         npt.assert_equal(_call({"$and": [{}, {}]}), [0, 1, 2])
         npt.assert_equal(_call({"$and": [{}, {Cell.MORPHOLOGY: "morph-B"}]}), [1])
         # same query with a $or operator
