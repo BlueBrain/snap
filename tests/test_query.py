@@ -139,7 +139,7 @@ def test_resolve_ids():
         {"eight", "nine"},
     ]
     for it in iterables:
-        assert expected == resolve_ids(data, "", {"str": it}).tolist()
+        assert expected == resolve_ids(data, "", "", {"str": it}).tolist()
 
     with pytest.raises(BluepySnapError) as e:
         resolve_ids(data, "", "", {"str": {"$regex": "*.some", "edge_id": 2}})
