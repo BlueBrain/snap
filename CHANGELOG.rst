@@ -12,6 +12,9 @@ Improvements
   - ``properties`` is now a keyword argument in ``EdgePopulation.get``
 - Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
 - Added new notebooks covering node sets as well as node and edge queries
+- Added the possibility to query Edge IDs and Node IDs based on edge/node population type using query key ``population_type``
+
+  - the types conform to `node types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#populations>`_ and `edge types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#id4>`_ defined in the sonata specification
 
 
 Version v3.0.1

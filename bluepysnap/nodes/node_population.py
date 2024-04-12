@@ -48,6 +48,8 @@ Examples:
     >>> nodes.ids(group={ Node.LAYER: 2})  # returns list of IDs matching layer==2
     >>> nodes.ids(group={ Node.LAYER: [2, 3]})  # returns list of IDs with layer in [2,3]
     >>> nodes.ids(group={ Node.X: (0, 1)})  # returns list of IDs with 0 < x < 1
+    >>> # returns list of IDs of biophysical node populations
+    >>> nodes.ids(group={ "population_type": "biophysical"})
     >>> # returns list of IDs matching one of the queries inside the 'or' list
     >>> nodes.ids(group={'$or': [{ Node.LAYER: [2, 3]},
     >>>                          { Node.X: (0, 1), Node.MTYPE: 'L1_SLAC' }]})
@@ -371,7 +373,7 @@ class NodePopulation:
             self._check_properties(properties)
         # load all the properties needed to execute the query, excluding the unknown properties
         data = self._get_data(properties & self.property_names)
-        idx = query.resolve_ids(data, self.name, queries)
+        idx = query.resolve_ids(data, self.name, self.type, queries)
         return idx.nonzero()[0]
 
     def ids(self, group=None, limit=None, sample=None, raise_missing_property=True):

@@ -13,7 +13,7 @@ from bluepysnap.circuit_ids_types import IDS_DTYPE, CircuitNodeId
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.node_sets import NodeSets
 
-from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR
+from utils import PICKLED_SIZE_ADJUSTMENT, TEST_DATA_DIR, copy_test_data, edit_config
 
 
 class TestNodes:
@@ -233,6 +233,31 @@ class TestNodes:
         expected = CircuitNodeIds.from_dict({"default": [0, 1, 2], "default2": [0]})
         assert tested == expected
 
+        # Test querying with the population type
+        with copy_test_data() as (_, config_path):
+            with edit_config(config_path) as config:
+                config["networks"]["nodes"][0]["populations"]["default"]["type"] = "virtual"
+
+            circuit = Circuit(config_path)
+
+            tested = circuit.nodes.ids({"population_type": "virtual"})
+            expected = CircuitNodeIds.from_arrays(3 * ["default"], [0, 1, 2])
+            assert tested == expected
+
+            tested = circuit.nodes.ids({"population_type": "biophysical"})
+            expected = CircuitNodeIds.from_arrays(4 * ["default2"], [0, 1, 2, 3])
+            assert tested == expected
+
+            tested = circuit.nodes.ids(
+                {"population_type": ["virtual", "biophysical"], "node_id": [0]}
+            )
+            expected = CircuitNodeIds.from_tuples([("default", 0), ("default2", 0)])
+            assert tested == expected
+
+            tested = circuit.nodes.ids({"population_type": "fake"})
+            expected = CircuitNodeIds.from_arrays([], [])
+            assert tested == expected
+
     def test_get(self):
         # return all properties for all the ids
         tested = self.test_obj.get()
@@ -371,6 +396,50 @@ class TestNodes:
 
         with pytest.raises(BluepySnapError, match="Unknown properties required: {'unknown'}"):
             next(self.test_obj.get(properties="unknown"))
+
+        # Test querying with the population type
+        with copy_test_data() as (_, config_path):
+            with edit_config(config_path) as config:
+                config["networks"]["nodes"][0]["populations"]["default"]["type"] = "virtual"
+
+            circuit = Circuit(config_path)
+
+            tested = circuit.nodes.get(group={"population_type": "virtual"}, properties=["layer"])
+            tested = pd.concat(df for _, df in tested)
+            expected = pd.DataFrame(
+                {"layer": np.array([2, 6, 6], dtype=int)},
+                index=pd.MultiIndex.from_tuples(
+                    [
+                        ("default", 0),
+                        ("default", 1),
+                        ("default", 2),
+                    ],
+                    names=["population", "node_ids"],
+                ),
+            )
+            pdt.assert_frame_equal(tested, expected)
+
+            tested = circuit.nodes.get(
+                group={"population_type": "biophysical"}, properties=["layer"]
+            )
+            tested = pd.concat(df for _, df in tested)
+            expected = pd.DataFrame(
+                {"layer": np.array([7, 8, 8, 2], dtype=int)},
+                index=pd.MultiIndex.from_tuples(
+                    [
+                        ("default2", 0),
+                        ("default2", 1),
+                        ("default2", 2),
+                        ("default2", 3),
+                    ],
+                    names=["population", "node_ids"],
+                ),
+            )
+            pdt.assert_frame_equal(tested, expected)
+
+            tested = circuit.nodes.get(group={"population_type": "fake"}, properties=["layer"])
+            tested = dict(tested)
+            assert tested == {}
 
     def test_functionality_with_separate_node_set(self):
         with pytest.raises(BluepySnapError, match="Undefined node set"):
