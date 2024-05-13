@@ -75,7 +75,7 @@ def _validate(config):
 
     Schema mocked to not have to parse it from file for every validation.
     """
-    return test_module.validate_circuit_schema(CONFIG_FILE, config)
+    return test_module.validate_circuit_schema(CONFIG_FILE, config, ignore_datatype_errors=False)
 
 
 def _remove_from_config(config, to_remove):

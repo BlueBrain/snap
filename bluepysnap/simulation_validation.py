@@ -489,7 +489,7 @@ def validate_config(config):
     return [error for section in sorted(VALIDATORS) for error in VALIDATORS[section](config)]
 
 
-def validate(config_file, print_errors=True):
+def validate(config_file, print_errors=True, ignore_datatype_errors=False):
     """Validate Sonata simulation config.
 
     Args:
@@ -500,7 +500,7 @@ def validate(config_file, print_errors=True):
         set: set of errors, empty if no errors
     """
     config = _parse_config(config_file)
-    errors = schemas.validate_simulation_schema(config_file, config)
+    errors = schemas.validate_simulation_schema(config_file, config, ignore_datatype_errors)
 
     config = _add_validation_parameters(config, config_file)
     errors += validate_config(config)

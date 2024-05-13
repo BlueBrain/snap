@@ -767,7 +767,6 @@ def test_validate_reports(tmp_path):
     fail_1_file = tmp_path / "non_existent.h5"
     fail_2_file = tmp_path / "fail_2.h5"
 
-    report = {"cells": "fake_node_set"}
     config = {
         "_node_sets_instance": node_sets,
         "_output_dir": tmp_path,

@@ -1,8 +1,21 @@
 Changelog
 =========
 
+Version v3.1.0
+--------------
+
 Improvements
 ~~~~~~~~~~~~
+- Made ``Edges`` and ``EdgePopulation`` ``get`` functions more consistent
+
+  - Both now return ``self.ids(query)`` if ``properties=None``
+  - ``properties`` is now a keyword argument in ``EdgePopulation.get``
+- Added ``EdgePopulation.stats`` with two methods: ``divergence``, ``convergence``
+- Added new notebooks covering node sets as well as node and edge queries
+- Added the possibility to query Edge IDs and Node IDs based on edge/node population type using query key ``population_type``
+
+  - the types conform to `node types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#populations>`_ and `edge types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#id4>`_ defined in the sonata specification
+- teach the `bluepysnap validate-circuit` and `bluepysnap validate-simulation` the ability to `--ignore-datatype-errors` so that mismatches of datatypes to the specification are ignored
 - Update simulation validation to conform to the SONATA spec
 
   - ``synapse_replay.source`` and ``.dat`` spike input files are no longer supported

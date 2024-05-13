@@ -1,14 +1,11 @@
 import sys
 from unittest.mock import Mock, patch
 
-import numpy as np
-import pandas as pd
 import pytest
 
 import bluepysnap._plotting as test_module
 from bluepysnap.exceptions import BluepySnapError
 from bluepysnap.simulation import Simulation
-from bluepysnap.spike_report import FilteredSpikeReport, SpikeReport
 
 from utils import TEST_DATA_DIR
 
