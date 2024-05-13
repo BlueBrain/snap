@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, call, patch
 
 import numpy.testing as npt
-import pandas as pd
 import pytest
 
 import bluepysnap.simulation_validation as test_module
