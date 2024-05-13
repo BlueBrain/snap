@@ -8,7 +8,6 @@ from pathlib import Path
 import h5py
 import libsonata
 import numpy as np
-import pandas as pd
 
 from bluepysnap import schemas
 from bluepysnap.circuit_ids import CircuitNodeIds
@@ -219,15 +218,12 @@ def _get_ids_from_spike_file(file_):
     """Get unique gids from an input spikes file."""
     file_ = Path(file_)
     suffix = file_.suffix
-    if suffix == ".dat":
-        spikes = pd.read_csv(file_, delimiter=r"\s+", skiprows=1, header=None, names=["t", "id"])
-        return set(spikes["id"].values - 1)
-    elif suffix == ".h5":
+    if suffix == ".h5":
         spikes = libsonata.SpikeReader(file_)
         populations = spikes.get_population_names()
         return {pop: set(spikes[pop].get_dict()["node_ids"]) for pop in populations}
 
-    raise IOError(f"Unknown file type: '{suffix}' (supported: '.h5', '.dat')")
+    raise IOError(f"Unsupported file type: '{suffix}' (supported: '.h5')")
 
 
 def _get_ids_from_node_set(node_set, config):
@@ -242,6 +238,19 @@ def _get_ids_from_node_set(node_set, config):
             ids_per_population[population.name] = ids
 
     return ids_per_population
+
+
+def _get_ids_from_populations(config, only_non_virtual=False):
+    """Get node ids of populations."""
+    circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
+    populations = circuit.node_populations
+
+    if only_non_virtual:
+        populations = [
+            pop for pop in populations if circuit.node_population_properties(pop).type != "virtual"
+        ]
+
+    return {pop: circuit.node_population(pop).select_all().flatten() for pop in populations}
 
 
 def _get_missing_ids(sub_ids, super_ids):
@@ -277,18 +286,18 @@ def _validate_spike_file_contents(input_, config, prefix):
     except IOError as e:
         return [BluepySnapValidationError.fatal(f"{prefix}: {' '.join(map(str,e.args))}")]
 
-    nodeset_ids = _get_ids_from_node_set(input_["source"], config)
-    source = f"node set '{input_['source']}'"
+    if nodeset := input_.get("source"):
+        sim_ids = _get_ids_from_node_set(nodeset, config)
+        source = f"node set '{nodeset}'"
+    else:
+        sim_ids = _get_ids_from_populations(config)
+        source = "node populations"
 
-    return _compare_ids(spike_ids, nodeset_ids, source, prefix)
+    return _compare_ids(spike_ids, sim_ids, source, prefix)
 
 
 def _validate_spike_input(name, input_, config):
     errors = []
-
-    if (key := "source") in input_:
-        prefix = f"inputs.{name}.{key}"
-        errors += _validate_node_set_exists(config, input_[key], prefix=prefix)
 
     if (key := "spike_file") in input_:
         spike_path = _resolve_path(input_[key], config)
@@ -296,7 +305,7 @@ def _validate_spike_input(name, input_, config):
         prefix = f"inputs.{name}.{key}"
         errors += _validate_file_exists(spike_path, prefix=prefix)
 
-        if len(errors) > 0 or "source" not in input_ or not _file_exists(config["_circuit_config"]):
+        if len(errors) > 0 or not _file_exists(config["_circuit_config"]):
             errors += [BluepySnapValidationError.fatal(f"{prefix}: Can not validate file contents")]
         else:
             errors += _validate_spike_file_contents(input_, config, prefix)
@@ -429,17 +438,6 @@ def validate_reports(config):
     return errors
 
 
-def _get_ids_from_non_virtual_pops(config):
-    """Get ids of all non-virtual populations."""
-    circuit = libsonata.CircuitConfig.from_file(config["_circuit_config"])
-
-    return {
-        pop: circuit.node_population(pop).select_all().flatten()
-        for pop in circuit.node_populations
-        if circuit.node_population_properties(pop).type != "virtual"
-    }
-
-
 def _validate_electrodes_file(path, config):
     """Validate the ids for each of the populations in `electrodes_file` can be found."""
     prefix = "run.electrodes_file"
@@ -458,8 +456,8 @@ def _validate_electrodes_file(path, config):
         source = f"node set '{node_set}'"
         sim_ids = _get_ids_from_node_set(node_set, config)
     else:
-        source = "non-virtual populations"
-        sim_ids = _get_ids_from_non_virtual_pops(config)
+        source = "non-virtual node populations"
+        sim_ids = _get_ids_from_populations(config, only_non_virtual=True)
 
     return _compare_ids(elec_ids, sim_ids, source, prefix)
 

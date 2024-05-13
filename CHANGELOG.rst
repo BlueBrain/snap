@@ -16,6 +16,9 @@ Improvements
 
   - the types conform to `node types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#populations>`_ and `edge types <https://sonata-extension.readthedocs.io/en/latest/sonata_config.html#id4>`_ defined in the sonata specification
 - teach the `bluepysnap validate-circuit` and `bluepysnap validate-simulation` the ability to `--ignore-datatype-errors` so that mismatches of datatypes to the specification are ignored
+- Update simulation validation to conform to the SONATA spec
+
+  - ``synapse_replay.source`` and ``.dat`` spike input files are no longer supported
 
 
 Version v3.0.1
