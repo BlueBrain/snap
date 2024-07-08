@@ -20,8 +20,9 @@ from bluepysnap.utils import load_json, print_validation_errors
 L = logging.getLogger("brainbuilder")
 MAX_MISSING_FILES_DISPLAY = 10
 
-# print numpy scalars as "1" instead of "np.uint64(1)"
-np.set_printoptions(legacy="1.25")
+# print numpy scalars as "1" instead of "np.uint64(1)" (changed in numpy==2.0.0)
+if np.version.version >= "2.0.0":  # pragma: no cover
+    np.set_printoptions(legacy="1.25")
 
 
 def _check_partial_circuit_config(config):
