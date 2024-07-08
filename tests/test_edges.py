@@ -233,9 +233,9 @@ class TestEdges:
         tested = self.test_obj.get(ids, properties=["other2", "other1", "@source_node"])
         expected = pd.DataFrame(
             {
-                "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+                "other2": np.array([np.nan, np.nan, np.nan, np.nan, 10, 11, 12, 13], dtype=float),
                 "other1": np.array(
-                    [np.NaN, np.NaN, np.NaN, np.NaN, "A", "B", "C", "D"], dtype=object
+                    [np.nan, np.nan, np.nan, np.nan, "A", "B", "C", "D"], dtype=object
                 ),
                 "@source_node": np.array([2, 0, 0, 2, 2, 0, 0, 2], dtype=int),
             },
@@ -329,7 +329,7 @@ class TestEdges:
         tested = self.test_obj.get(ids, properties="other2")
         expected = pd.DataFrame(
             {
-                "other2": np.array([np.NaN, np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+                "other2": np.array([np.nan, np.nan, np.nan, np.nan, 10, 11, 12, 13], dtype=float),
             },
             index=pd.MultiIndex.from_tuples(
                 [

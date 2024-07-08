@@ -286,8 +286,8 @@ class TestNodes:
         tested = pd.concat(df for _, df in tested)
         expected = pd.DataFrame(
             {
-                "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
-                "other1": np.array([np.NaN, np.NaN, np.NaN, "A", "B", "C", "D"], dtype=object),
+                "other2": np.array([np.nan, np.nan, np.nan, 10, 11, 12, 13], dtype=float),
+                "other1": np.array([np.nan, np.nan, np.nan, "A", "B", "C", "D"], dtype=object),
                 "layer": np.array([2, 6, 6, 7, 8, 8, 2], dtype=int),
             },
             index=pd.MultiIndex.from_tuples(
@@ -373,7 +373,7 @@ class TestNodes:
         tested = self.test_obj.get(properties="other2")
         expected = pd.DataFrame(
             {
-                "other2": np.array([np.NaN, np.NaN, np.NaN, 10, 11, 12, 13], dtype=float),
+                "other2": np.array([np.nan, np.nan, np.nan, 10, 11, 12, 13], dtype=float),
             },
             index=pd.MultiIndex.from_tuples(
                 [
