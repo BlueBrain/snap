@@ -506,7 +506,7 @@ class EdgePopulation:
             # np.stack(uint64, int64) -> float64
             connected_node_ids_with_count = connected_node_ids_with_count.astype(np.uint32)
             if secondary_node_ids is not None:
-                mask = np.in1d(
+                mask = np.isin(
                     connected_node_ids_with_count[:, 0], secondary_node_ids, assume_unique=True
                 )
                 connected_node_ids_with_count = connected_node_ids_with_count[mask]
