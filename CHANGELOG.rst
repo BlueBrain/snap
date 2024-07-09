@@ -6,6 +6,7 @@ Version v3.1.0
 
 Improvements
 ~~~~~~~~~~~~
+- Support for ``numpy>=2``
 - Made ``Edges`` and ``EdgePopulation`` ``get`` functions more consistent
 
   - Both now return ``self.ids(query)`` if ``properties=None``
