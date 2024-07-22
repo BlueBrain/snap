@@ -4,6 +4,7 @@ The idea here is to not depend on libsonata if possible, so we can use this in a
 """
 
 import logging
+from contextlib import contextmanager
 from pathlib import Path
 
 import h5py
@@ -19,6 +20,13 @@ from bluepysnap.utils import load_json, print_validation_errors
 
 L = logging.getLogger("brainbuilder")
 MAX_MISSING_FILES_DISPLAY = 10
+
+
+@contextmanager
+def _np_printoptions():
+    """Get numpy print options."""
+    with np.printoptions(legacy=("1.25" if np.version.version >= "2.0.0" else None)):
+        yield
 
 
 def _check_partial_circuit_config(config):
@@ -347,11 +355,12 @@ def _check_edges_node_ids(nodes_ds, nodes):
         if node_ids.size > 0:
             missing_ids = sorted(set(nodes_ds[:]) - set(node_ids))
             if missing_ids:
-                errors.append(
-                    BluepySnapValidationError.fatal(
-                        f"{nodes_ds.name} misses node ids in its node population: {missing_ids}"
+                with _np_printoptions():
+                    errors.append(
+                        BluepySnapValidationError.fatal(
+                            f"{nodes_ds.name} misses node ids in its node population: {missing_ids}"
+                        )
                     )
-                )
         elif f"nodes/{node_population_name}" in h5f:
             errors.append(
                 BluepySnapValidationError.fatal(
@@ -386,12 +395,13 @@ def _check_edges_indices(population):
                 edges_range = node_to_edges_ranges[nodes_range[0] : nodes_range[1]][0]
                 edge_node_ids = list(set(nodes_ds[edges_range[0] : edges_range[1]]))
                 if len(edge_node_ids) > 1 or edge_node_ids[0] != node_id:
-                    errors.append(
-                        BluepySnapValidationError.fatal(
-                            f"Population {population.file.filename} edges {edge_node_ids} have "
-                            f"node ids {edges_range} instead of single id {node_id}"
+                    with _np_printoptions():
+                        errors.append(
+                            BluepySnapValidationError.fatal(
+                                f"Population {population.file.filename} edges {edge_node_ids} have "
+                                f"node ids {edges_range} instead of single id {node_id}"
+                            )
                         )
-                    )
 
     errors = []
     indices = population["indices"]
