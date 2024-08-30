@@ -43,11 +43,11 @@ class StatsHelper:
                 source_sample, target, return_synapse_count=True
             )
             for pre_gid, _, synapse_count in connections:
-                result[pre_gid] += synapse_count
+                result[pre_gid.id] += synapse_count
         else:
             connections = self._edge_population.iter_connections(source_sample, target)
             for pre_gid, _ in connections:
-                result[pre_gid] += 1
+                result[pre_gid.id] += 1
 
         return np.array(list(result.values()))
 
@@ -82,10 +82,10 @@ class StatsHelper:
                 source, target_sample, return_synapse_count=True
             )
             for _, post_gid, synapse_count in connections:
-                result[post_gid] += synapse_count
+                result[post_gid.id] += synapse_count
         else:
             connections = self._edge_population.iter_connections(source, target_sample)
             for _, post_gid in connections:
-                result[post_gid] += 1
+                result[post_gid.id] += 1
 
         return np.array(list(result.values()))
