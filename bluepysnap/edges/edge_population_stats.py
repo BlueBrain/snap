@@ -40,7 +40,7 @@ class StatsHelper:
         result = {id_: 0 for id_ in source_sample}
         if by == "synapses":
             connections = self._edge_population.iter_connections(
-                source_sample, target, return_synapse_count=True
+                source_sample, target, return_edge_count=True
             )
             for pre_gid, _, synapse_count in connections:
                 result[pre_gid.id] += synapse_count
@@ -79,7 +79,7 @@ class StatsHelper:
         result = {id_: 0 for id_ in target_sample}
         if by == "synapses":
             connections = self._edge_population.iter_connections(
-                source, target_sample, return_synapse_count=True
+                source, target_sample, return_edge_count=True
             )
             for _, post_gid, synapse_count in connections:
                 result[post_gid.id] += synapse_count
