@@ -3,6 +3,8 @@
 import h5py
 import numpy as np
 
+string_dtype = h5py.special_dtype(vlen=str)
+
 
 def write_spikes(filepath):
     population_names = ["default", "default2"]
@@ -16,7 +18,8 @@ def write_spikes(filepath):
         gpop_spikes = h5f.create_group("/spikes/" + population_names[0])
         gpop_spikes.attrs.create("sorting", data=2, dtype=sorting_type)
         timestamps, node_ids = zip(*sorted(zip(timestamps_base, node_ids_base)))
-        gpop_spikes.create_dataset("timestamps", data=timestamps, dtype=np.double)
+        dtimestamps = gpop_spikes.create_dataset("timestamps", data=timestamps, dtype=np.double)
+        dtimestamps.attrs.create("units", data="ms", dtype=string_dtype)
         gpop_spikes.create_dataset("node_ids", data=node_ids, dtype=np.uint64)
 
         gpop_spikes2 = h5f.create_group("/spikes/" + population_names[1])
@@ -33,7 +36,6 @@ def write_soma_report(filepath):
     element_ids = np.zeros(3)
     times = (0.0, 1.0, 0.1)
     data = [node_ids + j * 0.1 for j in range(10)]
-    string_dtype = h5py.special_dtype(vlen=str)
     with h5py.File(filepath, "w") as h5f:
         h5f.create_group("report")
         gpop_all = h5f.create_group("/report/" + population_names[0])
@@ -70,7 +72,6 @@ def write_element_report(filepath):
 
     times = (0.0, 1, 0.1)
 
-    string_dtype = h5py.special_dtype(vlen=str)
     with h5py.File(filepath, "w") as h5f:
         h5f.create_group("report")
         gpop_element = h5f.create_group("/report/" + population_names[0])
