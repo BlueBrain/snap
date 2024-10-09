@@ -648,15 +648,7 @@ class NodePopulation:
     @cached_property
     def spatial_segment_index(self):
         """Access to edges spatial index."""
-        try:
-            from spatial_index import open_index
-        except ImportError as e:
-            raise BluepySnapError(
-                (
-                    "Spatial index is for now only available internally to BBP. ",
-                    "It requires `spatial_index`, an internal package.",
-                )
-            ) from e
+        from brain_indexer import open_index
 
         index_dir = self._properties.spatial_segment_index_dir
         if not index_dir:
