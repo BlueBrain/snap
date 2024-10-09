@@ -5,7 +5,6 @@ import pickle
 import shutil
 import tempfile
 from contextlib import contextmanager
-from distutils.dir_util import copy_tree
 from pathlib import Path
 
 import numpy.testing as npt
@@ -24,7 +23,7 @@ PICKLED_SIZE_ADJUSTMENT = len(pickle.dumps(str(TEST_DATA_DIR.absolute())))
 
 @contextmanager
 def setup_tempdir(cleanup=True):
-    temp_dir = str(Path(tempfile.mkdtemp()).resolve())
+    temp_dir = Path(tempfile.mkdtemp()).resolve()
     try:
         yield temp_dir
     finally:
@@ -41,7 +40,10 @@ def copy_test_data(config="circuit_config.json"):
         yields a path to the copy of the config file
     """
     with setup_tempdir() as tmp_dir:
-        copy_tree(str(TEST_DATA_DIR), tmp_dir)
+        # shutil.copytree expects the target to not exist
+        if tmp_dir.exists():
+            tmp_dir.rmdir()
+        shutil.copytree(str(TEST_DATA_DIR), tmp_dir)
         copied_path = Path(tmp_dir)
         yield copied_path, copied_path / config
 
