@@ -627,8 +627,7 @@ class TestNodePopulation:
 
     def test_spatial_segment_index_error(self):
         with pytest.raises(
-            BluepySnapError,
-            match="It appears default does not have segment indices"
+            BluepySnapError, match="It appears default does not have segment indices"
         ):
             self.test_obj.spatial_segment_index
 
