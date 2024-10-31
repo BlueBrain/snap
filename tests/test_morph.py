@@ -126,6 +126,25 @@ class TestMorphHelper:
         with pytest.raises(BluepySnapError, match="node_id must be a int or a CircuitNodeId"):
             self.test_obj.get([0, 1])
 
+    def test_get_alternate_morphology_collection(self):
+        morph_path = TEST_DATA_DIR / "morphologies/container-morphs.h5"
+        alternate_morphs = {"h5v1": str(morph_path)}
+
+        test_obj = test_module.MorphHelper(
+            None, self.nodes, alternate_morphologies=alternate_morphs
+        )
+
+        node_id = 0
+
+        with pytest.raises(BluepySnapError):
+            test_obj.get_morphology_dir(extension="h5")
+
+        with pytest.raises(BluepySnapError):
+            test_obj.get_filepath(node_id, extension="h5")
+
+        morph_A = test_obj.get(node_id, extension="h5")
+        assert len(morph_A.points) == 13
+
     def test_get_alternate_morphology(self):
         alternate_morphs = {"h5v1": str(self.morph_path)}
         test_obj = test_module.MorphHelper(

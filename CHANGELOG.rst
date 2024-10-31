@@ -20,6 +20,7 @@ Improvements
 - Update simulation validation to conform to the SONATA spec
 
   - ``synapse_replay.source`` and ``.dat`` spike input files are no longer supported
+- Support morphology containers
 
 
 Version v3.0.1
