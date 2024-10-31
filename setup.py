@@ -49,7 +49,7 @@ setup(
         "importlib_resources>=5.0.0",
         "jsonschema>=4.0.0,<5.0.0",
         "libsonata>=0.1.24,<1.0.0",
-        "morphio>=3.0.0,<4.0.0",
+        "morphio>=3.3.5,<4.0.0",
         "morph-tool>=2.4.3,<3.0.0",
         "numpy>=1.8",
         "pandas>=1.0.0",
