@@ -107,13 +107,14 @@ class MorphHelper:
                 according to `node_id` position in the circuit.
             extension (str): expected filetype extension of the morph file.
         """
-        if extension == "h5":
-            collection = morphio.Collection(self._get_morphology_base(extension))
-            name = self.get_name(node_id)
-            result = collection.load(name, mutable=True)
-        else:
-            filepath = self.get_filepath(node_id, extension=extension)
-            result = morphio.mut.Morphology(filepath)
+        collection = morphio.Collection(
+            self._get_morphology_base(extension),
+            [
+                f".{extension}",
+            ],
+        )
+        name = self.get_name(node_id)
+        result = collection.load(name, mutable=True)
 
         if transform:
             T = np.eye(4)
