@@ -619,6 +619,12 @@ class EdgePopulation:
             raise BluepySnapError(f"It appears {self.name} does not have synapse indices")
         return open_index(index_dir)
 
+    # ALIASES
+    edges_by_source = efferent_edges
+    edges_by_target = afferent_edges
+    target_nodes_by_source = efferent_nodes
+    source_nodes_by_target = afferent_nodes
+
     def __getstate__(self):
         """Make EdgePopulation pickle-able, without storing state of caches."""
         return self._circuit, self.name
