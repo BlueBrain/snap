@@ -36,9 +36,9 @@ properties:
       integration_method:
         type: string
         enum:
-          - "0"
-          - "1"
-          - "2"
+          - "euler"
+          - "crank_nicolson"
+          - "crank_nicolson_ion"
       stimulus_seed:
         $ref: "#/$simulation_defs/non_negative_integer"
       ionchannel_seed:

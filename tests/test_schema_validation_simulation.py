@@ -214,7 +214,7 @@ def test_run():
     config["run"].update(
         {
             "spike_threshold": 1,
-            "integration_method": "0",
+            "integration_method": "euler",
             "stimulus_seed": 1,
             "ionchannel_seed": 1,
             "minis_seed": 1,
@@ -226,8 +226,8 @@ def test_run():
 
     config["run"]["integration_method"] = "fail"
 
-    res = _validate(config)
-    assert "integration_method: 'fail' is not one of ['0', '1', '2']" in res[0].message
+    message = _validate(config)[0].message
+    assert "integration_method: 'fail' is not one of ['euler', 'crank_nicolson', 'crank_nicolson_ion']" in message
 
 
 def test_output():
